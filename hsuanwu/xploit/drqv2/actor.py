@@ -8,7 +8,7 @@ class Actor(nn.Module):
     """
     Actor network.
 
-    :param action_space: The action space of the environment.
+    :param action_shape: The action shape of the environment.
     :param feature_dim: Number of features extracted.
     :param hidden_dim: The size of the hidden layers.
     """
