@@ -1,10 +1,7 @@
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
-from gym import spaces
-
-import jax
 import jax.numpy as jnp
 import flax.linen as nn
 
+from hsuanwu.common.typing import *
 
 class CnnEncoder(nn.Module):
     """
