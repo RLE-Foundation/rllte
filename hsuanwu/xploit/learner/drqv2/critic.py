@@ -1,13 +1,49 @@
-from typing import Tuple
-
+import flax.linen as nn
 import jax.numpy as jnp
 
-from jaxrl.datasets import Batch
-from jaxrl.networks.common import InfoDict, Model, Params
+from hsuanwu.common.typing import *
+from hsuanwu.xploit.encoders import CnnEncoder
 
+class Critic(nn.Module):
+    """
+    Critic network.
 
-def update(actor: Model, critic: Model, target_critic: Model, batch: Batch,
-           discount: float) -> Tuple[Model, InfoDict]:
+    :param action_space: The action space of the environment.
+    :param feature_dim: Number of features extracted.
+    :param hidden_dim: The size of the hidden layers.
+    """
+    action_shape: Tuple[int]
+    feature_dim: int
+    hidden_dim: int
+
+    @nn.compact
+    def __call__(self, obs, action) -> jnp.array:
+        h = CnnEncoder(name='encoder')(obs)
+
+        h = nn.Dense(self.feature_dim)(h)
+        h = nn.LayerNorm()(h)
+        h = nn.tanh(h)
+
+        ''' concatenate h and action '''
+        h_action = jnp.concatenate([h, action], axis=1)
+
+        q1 = nn.Dense(self.hidden_dim)(h_action)
+        q1 = nn.relu(q1)
+        q1 = nn.Dense(self.hidden_dim)(q1)
+        q1 = nn.relu(q1)
+        q1 = nn.Dense(1)(q1)
+
+        q2 = nn.Dense(self.hidden_dim)(h_action)
+        q2 = nn.relu(q2)
+        q2 = nn.Dense(self.hidden_dim)(q2)
+        q2 = nn.relu(q2)
+        q2 = nn.Dense(1)(q2)
+
+        return q1, q2
+
+def update_critic(
+    actor: TrainState, critic: TrainState, target_critic: TrainState, 
+    batch: Batch, discount: float) -> Tuple[TrainState, InfoDict]:
     next_actions = actor(batch.next_observations)
     next_q1, next_q2 = target_critic(batch.next_observations, next_actions)
     next_q = jnp.minimum(next_q1, next_q2)
@@ -15,8 +51,7 @@ def update(actor: Model, critic: Model, target_critic: Model, batch: Batch,
     target_q = batch.rewards + discount * batch.masks * next_q
 
     def critic_loss_fn(critic_params: Params) -> Tuple[jnp.ndarray, InfoDict]:
-        q1, q2 = critic.apply_fn({'params': critic_params}, batch.observations,
-                                 batch.actions)
+        q1, q2 = critic.apply_fn({'params': critic_params}, batch.observations, batch.actions)
         critic_loss = ((q1 - target_q)**2 + (q2 - target_q)**2).mean()
         return critic_loss, {
             'critic_loss': critic_loss,

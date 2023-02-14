@@ -10,8 +10,8 @@ class CnnEncoder(nn.Module):
     """
 
     @nn.compact
-    def __call__(self, obs: jnp.array) -> jnp.array:
-        x = nn.Conv(32, (3, 3), (2, 2))(obs)
+    def __call__(self, observations: jnp.array) -> jnp.array:
+        x = nn.Conv(32, (3, 3), (2, 2))(observations)
         x = nn.relu(x)
         x = nn.Conv(32, (3, 3))(x)
         x = nn.relu(x)
@@ -28,8 +28,8 @@ class MlpEncoder(nn.Module):
     """
 
     @nn.compact
-    def __call__(self, obs: jnp.array) -> jnp.array:
-        x = nn.Dense(64)(obs)
+    def __call__(self, observations: jnp.array) -> jnp.array:
+        x = nn.Dense(64)(observations)
         x = nn.relu(x)
         x = nn.Dense(64)(x)
         x = nn.relu(x)
