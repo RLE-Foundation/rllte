@@ -2,6 +2,7 @@ import flax.linen as nn
 import jax.numpy as jnp
 
 from hsuanwu.common.typing import *
+from hsuanwu.common.train_state import TrainState
 from hsuanwu.xploit.encoders import CnnEncoder
 
 class Critic(nn.Module):
@@ -59,6 +60,6 @@ def update_critic(
             'q2': q2.mean()
         }
 
-    new_critic, info = critic.apply_gradient(critic_loss_fn)
+    new_critic, info = critic.apply_gradients(critic_loss_fn)
 
-    return new_critic, 
+    return new_critic, info

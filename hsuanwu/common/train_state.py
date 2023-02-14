@@ -18,12 +18,14 @@ class TrainState:
     :param apply_fn: Usually set to `model.apply()`. Kept in this dataclass for
       convenience to have a shorter params list for the `train_step()` function
       in your training loop.
+    :param params: The parameters to be updated by `tx` and used by `apply_fn`.
     :param tx: An Optax gradient transformation.
     :param opt_state: The state for `tx`.
     """
 
     step: int
     apply_fn: Callable[..., Any] = struct.field(pytree_node=False)
+    params: Params
     tx: Optional[optax.GradientTransformation] = struct.field(pytree_node=False)
     opt_state: Optional[optax.OptState] = None
 

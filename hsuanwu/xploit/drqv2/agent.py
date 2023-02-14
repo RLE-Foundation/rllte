@@ -3,13 +3,15 @@ import functools
 import optax
 import jax
 
+
 from hsuanwu.common.typing import *
 from hsuanwu.common.train_state import TrainState
 from hsuanwu.xploit.drqv2.actor import Actor, update_actor
 from hsuanwu.xploit.drqv2.critic import Critic, update_critic
 
+
 def target_update(critic: TrainState, target_critic: TrainState, tau: float) -> TrainState:
-    new_target_params = jax.tree_multimap(
+    new_target_params = jax.tree_map(
         lambda p, tp: p * tau + tp * (1 - tau), critic.params,
         target_critic.params)
 
@@ -73,7 +75,7 @@ class DrQv2Agent:
         self.rng = jax.random.PRNGKey(0)
         self.rng, actor_key, critic_key = jax.random.split(self.rng, 3)
         init_obs = jnp.ones((1, *obs_shape))
-        init_actions = jnp.ones((1, *action_shape[0]))
+        init_actions = jnp.ones((1, action_shape[0]))
 
         # actor train state
         self.actor = TrainState.create(
@@ -109,8 +111,8 @@ class DrQv2Agent:
         self.step += 1
 
         new_actor, new_critic, new_target_critic, info = _update_jit(
-            self.actor, self.critic, self.target_critic, batch, self.discount,
-            self.tau, self.step % self.update_every_steps == 0)
+            self.actor, self.critic, self.target_critic, batch, 0.99,
+            self.critic_target_tau, self.step % self.update_every_steps == 0)
 
         self.actor = new_actor
         self.critic = new_critic

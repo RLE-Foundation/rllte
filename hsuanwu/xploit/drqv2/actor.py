@@ -2,6 +2,7 @@ import flax.linen as nn
 import jax.numpy as jnp
 
 from hsuanwu.common.typing import *
+from hsuanwu.common.train_state import TrainState
 from hsuanwu.xploit.encoders import CnnEncoder
 
 class Actor(nn.Module):
@@ -44,6 +45,6 @@ def update_actor(
         actor_loss = - q.mean()
         return actor_loss, {'actor_loss': actor_loss}
 
-    new_actor, info = actor.apply_gradient(actor_loss_fn)
+    new_actor, info = actor.apply_gradients(actor_loss_fn)
 
     return new_actor, info
