@@ -57,17 +57,17 @@ class MlpEncoder(BaseEncoder):
 
     :param observation_space: Observation space of the environment.
     :param features_dim: Number of features extracted.
-    :param hidden_size: Number of units per layer.
+    :param hidden_dim: Number of units per hidden layer.
     """
-    def __init__(self, observation_space: Space, features_dim: int = 64, hidden_size: int = 256) -> None:
+    def __init__(self, observation_space: Space, features_dim: int = 64, hidden_dim: int = 256) -> None:
         super().__init__(observation_space, features_dim)
 
         input_dim = observation_space.shape[0]
         self.trunk = nn.Sequential(
-            nn.Linear(input_dim, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size), nn.ReLU(),
-            nn.Linear(hidden_size, features_dim)
+            nn.Linear(input_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, features_dim)
         )
 
         self.apply(network_init)
