@@ -13,8 +13,7 @@ class FrameStack(gym.Wrapper):
         self.observation_space = gym.spaces.Box(
             low=0,
             high=1,
-            # shape=((shp[0] * k,) + shp[1:]),
-            shape=(shp[:2] + (shp[2] * k, )),
+            shape=((shp[0] * k,) + shp[1:]),
             dtype=env.observation_space.dtype
         )
         self._max_episode_steps = env._max_episode_steps
@@ -58,7 +57,7 @@ def make_dmc_env(
     # shorten episode length
     max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
 
-    if not env_id in gym.envs.registry:
+    if not env_id in gym.envs.registry.env_specs:
         register(
             id=env_id,
             entry_point='hsuanwu.envs.dmc.wrappers:DMCWrapper',

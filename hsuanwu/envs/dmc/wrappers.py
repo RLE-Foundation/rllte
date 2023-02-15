@@ -85,7 +85,7 @@ class DMCWrapper(core.Env):
         # create observation space
         if from_pixels:
             self._observation_space = spaces.Box(
-                low=0, high=255, shape=[height, width, 3], dtype=np.uint8
+                low=0, high=255, shape=[3, height, width], dtype=np.uint8
             )
         else:
             self._observation_space = _spec_to_box(
@@ -135,8 +135,7 @@ class DMCWrapper(core.Env):
                 mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))  # hardcoded for dmc
                 bg = self._bg_source.get_image()
                 obs[mask] = bg[mask]
-            # obs = obs.transpose(2, 0, 1).copy()
-            obs = obs.copy()
+            obs = obs.transpose(2, 0, 1).copy()
         else:
             obs = _flatten_obs(time_step.observation)
         return obs
@@ -172,7 +171,7 @@ class DMCWrapper(core.Env):
         action = self._convert_action(action)
         assert self._true_action_space.contains(action)
         reward = 0
-        extra = {'internal_state': self._env.physics.get_state().copy()}
+        info = {'internal_state': self._env.physics.get_state().copy()}
 
         for _ in range(self._frame_skip):
             time_step = self._env.step(action)
@@ -181,8 +180,11 @@ class DMCWrapper(core.Env):
             if done:
                 break
         obs = self._get_obs(time_step)
-        extra['discount'] = time_step.discount
-        return obs, reward, done, extra
+        info['discount'] = time_step.discount
+        if done and time_step.discount == 1.0:
+            info['TimeLimit.truncated'] = True
+
+        return obs, reward, done, info
 
     def reset(self):
         time_step = self._env.reset()

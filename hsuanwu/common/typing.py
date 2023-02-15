@@ -1,12 +1,9 @@
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
-
+from gym import Space, Env
 import collections
-import flax
-import jax
+import torch
 
-PRNGKey = jax.random.PRNGKey
-Params = flax.core.FrozenDict[str, Any]
-InfoDict = Dict[str, float]
+Tensor = torch.Tensor
 Batch = collections.namedtuple(
     'Batch',
     ['observations', 'actions', 'rewards', 'masks', 'next_observations'])

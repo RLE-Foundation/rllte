@@ -95,7 +95,7 @@ class DrQv2Agent:
         self.step = 0
     
     def act(self, obs, training=True):
-        action = self.actor(obs)
+        action = self.actor(jnp.expand_dims(obs, 0))
         if not training:
             return action
         
