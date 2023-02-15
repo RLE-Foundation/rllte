@@ -18,7 +18,7 @@ class Actor(nn.Module):
     hidden_dim: int
 
     @nn.compact
-    def __call__(self, obs) -> jnp.array:
+    def __call__(self, obs) -> jnp.ndarray:
         h = CnnEncoder(name='encoder')(obs)
         # detach
         h = jax.lax.stop_gradient(h)

@@ -18,7 +18,7 @@ class Critic(nn.Module):
     hidden_dim: int
 
     @nn.compact
-    def __call__(self, obs, action) -> jnp.array:
+    def __call__(self, obs, action) -> jnp.ndarray:
         h = CnnEncoder(name='encoder')(obs)
 
         h = nn.Dense(self.feature_dim)(h)
