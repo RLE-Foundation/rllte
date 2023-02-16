@@ -9,4 +9,4 @@ Tensor = torch.Tensor
 InfoDict = Dict[str, float]
 Batch = collections.namedtuple(
     'Batch',
-    ['observations', 'actions', 'rewards', 'masks', 'next_observations'])
+    ['observations', 'actions', 'rewards', 'dones', 'next_observations'])

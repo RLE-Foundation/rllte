@@ -2,7 +2,9 @@ import numpy as np
 
 from hsuanwu.common.typing import *
 
-class ReplayBuffer:
+
+
+class VanillaReplayBuffer:
     """
     Replay buffer for off-policy algorithms.
 
@@ -47,6 +49,7 @@ class ReplayBuffer:
             observations=self.observations[indices],
             actions=self.actions[indices],
             rewards=self.rewards[indices],
+            dones=self.dones[indices],
             next_observations=self.observations[indices]
         )
 
