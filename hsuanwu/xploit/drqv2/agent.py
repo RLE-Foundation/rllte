@@ -1,10 +1,10 @@
-import jax.numpy as jnp
-import functools
-import optax
-import jax
-
+from torch.nn import functional as F
+from torch import nn
+import torch
 
 from hsuanwu.common.typing import *
+from hsuanwu.xploit.drqv2.actor import Actor
+from hsuanwu.xploit.drqv2.critic import Critic
 
 class DrQv2Agent:
     """
@@ -25,9 +25,10 @@ class DrQv2Agent:
     :param stddev_clip: The exploration std clip range.
     """
     def __init__(self,
-                obs_shape: Tuple[int] = (84, 84, 3), 
+                observation_space: Space, 
+                action_space: Space,
                 device: torch.device = 'cuda',
-                action_shape: Tuple[int] = (7, ),
+                encoder: nn.Module = None,
                 feature_dim: int = 50,
                 hidden_dim: int = 1024,
                 lr: float = 1e-4,
@@ -36,11 +37,35 @@ class DrQv2Agent:
                 update_every_steps: int = 2,
                 stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
                 stddev_clip: float = 0.3) -> None:
+        self.device = device
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
         self.num_expl_steps = num_expl_steps
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
+
+        # create models
+        self.encoder = encoder(
+            observation_space=observation_space, 
+            feature_dim=feature_dim)
+        self.actor = Actor(
+            action_space=action_space,
+            features_dim=feature_dim,
+            hidden_dim=hidden_dim).to(device)
+        self.critic = Critic(
+            action_space=action_space,
+            features_dim=feature_dim,
+            hidden_dim=hidden_dim).to(device)
+        self.critic_target = Critic(
+            action_space=action_space,
+            features_dim=feature_dim,
+            hidden_dim=hidden_dim).to(device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
+
+        # create optimizers
+        self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
+        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
     def act(self, obs, training=True):
         pass

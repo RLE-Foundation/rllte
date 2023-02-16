@@ -2,7 +2,6 @@ from torch import nn
 
 from hsuanwu.common.typing import *
 from hsuanwu.xploit.utils import network_init
-from hsuanwu.xploit.encoders import CnnEncoder, MlpEncoder
 
 class Actor(nn.Module):
     """
@@ -14,6 +13,8 @@ class Actor(nn.Module):
     """
     def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
+        self.trunk = nn.Sequential(nn.LayerNorm(features_dim), nn.Tanh())
+
         self.policy = nn.Sequential(nn.Linear(features_dim, hidden_dim),
                                     nn.ReLU(inplace=True),
                                     nn.Linear(hidden_dim, hidden_dim),
@@ -22,3 +23,10 @@ class Actor(nn.Module):
     
         self.apply(network_init)
     
+    def forward(self, obs: Tensor) -> Tensor:
+        h = self.trunk(obs)
+
+        action = self.policy(h)
+        action = torch.tanh(action)
+
+        return action

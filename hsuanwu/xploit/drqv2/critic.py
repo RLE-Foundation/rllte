@@ -1,65 +1,38 @@
-import flax.linen as nn
-import jax.numpy as jnp
+from torch import nn
 
 from hsuanwu.common.typing import *
-from hsuanwu.common.train_state import TrainState
-from hsuanwu.xploit.encoders import CnnEncoder
+from hsuanwu.xploit.utils import network_init
 
 class Critic(nn.Module):
     """
-    Critic network.
+    Critic network
 
-    :param action_shape: The action shape of the environment.
-    :param feature_dim: Number of features extracted.
-    :param hidden_dim: The size of the hidden layers.
+    :param action_space: Action space of the environment.
+    :param features_dim: Number of features accepted.
+    :param hidden_dim: Number of units per hidden layer.
     """
-    action_shape: Tuple[int]
-    feature_dim: int
-    hidden_dim: int
+    def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
+        super().__init__()
+        self.trunk = nn.Sequential(nn.LayerNorm(features_dim), nn.Tanh())
 
-    @nn.compact
-    def __call__(self, obs, action) -> jnp.ndarray:
-        h = CnnEncoder(name='encoder')(obs)
+        action_shape = action_space.shape
+        self.Q1 = nn.Sequential(
+            nn.Linear(features_dim + action_shape[0], hidden_dim),
+            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
 
-        h = nn.Dense(self.feature_dim)(h)
-        h = nn.LayerNorm()(h)
-        h = nn.tanh(h)
+        self.Q2 = nn.Sequential(
+            nn.Linear(features_dim + action_shape[0], hidden_dim),
+            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
 
-        ''' concatenate h and action '''
-        h_action = jnp.concatenate([h, action], axis=1)
-
-        q1 = nn.Dense(self.hidden_dim)(h_action)
-        q1 = nn.relu(q1)
-        q1 = nn.Dense(self.hidden_dim)(q1)
-        q1 = nn.relu(q1)
-        q1 = nn.Dense(1)(q1)
-
-        q2 = nn.Dense(self.hidden_dim)(h_action)
-        q2 = nn.relu(q2)
-        q2 = nn.Dense(self.hidden_dim)(q2)
-        q2 = nn.relu(q2)
-        q2 = nn.Dense(1)(q2)
+        self.apply(network_init)
+    
+    def forward(self, obs: Tensor, action: Tensor):
+        h = self.trunk(obs)
+        h_action = torch.cat([h, action], dim=-1)
+        
+        q1 = self.Q1(h_action)
+        q2 = self.Q2(h_action)
 
         return q1, q2
-
-def update_critic(
-    actor: TrainState, critic: TrainState, target_critic: TrainState, 
-    batch: Batch, discount: float) -> Tuple[TrainState, InfoDict]:
-    next_actions = actor(batch.next_observations)
-    next_q1, next_q2 = target_critic(batch.next_observations, next_actions)
-    next_q = jnp.minimum(next_q1, next_q2)
-
-    target_q = batch.rewards + discount * batch.masks * next_q
-
-    def critic_loss_fn(critic_params: Params) -> Tuple[jnp.ndarray, InfoDict]:
-        q1, q2 = critic.apply_fn({'params': critic_params}, batch.observations, batch.actions)
-        critic_loss = ((q1 - target_q)**2 + (q2 - target_q)**2).mean()
-        return critic_loss, {
-            'critic_loss': critic_loss,
-            'q1': q1.mean(),
-            'q2': q2.mean()
-        }
-
-    new_critic, info = critic.apply_gradients(critic_loss_fn)
-
-    return new_critic, info
