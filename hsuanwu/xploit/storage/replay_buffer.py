@@ -1,8 +1,6 @@
-from gym import spaces
 import numpy as np
 
 from hsuanwu.common.typing import *
-
 
 class ReplayBuffer:
     """
@@ -11,26 +9,20 @@ class ReplayBuffer:
     :param observation_space: Observation space.
     :param action_space: Action space.
     :param buffer_size: Max number of element in the buffer.
-    :param n_envs: Number of parallel environments.
     """
-    def __init__(
-        self,
-        observation_space: spaces.Space,
-        action_space: spaces.Space,
-        buffer_size: int,
-        n_envs: int = 1
-        ) -> None:
+    def __init__(self,
+                 observation_space: Space,
+                 action_space: Space,
+                 buffer_size: int,
+                 ) -> None:
         self.observation_space = observation_space
         self.action_space = action_space
-        self.n_envs = n_envs
-        self.buffer_size = max(buffer_size // n_envs, 1)
+        self.buffer_size = buffer_size
 
         self.observations = np.empty(shape=(self.buffer_size + 1, ) + observation_space.shape, dtype=observation_space.dtype)
         self.actions = np.empty(shape=(self.buffer_size, action_space.shape[0]), dtype=action_space.dtype)
         self.rewards = np.empty(shape=(self.buffer_size, ), dtype=np.float32)
         self.dones = np.empty((self.buffer_size, ), dtype=np.float32)
-        self.masks = np.empty((self.buffer_size, ), dtype=np.float32)
-        # self.next_observations = np.empty(shape=(self.buffer_size, self.n_envs) + observation_space.shape, dtype=observation_space.dtype)
 
         self._idx = 0
         self._size = 0
@@ -39,13 +31,11 @@ class ReplayBuffer:
             obs: np.ndarray,
             action: np.ndarray,
             reward: np.ndarray,
-            mask: float,
             done: float) -> None:
 
         self.observations[self._idx + 1] = obs
         self.actions[self._idx] = action
         self.rewards[self._idx] = reward
-        self.masks[self._idx] = mask
         self.dones[self._idx] = done
 
         self._idx = (self._idx + 1) % self.buffer_size
@@ -57,7 +47,6 @@ class ReplayBuffer:
             observations=self.observations[indices],
             actions=self.actions[indices],
             rewards=self.rewards[indices],
-            masks=self.masks[indices],
             next_observations=self.observations[indices]
         )
 

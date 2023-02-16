@@ -1,10 +1,5 @@
-import jax.numpy as jnp
 import numpy as np
 import time
-import jax
-import os
-os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
-
 # from hsuanwu.xploit.drqv2.agent import DrQv2Agent
 # from hsuanwu.xploit.replay_buffer import ReplayBuffer
 from hsuanwu.envs.dmc import make_dmc_env, FrameStack
@@ -22,6 +17,13 @@ if __name__ == '__main__':
     env = FrameStack(env, k=2)
     print(env.observation_space.shape, env.action_space.shape)
     print(env.observation_space.sample().shape)
+
+    buffer = np.empty(shape=(1000000, )+ env.observation_space.shape, dtype=env.observation_space.dtype)
+    env.reset()
+    for i in range(1000000):
+        obs, reward, done, info = env.step(env.action_space.sample())
+        buffer[i] = obs
+        print(i)
 
     # agent = DrQv2Agent(
     #     obs_shape = env.observation_space.shape, 
