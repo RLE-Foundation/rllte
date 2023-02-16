@@ -5,6 +5,7 @@ import torch
 from hsuanwu.common.typing import *
 from hsuanwu.xploit.drqv2.actor import Actor
 from hsuanwu.xploit.drqv2.critic import Critic
+from hsuanwu.xploit import utils
 
 class DrQv2Agent:
     """
@@ -29,6 +30,8 @@ class DrQv2Agent:
                 action_space: Space,
                 device: torch.device = 'cuda',
                 encoder: nn.Module = None,
+                aug: nn.Module = None,
+                noise: Distribution = None,
                 feature_dim: int = 50,
                 hidden_dim: int = 1024,
                 lr: float = 1e-4,
@@ -67,8 +70,96 @@ class DrQv2Agent:
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
-    def act(self, obs, training=True):
-        pass
+        # create augmentation function
+        self.aug = aug()
+
+        # create noise function
+        self.noise = noise
+
+
+    def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
+        obs = torch.as_tensor(obs, device=self.device)
+        encoded_obs = self.encoder(obs.unsequeeze(0))
+        mu = self.actor(encoded_obs)
+        std = utils.schedule(self.stddev_schedule, step)
+        dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+
+        if not training:
+            action = dist.mean
+        else:
+            action = dist.sample(clip=None)
+            if step < self.num_expl_steps:
+                action.uniform_(-1.0, 1.0)
+
+        return action.cpu().numpy()[0]
+
+
+    def update(self, batch: Batch, step: int = 0) -> Tensor:
+        if step % self.update_every_steps != 0:
+            return {}
+        
+        obs, action, reward, discount, next_obs = utils.to_torch(batch, self.device)
+
+        # obs augmentation
+        aug_obs = self.aug(obs.float())
+        aug_next_obs = self.aug(next_obs.float())
+
+        # encode
+        encoded_obs = self.encoder(aug_obs)
+        with torch.no_grad():
+            encoded_next_obs = self.encoder(aug_next_obs)
+        
+        # update criitc
+        critic_metric = self.update_critic(encoded_obs, action, reward, discount, encoded_next_obs, step)
+
+        # update actor (do not udpate encoder)
+        actor_metric = self.update_actor(encoded_obs.detach(), step)
+
+        # udpate critic target
+        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
+
+        return {critic_metric, actor_metric}
     
-    def update(self, batch: Batch):
-        pass
+
+    def update_critic(self, obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs, step: int) -> InfoDict:
+        with torch.no_grad():
+            mu = self.actor(next_obs)
+            std = utils.schedule(self.stddev_schedule, step)
+            dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+            next_action = dist.sample(clip=self.stddev_clip)
+            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+            target_V = torch.min(target_Q1, target_Q2)
+            target_Q = reward + (discount * target_V)
+
+        Q1, Q2 = self.critic(obs, action)
+        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+
+        # optimize encoder and critic
+        self.encoder_opt.zero_grad(set_to_none=True)
+        self.critic_opt.zero_grad(set_to_none=True)
+        critic_loss.backward()
+        self.critic_opt.step()
+        self.encoder_opt.step()
+
+        return {'critic_loss': critic_loss, 
+                'critic_q1': Q1.mean().item(), 
+                'critic_q2': Q2.mean().item(), 
+                'critic_target': target_Q.mean().item()}
+
+    def update_actor(self, obs: Tensor, step: int) -> InfoDict:
+        mu = self.actor(obs)
+        std = utils.schedule(self.stddev_schedule, step)
+        dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+        action = dist.sample(clip=self.stddev_clip)
+
+        Q1, Q2 = self.critic(obs, action)
+        Q = torch.min(Q1, Q2)
+
+        actor_loss = - Q.mean()
+
+         # optimize actor
+        self.actor_opt.zero_grad(set_to_none=True)
+        actor_loss.backward()
+        self.actor_opt.step()
+
+        return {'actor_loss': actor_loss.item()}

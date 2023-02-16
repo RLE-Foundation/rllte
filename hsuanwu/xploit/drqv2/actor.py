@@ -26,7 +26,7 @@ class Actor(nn.Module):
     def forward(self, obs: Tensor) -> Tensor:
         h = self.trunk(obs)
 
-        action = self.policy(h)
-        action = torch.tanh(action)
+        mu = self.policy(h)
+        mu = torch.tanh(mu)
 
-        return action
+        return mu
