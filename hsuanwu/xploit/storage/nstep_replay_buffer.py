@@ -1,10 +1,8 @@
 from collections import defaultdict
 import numpy as np
-import datetime
-import io
+import random
 
 from hsuanwu.common.typing import *
-
 
 
 class NStepReplayBuffer:
@@ -25,37 +23,18 @@ class NStepReplayBuffer:
                  n_step: int = 2,
                  discount: float = 0.99
                  ) -> None:
-        self.observation_space = observation_space
-        self.action_space = action_space
-        self.buffer_size = buffer_size
-        self.buffer_dir = buffer_dir
-        self.n_step = n_step
-        self.discount = discount
+        self._observation_space = observation_space
+        self._action_space = action_space
+        self._buffer_size = buffer_size
+        self._buffer_dir = buffer_dir
+        self._nstep = n_step
+        self._discount = discount
 
         self._current_episode = defaultdict(list)
+        self._episodes = list()
 
         self._num_episodes = 0
         self._num_transitions = 0
-
-    def _load_episode(self, file):
-        with file.open('rb') as f:
-            episode = np.load(f)
-            episode = {key: episode[key] for key in episode.keys()}
-            return episode
-
-    def _save_episode(self):
-        eps_idx = self._num_episodes
-        eps_len = len(self._current_episode['observation']) - 1
-        self._num_episodes += 1
-        self._num_transitions += eps_len
-        ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        eps_file = f'{ts}_{eps_idx}_{eps_len}.npz'
-
-        with io.BytesIO() as bs:
-            np.savez_compressed(bs, **self._current_episode)
-            bs.seek(0)
-            with eps_file.open('wb') as f:
-                f.write(bs.read())
         
     def add(self,
             observation: np.ndarray,
@@ -69,11 +48,32 @@ class NStepReplayBuffer:
         self._current_episode['done'].append(done)
 
         if done:
-            self._save_episode()
+            self._num_episodes += 1
+            eps_len = len(self._current_episode['observation']) - 1
+            self._num_transitions += eps_len
             self._current_episode = defaultdict(list)
-    
+
+
     def sample(self, batch_size: int) -> Batch:
-        pass
+        batch = [self.sample_single_step() for idx in range(batch_size)]
+        return batch
+        
+
+    def sample_single_step(self) -> Tuple[ndarray]:
+        episode = random.choice(self._episodes)
+        eps_len = len(episode['observation']) - 1
+
+        idx = np.random.randint(0, eps_len - self._nstep + 1) + 1
+        obs = episode['observation'][idx - 1]
+        action = episode['action'][idx]
+        next_obs = episode['observation'][idx + self._nstep - 1]
+        reward = np.zeros_like(episode['reward'][idx])
+        discount = np.ones_like(episode['reward'][idx])
+        for i in range(self._nstep):
+            step_reward = episode['reward'][idx + i]
+            reward += discount * step_reward
+            discount *= episode['discount'][idx + i] * self._discount
+        return (obs, action, reward, discount, next_obs)
 
     @property
     def get_current_size(self):

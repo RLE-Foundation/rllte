@@ -1,8 +1,10 @@
+from pathlib import Path
 import numpy as np
 import time
 # from hsuanwu.xploit.drqv2.agent import DrQv2Agent
 # from hsuanwu.xploit.replay_buffer import ReplayBuffer
 from hsuanwu.envs.dmc import make_dmc_env, FrameStack
+from hsuanwu.xploit.storage.nstep_replay_buffer import NStepReplayBuffer
 
 if __name__ == '__main__':
     env = make_dmc_env(domain_name='hopper', 
@@ -18,12 +20,28 @@ if __name__ == '__main__':
     print(env.observation_space.shape, env.action_space.shape)
     print(env.observation_space.sample().shape)
 
-    buffer = np.empty(shape=(1000000, )+ env.observation_space.shape, dtype=env.observation_space.dtype)
-    env.reset()
-    for i in range(1000000):
-        obs, reward, done, info = env.step(env.action_space.sample())
-        buffer[i] = obs
-        print(i)
+    replay_buffer = NStepReplayBuffer(
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        buffer_size=10000,
+        buffer_dir=Path.cwd() / 'logs'
+    )
+
+    obs = env.reset()
+    for step in range(100000):
+        print(step)
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        replay_buffer.add(
+            obs,
+            action,
+            reward,
+            done
+        )
+        if done:
+            obs = env.reset()
+    
+    time.sleep(100)
 
     # agent = DrQv2Agent(
     #     obs_shape = env.observation_space.shape, 
