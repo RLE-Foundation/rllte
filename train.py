@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import time
+import torch
 # from hsuanwu.xploit.drqv2.agent import DrQv2Agent
 # from hsuanwu.xploit.replay_buffer import ReplayBuffer
 from hsuanwu.envs.dmc import make_dmc_env, FrameStack
@@ -23,12 +24,16 @@ if __name__ == '__main__':
     replay_buffer = NStepReplayBuffer(
         observation_space=env.observation_space,
         action_space=env.action_space,
-        buffer_size=10000,
-        buffer_dir=Path.cwd() / 'logs'
+        buffer_size=1000000
     )
 
+    loader = torch.utils.data.DataLoader(replay_buffer,
+                                         batch_size=256,
+                                         num_workers=1,
+                                         pin_memory=True)
+
     obs = env.reset()
-    for step in range(100000):
+    for step in range(1000000):
         print(step)
         action = env.action_space.sample()
         obs, reward, done, info = env.step(action)
@@ -36,12 +41,18 @@ if __name__ == '__main__':
             obs,
             action,
             reward,
-            done
+            done,
+            discount=info['discount']
         )
+
+        if step > 1000:
+            batch = next(iter(loader)) #replay_buffer.sample(batch_size=256)
+            obs, action, reward, discount, next_obs = batch
+            print(obs.shape, action.shape, reward.shape, discount.shape)
+            quit(0)
+
         if done:
             obs = env.reset()
-    
-    time.sleep(100)
 
     # agent = DrQv2Agent(
     #     obs_shape = env.observation_space.shape, 
