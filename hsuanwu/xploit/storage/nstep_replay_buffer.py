@@ -44,10 +44,9 @@ class NStepReplayBuffer(IterableDataset):
         
         self._current_episode['observation'].append(observation)
         self._current_episode['action'].append(action)
-        self._current_episode['reward'].append(reward)
-        self._current_episode['done'].append(done)
-        self._current_episode['discount'].append(discount)
-
+        self._current_episode['reward'].append(np.full([1, ], reward))
+        self._current_episode['done'].append(np.full([1, ], done))
+        self._current_episode['discount'].append(np.full([1, ], discount))
 
         if done:
             eps_len = len(self._current_episode['observation']) - 1
