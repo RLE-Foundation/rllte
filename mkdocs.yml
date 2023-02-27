@@ -1,3 +1,57 @@
-site_name: My Docs
+site_name: "Hsuanwu"
+copyright: Copyright &copy; 2023 BellmanProject
 theme:
   name: material
+  custom_dir: docs/overrides/
+  palette:
+    - scheme: default
+      primary: teal
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+        
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  features:
+    - navigation.footer
+    - navigation.indexes
+    # - navigation.instant
+    # - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+
+repo_url: https://github.com/BellmanProject/Hsuanwu
+repo_name: BellmanProject/Hsuanwu
+
+
+extra:
+  social: 
+    - icon: fontawesome/brands/github
+      link: https://github.com/BellmanProject/Hsuanwu
+    - icon: fontawesome/solid/paper-plane
+      link: friedrichyuan19990827@gmail.com
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/hsuanwu/
+  
+nav:
+
+  - Home: index.md
+  - Getting stared:
+    - Installation: getting_started.md
+    - License: license.md
+  - API:
+    - xploit:
+      - learner: 
+        - discrete_learner: API/xplore.md
+    - xplore:
+      - reward:
+        - RE3: API/xplore.md
