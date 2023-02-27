@@ -8,7 +8,7 @@ class Logger:
     """
     The logger class.
 
-    :param log_dir: the logging location.
+    :param log_dir: The logging location.
     """
     def __init__(self, log_dir: Path) -> None:
         self._log_dir = log_dir
