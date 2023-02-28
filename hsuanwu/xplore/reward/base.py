@@ -10,7 +10,7 @@ class BaseIntrinsicRewardModule(object):
         kappa: The decay rate.
     
     Returns:
-        The base class of intrinsic reward module.
+        Instance of the base intrinsic reward module.
     """
     def __init__(
             self,
@@ -41,7 +41,7 @@ class BaseIntrinsicRewardModule(object):
             rollouts: The collected experiences. A python dict like 
                 {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}
+                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
         
         Returns: 
@@ -53,9 +53,9 @@ class BaseIntrinsicRewardModule(object):
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+            rollouts: The collected experiences. A python dict like {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
             actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-            rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}
+            rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
         
         Returns:
             None

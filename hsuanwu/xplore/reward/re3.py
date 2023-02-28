@@ -11,8 +11,12 @@ class RandomCnnEncoder(nn.Module):
     """
     Random encoder for encoding image-based observations.
     
-    :param obs_shape: The data shape of observations.
-    :param latent_dim: The dimension of encoding vectors of the observations.
+    Args:
+        obs_shape: The data shape of observations.
+        latent_dim: The dimension of encoding vectors of the observations.
+    
+    Returns:
+        CNN-based random encoder.
     """
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
@@ -36,11 +40,14 @@ class RandomCnnEncoder(nn.Module):
 
 
 class RandomMlpEncoder(nn.Module):
-    """
-    Random encoder for encoding state-based observations.
+    """Random encoder for encoding state-based observations.
+
+    Args:
+        obs_shape: The data shape of observations.
+        latent_dim: The dimension of encoding vectors of the observations.
     
-    :param obs_shape: The data shape of observations.
-    :param latent_dim: The dimension of encoding vectors of the observations.
+    Returns:
+        MLP-based random encoder.
     """
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
@@ -54,15 +61,18 @@ class RandomMlpEncoder(nn.Module):
 
 
 class RE3(BaseRewardIntrinsicModule):
-    """
-    State Entropy Maximization with Random Encoders for Efficient Exploration (RE3)
-    Paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
+        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
     
-    :param env: The environment.
-    :param device: Device (cpu, cuda, ...) on which the code should be run.
-    :param beta: The initial weighting coefficient of the intrinsic rewards.
-    :param kappa: The decay rate.
-    :param latent_dim: The dimension of encoding vectors of the observations.
+    Args:
+        env: The environment.
+        device: Device (cpu, cuda, ...) on which the code should be run.
+        beta: The initial weighting coefficient of the intrinsic rewards.
+        kappa: The decay rate.
+        latent_dim: The dimension of encoding vectors of the observations.
+    
+    Returns:
+        Instance of RE3.
     """
     def __init__(
             self, 
@@ -86,18 +96,19 @@ class RE3(BaseRewardIntrinsicModule):
             p.requires_grad = False
     
     def compute_irs(self, rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False) -> ndarray:
-        """
-        Compute the intrinsic rewards using the collected observations.
+        """Compute the intrinsic rewards using the collected observations.
 
-        :param rollouts: The collected experiences. A python dict like:
-            + observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>
-            - actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>
-            + rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>
-        :param step: The current time step.
-        :param k: The k value for marking neighbors.
-        :param average_entropy: Use the average of entropy estimation.
+        Args:
+            rollouts: The collected experiences. A python dict like 
+                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
+            step: The current time step.
+            k: The k value for marking neighbors.
+            average_entropy: Use the average of entropy estimation.
 
-        :return: The intrinsic rewards
+        Returns:
+            The intrinsic rewards
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1. - self._kappa, step)
