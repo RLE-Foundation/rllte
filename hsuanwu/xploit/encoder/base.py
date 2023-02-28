@@ -4,10 +4,13 @@ from hsuanwu.common.typing import *
 
 
 class BaseEncoder(nn.Module):
-    """
-    Base class that represents a features extractor.
+    """Base class that represents a features extractor.
 
-    :param observation_space: Observation space of the environment.
+    Args:
+        observation_space: Observation space of the environment.
+
+    Returns:
+        base encoder class
     """
 
     def __init__(self, observation_space: Space, features_dim: int = 0) -> None:
