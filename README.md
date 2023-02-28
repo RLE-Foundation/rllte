@@ -1,5 +1,5 @@
 <div align=center>
-<img src='./assets/images/logo.png' style="width: 90%">
+<img src='./docs/assets/images/logo.png' style="width: 90%">
 </div>
 
 <img src="https://img.shields.io/badge/License-Apache-blue">
