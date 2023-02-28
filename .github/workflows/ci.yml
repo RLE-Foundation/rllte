@@ -2,11 +2,11 @@ name: ci
 on:
   push:
     branches:
-      - master
       - main
     paths:
       # Only rebuild website when docs have changed
       # Comment out when testing locally via act!
+      - '.github/**'
       - 'docs/**'
       - 'mkdocs.yml'
 permissions:
