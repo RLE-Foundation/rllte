@@ -28,7 +28,7 @@ theme:
     # - navigation.prune
     - navigation.sections
     - navigation.tabs
-    # - navigation.tabs.sticky
+    - navigation.tabs.sticky
     - navigation.top
     - navigation.tracking
 
@@ -62,3 +62,4 @@ nav:
     - xplore:
       - reward:
         - base: api/xplore/reward/base.md
+        - RE3: api/xplore/reward/re3.md

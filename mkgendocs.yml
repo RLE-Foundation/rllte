@@ -7,12 +7,21 @@ pages:
   - page: "xploit/encoder/base.md"
     source: "hsuanwu/xploit/encoder/base.py"
     classes:
-      - BaseEncoder:
-        - features_dim
+      - BaseEncoder
 
+# xplore.reward
+###################################################################
   - page: "xplore/reward/base.md"
     source: "hsuanwu/xplore/reward/base.py"
     classes:
-      - BaseIntrinsicRewardModule:
-        - compute_irs
-        - update
+      - BaseIntrinsicRewardModule
+  
+  - page: "xplore/reward/re3.md"
+    source: "hsuanwu/xplore/reward/re3.py"
+    classes:
+      - RE3
+      - RandomMlpEncoder
+      - RandomCnnEncoder
+
+
+###################################################################

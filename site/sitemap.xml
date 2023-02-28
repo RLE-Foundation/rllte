@@ -21,12 +21,22 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.hsuanwu.dev/sources/</loc>
+         <loc>https://docs.hsuanwu.dev/api/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.hsuanwu.dev/sources/api/xploit/encoder/base/</loc>
+         <loc>https://docs.hsuanwu.dev/api/xploit/encoder/base/</loc>
+         <lastmod>2023-02-28</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.hsuanwu.dev/api/xplore/reward/base/</loc>
+         <lastmod>2023-02-28</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.hsuanwu.dev/api/xplore/reward/re3/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>

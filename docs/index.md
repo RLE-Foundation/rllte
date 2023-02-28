@@ -11,5 +11,5 @@
 The highlight features of Hsuanwu:
 
 - 🧱 Complete decoupling of RL algorithms, and each method can be invoked separately;
-- 📚 Large number of reusable bechmarking implementations;
+- 📚 Large number of reusable bechmarking implementations ([See Benmarks](https://benchmark.hsuanwu.dev/));
 - 🛠️ Support for RL model engineering deployment (C++ API);
