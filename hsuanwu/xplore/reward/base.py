@@ -1,13 +1,16 @@
 from hsuanwu.common.typing import *
 
 class BaseRewardModule(object):
-    """
-    Base class of intrinsic reward module.
+    """Base class of intrinsic reward module.
+
+    Args:
+        env: The environment.
+        device: Device (cpu, cuda, ...) on which the code should be run.
+        beta: The initial weighting coefficient of the intrinsic rewards.
+        kappa: The decay rate.
     
-    :param env: The environment.
-    :param device: Device (cpu, cuda, ...) on which the code should be run.
-    :param beta: The initial weighting coefficient of the intrinsic rewards.
-    :param kappa: The decay rate.
+    Returns:
+        The base class of intrinsic reward module.
     """
     def __init__(
             self,
@@ -32,26 +35,30 @@ class BaseRewardModule(object):
         self._kappa = kappa
 
     def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
-        """
-        Compute the intrinsic rewards using the collected observations.
+        """Compute the intrinsic rewards using the collected observations.
 
-        :param rollouts: The collected experiences. A python dict like:
+        Args:
+            rollouts: The collected experiences. A python dict like:
             + observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>
             - actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>
             + rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>
-        :param step: The current time step.
+            step: The current time step.
         
-        :return: The intrinsic rewards
+        Returns: 
+            The intrinsic rewards.
         """
         pass
 
     def update(self, rollouts: Dict,) -> None:
-        """
-        Update the intrinsic reward module if necessary.
+        """Update the intrinsic reward module if necessary.
 
-        :param rollouts: The collected experiences. A python dict like:
+        Args:
+            rollouts: The collected experiences. A python dict like:
             + observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>
             - actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>
             + rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>
+        
+        Returns:
+            None
         """
         pass
