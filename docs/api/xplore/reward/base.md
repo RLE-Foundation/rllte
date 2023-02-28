@@ -44,11 +44,11 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like:
+* **rollouts**  : The collected experiences. A python dict like 
 * **step**  : The current time step.
-+ observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>
-- actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>
-+ rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>
+{observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}
 
 
 **Returns**
@@ -69,10 +69,9 @@ Update the intrinsic reward module if necessary.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like:
-+ observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>
-- actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>
-+ rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>
+* **rollouts**  : {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}
 
 
 **Returns**
