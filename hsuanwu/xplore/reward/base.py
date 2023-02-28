@@ -39,9 +39,9 @@ class BaseIntrinsicRewardModule(object):
 
         Args:
             rollouts: The collected experiences. A python dict like 
-            {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-            actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-            rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
+                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
         
         Returns: 
@@ -53,9 +53,10 @@ class BaseIntrinsicRewardModule(object):
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: The collected experiences. A python dict like {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-            actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-            rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
+            rollouts: The collected experiences. A python dict like 
+                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
         
         Returns:
             None
