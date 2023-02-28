@@ -1,10 +1,10 @@
-sources_dir: docs/sources
-templates_dir: docs/templates
+sources_dir: docs/api
+templates_dir: 
 repo: https://github.com/BellmanProject/Hsuanwu  #link to sources on github
 version: main                               #link to sources on github
 
 pages:
-  - page: "api/xploit/encoder/base.md"
+  - page: "xploit/encoder/base.md"
     source: "hsuanwu/xploit/encoder/base.py"
     classes:
       - BaseEncoder:

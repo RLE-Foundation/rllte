@@ -10,7 +10,7 @@ class BaseEncoder(nn.Module):
         observation_space: Observation space of the environment.
     
     Returns:
-        base encoder class
+        The base encoder class
     """
 
     def __init__(self, observation_space: Space, features_dim: int = 0) -> None:

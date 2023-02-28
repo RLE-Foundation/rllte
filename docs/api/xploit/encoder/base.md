@@ -13,14 +13,22 @@ BaseEncoder(
 ---
 Base class that represents a features extractor.
 
-:param observation_space: Observation space of the environment.
+
+**Args**
+
+* **observation_space**  : Observation space of the environment.
+
+
+**Returns**
+
+The base encoder class
 
 
 **Methods:**
 
 
 ### .features_dim
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L20)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L23)
 ```python
 .features_dim()
 ```
