@@ -1,0 +1,11 @@
+sources_dir: docs/sources
+templates_dir: docs/templates
+repo: https://github.com/BellmanProject/Hsuanwu  #link to sources on github
+version: main                               #link to sources on github
+
+pages:
+  - page: "api/xploit/encoder/base.md"
+    source: "hsuanwu/xploit/encoder/base.py"
+    classes:
+      - BaseEncoder:
+        - features_dim

@@ -8,7 +8,7 @@ theme:
   # custom_dir: docs/theme_override_home/
   palette:
     - scheme: default
-      primary: light blue
+      primary: teal
       accent: indigo
       toggle:
         icon: material/brightness-7
@@ -32,9 +32,11 @@ theme:
     - navigation.top
     - navigation.tracking
 
+extra_css:
+  - assets/stylesheets/extra.css
+
 repo_url: https://github.com/BellmanProject/Hsuanwu
 repo_name: BellmanProject/Hsuanwu
-
 
 extra:
   social: 
@@ -47,14 +49,16 @@ extra:
   
 nav:
 
-  - Overview: index.md
+  - Overview: 
+    - Overview: index.md
+    - License: license.md
+    - Changelog: changelog.md
   - Getting stared:
     - Installation: getting_started.md
-    - License: license.md
   - API:
     - xploit:
       - learner: 
-        - discrete_learner: API/xplore.md
+        - discrete_learner: sources/api/xploit/encoder/base.md
     - xplore:
       - reward:
         - RE3: API/xplore.md
