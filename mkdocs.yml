@@ -2,10 +2,12 @@ site_name: "Hsuanwu"
 copyright: Copyright &copy; 2023 BellmanProject
 theme:
   name: material
-  custom_dir: docs/overrides/
+  logo: assets/images/icon.svg
+  favicon: assets/images/icon.svg
+  # custom_dir: docs/theme_override_home/
   palette:
     - scheme: default
-      primary: teal
+      primary: light blue
       accent: indigo
       toggle:
         icon: material/brightness-7
@@ -44,7 +46,7 @@ extra:
   
 nav:
 
-  - Home: index.md
+  - Overview: index.md
   - Getting stared:
     - Installation: getting_started.md
     - License: license.md
