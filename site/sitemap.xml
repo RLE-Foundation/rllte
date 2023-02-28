@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>None</loc>
+         <loc>https://docs.hsuanwu.dev/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
+         <loc>https://docs.hsuanwu.dev/getting_started/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
+         <loc>https://docs.hsuanwu.dev/license/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>None</loc>
+         <loc>https://docs.hsuanwu.dev/API/xplore/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>
     </url>

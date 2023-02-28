@@ -1,4 +1,5 @@
 site_name: "Hsuanwu"
+site_url: https://docs.hsuanwu.dev/
 copyright: Copyright &copy; 2023 Bellman Project
 theme:
   name: material
