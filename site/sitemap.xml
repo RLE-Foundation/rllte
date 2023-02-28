@@ -6,6 +6,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.hsuanwu.dev/benchmarks/</loc>
+         <lastmod>2023-02-28</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.hsuanwu.dev/changelog/</loc>
          <lastmod>2023-02-28</lastmod>
          <changefreq>daily</changefreq>

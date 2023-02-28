@@ -6,9 +6,7 @@ on:
     paths:
       # Only rebuild website when docs have changed
       # Comment out when testing locally via act!
-      - '.github/**'
-      - 'docs/**'
-      - 'mkdocs.yml'
+      - 'docs/trigger.yml'
 permissions:
   contents: write
 jobs:

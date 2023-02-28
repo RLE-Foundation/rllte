@@ -48,7 +48,6 @@ extra:
       link: https://pypi.org/project/hsuanwu/
   
 nav:
-
   - Overview: 
     - Overview: index.md
     - License: license.md
@@ -63,3 +62,4 @@ nav:
       - reward:
         - base: api/xplore/reward/base.md
         - RE3: api/xplore/reward/re3.md
+  - Benchmarks: benchmarks.md
