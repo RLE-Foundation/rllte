@@ -1,6 +1,6 @@
 from hsuanwu.common.typing import *
 
-class BaseRewardModule(object):
+class BaseIntrinsicRewardModule(object):
     """Base class of intrinsic reward module.
 
     Args:

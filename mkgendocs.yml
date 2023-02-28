@@ -9,3 +9,10 @@ pages:
     classes:
       - BaseEncoder:
         - features_dim
+
+  - page: "xplore/reward/base.md"
+    source: "hsuanwu/xplore/reward/base.py"
+    classes:
+      - BaseIntrinsicRewardModule:
+        - compute_irs
+        - update

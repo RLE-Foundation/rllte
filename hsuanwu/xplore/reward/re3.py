@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardModule
+from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
 
 
 class RandomCnnEncoder(nn.Module):
@@ -53,7 +53,7 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RE3(BaseRewardModule):
+class RE3(BaseRewardIntrinsicModule):
     """
     State Entropy Maximization with Random Encoders for Efficient Exploration (RE3)
     Paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
