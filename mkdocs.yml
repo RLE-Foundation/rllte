@@ -57,8 +57,8 @@ nav:
     - Installation: getting_started.md
   - API:
     - xploit:
-      - learner: 
-        - discrete_learner: sources/api/xploit/encoder/base.md
+      - encoder: 
+        - base: api/xploit/encoder/base.md
     - xplore:
       - reward:
-        - RE3: API/xplore.md
+        - base: api/xplore/reward/base.md
