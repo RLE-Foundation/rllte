@@ -870,50 +870,6 @@ The highlight features of Hsuanwu:</p>
 <li>📚 Large number of reusable bechmarking implementations (<a href="benchmarks">See Benchmarks</a>);</li>
 <li>🛠️ Support for RL model engineering deployment (C++ API);</li>
 </ul>
-<div align=center>
-<script type="text/javascript" src="./assets/stylesheets/jquery-3.6.3.min.js"></script>
-<script src="./assets/stylesheets/echarts.js"></script>
-<div id="main" style="width: 750px; height:400px;">
-    <script type="text/javascript">
-    $.getJSON("./assets/images/structure.json", function(data) {});
-      var myChart = echarts.init(document.getElementById('main'));
-      var option = {
-        tooltip: {
-            trigger: 'item',
-            triggerOn: 'mousemove'
-            },
-        series: [{
-            type: 'tree',
-            data: [data],
-            top: '1%',
-            left: '7%',
-            bottom: '1%',
-            right: '20%',
-            symbolSize: 7,
-            label: {
-                position: 'left',
-                verticalAlign: 'middle',
-                align: 'right',
-                fontSize: 9
-                },
-        leaves: {
-            label: {
-            position: 'right',
-            verticalAlign: 'middle',
-            align: 'left'}
-            },
-        emphasis: {
-            focus: 'descendant'
-            },
-        expandAndCollapse: true,
-        animationDuration: 550,
-        animationDurationUpdate: 750
-        }]
-      };
-      myChart.setOption(option);
-    </script>
-</div>
-</div>
 
 
 
