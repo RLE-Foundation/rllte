@@ -60,9 +60,9 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RE3(BaseRewardIntrinsicModule):
-    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+class REVD(BaseRewardIntrinsicModule):
+    """Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD). 
+        See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
     
     Args:
         env: The environment.
@@ -72,7 +72,7 @@ class RE3(BaseRewardIntrinsicModule):
         latent_dim: The dimension of encoding vectors of the observations.
     
     Returns:
-        Instance of RE3.
+        Instance of REVD.
     """
     def __init__(
             self, 
@@ -94,8 +94,11 @@ class RE3(BaseRewardIntrinsicModule):
         # freeze the network parameters
         for p in self.encoder.parameters():
             p.requires_grad = False
+
+        self.first_update = True
+        self.last_encoded_obs = list()
     
-    def compute_irs(self, rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3, average_divergence: bool = False) -> ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -104,8 +107,9 @@ class RE3(BaseRewardIntrinsicModule):
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
+            alpha: The order of Rényi divergence.
             k: The k value for marking neighbors.
-            average_entropy: Use the average of entropy estimation.
+            average_divergence: Use the average of divergence estimation.
 
         Returns:
             The intrinsic rewards
@@ -119,17 +123,29 @@ class RE3(BaseRewardIntrinsicModule):
         obs_tensor = torch.from_numpy(rollouts['observations'])
         obs_tensor = obs_tensor.to(self.device)
 
+        if self.first_update:
+            with torch.no_grad():
+                for idx in range(n_envs):
+                    src_feats = self.encoder(obs_tensor[:, idx])
+                    self.last_encoded_obs.append(src_feats)
+            self.first_update = False
+
+            return intrinsic_rewards
+
         with torch.no_grad():
             for idx in range(n_envs):
                 src_feats = self.encoder(obs_tensor[:, idx])
-                dist = torch.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
-                if average_entropy:
-                    for sub_k in range(k):
-                        intrinsic_rewards[:, idx, 0] += torch.log(
-                            torch.kthvalue(dist, sub_k + 1, dim=1).values + 1.).cpu().numpy()
-                    intrinsic_rewards[:, idx, 0] /= k
+                dist_intra = torch.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
+                dist_outer = torch.linalg.vector_norm(src_feats.unsqueeze(1) - self.last_encoded_obs[idx], ord=2, dim=2)
+
+                if average_divergence:
+                    pass
                 else:
-                    intrinsic_rewards[:, idx, 0] = torch.log(
-                            torch.kthvalue(dist, k + 1, dim=1).values + 1.).cpu().numpy()
-        
+                    D_step_intra = torch.kthvalue(dist_intra, k + 1, dim=1).values
+                    D_step_outer = torch.kthvalue(dist_outer, k + 1, dim=1).values
+                    L = torch.kthvalue(dist_intra, 2, dim=1).values.cpu().numpy().sum() / n_steps
+                    intrinsic_rewards[:, idx, 0] = L * torch.pow(D_step_outer / (D_step_intra + 0.0001), 1. - alpha).cpu().numpy()
+
+                self.last_encoded_obs[idx] = src_feats
+
         return beta_t * intrinsic_rewards

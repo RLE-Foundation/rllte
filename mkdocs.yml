@@ -50,8 +50,8 @@ extra:
 nav:
   - Overview: 
     - Overview: index.md
-    - License: license.md
     - Changelog: changelog.md
+    - License: license.md
   - Getting stared:
     - Installation: getting_started.md
   - API:

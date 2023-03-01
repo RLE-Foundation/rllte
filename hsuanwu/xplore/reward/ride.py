@@ -60,9 +60,9 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RE3(BaseRewardIntrinsicModule):
-    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+class RIDE(BaseRewardIntrinsicModule):
+    """RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments.
+        See paper: https://arxiv.org/pdf/2002.12292
     
     Args:
         env: The environment.
@@ -72,7 +72,7 @@ class RE3(BaseRewardIntrinsicModule):
         latent_dim: The dimension of encoding vectors of the observations.
     
     Returns:
-        Instance of RE3.
+        Instance of RIDE.
     """
     def __init__(
             self, 
@@ -95,7 +95,32 @@ class RE3(BaseRewardIntrinsicModule):
         for p in self.encoder.parameters():
             p.requires_grad = False
     
-    def compute_irs(self, rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False) -> ndarray:
+    def pseudo_counts(self,
+                     src_feats,
+                     k=10,
+                     kernel_cluster_distance=0.008,
+                     kernel_epsilon=0.0001,
+                     c=0.001,
+                     sm=8):
+        counts = np.zeros(shape=(src_feats.size()[0], ))
+        for step in range(src_feats.size()[0]):
+            ob_dist = torch.norm(src_feats[step] - src_feats, p=2, dim=1)
+            ob_dist = torch.sort(ob_dist).values
+            ob_dist = ob_dist[:k]
+            dist = ob_dist.cpu().numpy()
+            # moving average
+            dist = dist / np.mean(dist + 1e-11)
+            dist = np.max(dist - kernel_cluster_distance, 0)
+            kernel = kernel_epsilon / (dist + kernel_epsilon)
+            s = np.sqrt(np.sum(kernel)) + c
+
+            if np.isnan(s) or s > sm:
+                counts[step] = 0.
+            else:
+                counts[step] = 1 / s
+        return 
+    
+    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -104,8 +129,6 @@ class RE3(BaseRewardIntrinsicModule):
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
-            k: The k value for marking neighbors.
-            average_entropy: Use the average of entropy estimation.
 
         Returns:
             The intrinsic rewards
@@ -122,14 +145,8 @@ class RE3(BaseRewardIntrinsicModule):
         with torch.no_grad():
             for idx in range(n_envs):
                 src_feats = self.encoder(obs_tensor[:, idx])
-                dist = torch.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
-                if average_entropy:
-                    for sub_k in range(k):
-                        intrinsic_rewards[:, idx, 0] += torch.log(
-                            torch.kthvalue(dist, sub_k + 1, dim=1).values + 1.).cpu().numpy()
-                    intrinsic_rewards[:, idx, 0] /= k
-                else:
-                    intrinsic_rewards[:, idx, 0] = torch.log(
-                            torch.kthvalue(dist, k + 1, dim=1).values + 1.).cpu().numpy()
-        
+                dist = torch.linalg.vector_norm(src_feats[:-1] - src_feats[1:], ord=2, dim=1)
+                n_eps = self.pseudo_counts(src_feats)
+                intrinsic_rewards[:-1, idx, 0] = n_eps[1:] * dist.cpu().numpy()
+            
         return beta_t * intrinsic_rewards

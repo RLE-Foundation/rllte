@@ -1,4 +1,6 @@
-from torch import nn
+from torch.nn import functional as F
+from torch import nn, optim
+from torch.utils.data import DataLoader, TensorDataset
 
 import numpy as np
 import torch
@@ -7,16 +9,16 @@ from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
 
 
-class RandomCnnEncoder(nn.Module):
+class CnnEncoder(nn.Module):
     """
-    Random encoder for encoding image-based observations.
+    Encoder for encoding image-based observations.
     
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
     
     Returns:
-        CNN-based random encoder.
+        CNN-based encoder.
     """
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
@@ -39,15 +41,15 @@ class RandomCnnEncoder(nn.Module):
         return h
 
 
-class RandomMlpEncoder(nn.Module):
-    """Random encoder for encoding state-based observations.
+class MlpEncoder(nn.Module):
+    """Encoder for encoding state-based observations.
 
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
     
     Returns:
-        MLP-based random encoder.
+        MLP-based encoder.
     """
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
@@ -60,9 +62,10 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RE3(BaseRewardIntrinsicModule):
-    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+
+class RND(BaseRewardIntrinsicModule):
+    """Exploration by Random Network Distillation (RND).
+        See paper: https://arxiv.org/pdf/1810.12894.pdf
     
     Args:
         env: The environment.
@@ -70,9 +73,11 @@ class RE3(BaseRewardIntrinsicModule):
         beta: The initial weighting coefficient of the intrinsic rewards.
         kappa: The decay rate.
         latent_dim: The dimension of encoding vectors of the observations.
+        lr: The learning rate of inverse and forward dynamics model.
+        batch_size: The batch size to train the dynamic models.
     
     Returns:
-        Instance of RE3.
+        Instance of RND.
     """
     def __init__(
             self, 
@@ -81,21 +86,30 @@ class RE3(BaseRewardIntrinsicModule):
             beta: float, 
             kappa: float,
             latent_dim: int,
+            lr: float,
+            batch_size: int
             ) -> None:
         super().__init__(env, device, beta, kappa)
 
-        if len(self._obs_shape) == 3:
-            self.encoder = RandomCnnEncoder(obs_shape=self._obs_shape, latent_dim=latent_dim)
+        self._batch_size = batch_size
+
+        if len(self.obs_shape) == 3:
+            self.predictor = CnnEncoder(self._obs_shape, latent_dim)
+            self.target = CnnEncoder(self._obs_shape, latent_dim)
         else:
-            self.encoder = RandomMlpEncoder(obs_shape=self._obs_shape, latent_dim=latent_dim)
+            self.predictor = MlpEncoder(self._obs_shape, latent_dim)
+            self.target = MlpEncoder(self._obs_shape, latent_dim)
         
-        self.encoder.to(self._device)
+        self.predictor.to(self.device)
+        self.target.to(self.device)
+
+        self._opt = optim.Adam(lr=lr, params=self.predictor.parameters())
 
         # freeze the network parameters
-        for p in self.encoder.parameters():
+        for p in self.target.parameters():
             p.requires_grad = False
-    
-    def compute_irs(self, rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False) -> ndarray:
+
+    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -104,8 +118,6 @@ class RE3(BaseRewardIntrinsicModule):
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
-            k: The k value for marking neighbors.
-            average_entropy: Use the average of entropy estimation.
 
         Returns:
             The intrinsic rewards
@@ -116,20 +128,48 @@ class RE3(BaseRewardIntrinsicModule):
         n_envs = rollouts['observations'].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
+        # observations shape ((n_steps, n_envs) + obs_shape)
         obs_tensor = torch.from_numpy(rollouts['observations'])
         obs_tensor = obs_tensor.to(self.device)
 
         with torch.no_grad():
             for idx in range(n_envs):
-                src_feats = self.encoder(obs_tensor[:, idx])
-                dist = torch.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
-                if average_entropy:
-                    for sub_k in range(k):
-                        intrinsic_rewards[:, idx, 0] += torch.log(
-                            torch.kthvalue(dist, sub_k + 1, dim=1).values + 1.).cpu().numpy()
-                    intrinsic_rewards[:, idx, 0] /= k
-                else:
-                    intrinsic_rewards[:, idx, 0] = torch.log(
-                            torch.kthvalue(dist, k + 1, dim=1).values + 1.).cpu().numpy()
+                src_feats = self.predictor(obs_tensor[:, idx])
+                tgt_feats = self.target(obs_tensor[:, idx])
+                dist = F.mse_loss(src_feats, tgt_feats, reduction='none').mean(dim=1)
+                dist = (dist - dist.min()) / (dist.max() - dist.min() + 1e-11)
+                intrinsic_rewards[:-1, idx, 0] = dist[1:].cpu().numpy()
+        
+        # update model
+        self.update(rollouts)
         
         return beta_t * intrinsic_rewards
+    
+    def update(self, rollouts: Dict,) -> None:
+        """Update the intrinsic reward module if necessary.
+
+        Args:
+            rollouts: The collected experiences. A python dict like 
+                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
+                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
+                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
+        
+        Returns:
+            None
+        """
+        n_steps = rollouts['observations'].shape[0]
+        n_envs = rollouts['observations'].shape[1]
+        obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self._obs_shape)
+
+        dataset = TensorDataset(obs_tensor)
+        loader = DataLoader(dataset=dataset, batch_size=self._batch_size, drop_last=True)
+
+        for idx, batch_data in enumerate(loader):
+            batch_obs = batch_data[0]
+            src_feats = self.predictor(batch_obs)
+            tgt_feats = self.target(batch_obs)
+
+            loss = F.mse_loss(src_feats, tgt_feats)
+            self.opt.zero_grad()
+            loss.backward()
+            self.opt.step()

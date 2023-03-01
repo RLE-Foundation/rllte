@@ -60,9 +60,9 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RE3(BaseRewardIntrinsicModule):
-    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+class RISE(BaseRewardIntrinsicModule):
+    """Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning (RISE). 
+        See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
     
     Args:
         env: The environment.
@@ -72,7 +72,7 @@ class RE3(BaseRewardIntrinsicModule):
         latent_dim: The dimension of encoding vectors of the observations.
     
     Returns:
-        Instance of RE3.
+        Instance of RISE.
     """
     def __init__(
             self, 
@@ -95,7 +95,7 @@ class RE3(BaseRewardIntrinsicModule):
         for p in self.encoder.parameters():
             p.requires_grad = False
     
-    def compute_irs(self, rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3, average_entropy: bool = False) -> ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -104,6 +104,7 @@ class RE3(BaseRewardIntrinsicModule):
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             step: The current time step.
+            alpha: The The order of Rényi entropy.
             k: The k value for marking neighbors.
             average_entropy: Use the average of entropy estimation.
 
@@ -125,11 +126,11 @@ class RE3(BaseRewardIntrinsicModule):
                 dist = torch.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
                 if average_entropy:
                     for sub_k in range(k):
-                        intrinsic_rewards[:, idx, 0] += torch.log(
-                            torch.kthvalue(dist, sub_k + 1, dim=1).values + 1.).cpu().numpy()
+                        intrinsic_rewards[:, idx, 0] += torch.pow(
+                            torch.kthvalue(dist, sub_k + 1, dim=1).values, 1. - alpha).cpu().numpy()
                     intrinsic_rewards[:, idx, 0] /= k
                 else:
-                    intrinsic_rewards[:, idx, 0] = torch.log(
-                            torch.kthvalue(dist, k + 1, dim=1).values + 1.).cpu().numpy()
+                    intrinsic_rewards[:, idx, 0] = torch.pow(
+                            torch.kthvalue(dist, k + 1, dim=1).values, 1. - alpha).cpu().numpy()
         
         return beta_t * intrinsic_rewards
