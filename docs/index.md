@@ -18,13 +18,12 @@ The highlight features of Hsuanwu:
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.1/dist/echarts.min.js"></script>
 <div id="main" style="width: 750px; height:400px;">
-    <script type="text/javascript">
-var ROOT_PATH = 'https://echarts.apache.org/examples';    
+    <script type="text/javascript"> 
 var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
 var option;
 myChart.showLoading();
-$.get(ROOT_PATH + '/data/asset/data/flare.json', function (data) {
+$.get('./assets/images/structure.json', function (data) {
   myChart.hideLoading();
   myChart.setOption(
     (option = {
