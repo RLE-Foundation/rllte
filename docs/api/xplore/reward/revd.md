@@ -1,18 +1,18 @@
 #
 
 
-## RE3
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L63)
+## REVD
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L63)
 ```python 
-RE3(
+REVD(
    env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int
 )
 ```
 
 
 ---
-State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD). 
+See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
 
 
 **Args**
@@ -26,17 +26,18 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Returns**
 
-Instance of RE3.
+Instance of REVD.
 
 
 **Methods:**
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L98)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L101)
 ```python
 .compute_irs(
-   rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False
+   rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3,
+   average_divergence: bool = False
 )
 ```
 
@@ -51,8 +52,9 @@ Compute the intrinsic rewards using the collected observations.
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
 * **step**  : The current time step.
+* **alpha**  : The order of Rényi divergence.
 * **k**  : The k value for marking neighbors.
-* **average_entropy**  : Use the average of entropy estimation.
+* **average_divergence**  : Use the average of divergence estimation.
 
 
 **Returns**
@@ -63,7 +65,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L42)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L42)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -90,7 +92,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L59)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L59)
 ```python
 .forward(
    obs: Tensor
@@ -102,7 +104,7 @@ MLP-based random encoder.
 
 
 ## RandomCnnEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L10)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L10)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -129,7 +131,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L34)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L34)
 ```python
 .forward(
    obs: Tensor

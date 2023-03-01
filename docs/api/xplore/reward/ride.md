@@ -1,18 +1,18 @@
 #
 
 
-## RE3
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L63)
+## RIDE
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L63)
 ```python 
-RE3(
+RIDE(
    env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int
 )
 ```
 
 
 ---
-State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
-See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments.
+See paper: https://arxiv.org/pdf/2002.12292
 
 
 **Args**
@@ -26,17 +26,27 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Returns**
 
-Instance of RE3.
+Instance of RIDE.
 
 
 **Methods:**
 
 
+### .pseudo_counts
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L98)
+```python
+.pseudo_counts(
+   src_feats, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
+   c = 0.001, sm = 8
+)
+```
+
+
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L98)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L123)
 ```python
 .compute_irs(
-   rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False
+   rollouts: Dict, step: int
 )
 ```
 
@@ -51,8 +61,6 @@ Compute the intrinsic rewards using the collected observations.
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
 * **step**  : The current time step.
-* **k**  : The k value for marking neighbors.
-* **average_entropy**  : Use the average of entropy estimation.
 
 
 **Returns**
@@ -62,47 +70,8 @@ The intrinsic rewards
 ----
 
 
-## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L42)
-```python 
-RandomMlpEncoder(
-   obs_shape: Tuple, latent_dim: int
-)
-```
-
-
----
-Random encoder for encoding state-based observations.
-
-
-**Args**
-
-* **obs_shape**  : The data shape of observations.
-* **latent_dim**  : The dimension of encoding vectors of the observations.
-
-
-**Returns**
-
-MLP-based random encoder.
-
-
-**Methods:**
-
-
-### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L59)
-```python
-.forward(
-   obs: Tensor
-)
-```
-
-
-----
-
-
 ## RandomCnnEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L10)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L10)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -129,7 +98,46 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L34)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L34)
+```python
+.forward(
+   obs: Tensor
+)
+```
+
+
+----
+
+
+## RandomMlpEncoder
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L42)
+```python 
+RandomMlpEncoder(
+   obs_shape: Tuple, latent_dim: int
+)
+```
+
+
+---
+Random encoder for encoding state-based observations.
+
+
+**Args**
+
+* **obs_shape**  : The data shape of observations.
+* **latent_dim**  : The dimension of encoding vectors of the observations.
+
+
+**Returns**
+
+MLP-based random encoder.
+
+
+**Methods:**
+
+
+### .forward
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L59)
 ```python
 .forward(
    obs: Tensor

@@ -61,5 +61,12 @@ nav:
     - xplore:
       - reward:
         - base: api/xplore/reward/base.md
+        - ICM: api/xplore/reward/icm.md
+        - RND: api/xplore/reward/rnd.md
+        - GIRM: api/xplore/reward/girm.md
+        - NGU: api/xplore/reward/ngu.md
+        - RIDE: api/xplore/reward/ride.md
         - RE3: api/xplore/reward/re3.md
+        - RISE: api/xplore/reward/rise.md
+        - REVD: api/xplore/reward/revd.md
   - Benchmarks: benchmarks.md

@@ -16,12 +16,63 @@ pages:
     classes:
       - BaseIntrinsicRewardModule
   
+  - page: "xplore/reward/icm.md"
+    source: "hsuanwu/xplore/reward/icm.py"
+    classes:
+      - ICM
+      - CnnEncoder
+      - InverseForwardDynamicsModel
+  
+  - page: "xplore/reward/rnd.md"
+    source: "hsuanwu/xplore/reward/rnd.py"
+    classes:
+      - RND
+      - CnnEncoder
+      - MlpEncoder
+  
+  - page: "xplore/reward/girm.md"
+    source: "hsuanwu/xplore/reward/girm.py"
+    classes:
+      - GIRM
+      - CnnEncoder
+      - CnnDecoder
+      - MlpEncoder
+      - MlpDecoder
+      - VAE
+  
+  - page: "xplore/reward/ngu.md"
+    source: "hsuanwu/xplore/reward/ngu.py"
+    classes:
+      - NGU
+      - CnnEncoder
+      - MlpEncoder
+  
+  - page: "xplore/reward/ride.md"
+    source: "hsuanwu/xplore/reward/ride.py"
+    classes:
+      - RIDE
+      - RandomCnnEncoder
+      - RandomMlpEncoder
+
   - page: "xplore/reward/re3.md"
     source: "hsuanwu/xplore/reward/re3.py"
     classes:
       - RE3
       - RandomMlpEncoder
       - RandomCnnEncoder
+  
+  - page: "xplore/reward/rise.md"
+    source: "hsuanwu/xplore/reward/rise.py"
+    classes:
+      - RISE
+      - RandomMlpEncoder
+      - RandomCnnEncoder
 
+  - page: "xplore/reward/revd.md"
+    source: "hsuanwu/xplore/reward/revd.py"
+    classes:
+      - REVD
+      - RandomMlpEncoder
+      - RandomCnnEncoder
 
 ###################################################################
