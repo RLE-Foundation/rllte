@@ -870,6 +870,47 @@ The highlight features of Hsuanwu:</p>
 <li>📚 Large number of reusable bechmarking implementations (<a href="benchmarks">See Benchmarks</a>);</li>
 <li>🛠️ Support for RL model engineering deployment (C++ API);</li>
 </ul>
+<div align=center>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.1/dist/echarts.min.js"></script>
+<div id="main" style="width: 750px; height:400px;">
+    <script type="text/javascript">
+var ROOT_PATH = 'https://echarts.apache.org/examples';    
+var chartDom = document.getElementById('main');
+var myChart = echarts.init(chartDom);
+var option;
+myChart.showLoading();
+$.get(ROOT_PATH + '/data/asset/data/flare.json', function (data) {
+  myChart.hideLoading();
+  myChart.setOption(
+    (option = {
+      tooltip: {
+        trigger: 'item',
+        triggerOn: 'mousemove'
+      },
+      series: [
+        {
+          type: 'tree',
+          data: [data],
+          top: '18%',
+          bottom: '14%',
+          layout: 'radial',
+          symbol: 'emptyCircle',
+          symbolSize: 7,
+          initialTreeDepth: 3,
+          animationDurationUpdate: 750,
+          emphasis: {
+            focus: 'descendant'
+          }
+        }
+      ]
+    })
+  );
+});
+option && myChart.setOption(option);
+</script>
+</div>
+</div>
 
 
 
