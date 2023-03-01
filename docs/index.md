@@ -15,6 +15,7 @@ The highlight features of Hsuanwu:
 - 🛠️ Support for RL model engineering deployment (C++ API);
 
 <div align=center>
+<script type="text/javascript" src="./assets/stylesheets/jquery-3.6.3.min.js"></script>
 <script src="./assets/stylesheets/echarts.js"></script>
 <div id="main" style="width: 750px; height:400px;">
     <script type="text/javascript">
