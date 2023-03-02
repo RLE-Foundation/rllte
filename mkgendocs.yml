@@ -107,11 +107,11 @@ pages:
   - page: "xplore/noise/truncated_normal.md"
     source: "hsuanwu/xplore/noise/truncated_normal.py"
     classes:
-      - RandomCrop
+      - TruncatedNormalActionNoise
   
-  - page: "xplore/augmentation/ornstein_uhlenbeck.md"
+  - page: "xplore/noise/ornstein_uhlenbeck.md"
     source: "hsuanwu/xplore/noise/ornstein_uhlenbeck.py"
     classes:
-      - RandomShift
+      - OrnsteinUhlenbeckActionNoise
 
 ###################################################################
