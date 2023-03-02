@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from hsuanwu.common.typing import *
 
-class RandomShiftsAug(nn.Module):
+class RandomShift(nn.Module):
     """Random shift operation for processing image-based observations.
 
     Args:
@@ -15,17 +15,17 @@ class RandomShiftsAug(nn.Module):
     """
     def __init__(self, pad: int = 4) -> None:
         super().__init__()
-        self.pad = pad
+        self._pad = pad
 
     def forward(self, x: Tensor) -> Tensor:
         n, c, h, w = x.size()
         assert h == w
-        padding = tuple([self.pad] * 4)
+        padding = tuple([self._pad] * 4)
         x = F.pad(x, padding, 'replicate')
-        eps = 1.0 / (h + 2 * self.pad)
+        eps = 1.0 / (h + 2 * self._pad)
         arange = torch.linspace(-1.0 + eps,
                                 1.0 - eps,
-                                h + 2 * self.pad,
+                                h + 2 * self._pad,
                                 device=x.device,
                                 dtype=x.dtype)[:h]
         arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
@@ -33,13 +33,14 @@ class RandomShiftsAug(nn.Module):
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
 
         shift = torch.randint(0,
-                              2 * self.pad + 1,
+                              2 * self._pad + 1,
                               size=(n, 1, 1, 2),
                               device=x.device,
                               dtype=x.dtype)
-        shift *= 2.0 / (h + 2 * self.pad)
+        shift *= 2.0 / (h + 2 * self._pad)
 
         grid = base_grid + shift
+        
         return F.grid_sample(x,
                              grid,
                              padding_mode='zeros',

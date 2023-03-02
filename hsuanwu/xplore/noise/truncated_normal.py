@@ -5,14 +5,17 @@ import torch
 from hsuanwu.common.typing import *
 
 class TruncatedNormalActionNoise(pyd.Normal):
-    """
-    Truncated normal distribution for sampling noise.
-
-    :param loc: Mean of the distribution.
-    :param scale: Standard deviation of the distribution.
-    :param low: Lower bound for clipping.
-    :param high: Upper bound for clipping.
-    :param eps: A constant for clamping.
+    """Truncated normal distribution for sampling noise.
+    
+    Args:
+        loc: Mean of the distribution.
+        scale: Standard deviation of the distribution.
+        low: Lower bound for clipping.
+        high: Upper bound for clipping.
+        eps: A constant for clamping.
+    
+    Returns:
+        Distribution instance.
     """
     def __init__(self, 
                  loc: Tensor, 

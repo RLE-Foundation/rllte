@@ -76,3 +76,17 @@ pages:
       - RandomCnnEncoder
 
 ###################################################################
+
+# xplore.augmentation
+###################################################################
+  - page: "xplore/augmentation/random_crop.md"
+    source: "hsuanwu/xplore/reward/random_crop.py"
+    classes:
+      - RandomCrop
+  
+  - page: "xplore/augmentation/random_shift.md"
+    source: "hsuanwu/xplore/reward/random_shift.py"
+    classes:
+      - RandomShift
+
+###################################################################

@@ -69,4 +69,7 @@ nav:
         - RE3: api/xplore/reward/re3.md
         - RISE: api/xplore/reward/rise.md
         - REVD: api/xplore/reward/revd.md
+      - augmentation:
+        - RandomCrop: api/xplore/augmentation/random_crop.md
+        - RandomShift: api/xplore/augmentation/random_shift.md
   - Benchmarks: benchmarks.md
