@@ -80,6 +80,11 @@ pages:
 
 # xplore.augmentation
 ###################################################################
+  - page: "xplore/augmentation/base.md"
+    source: "hsuanwu/xplore/augmentation/base.py"
+    classes:
+      - BaseAugmentation
+
   - page: "xplore/augmentation/random_crop.md"
     source: "hsuanwu/xplore/augmentation/random_crop.py"
     classes:
@@ -87,6 +92,25 @@ pages:
   
   - page: "xplore/augmentation/random_shift.md"
     source: "hsuanwu/xplore/augmentation/random_shift.py"
+    classes:
+      - RandomShift
+
+###################################################################
+
+# xplore.noise
+###################################################################
+  - page: "xplore/noise/base.md"
+    source: "hsuanwu/xplore/noise/base.py"
+    classes:
+      - BaseActionNoise
+
+  - page: "xplore/noise/truncated_normal.md"
+    source: "hsuanwu/xplore/noise/truncated_normal.py"
+    classes:
+      - RandomCrop
+  
+  - page: "xplore/augmentation/ornstein_uhlenbeck.md"
+    source: "hsuanwu/xplore/noise/ornstein_uhlenbeck.py"
     classes:
       - RandomShift
 

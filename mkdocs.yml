@@ -60,7 +60,7 @@ nav:
         - base: api/xploit/encoder/base.md
     - xplore:
       - reward:
-        - base: api/xplore/reward/base.md
+        - Base: api/xplore/reward/base.md
         - ICM: api/xplore/reward/icm.md
         - RND: api/xplore/reward/rnd.md
         - GIRM: api/xplore/reward/girm.md
@@ -70,6 +70,11 @@ nav:
         - RISE: api/xplore/reward/rise.md
         - REVD: api/xplore/reward/revd.md
       - augmentation:
+        - Base: api/xplore/augmentation/base.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomShift: api/xplore/augmentation/random_shift.md
+      - noise:
+        - Base: api/xplore/noise/base.md
+        - TruncatedNormal: api/xplore/noise/truncated_normal.md
+        - OrnsteinUhlenbeck: api/xplore/noise/ornstein_uhlenbeck.md
   - Benchmarks: benchmarks.md

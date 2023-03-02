@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from hsuanwu.common.typing import *
+from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
-class RandomShift(nn.Module):
+class RandomShift(BaseAugmentation):
     """Random shift operation for processing image-based observations.
 
     Args:

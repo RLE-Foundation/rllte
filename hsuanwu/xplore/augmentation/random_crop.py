@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from hsuanwu.common.typing import *
+from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
-class RandomCrop(nn.Module):
+class RandomCrop(BaseAugmentation):
     """Random crop operation for processing image-based observations.
 
     Args:
