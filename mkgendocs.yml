@@ -1,3 +1,4 @@
+# gendocs --config mkgendocs.yml
 sources_dir: docs/api
 templates_dir: 
 repo: https://github.com/BellmanProject/Hsuanwu  #link to sources on github
@@ -80,12 +81,12 @@ pages:
 # xplore.augmentation
 ###################################################################
   - page: "xplore/augmentation/random_crop.md"
-    source: "hsuanwu/xplore/reward/random_crop.py"
+    source: "hsuanwu/xplore/augmentation/random_crop.py"
     classes:
       - RandomCrop
   
   - page: "xplore/augmentation/random_shift.md"
-    source: "hsuanwu/xplore/reward/random_shift.py"
+    source: "hsuanwu/xplore/augmentation/random_shift.py"
     classes:
       - RandomShift
 
