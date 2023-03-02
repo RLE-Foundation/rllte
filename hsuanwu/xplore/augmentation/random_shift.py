@@ -5,10 +5,13 @@ import torch.nn.functional as F
 from hsuanwu.common.typing import *
 
 class RandomShiftsAug(nn.Module):
-    """
-    Random shift operation for processing image-based observations.
+    """Random shift operation for processing image-based observations.
 
-    :param pad: Padding size.
+    Args:
+        pad: Padding size.
+
+    Returns:
+        Augmented images.
     """
     def __init__(self, pad: int = 4) -> None:
         super().__init__()
