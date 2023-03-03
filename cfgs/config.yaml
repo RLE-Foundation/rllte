@@ -1,0 +1,4 @@
+encoder:
+  _target_: hsuanwu.xploit.encoder.VanillaCnnEncoder
+  observation_space: ???
+  features_dim: 50
