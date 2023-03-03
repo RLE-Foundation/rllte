@@ -15,7 +15,7 @@ class TruncatedNormal(BaseDistribution):
         eps: A constant for clamping.
     
     Returns:
-        Action noise instance.
+        Truncated normal distribution instance.
     """
     def __init__(self, 
                  mu: Tensor, 

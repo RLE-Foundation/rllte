@@ -19,7 +19,7 @@ class OrnsteinUhlenbeck(BaseDistribution):
         initial_noise: Initial value for the noise output, (if None: 0)
     
     Returns:
-        Action Noise instance.
+        Ornstein-Uhlenbeck noise instance.
     """
     def __init__(self, 
                  mu: Tensor, 

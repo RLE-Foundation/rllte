@@ -4,7 +4,7 @@ from torch import distributions as pyd
 from hsuanwu.common.typing import *
 
 class BaseDistribution(pyd.Normal):
-    """Base class of action noise.
+    """Base class of distribution.
     
     Args:
         mu: Mean of the distribution.
@@ -14,7 +14,7 @@ class BaseDistribution(pyd.Normal):
         eps: A constant for clamping.
 
     Returns:
-        Base action noise instan.
+        Base distribution instance.
     """
     def __init__(self, 
                  mu: Tensor, 
