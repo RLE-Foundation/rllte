@@ -2,16 +2,7 @@
 <img src='./docs/assets/images/logo.png' style="width: 90%">
 </div>
 
-<img src="https://img.shields.io/badge/License-Apache-%23CA2136">
-<img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> 
-<img src="https://img.shields.io/badge/Docs-Passing-%23009485">
-<img src="https://img.shields.io/badge/Codestyle-Black-black">
-<img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD">
-<img src="https://img.shields.io/badge/Pytorch-%3E%3D1.12.0-%23EF5739">
-<img src="https://img.shields.io/badge/Gym-%3E%3D0.21.0-brightgreen">
-<img src="https://img.shields.io/badge/DMC Suite-1.0.5-blue">
-<img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet">
-<img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4">
+<img src="https://img.shields.io/badge/License-Apache-%23CA2136"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Pytorch-%3E%3D1.12.0-%23EF5739"> <img src="https://img.shields.io/badge/Gym-%3E%3D0.21.0-brightgreen"> <img src="https://img.shields.io/badge/DMC Suite-1.0.5-blue"> <img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet"> <img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4">
 
 **Hsuanwu: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable baselines.
 The highlight features of Hsuanwu:
