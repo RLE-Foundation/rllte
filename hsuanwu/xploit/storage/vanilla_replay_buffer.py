@@ -5,12 +5,15 @@ from hsuanwu.common.typing import *
 
 
 class VanillaReplayBuffer:
-    """
-    Replay buffer for off-policy algorithms.
+    """Vanilla replay buffer for off-policy algorithms.
 
-    :param observation_space: Observation space.
-    :param action_space: Action space.
-    :param buffer_size: Max number of element in the buffer.
+    Args:
+        observation_space: Observation space.
+        action_space: Action space.
+        buffer_size: Max number of element in the buffer.
+    
+    Returns:
+        Vanilla replay buffer.
     """
     def __init__(self,
                  observation_space: Space,

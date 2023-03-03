@@ -6,13 +6,16 @@ from hsuanwu.xploit.utils import network_init
 
 
 
-class MlpEncoder(BaseEncoder):
-    """
-    Multi layer perceptron (MLP) for processing state-based inputs.
+class VanillaMlpEncoder(BaseEncoder):
+    """Multi layer perceptron (MLP) for processing state-based inputs.
 
-    :param observation_space: Observation space of the environment.
-    :param features_dim: Number of features extracted.
-    :param hidden_dim: Number of units per hidden layer.
+    Args:
+        observation_space: Observation space of the environment.
+        features_dim: Number of features extracted.
+        hidden_dim: Number of units per hidden layer.
+    
+    Returns:
+        Mlp-based encoder.
     """
     def __init__(self, observation_space: Space, features_dim: int = 64, hidden_dim: int = 256) -> None:
         super().__init__(observation_space, features_dim)

@@ -7,14 +7,17 @@ from hsuanwu.common.typing import *
 
 
 class NStepReplayBuffer(IterableDataset):
-    """
-    Replay buffer for off-policy algorithms (N-step returns supported).
+    """Replay buffer for off-policy algorithms (N-step returns supported).
 
-    :param observation_space: Observation space.
-    :param action_space: Action space.
-    :param buffer_size: Max number of element in the buffer.
-    :param n_step: The number of transitions to consider when computing n-step returns
-    :param discount: The discount factor for future rewards.
+    Args:
+        observation_space: Observation space.
+        action_space: Action space.
+        buffer_size: Max number of element in the buffer.
+        n_step: The number of transitions to consider when computing n-step returns
+        discount: The discount factor for future rewards.
+
+    Returns:
+        N-step replay buffer.
     """
     def __init__(self,
                  observation_space: Space,

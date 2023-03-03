@@ -6,12 +6,15 @@ from hsuanwu.xploit.utils import network_init
 
 
 
-class CnnEncoder(BaseEncoder):
-    """
-    Convolutional neural network (CNN)-based encoder for processing image-based observations.
+class VanillaCnnEncoder(BaseEncoder):
+    """Convolutional neural network (CNN)-based encoder for processing image-based observations.
 
-    :param observation_space: Observation space of the environment.
-    :param features_dim: Number of features extracted.
+    Args:
+        observation_space: Observation space of the environment.
+        features_dim: Number of features extracted.
+
+    Returns:
+        CNN-based encoder.
     """
     def __init__(self, observation_space: Space, features_dim: int = 64) -> None:
         super().__init__(observation_space, features_dim)

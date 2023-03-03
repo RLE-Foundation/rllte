@@ -7,12 +7,15 @@ from hsuanwu.xploit import utils
 
 
 class Actor(nn.Module):
-    """
-    Actor network
+    """Actor network
 
-    :param action_space: Action space of the environment.
-    :param features_dim: Number of features accepted.
-    :param hidden_dim: Number of units per hidden layer.
+    Args:
+        action_space: Action space of the environment.
+        features_dim: Number of features accepted.
+        hidden_dim: Number of units per hidden layer.
+    
+    Returns:
+        Actor network.
     """
     def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
@@ -37,12 +40,15 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    """
-    Critic network
+    """Critic network
 
-    :param action_space: Action space of the environment.
-    :param features_dim: Number of features accepted.
-    :param hidden_dim: Number of units per hidden layer.
+    Args:
+        action_space: Action space of the environment.
+        features_dim: Number of features accepted.
+        hidden_dim: Number of units per hidden layer.
+    
+    Returns:
+        Critic network.
     """
     def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
@@ -72,22 +78,25 @@ class Critic(nn.Module):
 
 
 class DrQv2Agent:
-    """
-    Learner for continuous control tasks.
-    Current learner: DrQ-v2
-    Paper: Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning
-    Link: https://openreview.net/pdf?id=_SJ-_yyes8
+    """Learner for continuous control tasks.
+        Current learner: DrQ-v2
+        Paper: Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning
+        Link: https://openreview.net/pdf?id=_SJ-_yyes8
 
-    :param obs_space: The observation shape of the environment.
-    :param action_shape: The action shape of the environment.
-    :param feature_dim: Number of features extracted.
-    :param hidden_dim: The size of the hidden layers.
-    :param lr: The learning rate.
-    :param critic_target_tau: The critic Q-function soft-update rate.
-    :param update_every_steps: The agent update frequency.
-    :param num_expl_steps: The exploration steps.
-    :param stddev_schedule: The exploration std schedule.
-    :param stddev_clip: The exploration std clip range.
+    Args:
+        obs_space: The observation shape of the environment.
+        action_shape: The action shape of the environment.
+        feature_dim: Number of features extracted.
+        hidden_dim: The size of the hidden layers.
+        lr: The learning rate.
+        critic_target_tau: The critic Q-function soft-update rate.
+        update_every_steps: The agent update frequency.
+        num_expl_steps: The exploration steps.
+        stddev_schedule: The exploration std schedule.
+        stddev_clip: The exploration std clip range.
+    
+    Returns:
+        Agent instance.
     """
     def __init__(self,
                 observation_space: Space, 
