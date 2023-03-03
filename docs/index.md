@@ -21,3 +21,8 @@ The highlight features of Hsuanwu:
 - 📚 Large number of reusable bechmarking implementations ([See Benchmarks](benchmarks));
 - 🛠️ Support for RL model engineering deployment (C++ API);
 - 🚀 Minimizing the CPU to GPU data transferring to realize full GPU-acceleration.
+
+See the project structure below:
+<div align=center>
+<img src='./assets/images/structure.png' style="width: 90%">
+</div>
