@@ -25,7 +25,7 @@ Truncated normal distribution for sampling noise.
 
 **Returns**
 
-Action noise instance.
+Truncated normal distribution instance.
 
 
 **Methods:**

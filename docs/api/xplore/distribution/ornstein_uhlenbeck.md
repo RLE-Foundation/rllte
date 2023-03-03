@@ -30,7 +30,7 @@ Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-u
 
 **Returns**
 
-Action Noise instance.
+Ornstein-Uhlenbeck noise instance.
 
 
 **Methods:**

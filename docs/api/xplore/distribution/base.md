@@ -11,7 +11,7 @@ BaseDistribution(
 
 
 ---
-Base class of action noise.
+Base class of distribution.
 
 
 **Args**
@@ -25,7 +25,7 @@ Base class of action noise.
 
 **Returns**
 
-Base action noise instan.
+Base distribution instance.
 
 
 **Methods:**
