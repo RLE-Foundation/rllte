@@ -73,8 +73,8 @@ nav:
         - Base: api/xplore/augmentation/base.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomShift: api/xplore/augmentation/random_shift.md
-      - noise:
-        - Base: api/xplore/noise/base.md
-        - TruncatedNormal: api/xplore/noise/truncated_normal.md
-        - OrnsteinUhlenbeck: api/xplore/noise/ornstein_uhlenbeck.md
+      - distribution:
+        - Base: api/xplore/distribution/base.md
+        - TruncatedNormal: api/xplore/distribution/truncated_normal.md
+        - OrnsteinUhlenbeck: api/xplore/distribution/ornstein_uhlenbeck.md
   - Benchmarks: benchmarks.md

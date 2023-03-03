@@ -3,7 +3,7 @@ from torch import distributions as pyd
 
 from hsuanwu.common.typing import *
 
-class BaseActionNoise(pyd.Normal):
+class BaseDistribution(pyd.Normal):
     """Base class of action noise.
     
     Args:

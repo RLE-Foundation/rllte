@@ -99,19 +99,19 @@ pages:
 
 # xplore.noise
 ###################################################################
-  - page: "xplore/noise/base.md"
-    source: "hsuanwu/xplore/noise/base.py"
+  - page: "xplore/distribution/base.md"
+    source: "hsuanwu/xplore/distribution/base.py"
     classes:
-      - BaseActionNoise
+      - BaseDistribution
 
-  - page: "xplore/noise/truncated_normal.md"
-    source: "hsuanwu/xplore/noise/truncated_normal.py"
+  - page: "xplore/distribution/truncated_normal.md"
+    source: "hsuanwu/xplore/distribution/truncated_normal.py"
     classes:
-      - TruncatedNormalActionNoise
+      - TruncatedNormal
   
-  - page: "xplore/noise/ornstein_uhlenbeck.md"
-    source: "hsuanwu/xplore/noise/ornstein_uhlenbeck.py"
+  - page: "xplore/distribution/ornstein_uhlenbeck.md"
+    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
     classes:
-      - OrnsteinUhlenbeckActionNoise
+      - OrnsteinUhlenbeck
 
 ###################################################################
