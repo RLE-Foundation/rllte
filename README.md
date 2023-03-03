@@ -14,5 +14,5 @@ The highlight features of Hsuanwu:
 
 See the project structure below:
 <div align=center>
-<img src='./assets/images/structure.png' style="width: 90%">
+<img src='./docs/assets/images/structure.png' style="width: 90%">
 </div>
