@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
+# contribution test
+
 class RandomCrop(BaseAugmentation):
     """Random crop operation for processing image-based observations.
 
