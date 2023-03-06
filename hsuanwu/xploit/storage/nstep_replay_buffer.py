@@ -36,6 +36,15 @@ class NStepReplayBuffer(IterableDataset):
         self._episodes = list()
 
         self._num_transitions = 0
+        self._num_episodes = 0
+    
+    @property
+    def num_transitions(self):
+        return self._num_transitions
+
+    @property
+    def num_episodes(self):
+        return self._num_episodes
         
     def add(self,
             observation: np.ndarray,
@@ -57,6 +66,7 @@ class NStepReplayBuffer(IterableDataset):
                 self._episodes.pop(0)
                 self._num_transitions -= early_eps_len
             self._num_transitions += eps_len
+            self._num_episodes += 1
             self._episodes.append(self._current_episode)
             self._current_episode = defaultdict(list)
         

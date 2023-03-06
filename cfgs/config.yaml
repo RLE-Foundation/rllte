@@ -11,6 +11,9 @@ work_dir: ???
 # train
 num_train_frames: 500000
 num_seed_frames: 4000
+batch_size: 256
+num_workers: 1
+pin_memory: true
 # eval
 eval_every_frames: 10000
 num_eval_episodes: 10
@@ -44,9 +47,6 @@ buffer:
   buffer_size: 500000
   n_step: 3
   discount: 0.99
-  batch_size: 256
-  num_workers: 1
-  pin_memory: true
 
 ##############################################################
 distribution:
@@ -63,3 +63,19 @@ reward:
   observation_space: ${observation_space}
   action_space: ${action_space}
   action_type: ${action_type}
+
+##############################################################
+hydra:
+  run:
+    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  # launcher:
+  #   timeout_min: 4300
+  #   cpus_per_task: 10
+  #   gpus_per_node: 1
+  #   tasks_per_node: 1
+  #   mem_gb: 160
+  #   nodes: 1
+  #   submitit_folder: ./exp/${now:%Y.%m.%d}/${now:%H%M%S}_${agent_cfg.experiment}/.slurm

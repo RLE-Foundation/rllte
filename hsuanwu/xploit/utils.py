@@ -45,7 +45,7 @@ def schedule(schdl, step):
     raise NotImplementedError(schdl)
 
 def to_torch(xs, device):
-    return tuple(torch.as_tensor(x, device=device) for x in xs)
+    return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
 def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     """Decreases the learning rate linearly"""

@@ -13,8 +13,10 @@ from hsuanwu.envs import make_dmc_env, FrameStack
 
 import hydra
 import torch
+import time
+torch.backends.cudnn.benchmark = True
 
-env = make_dmc_env(domain_name='hopper', 
+train_env = make_dmc_env(domain_name='hopper', 
                        task_name='hop', 
                        resource_files=None, 
                        img_source=None,
@@ -23,7 +25,18 @@ env = make_dmc_env(domain_name='hopper',
                        visualize_reward=False, 
                        from_pixels=True, 
                        frame_skip=2)
-env = FrameStack(env, k=3)
+train_env = FrameStack(train_env, k=3)
+
+eval_env = make_dmc_env(domain_name='hopper', 
+                       task_name='hop', 
+                       resource_files=None, 
+                       img_source=None,
+                       total_frames=None,
+                       seed=1, 
+                       visualize_reward=False, 
+                       from_pixels=True, 
+                       frame_skip=2)
+eval_env = FrameStack(eval_env, k=3)
 
 class OffPolicyTrainer:
     def __init__(self, train_env, eval_env, cfgs) -> None:
@@ -37,6 +50,7 @@ class OffPolicyTrainer:
         elif cfgs.action_type == 'dis':
             cfgs.action_space = {'shape': train_env.action_space.n}
         self.device = torch.device(cfgs.device)
+        # torch.backends.cudnn.benchmark = True
 
         # xploit part
         self.learner = hydra.utils.instantiate(cfgs.learner)
@@ -48,19 +62,27 @@ class OffPolicyTrainer:
         # xplore part
         self.learner.dist = hydra.utils.get_class(cfgs.distribution._target_)
         if cfgs.use_aug:
-            self.learner.aug = hydra.utils.instantiate(cfgs.augmentation)
+            self.learner.aug = hydra.utils.instantiate(cfgs.augmentation).to(self.device)
         if cfgs.use_irs:
             self.learner.reward = hydra.utils.instantiate(cfgs.reward)
         
-        self.loader = torch.utils.data.DataLoader(self.buffer,
-                                                  batch_size=cfgs.buffer.batch_size,
-                                                  num_workers=cfgs.buffer.num_workers,
+        self.replay_loader = torch.utils.data.DataLoader(self.buffer,
+                                                  batch_size=cfgs.batch_size,
+                                                  num_workers=cfgs.num_workers,
                                                   pin_memory=cfgs.pin_memory)
-        
+        self._replay_iter = None
+
         self.global_step = 0
         self.global_episode = 0
         self.train_until_step = cfgs.num_train_frames // cfgs.action_repeat
         self.train_start_step = cfgs.num_seed_frames // cfgs.action_repeat
+        self.eval_every_steps = cfgs.eval_every_frames // cfgs.action_repeat
+    
+    @property
+    def replay_iter(self):
+        if self._replay_iter is None:
+            self._replay_iter = iter(self.replay_loader)
+        return self._replay_iter
     
     def train(self):
         episode_step, episode_reward = 0, 0
@@ -68,8 +90,9 @@ class OffPolicyTrainer:
 
         while self.global_step <= self.train_until_step:
             # try to evaluate
-            eval_metrics = self.eval()
-            print(self.global_step, eval_metrics)
+            if self.global_step % self.eval_every_steps == 0:
+                eval_metrics = self.eval()
+                print(self.global_step, eval_metrics)
 
             # sample actions
             with torch.no_grad():
@@ -77,13 +100,20 @@ class OffPolicyTrainer:
             next_obs, reward, done, info = self.train_env.step(action)
             episode_reward += reward
             episode_step += 1
+            self.global_step += 1
 
             # save transitions
             self.buffer.add(obs, action, reward, done)
 
             # training
             if self.global_step >= self.train_start_step:
-                self.learner.update(self.loader, step=self.global_step)
+                # s = time.perf_counter()
+                metrics = self.learner.update(self.replay_iter, step=self.global_step)
+                # e = time.perf_counter()
+                # print(e - s, 'update\n', 
+                #       self.global_step, 
+                #       self.buffer.num_transitions,
+                #       self.buffer.num_episodes)
 
             if done:
                 obs = self.train_env.reset()
@@ -94,12 +124,12 @@ class OffPolicyTrainer:
     
     def eval(self):
         step, episode, total_reward = 0, 0, 0
+        obs = self.eval_env.reset()
         while episode <= self.cfgs.num_eval_episodes:
-            obs = self.eval_env.reset()
             with torch.no_grad():
                 action = self.learner.act(obs, training=False, step=self.global_step)
 
-            next_obs, reward, done, info = self.train_env.step(action)
+            next_obs, reward, done, info = self.eval_env.step(action)
             total_reward += reward
             step += 1
 
@@ -114,7 +144,7 @@ class OffPolicyTrainer:
 
 @hydra.main(version_base=None, config_path='../cfgs', config_name='config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(env, cfgs)
+    trainer = OffPolicyTrainer(train_env=train_env, eval_env=eval_env, cfgs=cfgs)
     trainer.train()
 
 if __name__ == '__main__':

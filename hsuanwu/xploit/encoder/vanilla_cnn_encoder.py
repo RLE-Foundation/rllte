@@ -24,7 +24,8 @@ class VanillaCnnEncoder(BaseEncoder):
         self.trunk = nn.Sequential(nn.Conv2d(obs_shape[0], 32, 3, stride=2), nn.ReLU(), 
                                    nn.Conv2d(32, 32, 3, stride=1), nn.ReLU(), 
                                    nn.Conv2d(32, 32, 3, stride=1), nn.ReLU(), 
-                                   nn.Conv2d(32, 32, 3, stride=1), nn.ReLU())
+                                   nn.Conv2d(32, 32, 3, stride=1), nn.ReLU(),
+                                   nn.Flatten())
 
         with torch.no_grad():
             sample = torch.ones(size=tuple(obs_shape)).float()
@@ -37,4 +38,5 @@ class VanillaCnnEncoder(BaseEncoder):
     def forward(self, obs: Tensor) -> Tensor:
         obs = obs / 255.0 - 0.5
         h = self.trunk(obs)
+        
         return self.linear(h.view(h.size()[0], -1))
