@@ -171,10 +171,11 @@ class DrQv2Agent:
         return action.cpu().numpy()[0]
 
 
-    def update(self, batch: Batch, step: int = 0) -> Tensor:
+    def update(self, replay_iter: DataLoader, step: int = 0) -> Tensor:
         if step % self.update_every_steps != 0:
             return {}
         
+        batch = next(replay_iter)
         obs, action, reward, discount, next_obs = utils.to_torch(batch, self.device)
 
         # obs augmentation

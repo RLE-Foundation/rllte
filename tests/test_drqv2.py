@@ -9,7 +9,7 @@ from pathlib import Path
 from hsuanwu.common.logger import Logger
 
 # env part
-from hsuanwu.envs import make_dmc_env
+from hsuanwu.envs import make_dmc_env, FrameStack
 
 import hydra
 import torch
@@ -22,15 +22,20 @@ env = make_dmc_env(domain_name='hopper',
                        seed=1, 
                        visualize_reward=False, 
                        from_pixels=True, 
-                       frame_skip=1)
+                       frame_skip=2)
+env = FrameStack(env, k=3)
 
 class OffPolicyTrainer:
-    def __init__(self, env, cfgs) -> None:
-        cfgs.observation_space = {'shape': env.observation_space.shape}
+    def __init__(self, train_env, eval_env, cfgs) -> None:
+        # setup
+        self.cfgs = cfgs
+        self.train_env = train_env
+        self.eval_env = eval_env
+        cfgs.observation_space = {'shape': train_env.observation_space.shape}
         if cfgs.action_type == 'cont':
-            cfgs.action_space = {'shape': env.action_space.shape}
+            cfgs.action_space = {'shape': train_env.action_space.shape}
         elif cfgs.action_type == 'dis':
-            cfgs.action_space = {'shape': env.action_space.n}
+            cfgs.action_space = {'shape': train_env.action_space.n}
         self.device = torch.device(cfgs.device)
 
         # xploit part
@@ -51,10 +56,61 @@ class OffPolicyTrainer:
                                                   batch_size=cfgs.buffer.batch_size,
                                                   num_workers=cfgs.buffer.num_workers,
                                                   pin_memory=cfgs.pin_memory)
+        
+        self.global_step = 0
+        self.global_episode = 0
+        self.train_until_step = cfgs.num_train_frames // cfgs.action_repeat
+        self.train_start_step = cfgs.num_seed_frames // cfgs.action_repeat
     
     def train(self):
-        
+        episode_step, episode_reward = 0, 0
+        obs = self.train_env.reset()
 
+        while self.global_step <= self.train_until_step:
+            # try to evaluate
+            eval_metrics = self.eval()
+            print(self.global_step, eval_metrics)
+
+            # sample actions
+            with torch.no_grad():
+                action = self.learner.act(obs, training=True, step=self.global_step)
+            next_obs, reward, done, info = self.train_env.step(action)
+            episode_reward += reward
+            episode_step += 1
+
+            # save transitions
+            self.buffer.add(obs, action, reward, done)
+
+            # training
+            if self.global_step >= self.train_start_step:
+                self.learner.update(self.loader, step=self.global_step)
+
+            if done:
+                obs = self.train_env.reset()
+                self.global_episode += 1
+                episode_step, episode_reward = 0, 0
+
+            obs = next_obs
+    
+    def eval(self):
+        step, episode, total_reward = 0, 0, 0
+        while episode <= self.cfgs.num_eval_episodes:
+            obs = self.eval_env.reset()
+            with torch.no_grad():
+                action = self.learner.act(obs, training=False, step=self.global_step)
+
+            next_obs, reward, done, info = self.train_env.step(action)
+            total_reward += reward
+            step += 1
+
+            if done:
+                obs = self.eval_env.reset()
+                episode += 1
+            
+            obs = next_obs
+        
+        return {'episode_reward': total_reward / episode, 
+                'episode_length': step * self.cfgs.action_repeat / episode}
 
 @hydra.main(version_base=None, config_path='../cfgs', config_name='config')
 def main(cfgs):

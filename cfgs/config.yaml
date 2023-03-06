@@ -2,10 +2,18 @@
 observation_space: ???
 action_space: ???
 action_type: cont
+frame_stack: 3
+action_repeat: 2
 device: cuda
 use_aug: True # use observation augmentation?
 use_irs: False # use intrinsic reward?
-work_dir: 
+work_dir: ???
+# train
+num_train_frames: 500000
+num_seed_frames: 4000
+# eval
+eval_every_frames: 10000
+num_eval_episodes: 10
 
 ##############################################################
 encoder:
@@ -23,6 +31,7 @@ learner:
   hidden_dim: 1024
   lr: 1e-4
   critic_target_tau: 0.01
+  num_expl_steps: 2000
   update_every_steps: 2
   stddev_schedule: linear(1.0, 0.1, 100000)
   stddev_clip: 0.3

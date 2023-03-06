@@ -1,1 +1,1 @@
-from .dmc import make_dmc_env
+from .dmc import make_dmc_env, FrameStack
