@@ -27,7 +27,8 @@ class VanillaCnnEncoder(BaseEncoder):
                                    nn.Conv2d(32, 32, 3, stride=1), nn.ReLU())
 
         with torch.no_grad():
-            n_flatten = self.trunk(torch.as_tensor(observation_space.sample()[None]).float()).shape[1]
+            sample = torch.ones(size=tuple(obs_shape)).float()
+            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
         
         self.linear = nn.Linear(n_flatten, features_dim)
 

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class CnnEncoder(nn.Module):
@@ -63,7 +63,7 @@ class MlpEncoder(nn.Module):
 
 
 
-class RND(BaseRewardIntrinsicModule):
+class RND(BaseIntrinsicRewardModule):
     """Exploration by Random Network Distillation (RND).
         See paper: https://arxiv.org/pdf/1810.12894.pdf
     

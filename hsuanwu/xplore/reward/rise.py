@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class RandomCnnEncoder(nn.Module):
@@ -60,7 +60,7 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RISE(BaseRewardIntrinsicModule):
+class RISE(BaseIntrinsicRewardModule):
     """Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning (RISE). 
         See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
     

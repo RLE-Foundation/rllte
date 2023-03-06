@@ -102,9 +102,9 @@ class DrQv2Agent:
                 observation_space: Space, 
                 action_space: Space,
                 device: torch.device = 'cuda',
-                encoder: nn.Module = None,
-                aug: nn.Module = None,
-                noise: Distribution = None,
+                # encoder: nn.Module = None,
+                # aug: nn.Module = None,
+                # noise: Distribution = None,
                 feature_dim: int = 50,
                 hidden_dim: int = 1024,
                 lr: float = 1e-4,
@@ -121,9 +121,10 @@ class DrQv2Agent:
         self.stddev_clip = stddev_clip
 
         # create models
-        self.encoder = encoder(
-            observation_space=observation_space, 
-            feature_dim=feature_dim)
+        # self.encoder = encoder(
+        #     observation_space=observation_space, 
+        #     feature_dim=feature_dim)
+        self.encoder = None
         self.actor = Actor(
             action_space=action_space,
             features_dim=feature_dim,
@@ -139,15 +140,18 @@ class DrQv2Agent:
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
-        self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.encoder_opt = None #torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
         # create augmentation function
-        self.aug = aug()
+        self.aug = None #aug()
 
         # create noise function
-        self.noise = noise
+        self.dist = None #noise
+
+        # create intrinsic reward function
+        self.irs = None
 
 
     def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
@@ -155,7 +159,7 @@ class DrQv2Agent:
         encoded_obs = self.encoder(obs.unsequeeze(0))
         mu = self.actor(encoded_obs)
         std = utils.schedule(self.stddev_schedule, step)
-        dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+        dist = self.dist(loc=mu, scale=torch.ones_like(mu) * std)
 
         if not training:
             action = dist.mean
@@ -198,7 +202,7 @@ class DrQv2Agent:
         with torch.no_grad():
             mu = self.actor(next_obs)
             std = utils.schedule(self.stddev_schedule, step)
-            dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+            dist = self.dist(loc=mu, scale=torch.ones_like(mu) * std)
             next_action = dist.sample(clip=self.stddev_clip)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_V = torch.min(target_Q1, target_Q2)
@@ -222,7 +226,7 @@ class DrQv2Agent:
     def update_actor(self, obs: Tensor, step: int) -> InfoDict:
         mu = self.actor(obs)
         std = utils.schedule(self.stddev_schedule, step)
-        dist = self.noise(loc=mu, scale=torch.ones_like(mu) * std)
+        dist = self.dist(loc=mu, scale=torch.ones_like(mu) * std)
         action = dist.sample(clip=self.stddev_clip)
 
         Q1, Q2 = self.critic(obs, action)

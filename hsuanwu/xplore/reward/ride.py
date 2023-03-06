@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class RandomCnnEncoder(nn.Module):
@@ -60,7 +60,7 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class RIDE(BaseRewardIntrinsicModule):
+class RIDE(BaseIntrinsicRewardModule):
     """RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments.
         See paper: https://arxiv.org/pdf/2002.12292
     

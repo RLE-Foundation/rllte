@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class CnnEncoder(nn.Module):
@@ -99,7 +99,7 @@ class InverseForwardDynamicsModel(nn.Module):
 
 
 
-class ICM(BaseRewardIntrinsicModule):
+class ICM(BaseIntrinsicRewardModule):
     """Curiosity-Driven Exploration by Self-Supervised Prediction.
         See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
     

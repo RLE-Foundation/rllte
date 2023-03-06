@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class MlpEncoder(nn.Module):
@@ -226,7 +226,7 @@ class VAE(nn.Module):
         return z, mu, logvar, reconstructed_next_obs
 
 
-class GIRM(BaseRewardIntrinsicModule):
+class GIRM(BaseIntrinsicRewardModule):
     """Intrinsic Reward Driven Imitation Learning via Generative Model (GIRM).
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
     

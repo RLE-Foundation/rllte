@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xplore.reward.base import BaseRewardIntrinsicModule
+from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
 class RandomCnnEncoder(nn.Module):
@@ -60,7 +60,7 @@ class RandomMlpEncoder(nn.Module):
         return self.trunk(obs)
 
 
-class REVD(BaseRewardIntrinsicModule):
+class REVD(BaseIntrinsicRewardModule):
     """Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD). 
         See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
     

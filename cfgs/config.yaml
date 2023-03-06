@@ -1,4 +1,56 @@
+##############################################################
+observation_space: ???
+action_space: ???
+action_type: cont
+device: cuda
+use_aug: True # use observation augmentation?
+use_irs: False # use intrinsic reward?
+work_dir: 
+
+##############################################################
 encoder:
   _target_: hsuanwu.xploit.encoder.VanillaCnnEncoder
-  observation_space: ???
+  observation_space: ${observation_space}
   features_dim: 50
+
+##############################################################
+learner:
+  _target_: hsuanwu.xploit.learner.ContinuousLearner
+  observation_space: ${observation_space}
+  action_space: ${action_space}
+  device: ${device}
+  feature_dim: 50
+  hidden_dim: 1024
+  lr: 1e-4
+  critic_target_tau: 0.01
+  update_every_steps: 2
+  stddev_schedule: linear(1.0, 0.1, 100000)
+  stddev_clip: 0.3
+
+##############################################################
+buffer:
+  _target_: hsuanwu.xploit.storage.NStepReplayBuffer
+  observation_space: ${observation_space}
+  action_space: ${action_space}
+  buffer_size: 500000
+  n_step: 3
+  discount: 0.99
+  batch_size: 256
+  num_workers: 1
+  pin_memory: true
+
+##############################################################
+distribution:
+  _target_: hsuanwu.xplore.distribution.TruncatedNormal
+
+##############################################################
+augmentation:
+  _target_: hsuanwu.xplore.augmentation.RandomShift
+  pad: 4
+
+##############################################################
+reward:
+  _target_: hsuanwu.xplore.reward.RE3
+  observation_space: ${observation_space}
+  action_space: ${action_space}
+  action_type: ${action_type}
