@@ -10,8 +10,8 @@ from hsuanwu.common.engine import OffPolicyTrainer
 
 import hydra
 
-train_env = make_dmc_env(domain_name='finger', 
-                       task_name='spin', 
+train_env = make_dmc_env(domain_name='cartpole', 
+                       task_name='balance', 
                        resource_files=None, 
                        img_source=None,
                        total_frames=None,
@@ -20,8 +20,8 @@ train_env = make_dmc_env(domain_name='finger',
                        from_pixels=True, 
                        frame_skip=2, frame_stack=3)
 
-test_env = make_dmc_env(domain_name='finger', 
-                       task_name='spin', 
+test_env = make_dmc_env(domain_name='cartpole', 
+                       task_name='balance', 
                        resource_files=None, 
                        img_source=None,
                        total_frames=None,
