@@ -4,11 +4,12 @@ from torch.utils.data import DataLoader
 from gym import Space, Env
 from numpy import ndarray
 from pathlib import Path
+import omegaconf
 import collections
 import torch
 
 Tensor = torch.Tensor
-InfoDict = Dict[str, float]
+DictConfig = omegaconf.DictConfig
 Batch = collections.namedtuple(
     'Batch',
     ['observations', 'actions', 'rewards', 'dones', 'next_observations'])
