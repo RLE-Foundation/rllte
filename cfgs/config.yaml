@@ -7,16 +7,15 @@ action_repeat: 2
 device: cuda
 use_aug: True # use observation augmentation?
 use_irs: False # use intrinsic reward?
-work_dir: ???
 # train
 num_train_frames: 500000
 num_seed_frames: 4000
 batch_size: 256
 num_workers: 1
 pin_memory: true
-# eval
-eval_every_frames: 10000
-num_eval_episodes: 10
+# test
+test_every_frames: 10000
+num_test_episodes: 10
 
 ##############################################################
 encoder:
@@ -71,6 +70,8 @@ hydra:
   sweep:
     dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
     subdir: ${hydra.job.num}
+  job:
+    chdir: true
   # launcher:
   #   timeout_min: 4300
   #   cpus_per_task: 10

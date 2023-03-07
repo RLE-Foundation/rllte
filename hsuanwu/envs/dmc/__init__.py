@@ -45,6 +45,7 @@ def make_dmc_env(
     height=84,
     width=84,
     camera_id=0,
+    frame_stack=3,
     frame_skip=1,
     episode_length=1000,
     environment_kwargs=None
@@ -80,4 +81,4 @@ def make_dmc_env(
             },
             max_episode_steps=max_episode_steps
         )
-    return gym.make(env_id)
+    return FrameStack(gym.make(env_id), k=frame_stack)

@@ -201,7 +201,7 @@ class DrQv2Agent:
         return metrics
     
 
-    def update_critic(self, obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs, step: int) -> InfoDict:
+    def update_critic(self, obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs, step: int) -> Dict:
         with torch.no_grad():
             # sample actions
             mu = self.actor(next_obs)
@@ -227,7 +227,7 @@ class DrQv2Agent:
                 'critic_q2': Q2.mean().item(), 
                 'critic_target': target_Q.mean().item()}
 
-    def update_actor(self, obs: Tensor, step: int) -> InfoDict:
+    def update_actor(self, obs: Tensor, step: int) -> Dict:
         # sample actions
         mu = self.actor(obs)
         std = utils.schedule(self.stddev_schedule, step)

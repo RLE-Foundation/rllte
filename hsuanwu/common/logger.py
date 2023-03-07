@@ -58,7 +58,8 @@ class Logger:
             return f'{key}: {value}'
         else:
             raise f'invalid format type: {ty}'
-    
+
+
     def parse_train_msg(self, msg: Any):
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
@@ -66,12 +67,14 @@ class Logger:
             pieces.append(self._format(disp_key, value, ty).ljust(13, ' '))
         return ' | '.join(pieces)
 
+
     def parse_test_msg(self, msg: Any):
         pieces = []
-        for key, disp_key, ty in TRAIN_MSG_FORMAT:
+        for key, disp_key, ty in TEST_MSG_FORMAT:
             value = msg.get(key, 0)
             pieces.append(self._format(disp_key, value, ty).ljust(13, ' '))
         return ' | '.join(pieces)
+
 
     def log(self, level: int, msg: Any):
         if level == INFO:
@@ -90,6 +93,7 @@ class Logger:
             self._test_file_write_header = False
         else:
             raise NotImplementedError
+
 
     def _dump_to_csv(self, file: Path, data: Dict, write_header: bool):
         csv_file = file.open('a')
