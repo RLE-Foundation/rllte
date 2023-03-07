@@ -1,46 +1,97 @@
-from termcolor import colored
-
+import os
 import csv
+import datetime
 
 from hsuanwu.common.typing import *
+from hsuanwu.common.logging import *
+
+TRAIN_MSG_FORMAT = [('frame', 'F', 'int'), 
+                    ('step', 'S', 'int'),
+                    ('episode', 'E', 'int'), 
+                    ('episode_length', 'L', 'int'),
+                    ('episode_reward', 'R', 'float'),
+                    ('fps', 'FPS', 'float'),
+                    ('total_time', 'T', 'time')]
+
+TEST_MSG_FORMAT = [('frame', 'F', 'int'), 
+                   ('step', 'S', 'int'),
+                   ('episode', 'E', 'int'), 
+                   ('episode_length', 'L', 'int'),
+                   ('episode_reward', 'R', 'float'),
+                   ('total_time', 'T', 'time')]
 
 class Logger:
-    """
-    The logger class.
+    """The logger class.
 
-    :param log_dir: The logging location.
+    Args:
+        log_dir: The logging location.
+    
+    Returns:
+        Logger instance.
     """
     def __init__(self, log_dir: Path) -> None:
         self._log_dir = log_dir
+        self._logger = getLogger(name='Hsuanwu Logger')
+        self._logger.setLevel(DEBUG)
+
+        sh = StreamHandler()
+        formatter = Formatter(
+            '[%(asctime)s] - [%(levelname)s] - %(message)s', 
+            datefmt='%m/%d/%Y %I:%M:%S %p')
+        sh.setFormatter(formatter)
+        self._logger.addHandler(sh)
+
         self._train_file = self._log_dir / 'train.log'
-        self._eval_file = self._log_dir /  'eval.log'
+        self._test_file = self._log_dir /  'test.log'
         self._train_file_write_header = True
-        self._eval_file_write_header = True
+        self._test_file_write_header = True
 
-    def log(self, metric, mode='train') -> None:
-        if mode == 'train':
-            prefix = '[' + colored('Train'.center(7, ' '), 'red', attrs=['bold']) + ']'
+    
+    def _format(self, key: str, value: Any, ty: Type):
+        if ty == 'int':
+            value = int(value)
+            return f'{key}: {value}'
+        elif ty == 'float':
+            return f'{key}: {value:.03f}'
+        elif ty == 'time':
+            value = str(datetime.timedelta(seconds=int(value)))
+            return f'{key}: {value}'
         else:
-            prefix = '[' + colored('Eval'.center(7, ' '), 'green', attrs=['bold']) + ']'
-        
-        row = ' | '
-        row = row.join([(key + ': ' + metric[key]).center(10) for key in metric.keys()])
-        
-        print(prefix + ' | ' + row)
+            raise f'invalid format type: {ty}'
+    
+    def parse_train_msg(self, msg: Any):
+        pieces = []
+        for key, disp_key, ty in TRAIN_MSG_FORMAT:
+            value = msg.get(key, 0)
+            pieces.append(self._format(disp_key, value, ty).ljust(13, ' '))
+        return ' | '.join(pieces)
 
-        self.dump(metric, mode)
+    def parse_test_msg(self, msg: Any):
+        pieces = []
+        for key, disp_key, ty in TRAIN_MSG_FORMAT:
+            value = msg.get(key, 0)
+            pieces.append(self._format(disp_key, value, ty).ljust(13, ' '))
+        return ' | '.join(pieces)
 
-
-    def dump(self, metric, mode) -> None:
-        if mode == 'train':
-            self._dump_to_csv(self._train_file, metric, self._train_file_write_header)
+    def log(self, level: int, msg: Any):
+        if level == INFO:
+            self._logger.info(msg)
+        elif level == DEBUG:
+            self._logger.debug(msg)
+        elif level == TRAIN:
+            self._logger.train(self.parse_train_msg(msg))
+            # save data
+            self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
             self._train_file_write_header = False
+        elif level == TEST:
+            self._logger.test(self.parse_test_msg(msg))
+            # save data
+            self._dump_to_csv(self._test_file, msg, self._test_file_write_header)
+            self._test_file_write_header = False
         else:
-            self._dump_to_csv(self._eval_file, metric, self._eval_file_write_header)
-            self._eval_file_write_header = False
+            raise NotImplementedError
 
-
-    def _dump_to_csv(self, file, data, write_header):
+    def _dump_to_csv(self, file: Path, data: Dict, write_header: bool):
         csv_file = file.open('a')
         csv_writer = csv.DictWriter(
             csv_file,

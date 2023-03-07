@@ -6,19 +6,30 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from pathlib import Path
-from hsuanwu.common.logger import Logger
+from hsuanwu.common.logger import *
 
 logger = Logger(Path.cwd() / 'logs/')
-metric = {
-    'E': 'hopper_hop', # env
-    'S': '10000000', # step
-    'R': '102.2055', # episode reward,
-    'F': '177.0843', # FPS
-    'T': '0:00:29' # time cost
+
+msg_info = 'Invoking Hsuanwu Engine...'
+msg_debug = 'Checking Module Compatibility...'
+msg_train = {
+    'frame': 12000,
+    'step': 6000,
+    'episode': 12,
+    'episode_reward': 225.8908,
+    'episode_length': 1000.000,
+    'fps': 177.1211132,
+    'total_time': 1200
 }
-logger.log(metric)
-logger.log(metric, mode='eval')
-logger.log(metric)
-logger.log(metric, mode='eval')
-logger.log(metric)
-logger.log(metric, mode='eval')
+msg_test = {
+    'frame': 10000,
+    'step': 5000,
+    'episode': 10,
+    'episode_reward': 201.8908,
+    'episode_length': 1000.000,
+    'total_time': 1000
+}
+logger.log(level=INFO, msg=msg_info)
+logger.log(level=DEBUG, msg=msg_debug)
+logger.log(level=TRAIN, msg=msg_train)
+logger.log(level=TEST, msg=msg_test)
