@@ -11,13 +11,13 @@ class VanillaCnnEncoder(BaseEncoder):
 
     Args:
         observation_space: Observation space of the environment.
-        features_dim: Number of features extracted.
+        feature_dim: Number of features extracted.
 
     Returns:
         CNN-based encoder.
     """
-    def __init__(self, observation_space: Space, features_dim: int = 64) -> None:
-        super().__init__(observation_space, features_dim)
+    def __init__(self, observation_space: Space, feature_dim: int = 64) -> None:
+        super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape
         assert len(obs_shape) == 3
@@ -31,7 +31,7 @@ class VanillaCnnEncoder(BaseEncoder):
             sample = torch.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
         
-        self.linear = nn.Linear(n_flatten, features_dim)
+        self.linear = nn.Linear(n_flatten, feature_dim)
 
         self.apply(network_init)
     

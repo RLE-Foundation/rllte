@@ -11,21 +11,21 @@ class VanillaMlpEncoder(BaseEncoder):
 
     Args:
         observation_space: Observation space of the environment.
-        features_dim: Number of features extracted.
+        feature_dim: Number of features extracted.
         hidden_dim: Number of units per hidden layer.
     
     Returns:
         Mlp-based encoder.
     """
-    def __init__(self, observation_space: Space, features_dim: int = 64, hidden_dim: int = 256) -> None:
-        super().__init__(observation_space, features_dim)
+    def __init__(self, observation_space: Space, feature_dim: int = 64, hidden_dim: int = 256) -> None:
+        super().__init__(observation_space, feature_dim)
 
         input_dim = observation_space.shape[0]
         self.trunk = nn.Sequential(
             nn.Linear(input_dim, hidden_dim), nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
-            nn.Linear(hidden_dim, features_dim)
+            nn.Linear(hidden_dim, feature_dim)
         )
 
         self.apply(network_init)

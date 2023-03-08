@@ -11,7 +11,7 @@ import time
 import torch
 # from hsuanwu.xploit.drqv2.agent import DrQv2Agent
 # from hsuanwu.xploit.replay_buffer import ReplayBuffer
-from hsuanwu.envs.dmc import make_dmc_env, FrameStack
+from hsuanwu.env.dmc import make_dmc_env, FrameStack
 from hsuanwu.xploit.storage.nstep_replay_buffer import NStepReplayBuffer
 
 if __name__ == '__main__':

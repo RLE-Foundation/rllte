@@ -61,7 +61,7 @@ def make_dmc_env(
     if not env_id in gym.envs.registry.env_specs:
         register(
             id=env_id,
-            entry_point='hsuanwu.envs.dmc.wrappers:DMCWrapper',
+            entry_point='hsuanwu.env.dmc.wrappers:DMCWrapper',
             kwargs={
                 'domain_name': domain_name,
                 'task_name': task_name,

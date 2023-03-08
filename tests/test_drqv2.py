@@ -9,7 +9,7 @@ from pathlib import Path
 from hsuanwu.common.logger import Logger
 
 # env part
-from hsuanwu.envs import make_dmc_env, FrameStack
+from hsuanwu.env import make_dmc_env, FrameStack
 
 import hydra
 import torch

@@ -6,7 +6,7 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.xplore.augmentation import RandomCrop
-from hsuanwu.envs.dmc import make_dmc_env
+from hsuanwu.env.dmc import make_dmc_env
 
 import torch
 import numpy as np

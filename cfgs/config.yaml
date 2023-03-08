@@ -5,13 +5,14 @@ action_type: cont
 frame_stack: 3
 action_repeat: 2
 device: cuda
+seed: 1
 use_aug: True # use observation augmentation?
 use_irs: False # use intrinsic reward?
 # train
 num_train_frames: 500000
 num_seed_frames: 4000
 batch_size: 256
-num_workers: 1
+num_workers: 4
 pin_memory: true
 # test
 test_every_frames: 10000
@@ -21,7 +22,7 @@ num_test_episodes: 10
 encoder:
   _target_: hsuanwu.xploit.encoder.VanillaCnnEncoder
   observation_space: ${observation_space}
-  features_dim: 50
+  feature_dim: 50
 
 ##############################################################
 learner:

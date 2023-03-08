@@ -8,17 +8,18 @@ class BaseEncoder(nn.Module):
 
     Args:
         observation_space: Observation space of the environment.
+        feature_dim: Number of features extracted.
     
     Returns:
         The base encoder class
     """
 
-    def __init__(self, observation_space: Space, features_dim: int = 0) -> None:
+    def __init__(self, observation_space: Space, feature_dim: int = 0) -> None:
         super().__init__()
-        assert features_dim > 0
+        assert feature_dim > 0
         self._observation_space = observation_space
-        self._features_dim = features_dim
+        self._feature_dim = feature_dim
 
     @property
-    def features_dim(self) -> int:
-        return self._features_dim
+    def feature_dim(self) -> int:
+        return self._feature_dim

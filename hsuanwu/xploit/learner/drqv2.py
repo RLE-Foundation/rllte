@@ -1,11 +1,9 @@
 from torch.nn import functional as F
 from torch import nn
-import torch, time
+import torch
 
 from hsuanwu.common.typing import *
 from hsuanwu.xploit import utils
-
-from hsuanwu.xploit.encoder import VanillaCnnEncoder
 
 class Actor(nn.Module):
     """Actor network
@@ -18,11 +16,13 @@ class Actor(nn.Module):
     Returns:
         Actor network.
     """
-    def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
+    def __init__(self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(features_dim), nn.Tanh())
+        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
+        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
+        #                            nn.LayerNorm(feature_dim), nn.Tanh())
 
-        self.policy = nn.Sequential(nn.Linear(features_dim, hidden_dim),
+        self.policy = nn.Sequential(nn.Linear(feature_dim, hidden_dim),
                                     nn.ReLU(inplace=True),
                                     nn.Linear(hidden_dim, hidden_dim),
                                     nn.ReLU(inplace=True),
@@ -37,6 +37,16 @@ class Actor(nn.Module):
         mu = torch.tanh(mu)
 
         return mu
+
+    # def forward(self, obs: Tensor, std: float) -> Tensor:
+    #     h = self.trunk(obs)
+
+    #     mu = self.policy(h)
+    #     mu = torch.tanh(mu)
+    #     std = torch.ones_like(mu) * std
+
+    #     dist = TruncatedNormal(mu, std)
+    #     return dist
     
 
 
@@ -51,18 +61,20 @@ class Critic(nn.Module):
     Returns:
         Critic network.
     """
-    def __init__(self, action_space: Space, features_dim: int = 64, hidden_dim: int = 1024) -> None:
+    def __init__(self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(features_dim), nn.Tanh())
+        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
+        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
+                                #    nn.LayerNorm(feature_dim), nn.Tanh())
 
         action_shape = action_space.shape
         self.Q1 = nn.Sequential(
-            nn.Linear(features_dim + action_shape[0], hidden_dim),
+            nn.Linear(feature_dim + action_shape[0], hidden_dim),
             nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
 
         self.Q2 = nn.Sequential(
-            nn.Linear(features_dim + action_shape[0], hidden_dim),
+            nn.Linear(feature_dim + action_shape[0], hidden_dim),
             nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
 
@@ -122,26 +134,27 @@ class DrQv2Agent:
         # self.encoder = encoder(
         #     observation_space=observation_space, 
         #     feature_dim=feature_dim)
-        # self.encoder = VanillaCnnEncoder(observation_space, features_dim=feature_dim).to(self.device)
+        # self.encoder = Encoder(observation_space.shape).to(self.device)
         self.encoder = None
         self.actor = Actor(
             action_space=action_space,
-            features_dim=feature_dim,
+            feature_dim=feature_dim,
             hidden_dim=hidden_dim).to(self.device)
         self.critic = Critic(
             action_space=action_space,
-            features_dim=feature_dim,
+            feature_dim=feature_dim,
             hidden_dim=hidden_dim).to(self.device)
         self.critic_target = Critic(
             action_space=action_space,
-            features_dim=feature_dim,
+            feature_dim=feature_dim,
             hidden_dim=hidden_dim).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
-        self.encoder_opt = None # torch.optim.Adam(self.encoder.parameters(), lr=lr)
+        # self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
+        self.train()
         self.critic_target.train()
 
         # create augmentation function
@@ -152,14 +165,25 @@ class DrQv2Agent:
 
         # create intrinsic reward function
         self.irs = None
+    
+    def train(self, training=True):
+        self.training = training
+        # self.encoder.train(training)
+        self.actor.train(training)
+        self.critic.train(training)
 
     def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
         obs = torch.as_tensor(obs, device=self.device)
+
         encoded_obs = self.encoder(obs.unsqueeze(0))
         # sample actions
         mu = self.actor(encoded_obs)
         std = utils.schedule(self.stddev_schedule, step)
         dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
+
+        # obs = self.encoder(obs.unsqueeze(0))
+        # stddev = utils.schedule(self.stddev_schedule, step)
+        # dist = self.actor(obs, stddev)
 
         if not training:
             action = dist.mean
@@ -171,7 +195,7 @@ class DrQv2Agent:
         return action.cpu().numpy()[0]
 
 
-    def update(self, replay_iter: DataLoader, step: int = 0) -> Tensor:
+    def update(self, replay_iter: DataLoader, step: int = 0) -> Dict:
         metrics = {}
         if step % self.update_every_steps != 0:
             return metrics
@@ -207,6 +231,10 @@ class DrQv2Agent:
             mu = self.actor(next_obs)
             std = utils.schedule(self.stddev_schedule, step)
             dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
+
+            # stddev = utils.schedule(self.stddev_schedule, step)
+            # dist = self.actor(next_obs, stddev)
+
             next_action = dist.sample(clip=self.stddev_clip)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_V = torch.min(target_Q1, target_Q2)
@@ -232,6 +260,10 @@ class DrQv2Agent:
         mu = self.actor(obs)
         std = utils.schedule(self.stddev_schedule, step)
         dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
+
+        # stddev = utils.schedule(self.stddev_schedule, step)
+        # dist = self.actor(obs, stddev)
+
         action = dist.sample(clip=self.stddev_clip)
 
         Q1, Q2 = self.critic(obs, action)

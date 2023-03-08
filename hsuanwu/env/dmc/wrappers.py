@@ -6,7 +6,7 @@ from dm_env import specs
 import numpy as np
 import skimage.io
 
-from hsuanwu.envs.dmc import natural_imgsource
+from hsuanwu.env.dmc import natural_imgsource
 
 
 def _spec_to_box(spec):
@@ -181,6 +181,7 @@ class DMCWrapper(core.Env):
                 break
         obs = self._get_obs(time_step)
         info['discount'] = time_step.discount
+        info['step_type'] = time_step.step_type
         if done and time_step.discount == 1.0:
             info['TimeLimit.truncated'] = True
 
