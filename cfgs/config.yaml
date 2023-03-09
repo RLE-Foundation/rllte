@@ -42,11 +42,14 @@ learner:
 ##############################################################
 buffer:
   _target_: hsuanwu.xploit.storage.NStepReplayBuffer
-  observation_space: ${observation_space}
-  action_space: ${action_space}
+  # observation_space: ${observation_space}
+  # action_space: ${action_space}
   buffer_size: 500000
+  num_workers: ${num_workers}
   n_step: 3
   discount: 0.99
+  fetch_every: 1000
+  save_snapshot: true
 
 ##############################################################
 distribution:

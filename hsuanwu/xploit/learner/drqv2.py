@@ -38,18 +38,7 @@ class Actor(nn.Module):
 
         return mu
 
-    # def forward(self, obs: Tensor, std: float) -> Tensor:
-    #     h = self.trunk(obs)
-
-    #     mu = self.policy(h)
-    #     mu = torch.tanh(mu)
-    #     std = torch.ones_like(mu) * std
-
-    #     dist = TruncatedNormal(mu, std)
-    #     return dist
     
-
-
 class Critic(nn.Module):
     """Critic network
 
@@ -181,10 +170,6 @@ class DrQv2Agent:
         std = utils.schedule(self.stddev_schedule, step)
         dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
 
-        # obs = self.encoder(obs.unsqueeze(0))
-        # stddev = utils.schedule(self.stddev_schedule, step)
-        # dist = self.actor(obs, stddev)
-
         if not training:
             action = dist.mean
         else:
@@ -232,9 +217,6 @@ class DrQv2Agent:
             std = utils.schedule(self.stddev_schedule, step)
             dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
 
-            # stddev = utils.schedule(self.stddev_schedule, step)
-            # dist = self.actor(next_obs, stddev)
-
             next_action = dist.sample(clip=self.stddev_clip)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_V = torch.min(target_Q1, target_Q2)
@@ -260,9 +242,6 @@ class DrQv2Agent:
         mu = self.actor(obs)
         std = utils.schedule(self.stddev_schedule, step)
         dist = self.dist(mu=mu, sigma=torch.ones_like(mu) * std)
-
-        # stddev = utils.schedule(self.stddev_schedule, step)
-        # dist = self.actor(obs, stddev)
 
         action = dist.sample(clip=self.stddev_clip)
 

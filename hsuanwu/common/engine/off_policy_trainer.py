@@ -10,8 +10,7 @@ from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
 
 from hsuanwu.xploit.storage.nstep_replay_buffer import *
-from dm_env import specs
-from hsuanwu.common.engine import dmc
+from hsuanwu.xploit.storage.utils import worker_init_fn
 
 class eval_mode:
     def __init__(self, *models):
@@ -27,6 +26,7 @@ class eval_mode:
         for model, state in zip(self.models, self.prev_states):
             model.train(state)
         return False
+
 
 class OffPolicyTrainer:
     """Trainer for off-policy algorithms.
@@ -88,18 +88,8 @@ class OffPolicyTrainer:
         self._replay_loader = torch.utils.data.DataLoader(self._replay_buffer,
                                                   batch_size=cfgs.batch_size,
                                                   num_workers=cfgs.num_workers,
-                                                  pin_memory=cfgs.pin_memory)
-
-        # env = dmc.make(name='cartpole_balance', frame_stack=3, action_repeat=2, seed=1)
-        # data_specs = (env.observation_spec(),
-        #               env.action_spec(),
-        #               specs.Array((1,), np.float32, 'reward'),
-        #               specs.Array((1,), np.float32, 'discount'))
-        # del env
-        # self._replay_storage = ReplayBufferStorage(data_specs,
-        #                                           self._work_dir / 'buffer')
-        # self._replay_loader = make_replay_loader(
-        #     self._work_dir / 'buffer', 500000, 256, 4, False, 3, 0.99)
+                                                  pin_memory=cfgs.pin_memory,
+                                                  worker_init_fn=worker_init_fn)
 
         self._replay_iter = None
 
@@ -136,15 +126,12 @@ class OffPolicyTrainer:
         episode_step, episode_reward = 0, 0
         obs = self._train_env.reset()
         metrics = None
-        actor_loss = 0.
-        critic_loss = 0.
 
         while self._global_step <= self._train_unitl_step:
             # try to test
             if self._global_step % self._test_every_steps == 0:
                test_metrics = self.test()
                self._logger.log(level=TEST, msg=test_metrics)
-               print(self._replay_buffer.num_episodes)
             
             # sample actions
             with torch.no_grad(), eval_mode(self._learner):
@@ -156,18 +143,11 @@ class OffPolicyTrainer:
             self._global_frame += 1 * self._cfgs.action_repeat
 
             # save transition
-            self._replay_buffer.add(obs, action, reward, done, info['discount'])
-            # self._replay_storage.add({'observation': obs, 'action': action, 'reward': reward, 
-            #                           'step_type': info['step_type'], 'discount': info['discount']})
+            self._replay_buffer.add(obs, action, reward, done, info)
 
             # update agent
             if self._global_step >= self._seed_until_step:
                 metrics = self._learner.update(self.replay_iter, step=self._global_step)
-                # try:
-                #     actor_loss+=metrics['actor_loss']
-                #     critic_loss+=metrics['critic_loss']
-                # except:
-                #     pass
             
             # done
             if done:
@@ -184,11 +164,7 @@ class OffPolicyTrainer:
                         'fps': episode_frame / episode_time,
                         'total_time': total_time,
                     }
-                    # self._logger.log(level=TRAIN, msg=train_metrics)
-
-                    # print(actor_loss, critic_loss)
-                    # actor_loss = 0.
-                    # critic_loss = 0.
+                    self._logger.log(level=TRAIN, msg=train_metrics)
 
                 obs = self._train_env.reset()
                 self._global_episode += 1
