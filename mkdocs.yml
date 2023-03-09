@@ -54,7 +54,8 @@ nav:
     - License: license.md
   - Getting stared:
     - Installation: getting_started.md
-  - API:
+  - API Documentation:
+    - Overview: overview/api_overview.md
     - xploit:
       - encoder: 
         - base: api/xploit/encoder/base.md

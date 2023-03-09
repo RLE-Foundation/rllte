@@ -8,6 +8,7 @@
 <img src="https://img.shields.io/badge/Docs-Passing-%23009485">
 <img src="https://img.shields.io/badge/Codestyle-Black-black">
 <img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD">
+<img src="https://img.shields.io/badge/🤗Datasets-HuggingFace-%23FFD21E">
 <img src="https://img.shields.io/badge/Pytorch-%3E%3D1.12.0-%23EF5739">
 <img src="https://img.shields.io/badge/Hydra-1.3.2-%23E88444">
 <img src="https://img.shields.io/badge/Gym-%3E%3D0.21.0-brightgreen">

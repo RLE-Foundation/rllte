@@ -5,7 +5,7 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L6)
 ```python 
 BaseEncoder(
-   observation_space: Space, features_dim: int = 0
+   observation_space: Space, feature_dim: int = 0
 )
 ```
 
@@ -17,6 +17,7 @@ Base class that represents a features extractor.
 **Args**
 
 * **observation_space**  : Observation space of the environment.
+* **feature_dim**  : Number of features extracted.
 
 
 **Returns**
@@ -27,9 +28,9 @@ The base encoder class
 **Methods:**
 
 
-### .features_dim
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L23)
+### .feature_dim
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L24)
 ```python
-.features_dim()
+.feature_dim()
 ```
 
