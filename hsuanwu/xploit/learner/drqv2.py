@@ -113,6 +113,7 @@ class DrQv2Agent:
                 stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
                 stddev_clip: float = 0.3) -> None:
         self.device = torch.device(device)
+        self.lr = lr
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
         self.num_expl_steps = num_expl_steps
@@ -120,10 +121,6 @@ class DrQv2Agent:
         self.stddev_clip = stddev_clip
 
         # create models
-        # self.encoder = encoder(
-        #     observation_space=observation_space, 
-        #     feature_dim=feature_dim)
-        # self.encoder = Encoder(observation_space.shape).to(self.device)
         self.encoder = None
         self.actor = Actor(
             action_space=action_space,
@@ -140,26 +137,38 @@ class DrQv2Agent:
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
-        # self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
-        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
-        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
+        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
         self.train()
         self.critic_target.train()
 
-        # create augmentation function
+        # placeholder for augmentation and intrinsic reward function
         self.aug = None
-
-        # create noise function
-        self.dist = None
-
-        # create intrinsic reward function
         self.irs = None
     
     def train(self, training=True):
         self.training = training
-        # self.encoder.train(training)
         self.actor.train(training)
         self.critic.train(training)
+        if self.encoder is not None:
+            self.encoder.train(training)
+    
+    def set_encoder(self, encoder):
+        self.encoder = encoder
+        self.encoder.train()
+        self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=self.lr)
+    
+    def set_dist(self, dist):
+        # create noise function
+        self.dist = dist
+
+    def set_aug(self, aug):
+        # create augmentation function
+        self.aug = aug
+    
+    def set_irs(self, irs):
+        # create intrinsic reward function
+        self.irs = irs
 
     def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
         obs = torch.as_tensor(obs, device=self.device)
@@ -187,15 +196,18 @@ class DrQv2Agent:
         
         batch = next(replay_iter)
         obs, action, reward, discount, next_obs = utils.to_torch(batch, self.device)
+        if self.irs is not None:
+            reward = self.irs.compute_irs(reward)
 
         # obs augmentation
-        aug_obs = self.aug(obs.float())
-        aug_next_obs = self.aug(next_obs.float())
+        if self.aug is not None:
+            obs = self.aug(obs.float())
+            next_obs = self.aug(next_obs.float())
 
         # encode
-        encoded_obs = self.encoder(aug_obs)
+        encoded_obs = self.encoder(obs)
         with torch.no_grad():
-            encoded_next_obs = self.encoder(aug_next_obs)
+            encoded_next_obs = self.encoder(next_obs)
         
         # update criitc
         metrics.update(

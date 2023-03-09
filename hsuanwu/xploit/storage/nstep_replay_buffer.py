@@ -13,7 +13,9 @@ class NStepReplayBuffer(IterableDataset):
 
     Args:
         buffer_size: Max number of element in the buffer.
+        batch_size: Number of samples per batch to load.
         num_workers: Subprocesses to use for data loading.
+        pin_memory: Copy Tensors into device/CUDA pinned memory before returning them.
         n_step: The number of transitions to consider when computing n-step returns
         discount: The discount factor for future rewards.
         fetch_every: Loading interval.
@@ -24,7 +26,9 @@ class NStepReplayBuffer(IterableDataset):
     """
     def __init__(self,
                  buffer_size: int,
+                 batch_size: int,
                  num_workers: int,
+                 pin_memory: bool,
                  n_step: int = 2,
                  discount: float = 0.99,
                  fetch_every: int = 1000,
@@ -34,7 +38,9 @@ class NStepReplayBuffer(IterableDataset):
         self._replay_dir = Path.cwd() / 'buffer'
         self._replay_storage = ReplayBufferStorage(self._replay_dir)
         self._buffer_size = buffer_size
+        self._batch_size = batch_size
         self._num_workers = max(1, num_workers)
+        self._pin_memory = pin_memory
         self._n_step = n_step
         self._discount = discount
         self._save_snapshot = save_snapshot

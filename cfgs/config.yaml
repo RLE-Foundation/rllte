@@ -1,39 +1,38 @@
 ##############################################################
-observation_space: ???
-action_space: ???
-action_type: cont
-frame_stack: 3
-action_repeat: 2
-device: cuda
-seed: 1
-use_aug: True # use observation augmentation?
-use_irs: False # use intrinsic reward?
-# train
-num_train_frames: 500000
-num_seed_frames: 4000
-batch_size: 256
-num_workers: 4
-pin_memory: true
-# test
-test_every_frames: 10000
-num_test_episodes: 10
+# env setup
+observation_space: ???                    # observation space of environment, to be specified later.
+action_space: ???                         # action space of environment, to be specified later.
+action_type: cont                         # action type
+frame_stack: 3                            # number of stacked frames (for image-based observations)
+action_repeat: 2                          # number of action repeat
+seed: 1                                   # random seed
+# train setup
+device: cuda                              # use which cpu?
+use_aug: True                             # use observation augmentation?
+use_irs: False                            # use intrinsic reward?
+num_train_frames: 500000                  # number of frames for training. num_train_steps = num_train_frames // action_repeat
+num_seed_frames: 4000                     # initial exploration frames
+# test setup
+test_every_frames: 10000                  # test interval
+num_test_episodes: 10                     # number of test episodes
 
 ##############################################################
 encoder:
-  _target_: hsuanwu.xploit.encoder.VanillaCnnEncoder
+  _target_: VanillaCnnEncoder             # encoder name
   observation_space: ${observation_space}
-  feature_dim: 50
+  feature_dim: 50                         # number of features extracted.
+
 
 ##############################################################
 learner:
-  _target_: hsuanwu.xploit.learner.ContinuousLearner
+  _target_: ContinuousLearner             # learner type
   observation_space: ${observation_space}
   action_space: ${action_space}
-  device: ${device}
-  feature_dim: 50
-  hidden_dim: 1024
-  lr: 1e-4
-  critic_target_tau: 0.01
+  device: ${device}                       
+  feature_dim: ${encoder.feature_dim}
+  hidden_dim: 1024                        # size of the hidden layers.
+  lr: 1e-4                                # learning rate
+  critic_target_tau: 0.01                 
   num_expl_steps: 2000
   update_every_steps: 2
   stddev_schedule: linear(1.0, 0.1, 100000)
@@ -41,28 +40,28 @@ learner:
 
 ##############################################################
 buffer:
-  _target_: hsuanwu.xploit.storage.NStepReplayBuffer
-  # observation_space: ${observation_space}
-  # action_space: ${action_space}
+  _target_: NStepReplayBuffer
   buffer_size: 500000
-  num_workers: ${num_workers}
+  batch_size: 256
+  pin_memory: true
+  num_workers: 4
   n_step: 3
   discount: 0.99
   fetch_every: 1000
-  save_snapshot: true
+  save_snapshot: false
 
 ##############################################################
 distribution:
-  _target_: hsuanwu.xplore.distribution.TruncatedNormal
+  _target_: TruncatedNormal
 
 ##############################################################
 augmentation:
-  _target_: hsuanwu.xplore.augmentation.RandomShift
+  _target_: RandomShift
   pad: 4
 
 ##############################################################
 reward:
-  _target_: hsuanwu.xplore.reward.RE3
+  _target_: RE3
   observation_space: ${observation_space}
   action_space: ${action_space}
   action_type: ${action_type}

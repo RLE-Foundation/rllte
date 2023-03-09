@@ -9,7 +9,6 @@ from hsuanwu.common.typing import *
 from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
 
-from hsuanwu.xploit.storage.nstep_replay_buffer import *
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
 class eval_mode:
@@ -68,27 +67,30 @@ class OffPolicyTrainer:
         elif cfgs.action_type == 'dis':
             cfgs.action_space = {'shape': train_env.action_space.n}
         self._device = torch.device(cfgs.device)
+
+        # set path of each class
+        cfgs = self.set_class_path(cfgs)
         
         # xploit part
         self._learner = hydra.utils.instantiate(cfgs.learner)
-        self._learner.encoder = hydra.utils.instantiate(cfgs.encoder).to(self._device)
-        self._learner.encoder.train()
-        self._learner.encoder_opt = torch.optim.Adam(
-            self._learner.encoder.parameters(), lr=cfgs.learner.lr)
+        encoder = hydra.utils.instantiate(cfgs.encoder).to(self._device)
+        self._learner.set_encoder(encoder)
         self._replay_buffer = hydra.utils.instantiate(cfgs.buffer)
 
         # xplore part
         self._learner.dist = hydra.utils.get_class(cfgs.distribution._target_)
-        if cfgs.use_aug and cfgs.augmentation:
-            self._learner.aug = hydra.utils.instantiate(cfgs.augmentation).to(self._device)
+        if cfgs.use_aug:
+            aug = hydra.utils.instantiate(cfgs.augmentation).to(self._device)
+            self._learner.set_aug(aug)
         if cfgs.use_irs:
-            self._learner.reward = hydra.utils.instantiate(cfgs.reward)
+            irs = hydra.utils.instantiate(cfgs.reward)
+            self._learner.set_irs(irs)
 
         # make data loader        
         self._replay_loader = torch.utils.data.DataLoader(self._replay_buffer,
-                                                  batch_size=cfgs.batch_size,
-                                                  num_workers=cfgs.num_workers,
-                                                  pin_memory=cfgs.pin_memory,
+                                                  batch_size=cfgs.buffer.batch_size,
+                                                  num_workers=cfgs.buffer.num_workers,
+                                                  pin_memory=cfgs.buffer.pin_memory,
                                                   worker_init_fn=worker_init_fn)
 
         self._replay_iter = None
@@ -103,26 +105,41 @@ class OffPolicyTrainer:
 
         # debug
         self._logger.log(DEBUG, 'Check Accomplished. Start Training...')
+
+
+    def set_class_path(self, cfgs: DictConfig) -> DictConfig:
+        cfgs.learner._target_ = 'hsuanwu.xploit.' + 'learner.' + cfgs.learner._target_
+        cfgs.encoder._target_ = 'hsuanwu.xploit.' + 'encoder.' + cfgs.encoder._target_
+        cfgs.buffer._target_ = 'hsuanwu.xploit.' + 'storage.' + cfgs.buffer._target_
+
+        cfgs.distribution._target_ = 'hsuanwu.xplore.' + 'distribution.' + cfgs.distribution._target_
+        if cfgs.use_aug:
+            cfgs.augmentation._target_ = 'hsuanwu.xplore.' + 'augmentation.' + cfgs.augmentation._target_
+        if cfgs.use_irs:
+            cfgs.reward._target_ = 'hsuanwu.xplore.' + 'reward.' + cfgs.reward._target_
+
+        return cfgs
+
     
     @property
-    def global_step(self):
+    def global_step(self) -> int:
         return self._global_step
 
     @property
-    def global_episode(self):
+    def global_episode(self) -> int:
         return self._global_episode
 
     @property
-    def global_frame(self):
+    def global_frame(self) -> int:
         return self._global_step * self.cfg.action_repeat
 
     @property
-    def replay_iter(self):
+    def replay_iter(self) -> Iterable:
         if self._replay_iter is None:
             self._replay_iter = iter(self._replay_loader)
         return self._replay_iter
 
-    def train(self):
+    def train(self) -> None:
         episode_step, episode_reward = 0, 0
         obs = self._train_env.reset()
         metrics = None
@@ -173,7 +190,7 @@ class OffPolicyTrainer:
             
             obs = next_obs
 
-    def test(self):
+    def test(self) -> Dict:
         step, episode, total_reward = 0, 0, 0
         obs = self._test_env.reset()
 

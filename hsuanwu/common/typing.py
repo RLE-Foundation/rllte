@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union, Iterable
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 from gym import Space, Env
