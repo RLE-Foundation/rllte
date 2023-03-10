@@ -65,7 +65,9 @@ class REVD(BaseIntrinsicRewardModule):
         See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
     
     Args:
-        env: The environment.
+        obs_shape: Data shape of observation.
+        action_space: Data shape of action.
+        action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         beta: The initial weighting coefficient of the intrinsic rewards.
         kappa: The decay rate.
@@ -76,13 +78,15 @@ class REVD(BaseIntrinsicRewardModule):
     """
     def __init__(
             self, 
-            env: Env, 
+            obs_shape: Tuple,
+            action_shape: Tuple,
+            action_type: str,
             device: torch.device, 
             beta: float, 
             kappa: float,
             latent_dim: int,
             ) -> None:
-        super().__init__(env, device, beta, kappa)
+        super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
 
         if len(self._obs_shape) == 3:
             self.encoder = RandomCnnEncoder(obs_shape=self._obs_shape, latent_dim=latent_dim)

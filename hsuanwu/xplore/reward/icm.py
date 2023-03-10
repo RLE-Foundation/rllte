@@ -104,7 +104,9 @@ class ICM(BaseIntrinsicRewardModule):
         See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
     
     Args:
-        env: The environment.
+        obs_shape: Data shape of observation.
+        action_space: Data shape of action.
+        action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         beta: The initial weighting coefficient of the intrinsic rewards.
         kappa: The decay rate.
@@ -117,7 +119,9 @@ class ICM(BaseIntrinsicRewardModule):
     """
     def __init__(
             self, 
-            env: Env, 
+            obs_shape: Tuple,
+            action_shape: Tuple,
+            action_type: str,
             device: torch.device, 
             beta: float, 
             kappa: float,
@@ -125,7 +129,7 @@ class ICM(BaseIntrinsicRewardModule):
             lr: float,
             batch_size: int
             ) -> None:
-        super().__init__(env, device, beta, kappa)
+        super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
 
         self._batch_size = batch_size
 
