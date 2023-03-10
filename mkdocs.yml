@@ -35,6 +35,17 @@ theme:
 extra_css:
   - assets/stylesheets/extra.css
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
 repo_url: https://github.com/BellmanProject/Hsuanwu
 repo_name: BellmanProject/Hsuanwu
 
