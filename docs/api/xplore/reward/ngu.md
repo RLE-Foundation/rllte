@@ -5,8 +5,8 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L66)
 ```python 
 NGU(
-   env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int,
-   lr: float, batch_size: int
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float, latent_dim: int, lr: float, batch_size: int
 )
 ```
 
@@ -18,7 +18,9 @@ See paper: https://arxiv.org/pdf/2002.06038
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -36,7 +38,7 @@ Instance of NGU.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L112)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L116)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -61,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L160)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L164)
 ```python
 .update(
    rollouts: Dict
@@ -85,7 +87,7 @@ Update the intrinsic reward module if necessary.
 None
 
 ### .pseudo_counts
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L191)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L195)
 ```python
 .pseudo_counts(
    encoded_obs, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,

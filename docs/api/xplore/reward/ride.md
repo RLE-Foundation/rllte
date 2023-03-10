@@ -5,7 +5,8 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L63)
 ```python 
 RIDE(
-   env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float, latent_dim: int
 )
 ```
 
@@ -17,7 +18,9 @@ See paper: https://arxiv.org/pdf/2002.12292
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -33,7 +36,7 @@ Instance of RIDE.
 
 
 ### .pseudo_counts
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L98)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L102)
 ```python
 .pseudo_counts(
    src_feats, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -43,7 +46,7 @@ Instance of RIDE.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L123)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L127)
 ```python
 .compute_irs(
    rollouts: Dict, step: int

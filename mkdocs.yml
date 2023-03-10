@@ -52,13 +52,27 @@ nav:
     - Overview: index.md
     - Changelog: changelog.md
     - License: license.md
-  - Getting stared:
+
+  - Getting Stared:
     - Installation: getting_started.md
+
   - API Documentation:
     - Overview: overview/api_overview.md
     - xploit:
       - encoder: 
-        - base: api/xploit/encoder/base.md
+        - Base: api/xploit/encoder/base.md
+        - VanillaCnnEncoder: api/xploit/encoder/vanilla_cnn_encoder.md
+        - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
+
+      - learner:
+        - DrQv2Agent: api/xploit/learner/drqv2.md
+        - PPGAgent: api/xploit/learner/ppg.md
+      
+      - storage:
+        - VanillaReplayBuffer: api/xploit/storage/vanilla_replay_buffer.md
+        - NStepReplayBuffer: api/xploit/storage/nstep_replay_buffer.md
+        - PrioritizedReplayBuffer: api/xploit/storage/prioritized_replay_buffer.md
+
     - xplore:
       - reward:
         - Base: api/xplore/reward/base.md
@@ -70,10 +84,12 @@ nav:
         - RE3: api/xplore/reward/re3.md
         - RISE: api/xplore/reward/rise.md
         - REVD: api/xplore/reward/revd.md
+
       - augmentation:
         - Base: api/xplore/augmentation/base.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomShift: api/xplore/augmentation/random_shift.md
+
       - distribution:
         - Base: api/xplore/distribution/base.md
         - TruncatedNormal: api/xplore/distribution/truncated_normal.md

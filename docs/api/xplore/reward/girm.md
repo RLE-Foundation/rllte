@@ -5,8 +5,9 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L229)
 ```python 
 GIRM(
-   env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int,
-   lr: float, batch_size: int, lambd: float
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float, latent_dim: int, lr: float, batch_size: int,
+   lambd: float
 )
 ```
 
@@ -18,7 +19,9 @@ See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -37,7 +40,7 @@ Instance of GIRM.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L315)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L319)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -62,7 +65,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L375)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L379)
 ```python
 .update(
    rollouts: Dict, lambda_recon: float = 1.0, lambda_action: float = 1.0,

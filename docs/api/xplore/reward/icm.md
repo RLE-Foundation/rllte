@@ -5,8 +5,8 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L102)
 ```python 
 ICM(
-   env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int,
-   lr: float, batch_size: int
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float, latent_dim: int, lr: float, batch_size: int
 )
 ```
 
@@ -18,7 +18,9 @@ See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -36,7 +38,7 @@ Instance of ICM.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L181)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L185)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -61,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L226)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L230)
 ```python
 .update(
    rollouts: Dict

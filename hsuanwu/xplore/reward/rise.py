@@ -26,7 +26,8 @@ class RandomCnnEncoder(nn.Module):
             nn.Conv2d(64, 32, (3, 3), stride=(1, 1)), nn.ReLU(), nn.Flatten())
 
         with torch.no_grad():
-            n_flatten = self.trunk(torch.as_tensor(np.ones_like(obs_shape)[None]).float()).shape[1]
+            sample = torch.ones(size=tuple(obs_shape)).float()
+            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
         
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
@@ -121,8 +122,8 @@ class RISE(BaseIntrinsicRewardModule):
         n_envs = rollouts['observations'].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.from_numpy(rollouts['observations'])
-        obs_tensor = obs_tensor.to(self.device)
+        obs_tensor = torch.as_tensor(rollouts['observations'], dtype=torch.float32, device=self._device)
+
 
         with torch.no_grad():
             for idx in range(n_envs):

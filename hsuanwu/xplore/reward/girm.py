@@ -201,7 +201,7 @@ class VAE(nn.Module):
         self.mu = nn.Linear(latent_dim, action_dim)
         self.logvar = nn.Linear(latent_dim, action_dim)
 
-        self.device = device
+        self._device = device
         self.latent_dim = latent_dim
         self.action_dim = action_dim
 
@@ -219,7 +219,7 @@ class VAE(nn.Module):
         mu = self.mu(latent)
         logvar = self.logvar(latent)
 
-        z = self.reparameterize(mu, logvar, self.device)
+        z = self.reparameterize(mu, logvar, self._device)
 
         reconstructed_next_obs = self.decoder(z, obs)
 
@@ -265,7 +265,7 @@ class GIRM(BaseIntrinsicRewardModule):
 
         self._vae = VAE(
             device=self._device,
-            action_dim=self._action_shape,
+            action_dim=self._action_shape[0],
             obs_shape=self._obs_shape,
             latent_dim=latent_dim)
         self._vae.to(self._device)
@@ -339,9 +339,9 @@ class GIRM(BaseIntrinsicRewardModule):
         actions_tensor = torch.from_numpy(rollouts['actions'])
         if self.action_type == 'dis':
             # actions size: (n_steps, n_envs, 1)
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape).float()
-        obs_tensor = obs_tensor.to(self.device)
-        actions_tensor = actions_tensor.to(self.device)
+            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]).float()
+        obs_tensor = obs_tensor.to(self._device)
+        actions_tensor = actions_tensor.to(self._device)
 
         with torch.no_grad():
             for idx in range(n_envs):
@@ -352,7 +352,7 @@ class GIRM(BaseIntrinsicRewardModule):
                 latent = self._vae.encoder(obs_tensor, next_obs_tensor)
                 mu = self._vae.mu(latent)
                 logvar = self.vae.logvar(latent)
-                z = self._vae.reparameterize(mu, logvar, self.device)
+                z = self._vae.reparameterize(mu, logvar, self._device)
                 if self.action_type == 'dis':
                     pred_actions = F.softmax(z, dim=1)
                 else:
@@ -400,14 +400,14 @@ class GIRM(BaseIntrinsicRewardModule):
         obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self._obs_shape)
         if self.action_type == 'dis':
             actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, )
-            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape).float()
+            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape[0]).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape)
-        obs_tensor = obs_tensor.to(self.device)
-        actions_tensor = actions_tensor.to(self.device)
+            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape[0])
+        obs_tensor = obs_tensor.to(self._device)
+        actions_tensor = actions_tensor.to(self._device)
 
-        obs_tensor = obs_tensor.to(self.device)
-        actions_tensor = actions_tensor.to(self.device)
+        obs_tensor = obs_tensor.to(self._device)
+        actions_tensor = actions_tensor.to(self._device)
         # create data loader
         dataset = TensorDataset(obs_tensor[:-1], actions_tensor[:-1], obs_tensor[1:])
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)
@@ -420,7 +420,7 @@ class GIRM(BaseIntrinsicRewardModule):
             latent = self._vae.encoder(batch_obs, batch_next_obs)
             mu = self._vae.mu(latent)
             logvar = self._vae.logvar(latent)
-            z = self._vae.reparameterize(mu, logvar, self.device)
+            z = self._vae.reparameterize(mu, logvar, self._device)
             pred_next_obs = self._vae.decoder(z, batch_obs)
             # compute the total loss
             action_loss = self._action_loss(z, batch_actions)

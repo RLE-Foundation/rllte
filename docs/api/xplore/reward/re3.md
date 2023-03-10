@@ -5,7 +5,8 @@
 [source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L63)
 ```python 
 RE3(
-   env: Env, device: torch.device, beta: float, kappa: float, latent_dim: int
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float, latent_dim: int
 )
 ```
 
@@ -17,7 +18,9 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -33,7 +36,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L98)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L102)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False

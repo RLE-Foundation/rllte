@@ -35,7 +35,8 @@ class CnnEncoder(nn.Module):
         )
 
         with torch.no_grad():
-            n_flatten = self.trunk(torch.as_tensor(np.ones_like(obs_shape)[None]).float()).shape[1]
+            sample = torch.ones(size=tuple(obs_shape)).float()
+            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
         
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
@@ -140,12 +141,12 @@ class ICM(BaseIntrinsicRewardModule):
             
             self.inverse_forward_model = InverseForwardDynamicsModel(
                 latent_dim=latent_dim, 
-                action_dim=self._action_shape)
+                action_dim=self._action_shape[0])
         else:
             # for state-based observations
             self.inverse_forward_model = InverseForwardDynamicsModel(
                 latent_dim=self._obs_shape[0], 
-                action_dim=self._action_shape)
+                action_dim=self._action_shape[0])
         
         self._opt = optim.Adam(lr=lr, params=self.inverse_forward_model.parameters())
         self.inverse_forward_model.to(self._device)
@@ -205,9 +206,9 @@ class ICM(BaseIntrinsicRewardModule):
         actions_tensor = torch.from_numpy(rollouts['actions'])
         if self.action_type == 'dis':
             # actions size: (n_steps, n_envs, 1)
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape).float()
-        obs_tensor = obs_tensor.to(self.device)
-        actions_tensor = actions_tensor.to(self.device)
+            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]).float()
+        obs_tensor = obs_tensor.to(self._device)
+        actions_tensor = actions_tensor.to(self._device)
 
         with torch.no_grad():
             for idx in range(n_envs):
@@ -244,11 +245,11 @@ class ICM(BaseIntrinsicRewardModule):
         obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self._obs_shape)
         if self.action_type == 'dis':
             actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, )
-            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape).float()
+            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape[0]).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape)
-        obs_tensor = obs_tensor.to(self.device)
-        actions_tensor = actions_tensor.to(self.device)
+            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape[0])
+        obs_tensor = obs_tensor.to(self._device)
+        actions_tensor = actions_tensor.to(self._device)
 
         if len(self._obs_shape) == 3:
             encoded_obs = self.cnn_encoder(obs_tensor)

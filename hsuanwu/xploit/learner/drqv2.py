@@ -86,8 +86,8 @@ class DrQv2Agent:
         Link: https://openreview.net/pdf?id=_SJ-_yyes8
 
     Args:
-        obs_space: The observation shape of the environment.
-        action_shape: The action shape of the environment.
+        observation_space: Observation space of the environment.
+        action_space: Action shape of the environment.
         feature_dim: Number of features extracted.
         hidden_dim: The size of the hidden layers.
         lr: The learning rate.
@@ -194,10 +194,20 @@ class DrQv2Agent:
         if step % self.update_every_steps != 0:
             return metrics
         
-        batch = next(replay_iter)
-        obs, action, reward, discount, next_obs = utils.to_torch(batch, self.device)
+        # batch = next(replay_iter)
+        obs, action, reward, discount, next_obs = next(replay_iter) # utils.to_torch(batch, self.device)
         if self.irs is not None:
-            reward = self.irs.compute_irs(reward)
+            intrinsic_reward = self.irs.compute_irs(
+                rollouts={'observations': obs.unsqueeze(1).numpy(), 
+                          'actions': action.unsqueeze(1).numpy()},
+                step=step)
+            reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
+        
+        obs = obs.float().to(self.device)
+        action = action.float().to(self.device)
+        reward = reward.float().to(self.device)
+        discount = discount.float().to(self.device)
+        next_obs = next_obs.float().to(self.device)
 
         # obs augmentation
         if self.aug is not None:

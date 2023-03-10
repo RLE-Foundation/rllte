@@ -1,4 +1,5 @@
 from pathlib import Path
+from omegaconf import open_dict
 
 import numpy as np
 import random
@@ -61,11 +62,27 @@ class OffPolicyTrainer:
         self._logger.log(DEBUG, 'Checking Module Compatibility...')
 
         # remake observation and action sapce
-        cfgs.observation_space = {'shape': train_env.observation_space.shape}
-        if cfgs.action_type == 'cont':
-            cfgs.action_space = {'shape': train_env.action_space.shape}
-        elif cfgs.action_type == 'dis':
-            cfgs.action_space = {'shape': train_env.action_space.n}
+        obs_shape = train_env.observation_space.shape
+        observation_space = {'shape': train_env.observation_space.shape}
+        if train_env.action_space.__class__.__name__ == 'Discrete':
+            action_space = {'shape': (train_env.action_space.n, )}
+            action_type = 'dis'
+        elif train_env.action_space.__class__.__name__ == 'Box':
+            action_space = {'shape': train_env.action_space.shape}
+            action_type = 'cont'
+        else:
+            raise NotImplementedError
+
+        # remake observation and action sapce
+        with open_dict(cfgs):
+            # for encoder
+            cfgs.encoder.observation_space = observation_space
+            # for learner
+            cfgs.learner.observation_space = observation_space
+            cfgs.learner.action_space = action_space
+            cfgs.learner.device = cfgs.device
+            cfgs.learner.feature_dim = cfgs.encoder.feature_dim
+        
         self._device = torch.device(cfgs.device)
 
         # set path of each class
@@ -83,6 +100,11 @@ class OffPolicyTrainer:
             aug = hydra.utils.instantiate(cfgs.augmentation).to(self._device)
             self._learner.set_aug(aug)
         if cfgs.use_irs:
+            with open_dict(cfgs):
+                cfgs.reward.obs_shape = observation_space['shape']
+                cfgs.reward.action_shape = action_space['shape']
+                cfgs.reward.action_type = action_type
+                cfgs.reward.device = cfgs.device
             irs = hydra.utils.instantiate(cfgs.reward)
             self._learner.set_irs(irs)
 
@@ -92,7 +114,6 @@ class OffPolicyTrainer:
                                                   num_workers=cfgs.buffer.num_workers,
                                                   pin_memory=cfgs.buffer.pin_memory,
                                                   worker_init_fn=worker_init_fn)
-
         self._replay_iter = None
 
         # training track

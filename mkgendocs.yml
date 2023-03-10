@@ -5,10 +5,60 @@ repo: https://github.com/BellmanProject/Hsuanwu  #link to sources on github
 version: main                               #link to sources on github
 
 pages:
+# xploit.encoder
+###################################################################
   - page: "xploit/encoder/base.md"
     source: "hsuanwu/xploit/encoder/base.py"
     classes:
       - BaseEncoder
+  
+  - page: "xploit/encoder/vanilla_cnn_encoder.md"
+    source: "hsuanwu/xploit/encoder/vanilla_cnn_encoder.py"
+    classes:
+      - VanillaCnnEncoder
+  
+  - page: "xploit/encoder/vanilla_mlp_encoder.md"
+    source: "hsuanwu/xploit/encoder/vanilla_mlp_encoder.py"
+    classes:
+      - VanillaMlpEncoder
+###################################################################
+
+
+# xploit.learner
+###################################################################
+  - page: "xploit/learner/drqv2.md"
+    source: "hsuanwu/xploit/learner/drqv2.py"
+    classes:
+      - Actor
+      - Critic
+      - DrQv2Agent
+
+  - page: "xploit/learner/ppg.md"
+    source: "hsuanwu/xploit/learner/ppg.py"
+    classes:
+      - PPGAgent
+###################################################################
+
+
+# xploit.storage
+###################################################################
+  - page: "xploit/storage/vanilla_replay_buffer.md"
+    source: "hsuanwu/xploit/storage/vanilla_replay_buffer.py"
+    classes:
+      - ReplayBufferStorage
+      - VanillaReplayBuffer
+
+  - page: "xploit/storage/nstep_replay_buffer.md"
+    source: "hsuanwu/xploit/storage/nstep_replay_buffer.py"
+    classes:
+      - NStepReplayBuffer
+  
+  - page: "xploit/storage/prioritized_replay_buffer.md"
+    source: "hsuanwu/xploit/storage/prioritized_replay_buffer.py"
+    classes:
+      - PrioritizedReplayBuffer
+###################################################################
+
 
 # xplore.reward
 ###################################################################

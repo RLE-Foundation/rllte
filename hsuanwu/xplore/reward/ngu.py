@@ -28,7 +28,8 @@ class CnnEncoder(nn.Module):
             nn.Conv2d(64, 32, (3, 3), stride=(1, 1)), nn.ReLU(), nn.Flatten())
 
         with torch.no_grad():
-            n_flatten = self.trunk(torch.as_tensor(np.ones_like(obs_shape)[None]).float()).shape[1]
+            sample = torch.ones(size=tuple(obs_shape)).float()
+            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
         
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
@@ -104,8 +105,8 @@ class NGU(BaseIntrinsicRewardModule):
             self.predictor = MlpEncoder(self._obs_shape, latent_dim)
             self.target = MlpEncoder(self._obs_shape, latent_dim)
         
-        self.predictor.to(self.device)
-        self.target.to(self.device)
+        self.predictor.to(self._device)
+        self.target.to(self._device)
 
         self._opt = optim.Adam(lr=lr, params=self.predictor.parameters())
 
@@ -133,8 +134,7 @@ class NGU(BaseIntrinsicRewardModule):
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
         # observations shape ((n_steps, n_envs) + obs_shape)
-        obs_tensor = torch.from_numpy(rollouts['observations'])
-        obs_tensor = obs_tensor.to(self.device)
+        obs_tensor = torch.as_tensor(rollouts['observations'], dtype=torch.float32, device=self._device)
 
         with torch.no_grad():
             for idx in range(n_envs):
@@ -175,8 +175,10 @@ class NGU(BaseIntrinsicRewardModule):
         """
         n_steps = rollouts['observations'].shape[0]
         n_envs = rollouts['observations'].shape[1]
-        obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self.ob_shape)
-        obs_tensor = obs_tensor.to(self.device)
+        obs_tensor = torch.as_tensor(
+            rollouts['observations'], 
+            dtype=torch.float32, 
+            device=self._device).reshape(n_steps * n_envs, *self._obs_shape)
 
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)

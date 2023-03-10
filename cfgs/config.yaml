@@ -1,15 +1,12 @@
 ##############################################################
 # env setup
-observation_space: ???                    # observation space of environment, to be specified later.
-action_space: ???                         # action space of environment, to be specified later.
-action_type: cont                         # action type
 frame_stack: 3                            # number of stacked frames (for image-based observations)
 action_repeat: 2                          # number of action repeat
 seed: 1                                   # random seed
 # train setup
 device: cuda                              # use which cpu?
-use_aug: True                             # use observation augmentation?
-use_irs: False                            # use intrinsic reward?
+use_aug: true                             # use observation augmentation?
+use_irs: true                            # use intrinsic reward?
 num_train_frames: 500000                  # number of frames for training. num_train_steps = num_train_frames // action_repeat
 num_seed_frames: 4000                     # initial exploration frames
 # test setup
@@ -19,17 +16,11 @@ num_test_episodes: 10                     # number of test episodes
 ##############################################################
 encoder:
   _target_: VanillaCnnEncoder             # encoder name
-  observation_space: ${observation_space}
   feature_dim: 50                         # number of features extracted.
-
 
 ##############################################################
 learner:
   _target_: ContinuousLearner             # learner type
-  observation_space: ${observation_space}
-  action_space: ${action_space}
-  device: ${device}                       
-  feature_dim: ${encoder.feature_dim}
   hidden_dim: 1024                        # size of the hidden layers.
   lr: 1e-4                                # learning rate
   critic_target_tau: 0.01                 
@@ -62,9 +53,9 @@ augmentation:
 ##############################################################
 reward:
   _target_: RE3
-  observation_space: ${observation_space}
-  action_space: ${action_space}
-  action_type: ${action_type}
+  beta: 0.05
+  kappa: 0.00001
+  latent_dim: 128
 
 ##############################################################
 hydra:

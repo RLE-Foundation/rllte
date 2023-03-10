@@ -24,16 +24,7 @@ class BaseIntrinsicRewardModule(object):
             device: torch.device,
             beta: float,
             kappa: float) -> None:
-        # self._obs_shape = env.observation_space.shape
-        # if env.action_space.__class__.__name__ == 'Discrete':
-        #     self._action_shape = env.action_space.n
-        #     self._action_type = 'dis'
-        # elif env.action_space.__class__.__name__ == 'Box':
-        #     self._action_shape = env.action_space.shape
-        #     self._action_type = 'cont'
-        # else:
-        #     raise NotImplementedError
-        
+
         self._obs_shape = obs_shape
         self._action_shape = action_shape
         self._action_type = action_type

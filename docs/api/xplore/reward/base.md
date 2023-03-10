@@ -2,10 +2,11 @@
 
 
 ## BaseIntrinsicRewardModule
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L3)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L5)
 ```python 
 BaseIntrinsicRewardModule(
-   env: Env, device: torch.device, beta: float, kappa: float
+   obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
+   beta: float, kappa: float
 )
 ```
 
@@ -16,7 +17,9 @@ Base class of intrinsic reward module.
 
 **Args**
 
-* **env**  : The environment.
+* **obs_shape**  : Data shape of observation.
+* **action_space**  : Data shape of action.
+* **action_type**  : Continuous or discrete action. "cont" or "dis".
 * **device**  : Device (cpu, cuda, ...) on which the code should be run.
 * **beta**  : The initial weighting coefficient of the intrinsic rewards.
 * **kappa**  : The decay rate.
@@ -31,7 +34,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L37)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L46)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -56,7 +59,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L52)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L62)
 ```python
 .update(
    rollouts: Dict

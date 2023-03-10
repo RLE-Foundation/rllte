@@ -1,17 +1,18 @@
 - <font color="#009485"><b>Xploit</b></font>: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
-        - [VanillaCnnEncoder]()
-        - [VanillaMlpEncoder]()
+        - [BaseEncoder](../../api/xploit/encoder/base)
+        - [VanillaCnnEncoder](../../api/xploit/encoder/vanilla_cnn_encoder)
+        - [VanillaMlpEncoder](../../api/xploit/encoder/vanilla_mlp_encoder)
 
     + **Learner**: *Agent for interacting and learning.*
-        - [ContinuousLearner]()
-        - [DiscreteLearner]()
+        - [ContinuousLearner (DrQ-v2)](../../api/xploit/learner/drqv2)
+        - [DiscreteLearner (PPG)](../../api/xploit/learner/ppg)
 
     + **Storage**: *Buffer for storing collected experiences.*
-        - [VanillaReplayBuffer]()
-        - [NStepReplayBuffer]()
-        - [PrioritizedReplayBuffer]()
-        - [VanillaRolloutBuffer]()
+        - [VanillaReplayBuffer](../../api/xploit/storage/vanilla_replay_buffer)
+        - [NStepReplayBuffer](../../api/xploit/storage/nstep_replay_buffer)
+        - [PrioritizedReplayBuffer](../../api/xploit/storage/prioritized_replay_buffer)
+        - [VanillaRolloutBuffer](../../api/xploit/storage/vanilla_rollout_buffer)
 
 - <font color="#009485"><b>Xplore</b></font>: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
     + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
