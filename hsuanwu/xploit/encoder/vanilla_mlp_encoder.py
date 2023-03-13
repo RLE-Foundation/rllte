@@ -15,7 +15,7 @@ class VanillaMlpEncoder(BaseEncoder):
         hidden_dim: Number of units per hidden layer.
     
     Returns:
-        Mlp-based encoder.
+        Mlp-based encoder instance.
     """
     def __init__(self, observation_space: Space, feature_dim: int = 64, hidden_dim: int = 256) -> None:
         super().__init__(observation_space, feature_dim)

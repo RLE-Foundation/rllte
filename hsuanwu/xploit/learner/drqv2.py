@@ -10,7 +10,7 @@ class Actor(nn.Module):
 
     Args:
         action_space: Action space of the environment.
-        features_dim: Number of features accepted.
+        feature_dim: Number of features accepted.
         hidden_dim: Number of units per hidden layer.
     
     Returns:
@@ -44,7 +44,7 @@ class Critic(nn.Module):
 
     Args:
         action_space: Action space of the environment.
-        features_dim: Number of features accepted.
+        feature_dim: Number of features accepted.
         hidden_dim: Number of units per hidden layer.
     
     Returns:
@@ -88,6 +88,7 @@ class DrQv2Agent:
     Args:
         observation_space: Observation space of the environment.
         action_space: Action shape of the environment.
+        device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         hidden_dim: The size of the hidden layers.
         lr: The learning rate.
@@ -154,6 +155,7 @@ class DrQv2Agent:
             self.encoder.train(training)
     
     def set_encoder(self, encoder):
+        # create encoder
         self.encoder = encoder
         self.encoder.train()
         self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=self.lr)

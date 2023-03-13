@@ -48,19 +48,25 @@ class VanillaRolloutBuffer:
         self._storage['values'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
         self._storage['returns'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
 
-        self.global_step = 0
+        self._global_step = 0
 
 
-    def add(self, obs, actions, rewards, dones, log_probs, values, returns):
-        self._storage['obs'][self.global_step].copy_(obs)
-        self._storage['actions'][self.global_step].copy_(actions)
-        self._storage['rewards'][self.global_step].copy_(rewards)
-        self._storage['dones'][self.global_step].copy_(dones)
-        self._storage['log_probs'][self.global_step].copy_(log_probs)
-        self._storage['values'][self.global_step].copy_(values)
-        self._storage['returns'][self.global_step].copy_(returns)
+    def add(self, obs, actions, rewards, dones, log_probs, values) -> None:
+        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        actions = torch.as_tensor(actions, dtype=torch.float32, device=self._device)
+        rewards = torch.as_tensor(rewards, dtype=torch.float32, device=self._device)
+        dones = torch.as_tensor(dones, dtype=torch.float32, device=self._device)
+        log_probs = torch.as_tensor(log_probs, dtype=torch.float32, device=self._device)
+        values = torch.as_tensor(values, dtype=torch.float32, device=self._device)
 
-        self.global_step = (self.global_step + 1) % self.num_steps
+        self._storage['obs'][self._global_step].copy_(obs)
+        self._storage['actions'][self._global_step].copy_(actions)
+        self._storage['rewards'][self._global_step].copy_(rewards)
+        self._storage['dones'][self._global_step].copy_(dones)
+        self._storage['log_probs'][self._global_step].copy_(log_probs)
+        self._storage['values'][self._global_step].copy_(values)
+
+        self._global_step = (self._global_step + 1) % self._num_steps
 
     def sample(self,):
         pass
@@ -75,28 +81,7 @@ class VanillaRolloutBuffer:
                         next_value,
                         use_gae,
                         gamma,
-                        gae_lambda,
-                        use_proper_time_limits=True):
-        if use_proper_time_limits:
-            if use_gae:
-                self.value_preds[-1] = next_value
-                gae = 0
-                for step in reversed(range(self.rewards.size(0))):
-                    delta = self.rewards[step] + gamma * self.value_preds[
-                        step + 1] * self.masks[step +
-                                               1] - self.value_preds[step]
-                    gae = delta + gamma * gae_lambda * self.masks[step +
-                                                                  1] * gae
-                    gae = gae * self.bad_masks[step + 1]
-                    self.returns[step] = gae + self.value_preds[step]
-            else:
-                self.returns[-1] = next_value
-                for step in reversed(range(self.rewards.size(0))):
-                    self.returns[step] = (self.returns[step + 1] * \
-                        gamma * self.masks[step + 1] + self.rewards[step]) * self.bad_masks[step + 1] \
-                        + (1 - self.bad_masks[step + 1]) * self.value_preds[step]
-        else:
-            if use_gae:
+                        gae_lambda):
                 self.value_preds[-1] = next_value
                 gae = 0
                 for step in reversed(range(self.rewards.size(0))):
@@ -106,11 +91,6 @@ class VanillaRolloutBuffer:
                     gae = delta + gamma * gae_lambda * self.masks[step +
                                                                   1] * gae
                     self.returns[step] = gae + self.value_preds[step]
-            else:
-                self.returns[-1] = next_value
-                for step in reversed(range(self.rewards.size(0))):
-                    self.returns[step] = self.returns[step + 1] * \
-                        gamma * self.masks[step + 1] + self.rewards[step]
 
     def feed_forward_generator(self,
                                advantages,

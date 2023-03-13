@@ -11,6 +11,8 @@ def soft_update_params(net, target_net, tau):
         target_param.data.copy_(tau * param.data +
                                 (1 - tau) * target_param.data)
 
+
+
 def network_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
@@ -21,6 +23,8 @@ def network_init(m):
         nn.init.orthogonal_(m.weight.data, gain)
         if hasattr(m.bias, 'data'):
             m.bias.data.fill_(0.0)
+
+
 
 def schedule(schdl, step):
     try:
@@ -44,8 +48,12 @@ def schedule(schdl, step):
                 return (1.0 - mix) * final1 + mix * final2
     raise NotImplementedError(schdl)
 
+
+
 def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
+
+
 
 def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     """Decreases the learning rate linearly"""
@@ -53,10 +61,5 @@ def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-def cleanup_log_dir(log_dir):
-    try:
-        os.makedirs(log_dir)
-    except OSError:
-        files = glob.glob(os.path.join(log_dir, '*.monitor.csv'))
-        for f in files:
-            os.remove(f)
+
+

@@ -1,3 +1,4 @@
 from .vanilla_replay_buffer import VanillaReplayBuffer
+from .vanilla_rollout_buffer import VanillaRolloutBuffer
 from .nstep_replay_buffer import NStepReplayBuffer
 from .prioritized_replay_buffer import PrioritizedReplayBuffer
