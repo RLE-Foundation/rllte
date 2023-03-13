@@ -34,8 +34,7 @@ class FrameStack(gym.Wrapper):
         return np.concatenate(list(self._frames), axis=0)
 
 def make_dmc_env(
-    domain_name,
-    task_name,
+    env_id,
     resource_files,
     img_source,
     total_frames,
@@ -50,6 +49,7 @@ def make_dmc_env(
     episode_length=1000,
     environment_kwargs=None
 ):
+    domain_name, task_name = env_id.split('_')
     env_id = 'dmc_%s_%s_%s-v1' % (domain_name, task_name, seed)
 
     if from_pixels:
