@@ -5,11 +5,10 @@ theme:
   name: material
   logo: assets/images/icon.svg
   favicon: assets/images/icon.svg
-  # custom_dir: docs/theme_override_home/
   palette:
-    - scheme: default
+    - scheme: hsuanwu
       primary: teal
-      accent: indigo
+      accent: teal
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
