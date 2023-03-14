@@ -8,11 +8,14 @@ class VanillaRolloutBuffer:
     """Vanilla rollout buffer for on-policy algorithms.
     
     Args:
+        device: Device (cpu, cuda, ...) on which the code should be run.
         obs_shape: The data shape of observations.
         action_shape: The data shape of actions.
         action_type: The type of actions, 'cont' or 'dis'.
         num_steps: The sample steps of per rollout.
         num_envs: The number of parallel environments.
+        gamma: discount factor.
+        gae_lambda: Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
         Vanilla rollout buffer.
@@ -23,10 +26,16 @@ class VanillaRolloutBuffer:
                  action_shape: Tuple,
                  action_type: str,
                  num_steps: int,
-                 num_envs: int) -> None:
+                 num_envs: int,
+                 gamma: float = 0.99,
+                 gae_lambda: float = 0.95) -> None:
+        self._obs_shape = obs_shape
+        self._action_shape = action_shape
+        self._device = torch.device(device)
         self._num_steps = num_steps
         self._num_envs = num_envs
-        self._device = torch.device(device)
+        self._gamma = gamma
+        self._gae_lambda = gae_lambda
 
         self._storage = dict()
         # transition part
@@ -34,100 +43,128 @@ class VanillaRolloutBuffer:
                                            dtype=torch.float32, 
                                            device=self._device)
         if action_type == 'dis':
+            self._action_dim = 1
             self._storage['actions']  = torch.empty(size=(num_steps, num_envs, 1), 
                                                     dtype=torch.float32, 
                                                     device=self._device)
         if action_type == 'cont':
-            self._storage['actions'] = torch.empty(size=(num_steps, num_envs, action_shape[0]), 
+            self._action_dim = action_shape[0]
+            self._storage['actions'] = torch.empty(size=(num_steps, num_envs, self._action_dim), 
                                                    dtype=torch.float32, 
                                                    device=self._device)
         self._storage['rewards'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self._storage['dones'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self._storage['dones'] = torch.empty(size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device)
+        # first next_done
+        self._storage['dones'][0].copy_(torch.zeros(num_envs, 1).to(self._device))
         # extra part
         self._storage['log_probs'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
         self._storage['values'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
         self._storage['returns'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self._storage['advantages'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
 
         self._global_step = 0
+    
+    def get(self, key):
+        """Get stored experiences.
 
+        Args:
+            key: Keyword of the storage dictionary, e.g., "obs".
+        
+        Returns:
+            Value of the storage dictionary.
+        """
+        return self._storage[key]
+    
 
-    def add(self, obs, actions, rewards, dones, log_probs, values) -> None:
-        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
-        actions = torch.as_tensor(actions, dtype=torch.float32, device=self._device)
-        rewards = torch.as_tensor(rewards, dtype=torch.float32, device=self._device)
-        dones = torch.as_tensor(dones, dtype=torch.float32, device=self._device)
-        log_probs = torch.as_tensor(log_probs, dtype=torch.float32, device=self._device)
-        values = torch.as_tensor(values, dtype=torch.float32, device=self._device)
+    def add(self, obs: Any, actions: Any, rewards: Any, dones: Any, log_probs: Any, values: Any) -> None:
+        """Add sampled transitions into storage.
+        
+        Args:
+            obs: Observations.
+            actions: Actions.
+            rewards: Rewards.
+            dones: Dones.
+            log_probs: Log of the probability evaluated at `actions`.
+            values: Estimated values.
 
+        Returns:
+            None.
+        """
         self._storage['obs'][self._global_step].copy_(obs)
         self._storage['actions'][self._global_step].copy_(actions)
         self._storage['rewards'][self._global_step].copy_(rewards)
-        self._storage['dones'][self._global_step].copy_(dones)
+        self._storage['dones'][self._global_step + 1].copy_(dones)
         self._storage['log_probs'][self._global_step].copy_(log_probs)
         self._storage['values'][self._global_step].copy_(values)
 
         self._global_step = (self._global_step + 1) % self._num_steps
+        
 
-    def sample(self,):
-        pass
+    def reset(self) -> None:
+        """Reset the terminal state of each env.
 
-    def after_update(self):
-        self.obs[0].copy_(self.obs[-1])
-        self.recurrent_hidden_states[0].copy_(self.recurrent_hidden_states[-1])
-        self.masks[0].copy_(self.masks[-1])
-        self.bad_masks[0].copy_(self.bad_masks[-1])
+        """
+        self._storage['dones'][0].copy_(self._storage['dones'][-1])
+        
 
-    def compute_returns(self,
-                        next_value,
-                        use_gae,
-                        gamma,
-                        gae_lambda):
-                self.value_preds[-1] = next_value
-                gae = 0
-                for step in reversed(range(self.rewards.size(0))):
-                    delta = self.rewards[step] + gamma * self.value_preds[
-                        step + 1] * self.masks[step +
-                                               1] - self.value_preds[step]
-                    gae = delta + gamma * gae_lambda * self.masks[step +
-                                                                  1] * gae
-                    self.returns[step] = gae + self.value_preds[step]
+    def compute_returns_and_advantages(self, last_values: Tensor) -> None:
+        """Perform generalized advantage estimation (GAE).
+        
+        Args:
+            last_values: Estimated values of the last step.
+            gamma: Discount factor.
+            gae_lamdba: Coefficient of GAE.
+        
+        Returns:
+            None.
+        """
+        gae = 0
+        for step in reversed(range(self._num_steps)):
+            if step == self._num_steps - 1:
+                next_non_terminal = 1.0 - self._storage['dones'][-1]
+                next_values = last_values
+            else:
+                next_non_terminal = 1.0 - self._storage['dones'][step + 1]
+                next_values = self._storage['values'][step + 1]
+            delta = self._storage['rewards'][step] + self._gamma * next_values * next_non_terminal - self._storage['values'][step]
+            gae = delta + self._gamma * self._gae_lambda * next_non_terminal * gae
+            self._storage['advantages'][step] = gae
+        
+        self._storage['returns'] = self._storage['advantages'] + self._storage['values']
 
-    def feed_forward_generator(self,
-                               advantages,
-                               num_mini_batch=None,
-                               mini_batch_size=None):
-        num_steps, num_processes = self.rewards.size()[0:2]
-        batch_size = num_processes * num_steps
 
-        if mini_batch_size is None:
-            assert batch_size >= num_mini_batch, (
-                "PPO requires the number of processes ({}) "
-                "* number of steps ({}) = {} "
-                "to be greater than or equal to the number of PPO mini batches ({})."
-                "".format(num_processes, num_steps, num_processes * num_steps,
-                          num_mini_batch))
-            mini_batch_size = batch_size // num_mini_batch
+    def generator(self, num_mini_batch: int = None) -> Batch:
+        """Sample data from storage.
+        
+        Args:
+            num_mini_batch: Number of mini-batches
+
+        Returns:
+            Batch data.
+        """
+        batch_size = self._num_envs * self._num_steps
+
+        assert batch_size >= num_mini_batch, (
+            "PPO requires the number of processes ({}) "
+            "* number of steps ({}) = {} "
+            "to be greater than or equal to the number of PPO mini batches ({})."
+            "".format(self._num_envs, self._num_steps, batch_size, num_mini_batch))
+        mini_batch_size = batch_size // num_mini_batch
+
         sampler = BatchSampler(
             SubsetRandomSampler(range(batch_size)),
             mini_batch_size,
             drop_last=True)
+        
         for indices in sampler:
-            obs_batch = self.obs[:-1].view(-1, *self.obs.size()[2:])[indices]
-            recurrent_hidden_states_batch = self.recurrent_hidden_states[:-1].view(
-                -1, self.recurrent_hidden_states.size(-1))[indices]
-            actions_batch = self.actions.view(-1,
-                                              self.actions.size(-1))[indices]
-            value_preds_batch = self.value_preds[:-1].view(-1, 1)[indices]
-            return_batch = self.returns[:-1].view(-1, 1)[indices]
-            masks_batch = self.masks[:-1].view(-1, 1)[indices]
-            old_action_log_probs_batch = self.action_log_probs.view(-1,
-                                                                    1)[indices]
-            if advantages is None:
-                adv_targ = None
-            else:
-                adv_targ = advantages.view(-1, 1)[indices]
+            batch_obs = self._storage['obs'].view(-1, *self._obs_shape)[indices]
+            batch_actions = self._storage['actions'].view(-1, self._action_dim)[indices]
+            batch_values = self._storage['values'].view(-1, 1)[indices]
+            batch_returns = self._storage['returns'].view(-1, 1)[indices]
+            batch_dones = self._storage['dones'][:-1].view(-1, 1)[indices]
+            batch_old_log_probs = self._storage['log_probs'].view(-1, 1)[indices]
+            adv_targ = self._storage['advantages'].view(-1, 1)[indices]
 
-            yield obs_batch, recurrent_hidden_states_batch, actions_batch, \
-                value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ
+            yield batch_obs, batch_actions, batch_values, batch_returns, batch_dones, batch_old_log_probs, adv_targ
 
 

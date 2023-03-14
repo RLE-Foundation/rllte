@@ -10,7 +10,7 @@ from hsuanwu.common.logger import Logger
 
 # env part
 from hsuanwu.env import make_atari_env
-from hsuanwu.xploit.encoder import ResNetEncoder
+from hsuanwu.xploit.encoder import ResNetEncoder, VanillaCnnEncoder
 from hsuanwu.xploit.storage import VanillaRolloutBuffer
 from hsuanwu.xploit.learner import PPOAgent
 from hsuanwu.xplore.distribution import Categorical
@@ -24,10 +24,10 @@ torch.backends.cudnn.benchmark = True
 num_steps = 256
 num_envs = 2
 
-train_env = make_atari_env(env_id='Assault-v5', num_envs=num_envs, seed=0, frame_stack=4)
-test_env = make_atari_env(env_id='Assault-v5', num_envs=num_envs, seed=0, frame_stack=4)
-
 device = torch.device('cuda')
+train_env = make_atari_env(env_id='Assault-v5', num_envs=num_envs, seed=0, frame_stack=4, device=device)
+test_env = make_atari_env(env_id='Assault-v5', num_envs=num_envs, seed=0, frame_stack=4, device=device)
+
 
 encoder = ResNetEncoder(observation_space=train_env.observation_space, feature_dim=256).to(device)
 
@@ -51,15 +51,34 @@ rollout_buffer = VanillaRolloutBuffer(device='cuda',
                                       num_envs=num_envs)
 
 obs = train_env.reset()
-for step in range(num_steps):
-    with torch.no_grad():
-        actions, values, log_probs, entropy = learner.act(obs, training=True, step=0)
-    next_obs, rewards, dones, info = train_env.step(actions.squeeze(1).cpu().numpy())
-    print(actions.shape, values.shape, rewards.shape, log_probs.size(), entropy.size())
+num_updates = 10000000 // num_envs // num_steps
 
-    rollout_buffer.add(obs=obs, 
-                       actions=actions, 
-                       rewards=np.expand_dims(rewards, 1), 
-                       dones=np.expand_dims(dones, 1), 
-                       log_probs=log_probs, 
-                       values=values)
+for update in range(10):
+    for step in range(num_steps):
+        with torch.no_grad():
+            actions, values, log_probs, entropy = learner.act(obs, training=True, step=0)
+        next_obs, rewards, dones, infos = train_env.step(actions)
+        # print(actions.shape, values.shape, rewards.shape, log_probs.size(), entropy.size())
+
+        rollout_buffer.add(obs=obs, 
+                           actions=actions, 
+                           rewards=rewards, 
+                           dones=dones, 
+                           log_probs=log_probs, 
+                           values=values)
+    
+        obs = next_obs
+    
+    # get the value estimation of the last step
+    with torch.no_grad():
+        last_values = learner.get_value(next_obs).detach()
+    
+    # perform return and advantage estimation
+    rollout_buffer.compute_returns_and_advantages(last_values)
+
+    # policy update
+    train_metrics = learner.update(rollout_buffer)
+    print(train_metrics)
+
+    # reset buffer
+    rollout_buffer.reset()

@@ -13,11 +13,13 @@ from hsuanwu.env.atari.wrappers import (NoopResetEnv,
                                         MaxAndSkipEnv,
                                         EpisodicLifeEnv,
                                         FireResetEnv)
+from hsuanwu.env.utils import TorchVecEnvWrapper
 
 def make_atari_env(env_id: str = 'Alien-v5',
                    num_envs: int = 8,
                    seed: int = 0,
                    frame_stack: int = 4,
+                   device: torch.device = 'cuda'
                    ) -> Env:
     """Build Atari environments.
 
@@ -26,6 +28,7 @@ def make_atari_env(env_id: str = 'Alien-v5',
         num_envs: Number of parallel environments.
         seed: Random seed.
         frame_stack: Number of stacked frames.
+        device: Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.
@@ -54,5 +57,6 @@ def make_atari_env(env_id: str = 'Alien-v5',
 
     env_id = 'ALE/' + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
+    envs = SyncVectorEnv(envs)
 
-    return SyncVectorEnv(envs)
+    return TorchVecEnvWrapper(envs, device)
