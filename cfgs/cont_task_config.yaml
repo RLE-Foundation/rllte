@@ -1,0 +1,76 @@
+##############################################################
+# env setup
+frame_stack: 3                            # number of stacked frames (for image-based observations)
+action_repeat: 2                          # number of action repeat
+seed: 1                                   # random seed
+# train setup
+device: cuda                              # use which cpu?
+use_aug: true                             # use observation augmentation?
+use_irs: true                            # use intrinsic reward?
+num_train_frames: 500000                  # number of frames for training. num_train_steps = num_train_frames // action_repeat
+num_seed_frames: 4000                     # initial exploration frames
+# test setup
+test_every_frames: 10000                  # test interval
+num_test_episodes: 10                     # number of test episodes
+
+##############################################################
+encoder:
+  _target_: VanillaCnnEncoder             # encoder name
+  feature_dim: 50                         # number of features extracted.
+
+##############################################################
+learner:
+  _target_: ContinuousLearner             # learner type
+  hidden_dim: 1024                        # size of the hidden layers.
+  lr: 1e-4                                # learning rate
+  critic_target_tau: 0.01                 
+  num_expl_steps: 2000
+  update_every_steps: 2
+  stddev_schedule: linear(1.0, 0.1, 100000)
+  stddev_clip: 0.3
+
+##############################################################
+buffer:
+  _target_: NStepReplayBuffer
+  buffer_size: 500000
+  batch_size: 256
+  pin_memory: true
+  num_workers: 4
+  n_step: 3
+  discount: 0.99
+  fetch_every: 1000
+  save_snapshot: false
+
+##############################################################
+distribution:
+  _target_: TruncatedNormal
+
+##############################################################
+augmentation:
+  _target_: RandomShift
+  pad: 4
+
+##############################################################
+reward:
+  _target_: RE3
+  beta: 0.05
+  kappa: 0.00001
+  latent_dim: 128
+
+##############################################################
+hydra:
+  run:
+    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: true
+  # launcher:
+  #   timeout_min: 4300
+  #   cpus_per_task: 10
+  #   gpus_per_node: 1
+  #   tasks_per_node: 1
+  #   mem_gb: 160
+  #   nodes: 1
+  #   submitit_folder: ./exp/${now:%Y.%m.%d}/${now:%H%M%S}_${agent_cfg.experiment}/.slurm

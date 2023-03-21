@@ -5,16 +5,14 @@ import datetime
 from hsuanwu.common.typing import *
 from hsuanwu.common.logging import *
 
-TRAIN_MSG_FORMAT = [('frame', 'F', 'int'), 
-                    ('step', 'S', 'int'),
+TRAIN_MSG_FORMAT = [('step', 'S', 'int'),
                     ('episode', 'E', 'int'), 
                     ('episode_length', 'L', 'int'),
                     ('episode_reward', 'R', 'float'),
                     ('fps', 'FPS', 'float'),
                     ('total_time', 'T', 'time')]
 
-TEST_MSG_FORMAT = [('frame', 'F', 'int'), 
-                   ('step', 'S', 'int'),
+TEST_MSG_FORMAT = [('step', 'S', 'int'),
                    ('episode', 'E', 'int'), 
                    ('episode_length', 'L', 'int'),
                    ('episode_reward', 'R', 'float'),

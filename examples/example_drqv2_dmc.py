@@ -10,8 +10,7 @@ from hsuanwu.common.engine import OffPolicyTrainer
 
 import hydra
 
-train_env = make_dmc_env(domain_name='cartpole', 
-                       task_name='balance', 
+train_env = make_dmc_env(env_id='cartpole_balance', 
                        resource_files=None, 
                        img_source=None,
                        total_frames=None,
@@ -20,8 +19,7 @@ train_env = make_dmc_env(domain_name='cartpole',
                        from_pixels=True, 
                        frame_skip=2, frame_stack=3)
 
-test_env = make_dmc_env(domain_name='cartpole', 
-                       task_name='balance', 
+test_env = make_dmc_env(env_id='cartpole_balance',
                        resource_files=None, 
                        img_source=None,
                        total_frames=None,
