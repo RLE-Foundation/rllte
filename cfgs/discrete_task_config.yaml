@@ -1,0 +1,57 @@
+seed: 1 
+device: cuda                            
+use_aug: false                           
+use_irs: false                            
+num_train_steps: 10000000                                      
+num_steps: 256
+num_envs: 8
+# test setup
+test_every_episodes: 10
+num_test_episodes: 10                
+
+encoder:
+  _target_: ResNetEncoder
+  feature_dim: 256  
+
+learner:
+  _target_: PPOAgent         
+  hidden_dim: 1024
+  lr: 0.0001
+  eps: 0.00001
+  clip_range: 0.2
+  n_epochs: 5
+  num_mini_batch: 4
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+
+buffer:
+  _target_: VanillaRolloutBuffer
+  discount: 0.99
+  gae_lambda: 0.95
+  
+
+distribution:
+  _target_: Categorical
+
+##############################################################
+augmentation:
+  _target_: RandomShift
+  pad: 4
+
+##############################################################
+reward:
+  _target_: RE3
+  beta: 0.05
+  kappa: 0.00001
+  latent_dim: 128
+
+##############################################################
+hydra:
+  run:
+    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: true

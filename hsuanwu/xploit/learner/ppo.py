@@ -25,7 +25,7 @@ class ActorCritic(nn.Module):
         super().__init__()
 
         self.trunk = nn.Sequential(nn.Linear(feature_dim, hidden_dim), nn.ReLU())
-        self.actor = nn.Linear(hidden_dim, action_space.n)
+        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
         self.critic = nn.Linear(hidden_dim, 1)
 
         self.apply(utils.network_init)
@@ -47,6 +47,7 @@ class PPOAgent:
     Args:
         observation_space: Observation space of the environment.
         action_space: Action shape of the environment.
+        action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         hidden_dim: The size of the hidden layers.
@@ -67,7 +68,7 @@ class PPOAgent:
                  action_space: Space,
                  action_type: str,
                  device: torch.device = 'cuda',
-                 feature_dim: int = 50,
+                 feature_dim: int = 256,
                  hidden_dim: int = 1024,
                  lr: float = 1e-4,
                  eps: float = 1e-5,
@@ -99,12 +100,18 @@ class PPOAgent:
 
         # create optimizers
         self._actor_critic_opt = torch.optim.Adam(self._actor_critic.parameters(), lr=lr, eps=eps)
+        self.train()
 
         # placeholder for augmentation and intrinsic reward function
         self._dist = None
-        self.aug = None
-        self.irs = None
+        self._aug = None
+        self._irs = None
     
+    def train(self, training=True):
+        self.training = training
+        self._actor_critic.train(training)
+        if self._encoder is not None:
+            self._encoder.train(training)
 
     def set_encoder(self, encoder) -> None:
         """Set encoder.
@@ -173,6 +180,7 @@ class PPOAgent:
         encoded_obs = self._encoder(obs)
         features = self._actor_critic.trunk(encoded_obs)
         value = self._actor_critic.critic(features)
+        
         return value
     
 

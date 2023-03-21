@@ -27,6 +27,5 @@ class Categorical(pyd.Categorical):
             .unsqueeze(-1)
         )
 
-    @property
     def mode(self) -> Tensor:
         return self.probs.argmax(dim=-1, keepdim=True)

@@ -44,7 +44,6 @@ class BasePolicyTrainer:
         random.seed(cfgs.seed)
         # debug
         self._logger.log(INFO, 'Invoking Hsuanwu Engine...')
-        self._logger.log(DEBUG, 'Checking the Compatibility of Modules...')
         # preprocess the cfgs
         self._cfgs = self._process_cfgs(cfgs)
         # training track
@@ -92,8 +91,19 @@ class BasePolicyTrainer:
             # for learner
             cfgs.learner.observation_space = observation_space
             cfgs.learner.action_space = action_space
+            cfgs.learner.action_type = action_type
             cfgs.learner.device = cfgs.device
             cfgs.learner.feature_dim = cfgs.encoder.feature_dim
+
+        # set observation and action shape for rollout buffer.
+        if 'Rollout' in cfgs.buffer._target_:
+            with open_dict(cfgs):
+                cfgs.buffer.device = cfgs.device
+                cfgs.buffer.obs_shape = obs_shape
+                cfgs.buffer.action_shape = action_space['shape']
+                cfgs.buffer.action_type = action_type
+                cfgs.buffer.num_steps = cfgs.num_steps
+                cfgs.buffer.num_envs = cfgs.num_envs
         
         # xplore part
         if cfgs.use_irs:

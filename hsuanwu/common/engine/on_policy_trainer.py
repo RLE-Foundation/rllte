@@ -34,10 +34,11 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         self._learner.set_encoder(encoder)
-        self._replay_buffer = hydra.utils.instantiate(self._cfgs.buffer)
+        self._rollout_buffer = hydra.utils.instantiate(self._cfgs.buffer)
 
         # xplore part
-        self._learner.dist = hydra.utils.get_class(self._cfgs.distribution._target_)
+        dist = hydra.utils.get_class(self._cfgs.distribution._target_)
+        self._learner.set_dist(dist)
         if self._cfgs.use_aug:
             aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
             self._learner.set_aug(aug)
@@ -66,7 +67,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         for update in range(num_updates):
             # try to test
-            if update % self._test_every_episodes:
+            if update % self._test_every_episodes == 0:
                 test_metrics = self.test()
                 self._logger.log(level=TEST, msg=test_metrics)
 

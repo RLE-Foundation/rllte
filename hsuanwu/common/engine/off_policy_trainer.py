@@ -38,7 +38,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._replay_buffer = hydra.utils.instantiate(self._cfgs.buffer)
 
         # xplore part
-        self._learner.dist = hydra.utils.get_class(self._cfgs.distribution._target_)
+        dist = hydra.utils.get_class(self._cfgs.distribution._target_)
+        self._learner.set_dist(dist)
         if self._cfgs.use_aug:
             aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
             self._learner.set_aug(aug)

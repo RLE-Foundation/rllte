@@ -88,6 +88,7 @@ class DrQv2Agent:
     Args:
         observation_space: Observation space of the environment.
         action_space: Action shape of the environment.
+        action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         hidden_dim: The size of the hidden layers.
@@ -104,6 +105,7 @@ class DrQv2Agent:
     def __init__(self,
                 observation_space: Space, 
                 action_space: Space,
+                action_type: str,
                 device: torch.device = 'cuda',
                 feature_dim: int = 50,
                 hidden_dim: int = 1024,
@@ -113,6 +115,7 @@ class DrQv2Agent:
                 update_every_steps: int = 2,
                 stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
                 stddev_clip: float = 0.3) -> None:
+        self._action_type = action_type
         self.device = torch.device(device)
         self.lr = lr
         self.critic_target_tau = critic_target_tau

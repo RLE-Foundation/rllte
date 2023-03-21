@@ -14,7 +14,7 @@ class VanillaRolloutBuffer:
         action_type: The type of actions, 'cont' or 'dis'.
         num_steps: The sample steps of per rollout.
         num_envs: The number of parallel environments.
-        gamma: discount factor.
+        discount: discount factor.
         gae_lambda: Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
@@ -27,14 +27,14 @@ class VanillaRolloutBuffer:
                  action_type: str,
                  num_steps: int,
                  num_envs: int,
-                 gamma: float = 0.99,
+                 discount: float = 0.99,
                  gae_lambda: float = 0.95) -> None:
         self._obs_shape = obs_shape
         self._action_shape = action_shape
         self._device = torch.device(device)
         self._num_steps = num_steps
         self._num_envs = num_envs
-        self._gamma = gamma
+        self._discount = discount
         self._gae_lambda = gae_lambda
 
         self._storage = dict()
@@ -126,8 +126,8 @@ class VanillaRolloutBuffer:
             else:
                 next_non_terminal = 1.0 - self._storage['dones'][step + 1]
                 next_values = self._storage['values'][step + 1]
-            delta = self._storage['rewards'][step] + self._gamma * next_values * next_non_terminal - self._storage['values'][step]
-            gae = delta + self._gamma * self._gae_lambda * next_non_terminal * gae
+            delta = self._storage['rewards'][step] + self._discount * next_values * next_non_terminal - self._storage['values'][step]
+            gae = delta + self._discount * self._gae_lambda * next_non_terminal * gae
             self._storage['advantages'][step] = gae
         
         self._storage['returns'] = self._storage['advantages'] + self._storage['values']
