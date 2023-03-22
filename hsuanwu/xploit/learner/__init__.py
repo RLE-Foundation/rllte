@@ -1,3 +1,4 @@
-from .drqv2 import DrQv2Agent as ContinuousLearner
-from .ppg import PPGAgent as DiscreteLearner
-from .ppo import PPOAgent
+from .base import BaseLearner
+from .drqv2 import DrQv2Learner as ContinuousLearner
+from .ppg import PPGLearner as DiscreteLearner
+from .ppo import PPOLearner

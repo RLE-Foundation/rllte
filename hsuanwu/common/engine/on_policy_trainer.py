@@ -99,7 +99,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._rollout_buffer.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._learner.update(self._rollout_buffer)
+            metrics = self._learner.update(self._rollout_buffer, episode=self._global_episode)
 
             # reset buffer
             self._rollout_buffer.reset()

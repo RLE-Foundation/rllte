@@ -37,30 +37,29 @@ class VanillaRolloutBuffer:
         self._discount = discount
         self._gae_lambda = gae_lambda
 
-        self._storage = dict()
         # transition part
-        self._storage['obs'] = torch.empty(size=(num_steps, num_envs, *obs_shape), 
-                                           dtype=torch.float32, 
-                                           device=self._device)
+        self.obs = torch.empty(size=(num_steps, num_envs, *obs_shape),
+                               dtype=torch.float32,
+                               device=self._device)
         if action_type == 'dis':
             self._action_dim = 1
-            self._storage['actions']  = torch.empty(size=(num_steps, num_envs, 1), 
+            self.actions  = torch.empty(size=(num_steps, num_envs, 1), 
                                                     dtype=torch.float32, 
                                                     device=self._device)
         if action_type == 'cont':
             self._action_dim = action_shape[0]
-            self._storage['actions'] = torch.empty(size=(num_steps, num_envs, self._action_dim), 
+            self.actions = torch.empty(size=(num_steps, num_envs, self._action_dim), 
                                                    dtype=torch.float32, 
                                                    device=self._device)
-        self._storage['rewards'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self._storage['dones'] = torch.empty(size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.rewards = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.dones = torch.empty(size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device)
         # first next_done
-        self._storage['dones'][0].copy_(torch.zeros(num_envs, 1).to(self._device))
+        self.dones[0].copy_(torch.zeros(num_envs, 1).to(self._device))
         # extra part
-        self._storage['log_probs'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self._storage['values'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self._storage['returns'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self._storage['advantages'] = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.log_probs = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.values = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.values = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.advantages = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
 
         self._global_step = 0
     
@@ -90,12 +89,12 @@ class VanillaRolloutBuffer:
         Returns:
             None.
         """
-        self._storage['obs'][self._global_step].copy_(obs)
-        self._storage['actions'][self._global_step].copy_(actions)
-        self._storage['rewards'][self._global_step].copy_(rewards)
-        self._storage['dones'][self._global_step + 1].copy_(dones)
-        self._storage['log_probs'][self._global_step].copy_(log_probs)
-        self._storage['values'][self._global_step].copy_(values)
+        self.obs[self._global_step].copy_(obs)
+        self.actions[self._global_step].copy_(actions)
+        self.rewards[self._global_step].copy_(rewards)
+        self.dones[self._global_step + 1].copy_(dones)
+        self.log_probs[self._global_step].copy_(log_probs)
+        self.values[self._global_step].copy_(values)
 
         self._global_step = (self._global_step + 1) % self._num_steps
         
@@ -104,7 +103,7 @@ class VanillaRolloutBuffer:
         """Reset the terminal state of each env.
 
         """
-        self._storage['dones'][0].copy_(self._storage['dones'][-1])
+        self.dones[0].copy_(self.dones[-1])
         
 
     def compute_returns_and_advantages(self, last_values: Tensor) -> None:
@@ -121,16 +120,16 @@ class VanillaRolloutBuffer:
         gae = 0
         for step in reversed(range(self._num_steps)):
             if step == self._num_steps - 1:
-                next_non_terminal = 1.0 - self._storage['dones'][-1]
+                next_non_terminal = 1.0 - self.dones[-1]
                 next_values = last_values
             else:
-                next_non_terminal = 1.0 - self._storage['dones'][step + 1]
-                next_values = self._storage['values'][step + 1]
-            delta = self._storage['rewards'][step] + self._discount * next_values * next_non_terminal - self._storage['values'][step]
+                next_non_terminal = 1.0 - self.dones[step + 1]
+                next_values = self.values[step + 1]
+            delta = self.rewards[step] + self._discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self._discount * self._gae_lambda * next_non_terminal * gae
-            self._storage['advantages'][step] = gae
+            self.advantages[step] = gae
         
-        self._storage['returns'] = self._storage['advantages'] + self._storage['values']
+        self.values = self.advantages + self.values
 
 
     def generator(self, num_mini_batch: int = None) -> Batch:
@@ -157,13 +156,13 @@ class VanillaRolloutBuffer:
             drop_last=True)
         
         for indices in sampler:
-            batch_obs = self._storage['obs'].view(-1, *self._obs_shape)[indices]
-            batch_actions = self._storage['actions'].view(-1, self._action_dim)[indices]
-            batch_values = self._storage['values'].view(-1, 1)[indices]
-            batch_returns = self._storage['returns'].view(-1, 1)[indices]
-            batch_dones = self._storage['dones'][:-1].view(-1, 1)[indices]
-            batch_old_log_probs = self._storage['log_probs'].view(-1, 1)[indices]
-            adv_targ = self._storage['advantages'].view(-1, 1)[indices]
+            batch_obs = self.obs.view(-1, *self._obs_shape)[indices]
+            batch_actions = self.actions.view(-1, self._action_dim)[indices]
+            batch_values = self.values.view(-1, 1)[indices]
+            batch_returns = self.values.view(-1, 1)[indices]
+            batch_dones = self.dones[:-1].view(-1, 1)[indices]
+            batch_old_log_probs = self.log_probs.view(-1, 1)[indices]
+            adv_targ = self.advantages.view(-1, 1)[indices]
 
             yield batch_obs, batch_actions, batch_values, batch_returns, batch_dones, batch_old_log_probs, adv_targ
 

@@ -79,7 +79,7 @@ class Critic(nn.Module):
         return q1, q2
 
 
-class DrQv2Agent:
+class DrQv2Learner:
     """Learner for continuous control tasks.
         Current learner: DrQ-v2
         Paper: Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning
@@ -87,7 +87,7 @@ class DrQv2Agent:
 
     Args:
         observation_space: Observation space of the environment.
-        action_space: Action shape of the environment.
+        action_space: Action space of the environment.
         action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.

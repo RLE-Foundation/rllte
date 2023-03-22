@@ -1,11 +1,62 @@
 from hsuanwu.common.logger import *
 from hsuanwu.common.typing import *
 
-def checker(logger, cfgs: DictConfig):
+
+MATCH_KEYS = {
+    'ContinuousLearner': {
+        'storage': ['VanillaReplayBuffer', 'NStepReplayBuffer'],
+        'distribution': ['OrnsteinUhlenbeck', 'TruncatedNormal'],
+        'augmentation': [],
+        'reward': []
+    },
+    'DiscreteLearner': {
+        'storage': ['VanillaRolloutBuffer'],
+        'distribution': ['Categorical'],
+        'augmentation': [],
+        'reward': []
+    },
+    'PPOLearner': {
+        'storage': ['VanillaRolloutBuffer'],
+        'distribution': ['Categorical'],
+        'augmentation': [],
+        'reward': []
+    },
+    'SACLearner': {
+        'storage': ['VanillaReplayBuffer', 'NStepReplayBuffer'],
+        'distribution': ['OrnsteinUhlenbeck', 'TruncatedNormal'],
+        'augmentation': [],
+        'reward': []
+    },
+}
+
+def cfgs_checker(logger: Callable, cfgs: DictConfig):
     """Check the compatibility of modules.
     
     Args:
-        logger: 
+        logger: Hsuanwu logger instance.
+        cfgs: Dict Config.
     
     """
-    self._logger.log(DEBUG, 'Checking the Compatibility of Modules...')
+    logger.log(DEBUG, 'Checking the Compatibility of Modules...')
+
+    # xploit part
+    logger.log(DEBUG, f'Selected Encoder: {cfgs.encoder._target_}')
+    logger.log(DEBUG, f'Selected Learner: {cfgs.learner._target_}')
+    # Check the compatibility
+    assert cfgs.storage._target_ in MATCH_KEYS[cfgs.learner._target_]['storage'], \
+        f'{cfgs.storage._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/.'
+    logger.log(DEBUG, f'Selected Storage: {cfgs.storage._target_}')
+
+    assert cfgs.distribution._target_ in MATCH_KEYS[cfgs.learner._target_]['distribution'], \
+            f'{cfgs.distribution._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/.'    
+    logger.log(DEBUG, f'Selected Distribution: {cfgs.distribution._target_}')
+
+    if cfgs.use_aug:
+        logger.log(DEBUG, f'Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}')
+    else:
+        logger.log(DEBUG, f'Use Augmentation: {cfgs.use_aug}')
+    if cfgs.use_irs:
+        logger.log(DEBUG, f'Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}')
+    else:
+        logger.log(DEBUG, f'Use Intrinsic Reward: {cfgs.use_irs}')
+    quit(0)

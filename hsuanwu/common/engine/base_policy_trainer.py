@@ -10,7 +10,7 @@ import torch
 from hsuanwu.common.typing import *
 from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
-
+from hsuanwu.common.engine.checker import cfgs_checker
 
 
 class BasePolicyTrainer:
@@ -44,6 +44,7 @@ class BasePolicyTrainer:
         random.seed(cfgs.seed)
         # debug
         self._logger.log(INFO, 'Invoking Hsuanwu Engine...')
+        cfgs_checker(logger=self._logger, cfgs=cfgs)
         # preprocess the cfgs
         self._cfgs = self._process_cfgs(cfgs)
         # training track
@@ -96,14 +97,14 @@ class BasePolicyTrainer:
             cfgs.learner.feature_dim = cfgs.encoder.feature_dim
 
         # set observation and action shape for rollout buffer.
-        if 'Rollout' in cfgs.buffer._target_:
+        if 'Rollout' in cfgs.storage._target_:
             with open_dict(cfgs):
-                cfgs.buffer.device = cfgs.device
-                cfgs.buffer.obs_shape = obs_shape
-                cfgs.buffer.action_shape = action_space['shape']
-                cfgs.buffer.action_type = action_type
-                cfgs.buffer.num_steps = cfgs.num_steps
-                cfgs.buffer.num_envs = cfgs.num_envs
+                cfgs.storage.device = cfgs.device
+                cfgs.storage.obs_shape = obs_shape
+                cfgs.storage.action_shape = action_space['shape']
+                cfgs.storage.action_type = action_type
+                cfgs.storage.num_steps = cfgs.num_steps
+                cfgs.storage.num_envs = cfgs.num_envs
         
         # xplore part
         if cfgs.use_irs:
@@ -127,7 +128,7 @@ class BasePolicyTrainer:
         """
         cfgs.learner._target_ = 'hsuanwu.xploit.' + 'learner.' + cfgs.learner._target_
         cfgs.encoder._target_ = 'hsuanwu.xploit.' + 'encoder.' + cfgs.encoder._target_
-        cfgs.buffer._target_ = 'hsuanwu.xploit.' + 'storage.' + cfgs.buffer._target_
+        cfgs.storage._target_ = 'hsuanwu.xploit.' + 'storage.' + cfgs.storage._target_
 
         cfgs.distribution._target_ = 'hsuanwu.xplore.' + 'distribution.' + cfgs.distribution._target_
         if cfgs.use_aug:

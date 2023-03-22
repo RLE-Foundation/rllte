@@ -1,7 +1,7 @@
 seed: 1 
 device: cuda                            
 use_aug: false                           
-use_irs: false                            
+use_irs: false                           
 num_train_steps: 10000000                                      
 num_steps: 256
 num_envs: 8
@@ -14,7 +14,7 @@ encoder:
   feature_dim: 256  
 
 learner:
-  _target_: PPOAgent         
+  _target_: PPOLearner         
   hidden_dim: 1024
   lr: 0.0001
   eps: 0.00001
@@ -25,7 +25,7 @@ learner:
   ent_coef: 0.01
   max_grad_norm: 0.5
 
-buffer:
+storage:
   _target_: VanillaRolloutBuffer
   discount: 0.99
   gae_lambda: 0.95

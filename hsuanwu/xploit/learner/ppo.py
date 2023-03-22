@@ -39,10 +39,8 @@ class ActorCritic(nn.Module):
         return mu, value
 
 
-class PPOAgent:
-    """Proximal Policy Optimization (PPO) Agent
-        Paper: Proximal policy optimization algorithms
-        Link: https://arxiv.org/pdf/1707.06347
+class PPOLearner:
+    """Proximal Policy Optimization (PPO) Learner
     
     Args:
         observation_space: Observation space of the environment.
@@ -50,8 +48,9 @@ class PPOAgent:
         action_type: Continuous or discrete action. "cont" or "dis".
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
-        hidden_dim: The size of the hidden layers.
         lr: The learning rate.
+
+        hidden_dim: The size of the hidden layers.
         eps: RMSprop optimizer epsilon.
         clip_range: Clipping parameter.
         n_epochs: Times of updating the policy.
@@ -61,7 +60,7 @@ class PPOAgent:
         max_grad_norm: Maximum norm of gradients.
     
     Returns:
-        Agent instance.
+        PPO learner instance.
     """
     def __init__(self,
                  observation_space: Space, 
