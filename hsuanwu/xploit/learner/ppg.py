@@ -1,5 +1,6 @@
 from torch.nn import functional as F
 from torch import nn
+import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
@@ -29,9 +30,11 @@ class ActorCritic(nn.Module):
         self.actor = nn.Linear(hidden_dim, action_space.shape[0])
         self.critic = nn.Linear(hidden_dim, 1)
         self.aux_critic = nn.Linear(hidden_dim, 1)
+        self.dist = None
 
         self.apply(utils.network_init)
     
+
     def get_value(self, obs: Tensor) -> Tensor:
         """Get estimated values for observations.
 
@@ -44,26 +47,68 @@ class ActorCritic(nn.Module):
         return self.critic(self.trunk(obs))
 
 
-    def get_action_and_value(self, obs: Tensor, actions: Tensor, dist: Distribution) -> Sequence[Tensor]:
+    def get_action(self, obs: Tensor) -> Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        logits = self.actor(self.trunk(obs))
+        return self.dist(logits).mode()
+
+
+    def get_action_and_value(self, obs: Tensor, actions: Tensor = None) -> Sequence[Tensor]:
         """Get actions and estimated values for observations.
         
         Args:
             obs: Sampled observations.
             actions: Sampled actions.
-            dist: Hsuanwu distribution class.
 
         Returns:
-            Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
-        encoded_obs = self._encoder(obs)
-        mu, values = self._ac(encoded_obs)
-        d = dist(mu)
+        h = self.trunk(obs)
+        logits = self.actor(h)
+        dist = self.dist(logits)
+        if actions is None:
+            actions = dist.sample()
 
-        log_probs = d.log_probs(actions)
-        entropy = d.entropy().mean()
+        log_probs = dist.log_probs(actions)
+        entropy = dist.entropy().mean()
 
-        return values, log_probs, entropy
+        return actions, self.critic(h), log_probs, entropy
     
+    
+    def get_probs_and_aux_value(self, obs: Tensor) -> Sequence[Tensor]:
+        """Get probs and auxiliary estimated values for auxiliary phase update.
+        
+        Args:
+            obs: Sampled observations.
+        
+        Returns:
+            Distribution, estimated values, auxiliary estimated values.
+        """
+        h = self.trunk(obs)
+        logits = self.actor(h)
+        dist = self.dist(logits)
+
+        return dist, self.critic(h.detach()), self.aux_critic(h)
+
+
+    def get_logits(self, obs: Tensor) -> Distribution:
+        """Get the log-odds of sampling.
+
+        Args:
+            obs: Sampled observations.
+        
+        Returns:
+            Distribution
+        """
+        return self.dist(self.actor(self.trunk(obs)))
+
 
 class PPGLearner(BaseLearner):
     """Phasic Policy Gradient (PPG) Learner.
@@ -79,12 +124,15 @@ class PPGLearner(BaseLearner):
         hidden_dim: The size of the hidden layers.
         eps: RMSprop optimizer epsilon.
         clip_range: Clipping parameter.
-        num_mini_batch: Number of mini-batches.
+        num_policy_mini_batch: Number of mini-batches in policy phase.
+        num_aux_mini_batch: Number of mini-batches in auxiliary phase.
         vf_coef: Weighting coefficient of value loss.
         ent_coef: Weighting coefficient of entropy bonus.
         max_grad_norm: Maximum norm of gradients.
         policy_epochs: Number of iterations in the policy phase.
-        auxiliary_epochs: Number of iterations in the auxiliary phase.
+        aux_epochs: Number of iterations in the auxiliary phase.
+        kl_coef: Weighting coefficient of divergence loss.
+        num_aux_grad_accum: Number of gradient accumulation for auxiliary phase update.
 
     Returns:
         PPG learner instance.
@@ -99,27 +147,33 @@ class PPGLearner(BaseLearner):
                  hidden_dim: int = 256,
                  eps: float = 1e-5,
                  clip_range: float = 0.2,
-                 num_mini_batch: int = 4,
+                 num_policy_mini_batch: int = 4,
+                 num_aux_mini_batch: int = 4,
                  vf_coef: float = 0.5,
                  ent_coef: float = 0.01,
                  max_grad_norm: float = 0.5,
                  policy_epochs: int = 32,
-                 auxiliary_epochs: int = 6
+                 aux_epochs: int = 6,
+                 kl_coef: float = 1.0,
+                 num_aux_grad_accum: int = 1,
                  ) -> None:
         super().__init__(observation_space, action_space, action_type, device, feature_dim, lr)
         self._eps = eps
         self._clip_range = clip_range
-        self._num_mini_batch = num_mini_batch
+        self._num_policy_mini_batch = num_policy_mini_batch
+        self._num_aux_mini_batch = num_aux_mini_batch
         self._vf_coef = vf_coef
         self._ent_coef = ent_coef
         self._max_grad_norm = max_grad_norm
         self._policy_epochs = policy_epochs
-        self._auxiliary_epochs = auxiliary_epochs
+        self._aux_epochs = aux_epochs
+        self._kl_coef = kl_coef
+        self._num_aux_grad_accum = num_aux_grad_accum
 
         # auxiliary storage
         self._aux_obs = None
         self._aux_returns = None
-        self._aux_probs = None
+        self._aux_logits = None
         self._first_episode = True
 
         # create models
@@ -146,7 +200,33 @@ class PPGLearner(BaseLearner):
         self._ac.train(training)
         if self._encoder is not None:
             self._encoder.train(training)
+
     
+    def set_dist(self, dist: Distribution) -> None:
+        """Set the distribution for actor.
+        
+        Args:
+            dist: Hsuanwu distribution class.
+        
+        Returns:
+            None.
+        """
+        self._dist = dist
+        self._ac.dist = dist
+
+
+    def get_value(self, obs: Tensor) -> Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        encoded_obs = self._encoder(obs)
+        return self._ac.get_value(obs=encoded_obs)
+
 
     def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tensor:
         """Sample actions.
@@ -160,88 +240,13 @@ class PPGLearner(BaseLearner):
             Sampled actions.
         """
         encoded_obs = self._encoder(obs)
-        mu, values = self._ac(encoded_obs)
-        dist = self._dist(mu)
 
         if not training:
-            actions = dist.mode()
+            actions, values, log_probs, entropy = self._ac.get_action_and_value(obs=encoded_obs)
+            return actions, values, log_probs, entropy
         else:
-            actions = dist.sample()
-
-        log_probs = dist.log_probs(actions)
-        entropy = dist.entropy().mean()
-        
-        return actions, values, log_probs, entropy
-    
-    
-    def get_value(self, obs: Tensor) -> Tensor:
-        """Compute estimated values of observations.
-        
-        Args:
-            obs: Observations.
-        
-        Returns:
-            Estimated values.
-        """
-        encoded_obs = self._encoder(obs)
-        features = self._ac.trunk(encoded_obs)
-        value = self._ac.critic(features)
-        
-        return value
-    
-
-    def get_probs(self, obs: Tensor) -> Tensor:
-        """Get action probabilities.
-        
-        Args:
-            obs: Sampled observations.
-        
-        Returns:
-            Probabilities.
-        """
-        encoded_obs = self._encoder(obs)
-        features = self._ac.trunk(encoded_obs)
-        mu = self._ac.actor(features)
-        dist = self._dist(mu)
-
-        return dist.probs()
-    
-    
-    def get_aux_value(self, obs: Tensor) -> Tensor:
-        """Compute auxiliary estimated values of observations.
-        
-        Args:
-            obs: Observations.
-        
-        Returns:
-            Estimated values.
-        """
-        encoded_obs = self._encoder(obs)
-        features = self._ac.trunk(encoded_obs)
-        aux_value = self._ac.aux_critic(features)
-        
-        return aux_value
-    
-
-    def evaluate_actions(self, obs: Tensor, actions: Tensor) -> Sequence[Tensor]:
-        """Evaluate sampled actions.
-        
-        Args:
-            obs: Sampled observations.
-            actions: Samples actions.
-            aux: Get auxiliary values?
-
-        Returns:
-            Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
-        encoded_obs = self._encoder(obs)
-        mu, values = self._ac(encoded_obs)
-        dist = self._dist(mu)
-
-        log_probs = dist.log_probs(actions)
-        entropy = dist.entropy().mean()
-
-        return values, log_probs, entropy
+            actions = self._ac.get_action(obs=encoded_obs)
+            return actions
 
 
     def update(self, rollout_buffer: Any, episode: int = 0) -> Dict:
@@ -261,19 +266,21 @@ class PPGLearner(BaseLearner):
         total_entropy_loss = 0.
 
         if episode % self._policy_epochs != 0:
-            generator = rollout_buffer.generator(self._num_mini_batch)
+            generator = rollout_buffer.generator(self._num_policy_mini_batch)
 
             if self._first_episode:
                 num_steps, num_envs = rollout_buffer.obs.size()[:2]
                 self._aux_obs = torch.empty(
                     size=(num_steps, num_envs*self._policy_epochs)+self._obs_space.shape, 
-                    device=self._device, dtype=torch.float32)
+                    device='cpu', dtype=torch.float32)
                 self._aux_returns = torch.empty(
                     size=(num_steps, num_envs*self._policy_epochs, 1), 
-                    device=self._device, dtype=torch.float32)
-                self._aux_probs = torch.empty(
+                    device='cpu', dtype=torch.float32)
+                self._aux_logits = torch.empty(
                     size=(num_steps, num_envs*self._policy_epochs)+self._action_space.shape[0],
-                    device=self._device, dtype=torch.float32)
+                    device='cpu', dtype=torch.float32)
+                self._first_episode = False
+                self._num_aux_rollouts = num_envs * self._policy_epochs
             else:
                 idx = int(episode % self._policy_epochs)
                 self._aux_obs[:, idx] = rollout_buffer.obs.copy()
@@ -284,7 +291,9 @@ class PPGLearner(BaseLearner):
                     batch_dones, batch_old_log_probs, adv_targ = batch
                 
                 # evaluate sampled actions
-                values, log_probs, entropy = self.evaluate_actions(batch_obs, batch_actions)
+                values, log_probs, entropy = self._ac.get_action_and_value(
+                    obs=self._encoder(batch_obs),
+                    actions=batch_actions)
 
                 # actor loss part
                 ratio = torch.exp(log_probs - batch_old_log_probs)
@@ -318,13 +327,48 @@ class PPGLearner(BaseLearner):
             }
         
 
-        # TODO: Get action probs for stored auxiliary observations.
+        # TODO: Get action logits for stored auxiliary observations.
         for idx in range(self._policy_epochs):
             with torch.no_grad():
-                probs = self.get_probs(self._aux_obs[:, idx])
-                self._aux_probs[:, idx] = probs
-        
+                logits = self._ac.get_logits(self._aux_obs[:, idx]).logits().cpu().clone()
+                self._aux_logits[:, idx] = logits
 
-        # TODO: Auxiliary phase update
-        if episode % self._auxiliary_epochs == 0:
-            pass
+
+        # TODO: Auxiliary phase
+        if episode % self._aux_epochs == 0:
+            aux_inds = np.arange(self._num_aux_rollouts)
+            np.random.shuffle(aux_inds)
+
+            for idx in range(self._num_aux_rollouts, self._num_aux_mini_batch):
+                batch_inds = aux_inds[idx:idx+self._num_aux_mini_batch]
+                batch_aux_obs = self._aux_obs[:, batch_inds].reshape(-1, *self._aux_obs.size()[2:])
+                batch_aux_returns = self._aux_returns[:, batch_inds].reshape(-1, *self._aux_returns.size()[2:])
+                batch_aux_logits = self._aux_logits.reshape(-1, *self._aux_returns.size()[2:])
+
+                new_dist, new_values, new_aux_values = self._ac.get_probs_and_aux_value(
+                    self._encoder(batch_aux_obs))
+                
+                new_values = new_values.view(-1)
+                new_aux_values = new_aux_values.view(-1)
+                old_dist = self._dist(logits=batch_aux_logits)
+
+                # divergence loss
+                kl_loss = torch.distributions.kl_divergence(old_dist, new_dist)
+                # value loss
+                value_loss = 0.5 * ((new_values - batch_aux_returns)).mean()
+                aux_value_loss = 0.5 * ((new_aux_values - batch_aux_returns)).mean()
+                # total loss
+                (value_loss + aux_value_loss + self._kl_coef * kl_loss).backward()
+
+                if (idx + 1) % self._num_aux_grad_accum == 0:
+                    self._encoder_opt.zero_grad(set_to_none=True)
+                    self._ac_opt.zero_grad(set_to_none=True)
+                    (critic_loss * self._vf_coef + actor_loss - entropy * self._ent_coef).backward()
+                    nn.utils.clip_grad_norm_(self._encoder.parameters(), self._max_grad_norm)
+                    nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
+                    self._encoder_opt.step()
+                    self._ac_opt.step()
+
+
+
+                

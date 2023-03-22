@@ -52,7 +52,7 @@ class BaseLearner:
 
 
     def set_dist(self, dist: Distribution) -> None:
-        """Set the distribution for for learner.
+        """Set the distribution for earner.
         
         Args:
             dist: Hsuanwu distribution class.
@@ -64,7 +64,7 @@ class BaseLearner:
 
 
     def set_aug(self, aug) -> None:
-        """Set the augmentation for for learner.
+        """Set the augmentation for learner.
         
         Args:
             irs: Hsuanwu augmentation class.
@@ -76,7 +76,7 @@ class BaseLearner:
 
 
     def set_irs(self, irs) -> None:
-        """Set the intrinsic reward function for for learner.
+        """Set the intrinsic reward function for learner.
         
         Args:
             irs: Hsuanwu intrinsic reward class.
