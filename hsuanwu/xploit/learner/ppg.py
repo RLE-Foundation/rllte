@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from hsuanwu.common.typing import *
-from hsuanwu.xploit.learner.base import BaseLearner
+from hsuanwu.xploit.learner import BaseLearner
 from hsuanwu.xploit import utils
 
 
@@ -30,6 +30,7 @@ class ActorCritic(nn.Module):
         self.actor = nn.Linear(hidden_dim, action_space.shape[0])
         self.critic = nn.Linear(hidden_dim, 1)
         self.aux_critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
         self.dist = None
 
         self.apply(utils.network_init)
@@ -120,9 +121,9 @@ class PPGLearner(BaseLearner):
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         lr: The learning rate.
+        eps: Term added to the denominator to improve numerical stability.
 
         hidden_dim: The size of the hidden layers.
-        eps: RMSprop optimizer epsilon.
         clip_range: Clipping parameter.
         num_policy_mini_batch: Number of mini-batches in policy phase.
         num_aux_mini_batch: Number of mini-batches in auxiliary phase.
@@ -144,8 +145,8 @@ class PPGLearner(BaseLearner):
                  device: torch.device = 'cuda', 
                  feature_dim: int = 256,
                  lr: float = 5e-4,
+                 eps: float = 1e-5,
                  hidden_dim: int = 256,
-                 eps: float = 1e-8,
                  clip_range: float = 0.2,
                  num_policy_mini_batch: int = 8,
                  num_aux_mini_batch: int = 4,
@@ -157,8 +158,8 @@ class PPGLearner(BaseLearner):
                  kl_coef: float = 1.0,
                  num_aux_grad_accum: int = 1,
                  ) -> None:
-        super().__init__(observation_space, action_space, action_type, device, feature_dim, lr)
-        self._eps = eps
+        super().__init__(observation_space, action_space, action_type, device, feature_dim, lr, eps)
+        
         self._clip_range = clip_range
         self._num_policy_mini_batch = num_policy_mini_batch
         self._num_aux_mini_batch = num_aux_mini_batch
@@ -185,11 +186,6 @@ class PPGLearner(BaseLearner):
 
         self._ac_opt = torch.optim.Adam(self._ac.parameters(), lr=lr, eps=eps)
         self.train()
-
-        # placeholder for augmentation and intrinsic reward function
-        self._dist = None
-        self._aug = None
-        self._irs = None
     
     
     def train(self, training=True) -> None:
@@ -199,20 +195,6 @@ class PPGLearner(BaseLearner):
         self._ac.train(training)
         if self._encoder is not None:
             self._encoder.train(training)
-    
-
-    def set_encoder(self, encoder: torch.nn.Module) -> None:
-        """Set the encoder for learner.
-        
-        Args:
-            encoder: Hsuanwu encoder class.
-        
-        Returns:
-            None.
-        """
-        self._encoder = encoder
-        self._encoder.train()
-        self._encoder_opt = torch.optim.Adam(self._encoder.parameters(), lr=self._lr, eps=self._eps)
 
     
     def set_dist(self, dist: Distribution) -> None:
@@ -270,7 +252,7 @@ class PPGLearner(BaseLearner):
             episode: Global training episode.
         
         Returns:
-            Training metrics such as loss functions.
+            Training metrics such as actor loss, critic_loss, etc.
         """
 
         # TODO: Save auxiliary transitions
@@ -299,6 +281,7 @@ class PPGLearner(BaseLearner):
         total_critic_loss = 0.
         total_entropy_loss = 0.
         num_updates = 0
+
         generator = rollout_buffer.generator(self._num_policy_mini_batch)
 
         for batch in generator:
@@ -341,6 +324,7 @@ class PPGLearner(BaseLearner):
         total_critic_loss /= num_updates
         total_entropy_loss /= num_updates
 
+
         if  (episode + 1) % self._policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
             return {
@@ -363,7 +347,7 @@ class PPGLearner(BaseLearner):
 
 
         for e in range(self._aux_epochs):
-            print('aux phase', e)
+            print('Auxiliary Phase', e)
             aux_inds = np.arange(self._num_aux_rollouts)
             np.random.shuffle(aux_inds)
 

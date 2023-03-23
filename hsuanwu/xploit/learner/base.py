@@ -12,6 +12,7 @@ class BaseLearner:
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         lr: The learning rate.
+        eps: Term added to the denominator to improve numerical stability.
 
     Returns:
         Base learner instance.
@@ -23,6 +24,7 @@ class BaseLearner:
                 device: torch.device = 'cuda',
                 feature_dim: int = 50,
                 lr: float = 2.5e-4,
+                eps: float = 1e-5
                 ) -> None:
         self._obs_space = observation_space
         self._action_space = action_space
@@ -30,10 +32,22 @@ class BaseLearner:
         self._device = torch.device(device)
         self._feature_dim = feature_dim
         self._lr = lr
-    
+        self._eps = eps
 
-    def train(self, training=True) -> None:
+        # placeholder for distribution, augmentation, and intrinsic reward function.
+        self._dist = None
+        self._aug = None
+        self._irs = None
+
+
+    def train(self, training: bool = True) -> None:
         """ Set the train mode.
+
+        Args:
+            training: True (training) or False (testing).
+
+        Returns:
+            None.
         """
         self.training = training
 
@@ -49,6 +63,7 @@ class BaseLearner:
         """
         self._encoder = encoder
         self._encoder.train()
+        self._encoder_opt = torch.optim.Adam(self._encoder.parameters(), lr=self._lr, eps=self._eps)
 
 
     def set_dist(self, dist: Distribution) -> None:
@@ -92,7 +107,7 @@ class BaseLearner:
         
         Args:
             obs: Observation tensor.
-            training: Training or testing.
+            training: True (training) or False (testing).
         
         Returns:
             Sampled actions.

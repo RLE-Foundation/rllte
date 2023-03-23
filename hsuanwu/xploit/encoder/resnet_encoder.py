@@ -88,6 +88,8 @@ class ResNetEncoder(BaseEncoder):
 
         self.trunk = nn.Sequential(*modules)
         self.linear = nn.Linear(in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim)
+
+        self.apply(network_init)
     
     def forward(self, obs: Tensor) -> Tensor:
         obs = obs / 255.

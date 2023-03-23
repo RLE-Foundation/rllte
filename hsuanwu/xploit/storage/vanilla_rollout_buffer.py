@@ -119,6 +119,8 @@ class VanillaRolloutBuffer:
             self.advantages[step] = gae
         
         self.returns = self.advantages + self.values
+        self.advantages = (self.advantages - self.advantages.mean()) / (
+            self.advantages.std() + 1e-5)
 
 
     def generator(self, num_mini_batch: int = None) -> Batch:

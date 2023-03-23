@@ -3,11 +3,12 @@ from torch import nn
 import torch
 
 from hsuanwu.common.typing import *
+from hsuanwu.xploit.learner import BaseLearner
 from hsuanwu.xploit import utils
 
 
 class ActorCritic(nn.Module):
-    """Actor-Critic module.
+    """Actor-Critic network.
     
     Args:
         action_space: Action space of the environment.
@@ -24,22 +25,64 @@ class ActorCritic(nn.Module):
                  ) -> None:
         super().__init__()
 
-        self.trunk = nn.Sequential(nn.Linear(feature_dim, hidden_dim), nn.ReLU())
+        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh(),
+                                   nn.Linear(feature_dim, hidden_dim), nn.ReLU())
         self.actor = nn.Linear(hidden_dim, action_space.shape[0])
         self.critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
+        self.dist = None
 
         self.apply(utils.network_init)
 
+
+    def get_value(self, obs: Tensor) -> Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.trunk(obs))
+
+
+    def get_action(self, obs: Tensor) -> Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        mu = self.actor(self.trunk(obs))
+        return self.dist(mu).mean
     
-    def forward(self, obs: Tensor) -> Sequence[Tensor]:
-        features = self.trunk(obs)
-        mu = self.actor(features)
-        value = self.critic(features)
 
-        return mu, value
+    def get_action_and_value(self, obs: Tensor, actions: Tensor = None) -> Sequence[Tensor]:
+        """Get actions and estimated values for observations.
+        
+        Args:
+            obs: Sampled observations.
+            actions: Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.trunk(obs)
+        mu = self.actor(h)
+        dist = self.dist(mu)
+        if actions is None:
+            actions = dist.sample()
+
+        log_probs = dist.log_probs(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, self.critic(h), log_probs, entropy
 
 
-class PPOLearner:
+class PPOLearner(BaseLearner):
     """Proximal Policy Optimization (PPO) Learner
     
     Args:
@@ -49,9 +92,9 @@ class PPOLearner:
         device: Device (cpu, cuda, ...) on which the code should be run.
         feature_dim: Number of features extracted.
         lr: The learning rate.
+        eps: Term added to the denominator to improve numerical stability.
 
         hidden_dim: The size of the hidden layers.
-        eps: RMSprop optimizer epsilon.
         clip_range: Clipping parameter.
         n_epochs: Times of updating the policy.
         num_mini_batch: Number of mini-batches.
@@ -68,20 +111,18 @@ class PPOLearner:
                  action_type: str,
                  device: torch.device = 'cuda',
                  feature_dim: int = 256,
-                 hidden_dim: int = 1024,
-                 lr: float = 1e-4,
+                 lr: float = 5e-4,
                  eps: float = 1e-5,
+                 hidden_dim: int = 256,
                  clip_range: float = 0.2,
-                 n_epochs: int = 5,
-                 num_mini_batch: int = 4,
+                 n_epochs: int = 3,
+                 num_mini_batch: int = 8,
                  vf_coef: float = 0.5,
                  ent_coef: float = 0.01,
                  max_grad_norm: float = 0.5,
                  ) -> None:
-        self._action_type = action_type
-        self._device = torch.device(device)
-        self._lr = lr
-        self._eps = eps
+        super().__init__(observation_space, action_space, action_type, device, feature_dim, lr, eps)
+
         self._n_epochs = n_epochs
         self._clip_range = clip_range
         self._num_mini_batch = num_mini_batch
@@ -91,52 +132,35 @@ class PPOLearner:
 
         # create models
         self._encoder = None
-        self._actor_critic = ActorCritic(
+        self._ac = ActorCritic(
             action_space=action_space,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim
         ).to(self._device)
 
         # create optimizers
-        self._actor_critic_opt = torch.optim.Adam(self._actor_critic.parameters(), lr=lr, eps=eps)
+        self._ac_opt = torch.optim.Adam(self._ac.parameters(), lr=lr, eps=eps)
         self.train()
 
-        # placeholder for augmentation and intrinsic reward function
-        self._dist = None
-        self._aug = None
-        self._irs = None
     
     def train(self, training=True):
         self.training = training
-        self._actor_critic.train(training)
+        self._ac.train(training)
         if self._encoder is not None:
             self._encoder.train(training)
 
-    def set_encoder(self, encoder) -> None:
-        """Set encoder.
-        
-        Args:
-            encoder: Hsuanwu xploit.encoder instance.
-        
-        Returns:
-            None.
-        """
-        # create encoder
-        self._encoder = encoder
-        self._encoder.train()
-        self._encoder_opt = torch.optim.Adam(self._encoder.parameters(), lr=self._lr, eps=self._eps)
-    
 
     def set_dist(self, dist):
-        """Set distribution for sampling actions
+        """Set the distribution for actor.
         
         Args:
-            dist: Hsuanwu xplore.distribution class.
+            dist: Hsuanwu distribution class.
         
         Returns:
             None.
         """
         self._dist = dist
+        self._ac.dist = dist
 
 
     def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Sequence[Tensor]:
@@ -145,77 +169,48 @@ class PPOLearner:
         Args:
             obs: Observations.
             training: training mode, True or False.
-            step: global training step.
+            step: Global training step.
 
         Returns:
-            Actions.
+            Sampled actions.
         """
         encoded_obs = self._encoder(obs)
-        mu, values = self._actor_critic(encoded_obs)
-        dist = self._dist(mu)
 
-        if not training and self._action_type == 'cont':
-            actions = dist.mean()
-        elif not training and self._action_type == 'dis':
-            actions = dist.mode()
+        if training:
+            actions, values, log_probs, entropy = self._ac.get_action_and_value(obs=encoded_obs)
+            return actions, values, log_probs, entropy
         else:
-            actions = dist.sample()
-
-        log_probs = dist.log_probs(actions)
-        entropy = dist.entropy().mean()
-        
-        return actions, values, log_probs, entropy
+            actions = self._ac.get_action(obs=encoded_obs)
+            return actions
     
 
     def get_value(self, obs: Tensor) -> Tensor:
-        """Compute estimated values of observations.
-        
+        """Get estimated values for observations.
+
         Args:
             obs: Observations.
-        
+
         Returns:
             Estimated values.
         """
         encoded_obs = self._encoder(obs)
-        features = self._actor_critic.trunk(encoded_obs)
-        value = self._actor_critic.critic(features)
-        
-        return value
+        return self._ac.get_value(obs=encoded_obs)
     
 
-    def evaluate_actions(self, obs: Tensor, actions: Tensor) -> Sequence[Tensor]:
-        """Evaluate sampled actions.
-        
-        Args:
-            obs: Sampled observations.
-            actions: Samples actions.
-
-        Returns:
-            Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
-        encoded_obs = self._encoder(obs)
-        mu, values = self._actor_critic(encoded_obs)
-        dist = self._dist(mu)
-
-        log_probs = dist.log_probs(actions)
-        entropy = dist.entropy().mean()
-
-        return values, log_probs, entropy
-    
-
-    def update(self, rollout_buffer: Generator, step: int = 0) -> Dict:
+    def update(self, rollout_buffer: Any, episode: int = 0) -> Dict:
         """Update the learner.
         
         Args:
-            rollout_iter: Rollout buffer.
-            step: Global training step.
+            rollout_buffer: Hsuanwu rollout buffer.
+            episode: Global training episode.
 
         Returns:
-            Training metrics that includes actor loss, critic_loss, etc.
+            Training metrics such as actor loss, critic_loss, etc.
         """
-        actor_loss_epoch = 0.
-        critic_loss_epoch = 0.
-        entropy_loss_epoch = 0.
+        total_actor_loss = 0.
+        total_critic_loss = 0.
+        total_entropy_loss = 0.
+
 
         for e in range(self._n_epochs):
             generator = rollout_buffer.generator(self._num_mini_batch)
@@ -225,8 +220,10 @@ class PPOLearner:
                     batch_dones, batch_old_log_probs, adv_targ = batch
                 
                 # evaluate sampled actions
-                values, log_probs, entropy = self.evaluate_actions(batch_obs, batch_actions)
-
+                _, values, log_probs, entropy = self._ac.get_action_and_value(
+                    obs=self._encoder(batch_obs),
+                    actions=batch_actions)
+            
                 # actor loss part
                 ratio = torch.exp(log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
@@ -241,25 +238,25 @@ class PPOLearner:
 
                 # update
                 self._encoder_opt.zero_grad(set_to_none=True)
-                self._actor_critic_opt.zero_grad(set_to_none=True)
+                self._ac_opt.zero_grad(set_to_none=True)
                 (critic_loss * self._vf_coef + actor_loss - entropy * self._ent_coef).backward()
                 nn.utils.clip_grad_norm_(self._encoder.parameters(), self._max_grad_norm)
-                nn.utils.clip_grad_norm_(self._actor_critic.parameters(), self._max_grad_norm)
+                nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
+                self._ac_opt.step()
                 self._encoder_opt.step()
-                self._actor_critic_opt.step()
 
-                actor_loss_epoch += actor_loss.item()
-                critic_loss_epoch += critic_loss.item()
-                entropy_loss_epoch += entropy.item()
+                total_actor_loss += actor_loss.item()
+                total_critic_loss += critic_loss.item()
+                total_entropy_loss += entropy.item()
         
         num_updates = self._n_epochs * self._num_mini_batch
 
 
-        actor_loss_epoch /= num_updates
-        critic_loss_epoch /= num_updates
-        entropy_loss_epoch /= num_updates
+        total_actor_loss /= num_updates
+        total_critic_loss /= num_updates
+        total_entropy_loss /= num_updates
 
 
-        return {'actor_loss': actor_loss_epoch,
-                'critic_loss': critic_loss_epoch,
-                'entropy': entropy_loss_epoch}
+        return {'actor_loss': total_actor_loss,
+                'critic_loss': total_critic_loss,
+                'entropy': total_entropy_loss}

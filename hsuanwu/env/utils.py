@@ -22,7 +22,7 @@ class TorchVecEnvWrapper:
 
     def reset(self) -> Any:
         obs = self._venv.reset()
-        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device)
         return obs
     
 
@@ -32,7 +32,7 @@ class TorchVecEnvWrapper:
         actions = actions.cpu().numpy()
 
         obs, reward, done, info = self._venv.step(actions)
-        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device).unsqueeze(dim=1)
         done = torch.as_tensor([[1.0] if _ else [0.0] for _ in done], dtype=torch.float32, device=self._device)
 

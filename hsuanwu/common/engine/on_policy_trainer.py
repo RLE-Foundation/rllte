@@ -50,6 +50,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._num_train_steps = self._cfgs.num_train_steps
         self._num_steps = self._cfgs.num_steps
         self._num_envs = self._cfgs.num_envs
+        self._num_test_episodes = self._cfgs.num_test_episodes
         self._test_every_episodes = self._cfgs.test_every_episodes
 
         # debug
@@ -125,8 +126,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
         """
         obs = self._test_env.reset()
         episode_rewards = list()
+        episode_steps = 0
 
-        while len(episode_rewards) < self._cfgs.num_test_episodes:
+        while len(episode_rewards) < self._num_test_episodes:
             with torch.no_grad(), utils.eval_mode(self._learner):
                 actions = self._learner.act(obs, training=False, step=self._global_step)
             obs, rewards, dones, infos = self._test_env.step(actions)
@@ -134,11 +136,12 @@ class OnPolicyTrainer(BasePolicyTrainer):
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
+                    episode_steps += info['episode']['l']
             
         return {
             'step': self._global_step,
             'episode': self._global_episode,
-            'episode_length': self._num_steps,
+            'episode_length': int(episode_steps / self._num_test_episodes),
             'episode_reward': np.mean(episode_rewards),
             'total_time': self._timer.total_time()
         }
