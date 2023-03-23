@@ -59,4 +59,3 @@ def cfgs_checker(logger: Callable, cfgs: DictConfig):
         logger.log(DEBUG, f'Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}')
     else:
         logger.log(DEBUG, f'Use Intrinsic Reward: {cfgs.use_irs}')
-    quit(0)

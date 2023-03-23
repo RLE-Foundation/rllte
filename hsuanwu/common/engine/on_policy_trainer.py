@@ -34,7 +34,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         self._learner.set_encoder(encoder)
-        self._rollout_buffer = hydra.utils.instantiate(self._cfgs.buffer)
+        self._rollout_buffer = hydra.utils.instantiate(self._cfgs.storage)
 
         # xplore part
         dist = hydra.utils.get_class(self._cfgs.distribution._target_)
@@ -108,15 +108,16 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._global_step += self._num_envs * self._num_steps
             episode_time, total_time = self._timer.reset()
 
-            train_metrics = {
-                'step': self._global_step,
-                'episode': self._global_episode,
-                'episode_length': self._num_steps,
-                'episode_reward': np.mean(episode_rewards),
-                'fps': self._num_steps * self._num_envs / episode_time,
-                'total_time': total_time
-            }
-            self._logger.log(level=TRAIN, msg=train_metrics)
+            if len(episode_rewards) > 1:
+                train_metrics = {
+                    'step': self._global_step,
+                    'episode': self._global_episode,
+                    'episode_length': self._num_steps,
+                    'episode_reward': np.mean(episode_rewards),
+                    'fps': self._num_steps * self._num_envs / episode_time,
+                    'total_time': total_time
+                }
+                self._logger.log(level=TRAIN, msg=train_metrics)
 
 
     def test(self) -> Dict:
@@ -127,14 +128,12 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         while len(episode_rewards) < self._cfgs.num_test_episodes:
             with torch.no_grad(), utils.eval_mode(self._learner):
-                actions, _, _, _ = self._learner.act(obs, training=False, step=self._global_step)
-            next_obs, rewards, dones, infos = self._test_env.step(actions)
+                actions = self._learner.act(obs, training=False, step=self._global_step)
+            obs, rewards, dones, infos = self._test_env.step(actions)
 
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
-            
-            obs = next_obs
             
         return {
             'step': self._global_step,

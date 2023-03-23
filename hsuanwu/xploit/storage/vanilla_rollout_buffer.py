@@ -58,21 +58,10 @@ class VanillaRolloutBuffer:
         # extra part
         self.log_probs = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
         self.values = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
-        self.values = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
+        self.returns = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
         self.advantages = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)
 
         self._global_step = 0
-    
-    def get(self, key):
-        """Get stored experiences.
-
-        Args:
-            key: Keyword of the storage dictionary, e.g., "obs".
-        
-        Returns:
-            Value of the storage dictionary.
-        """
-        return self._storage[key]
     
 
     def add(self, obs: Any, actions: Any, rewards: Any, dones: Any, log_probs: Any, values: Any) -> None:
@@ -129,7 +118,7 @@ class VanillaRolloutBuffer:
             gae = delta + self._discount * self._gae_lambda * next_non_terminal * gae
             self.advantages[step] = gae
         
-        self.values = self.advantages + self.values
+        self.returns = self.advantages + self.values
 
 
     def generator(self, num_mini_batch: int = None) -> Batch:
@@ -159,7 +148,7 @@ class VanillaRolloutBuffer:
             batch_obs = self.obs.view(-1, *self._obs_shape)[indices]
             batch_actions = self.actions.view(-1, self._action_dim)[indices]
             batch_values = self.values.view(-1, 1)[indices]
-            batch_returns = self.values.view(-1, 1)[indices]
+            batch_returns = self.returns.view(-1, 1)[indices]
             batch_dones = self.dones[:-1].view(-1, 1)[indices]
             batch_old_log_probs = self.log_probs.view(-1, 1)[indices]
             adv_targ = self.advantages.view(-1, 1)[indices]

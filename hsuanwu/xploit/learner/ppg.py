@@ -142,12 +142,12 @@ class PPGLearner(BaseLearner):
                  action_space: Space, 
                  action_type: str, 
                  device: torch.device = 'cuda', 
-                 feature_dim: int = 50,
-                 lr: float = 2.5e-4,
+                 feature_dim: int = 256,
+                 lr: float = 5e-4,
                  hidden_dim: int = 256,
-                 eps: float = 1e-5,
+                 eps: float = 1e-8,
                  clip_range: float = 0.2,
-                 num_policy_mini_batch: int = 4,
+                 num_policy_mini_batch: int = 8,
                  num_aux_mini_batch: int = 4,
                  vf_coef: float = 0.5,
                  ent_coef: float = 0.01,
@@ -174,12 +174,11 @@ class PPGLearner(BaseLearner):
         self._aux_obs = None
         self._aux_returns = None
         self._aux_logits = None
-        self._first_episode = True
 
         # create models
         self._encoder = None
         self._ac = ActorCritic(
-            action_space=self._obs_space,
+            action_space=self._action_space,
             feature_dim=self._feature_dim,
             hidden_dim=hidden_dim
         ).to(self._device)
@@ -200,6 +199,20 @@ class PPGLearner(BaseLearner):
         self._ac.train(training)
         if self._encoder is not None:
             self._encoder.train(training)
+    
+
+    def set_encoder(self, encoder: torch.nn.Module) -> None:
+        """Set the encoder for learner.
+        
+        Args:
+            encoder: Hsuanwu encoder class.
+        
+        Returns:
+            None.
+        """
+        self._encoder = encoder
+        self._encoder.train()
+        self._encoder_opt = torch.optim.Adam(self._encoder.parameters(), lr=self._lr, eps=self._eps)
 
     
     def set_dist(self, dist: Distribution) -> None:
@@ -241,109 +254,124 @@ class PPGLearner(BaseLearner):
         """
         encoded_obs = self._encoder(obs)
 
-        if not training:
+        if training:
             actions, values, log_probs, entropy = self._ac.get_action_and_value(obs=encoded_obs)
             return actions, values, log_probs, entropy
         else:
             actions = self._ac.get_action(obs=encoded_obs)
             return actions
-
+    
 
     def update(self, rollout_buffer: Any, episode: int = 0) -> Dict:
         """Update learner.
         
         Args:
             rollout_buffer: Hsuanwu rollout buffer.
-            step: Global training step.
+            episode: Global training episode.
         
         Returns:
             Training metrics such as loss functions.
         """
 
+        # TODO: Save auxiliary transitions
+        if episode == 0:
+            num_steps, num_envs = rollout_buffer.obs.size()[:2]
+            self._aux_obs = torch.empty(
+                size=(num_steps, num_envs*self._policy_epochs, *self._obs_space.shape), 
+                device='cpu', dtype=torch.float32)
+            self._aux_returns = torch.empty(
+                size=(num_steps, num_envs*self._policy_epochs, 1), 
+                device='cpu', dtype=torch.float32)
+            self._aux_logits = torch.empty(
+                size=(num_steps, num_envs*self._policy_epochs, self._action_space.shape[0]),
+                device='cpu', dtype=torch.float32)
+            self._num_aux_rollouts = num_envs * self._policy_epochs
+            self._num_envs = num_envs
+            self._num_steps = num_steps
+            
+        idx = int(episode % self._policy_epochs)
+        self._aux_obs[:, idx*self._num_envs:(idx+1)*self._num_envs].copy_(rollout_buffer.obs.clone())
+        self._aux_returns[:, idx*self._num_envs:(idx+1)*self._num_envs].copy_(rollout_buffer.returns.clone())
+
+
         # TODO: Policy phase
         total_actor_loss = 0.
         total_critic_loss = 0.
         total_entropy_loss = 0.
+        num_updates = 0
+        generator = rollout_buffer.generator(self._num_policy_mini_batch)
 
-        if episode % self._policy_epochs != 0:
-            generator = rollout_buffer.generator(self._num_policy_mini_batch)
-
-            if self._first_episode:
-                num_steps, num_envs = rollout_buffer.obs.size()[:2]
-                self._aux_obs = torch.empty(
-                    size=(num_steps, num_envs*self._policy_epochs)+self._obs_space.shape, 
-                    device='cpu', dtype=torch.float32)
-                self._aux_returns = torch.empty(
-                    size=(num_steps, num_envs*self._policy_epochs, 1), 
-                    device='cpu', dtype=torch.float32)
-                self._aux_logits = torch.empty(
-                    size=(num_steps, num_envs*self._policy_epochs)+self._action_space.shape[0],
-                    device='cpu', dtype=torch.float32)
-                self._first_episode = False
-                self._num_aux_rollouts = num_envs * self._policy_epochs
-            else:
-                idx = int(episode % self._policy_epochs)
-                self._aux_obs[:, idx] = rollout_buffer.obs.copy()
-                self._aux_returns[:, idx] = rollout_buffer.returns.copy()
-
-            for batch in generator:
-                batch_obs, batch_actions, batch_values, batch_returns, \
-                    batch_dones, batch_old_log_probs, adv_targ = batch
+        for batch in generator:
+            batch_obs, batch_actions, batch_values, batch_returns, \
+                batch_dones, batch_old_log_probs, adv_targ = batch
                 
-                # evaluate sampled actions
-                values, log_probs, entropy = self._ac.get_action_and_value(
-                    obs=self._encoder(batch_obs),
-                    actions=batch_actions)
+            # evaluate sampled actions
+            _, values, log_probs, entropy = self._ac.get_action_and_value(
+                obs=self._encoder(batch_obs),
+                actions=batch_actions)
 
-                # actor loss part
-                ratio = torch.exp(log_probs - batch_old_log_probs)
-                surr1 = ratio * adv_targ
-                surr2 = torch.clamp(ratio, 1.0 - self._clip_range, 1.0 + self._clip_range) * adv_targ
-                actor_loss = - torch.min(surr1, surr2).mean()
+            # actor loss part
+            ratio = torch.exp(log_probs - batch_old_log_probs)
+            surr1 = ratio * adv_targ
+            surr2 = torch.clamp(ratio, 1.0 - self._clip_range, 1.0 + self._clip_range) * adv_targ
+            actor_loss = - torch.min(surr1, surr2).mean()
 
-                # critic loss part
-                values_clipped = batch_values + (values - batch_values).clamp(-self._clip_range, self._clip_range)
-                values_losses = (batch_values - batch_returns).pow(2)
-                values_losses_clipped = (values_clipped - batch_returns).pow(2)
-                critic_loss = 0.5 * torch.max(values_losses, values_losses_clipped).mean()
+            # critic loss part
+            values_clipped = batch_values + (values - batch_values).clamp(-self._clip_range, self._clip_range)
+            values_losses = (batch_values - batch_returns).pow(2)
+            values_losses_clipped = (values_clipped - batch_returns).pow(2)
+            critic_loss = 0.5 * torch.max(values_losses, values_losses_clipped).mean()
 
-                # update
-                self._encoder_opt.zero_grad(set_to_none=True)
-                self._ac_opt.zero_grad(set_to_none=True)
-                (critic_loss * self._vf_coef + actor_loss - entropy * self._ent_coef).backward()
-                nn.utils.clip_grad_norm_(self._encoder.parameters(), self._max_grad_norm)
-                nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
-                self._encoder_opt.step()
-                self._ac_opt.step()
+            # update
+            self._encoder_opt.zero_grad(set_to_none=True)
+            self._ac_opt.zero_grad(set_to_none=True)
+            (critic_loss * self._vf_coef + actor_loss - entropy * self._ent_coef).backward()
+            nn.utils.clip_grad_norm_(self._encoder.parameters(), self._max_grad_norm)
+            nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
+            self._encoder_opt.step()
+            self._ac_opt.step()
 
-                total_actor_loss += actor_loss.item()
-                total_critic_loss += critic_loss.item()
-                total_entropy_loss += entropy.item()
+            total_actor_loss += actor_loss.item()
+            total_critic_loss += critic_loss.item()
+            total_entropy_loss += entropy.item()
+            num_updates += 1
+        
 
+        total_actor_loss /= num_updates
+        total_critic_loss /= num_updates
+        total_entropy_loss /= num_updates
+
+        if  (episode + 1) % self._policy_epochs != 0:
+            # if not auxiliary phase, return train loss directly.
             return {
                 'actor_loss': total_actor_loss,
                 'critic_loss': total_critic_loss,
                 'entropy_loss': total_entropy_loss
-            }
-        
+                }
 
-        # TODO: Get action logits for stored auxiliary observations.
-        for idx in range(self._policy_epochs):
-            with torch.no_grad():
-                logits = self._ac.get_logits(self._aux_obs[:, idx]).logits().cpu().clone()
-                self._aux_logits[:, idx] = logits
 
 
         # TODO: Auxiliary phase
-        if episode % self._aux_epochs == 0:
+        for idx in range(self._policy_epochs):
+            with torch.no_grad():
+                aux_obs = self._aux_obs[:, idx*self._num_envs:(idx+1)*self._num_envs].to(self._device).reshape(
+                    -1, *self._aux_obs.size()[2:])
+                # get logits
+                logits = self._ac.get_logits(self._encoder(aux_obs)).logits.cpu().clone()
+                self._aux_logits[:, idx*self._num_envs:(idx+1)*self._num_envs] = logits.reshape(
+                    self._num_steps, self._num_envs, self._aux_logits.size()[2])
+
+
+        for e in range(self._aux_epochs):
+            print('aux phase', e)
             aux_inds = np.arange(self._num_aux_rollouts)
             np.random.shuffle(aux_inds)
 
-            for idx in range(self._num_aux_rollouts, self._num_aux_mini_batch):
+            for idx in range(0, self._num_aux_rollouts, self._num_aux_mini_batch):
                 batch_inds = aux_inds[idx:idx+self._num_aux_mini_batch]
-                batch_aux_obs = self._aux_obs[:, batch_inds].reshape(-1, *self._aux_obs.size()[2:])
-                batch_aux_returns = self._aux_returns[:, batch_inds].reshape(-1, *self._aux_returns.size()[2:])
-                batch_aux_logits = self._aux_logits.reshape(-1, *self._aux_returns.size()[2:])
+                batch_aux_obs = self._aux_obs[:, batch_inds].reshape(-1, *self._aux_obs.size()[2:]).to(self._device)
+                batch_aux_returns = self._aux_returns[:, batch_inds].reshape(-1, *self._aux_returns.size()[2:]).to(self._device)
+                batch_aux_logits = self._aux_logits[:, batch_inds].reshape(-1, *self._aux_logits.size()[2:]).to(self._device)
 
                 new_dist, new_values, new_aux_values = self._ac.get_probs_and_aux_value(
                     self._encoder(batch_aux_obs))
@@ -351,9 +379,8 @@ class PPGLearner(BaseLearner):
                 new_values = new_values.view(-1)
                 new_aux_values = new_aux_values.view(-1)
                 old_dist = self._dist(logits=batch_aux_logits)
-
                 # divergence loss
-                kl_loss = torch.distributions.kl_divergence(old_dist, new_dist)
+                kl_loss = torch.distributions.kl_divergence(old_dist, new_dist).mean()
                 # value loss
                 value_loss = 0.5 * ((new_values - batch_aux_returns)).mean()
                 aux_value_loss = 0.5 * ((new_aux_values - batch_aux_returns)).mean()
@@ -363,7 +390,6 @@ class PPGLearner(BaseLearner):
                 if (idx + 1) % self._num_aux_grad_accum == 0:
                     self._encoder_opt.zero_grad(set_to_none=True)
                     self._ac_opt.zero_grad(set_to_none=True)
-                    (critic_loss * self._vf_coef + actor_loss - entropy * self._ent_coef).backward()
                     nn.utils.clip_grad_norm_(self._encoder.parameters(), self._max_grad_norm)
                     nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
                     self._encoder_opt.step()

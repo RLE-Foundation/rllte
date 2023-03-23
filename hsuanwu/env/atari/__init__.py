@@ -59,4 +59,4 @@ def make_atari_env(env_id: str = 'Alien-v5',
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
 
-    return TorchVecEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device, lambda obs: obs)
