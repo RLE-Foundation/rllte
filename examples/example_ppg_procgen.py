@@ -10,7 +10,7 @@ from hsuanwu.env import make_procgen_env
 from hsuanwu.common.engine import OnPolicyTrainer
 
 train_env = make_procgen_env(
-    env_id='bigfish',
+    env_id='fruitbot',
     num_envs=64,
     num_levels=200,
     start_level=0,
@@ -19,7 +19,7 @@ train_env = make_procgen_env(
 )
 
 test_env = make_procgen_env(
-    env_id='bigfish',
+    env_id='fruitbot',
     num_envs=1,
     num_levels=0,
     start_level=0,

@@ -1,4 +1,4 @@
-seed: 1 
+seed: 0
 device: cuda                            
 use_aug: false                           
 use_irs: false                           

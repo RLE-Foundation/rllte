@@ -26,7 +26,8 @@ class ActorCritic(nn.Module):
                 ) -> None:
         super().__init__()
         
-        self.trunk = nn.Sequential(nn.Linear(feature_dim, hidden_dim), nn.ReLU())
+        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh(),
+                                   nn.Linear(feature_dim, hidden_dim), nn.ReLU())
         self.actor = nn.Linear(hidden_dim, action_space.shape[0])
         self.critic = nn.Linear(hidden_dim, 1)
         self.aux_critic = nn.Linear(hidden_dim, 1)
@@ -58,7 +59,7 @@ class ActorCritic(nn.Module):
             Estimated values.
         """
         logits = self.actor(self.trunk(obs))
-        return self.dist(logits).mode()
+        return self.dist(logits).mean
 
 
     def get_action_and_value(self, obs: Tensor, actions: Tensor = None) -> Sequence[Tensor]:
