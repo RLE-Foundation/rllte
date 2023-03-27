@@ -1,0 +1,44 @@
+seed: 1 
+device: cuda                            
+use_aug: false                           
+use_irs: false                            
+num_train_steps: 1000000                  
+num_init_steps: 5000                     
+# test setup
+test_every_steps: 10000
+num_test_episodes: 10                   
+
+encoder:
+  _target_: IdentityEncoder             # encoder name
+  feature_dim: 5
+
+
+learner:
+  _target_: SACLearner             # learner type
+  num_init_steps: ${num_init_steps}
+
+storage:
+  _target_: VanillaReplayBuffer
+  buffer_size: ${num_train_steps}
+  batch_size: 1024
+
+distribution:
+  _target_: SquashedNormal
+
+##############################################################
+augmentation:
+  _target_: RandomShift
+
+##############################################################
+reward:
+  _target_: RE3
+
+##############################################################
+hydra:
+  run:
+    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: true
