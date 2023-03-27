@@ -23,7 +23,7 @@ class VanillaReplayBuffer:
                  action_shape: Tuple,
                  action_type: str,
                  buffer_size: int = 1e+6,
-                 batch_size: int = 128
+                 batch_size: int = 1024
                  ):
         self._obs_shape = obs_shape
         self._action_shape = action_shape
@@ -70,7 +70,7 @@ class VanillaReplayBuffer:
         np.copyto(self.actions[self._global_step], action)
         np.copyto(self.rewards[self._global_step], reward)
         np.copyto(self.obs[(self._global_step + 1) % self._buffer_size], next_obs)
-        np.copyto(self.dones[self._global_step], not done)
+        np.copyto(self.dones[self._global_step], done)
 
         self._global_step = (self._global_step + 1) % self._buffer_size
         self._full = self._full or self._global_step == 0
