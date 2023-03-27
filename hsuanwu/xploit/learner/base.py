@@ -2,6 +2,7 @@ import torch
 
 from hsuanwu.common.typing import *
 
+
 class BaseLearner:
     """Base class of learner.
     

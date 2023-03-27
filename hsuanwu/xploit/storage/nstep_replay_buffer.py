@@ -25,11 +25,11 @@ class NStepReplayBuffer(IterableDataset):
         N-step replay buffer.
     """
     def __init__(self,
-                 buffer_size: int,
-                 batch_size: int,
-                 num_workers: int,
-                 pin_memory: bool,
-                 n_step: int = 2,
+                 buffer_size: int = 500000,
+                 batch_size: int = 256,
+                 num_workers: int = 4,
+                 pin_memory: bool = True,
+                 n_step: int = 3,
                  discount: float = 0.99,
                  fetch_every: int = 1000,
                  save_snapshot: bool = False
@@ -53,6 +53,17 @@ class NStepReplayBuffer(IterableDataset):
         self._fetch_every = fetch_every
         self._fetched_samples = fetch_every
 
+    @property
+    def get_batch_size(self):
+        return self._batch_size
+    
+    @property
+    def get_num_workers(self):
+        return self._num_workers
+    
+    @property
+    def get_pin_memory(self):
+        return self._pin_memory
 
     def _sample_episode(self) -> Dict:
         eps_fn = random.choice(self._worker_eps_fn_pool)

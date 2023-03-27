@@ -5,7 +5,7 @@ use_irs: false
 num_train_steps: 250000                  
 num_init_steps: 2000                     
 # test setup
-test_every_steps: 50000
+test_every_steps: 5000
 num_test_episodes: 10                   
 
 encoder:
@@ -14,24 +14,13 @@ encoder:
 
 learner:
   _target_: ContinuousLearner             # learner type
-  hidden_dim: 1024                        # size of the hidden layers.
-  lr: 1e-4                                # learning rate
-  critic_target_tau: 0.01                 
-  num_expl_steps: 2000
-  update_every_steps: 2
-  stddev_schedule: linear(1.0, 0.1, 100000)
-  stddev_clip: 0.3
 
-buffer:
+storage:
   _target_: NStepReplayBuffer
   buffer_size: 500000
   batch_size: 256
   pin_memory: true
   num_workers: 4
-  n_step: 3
-  discount: 0.99
-  fetch_every: 1000
-  save_snapshot: false
 
 distribution:
   _target_: TruncatedNormal

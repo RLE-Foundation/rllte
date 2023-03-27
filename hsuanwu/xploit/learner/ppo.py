@@ -83,7 +83,7 @@ class ActorCritic(nn.Module):
 
 
 class PPOLearner(BaseLearner):
-    """Proximal Policy Optimization (PPO) Learner
+    """Proximal Policy Optimization (PPO) Learner.
     
     Args:
         observation_space: Observation space of the environment.
@@ -144,6 +144,14 @@ class PPOLearner(BaseLearner):
 
     
     def train(self, training=True):
+        """ Set the train mode.
+
+        Args:
+            training: True (training) or False (testing).
+
+        Returns:
+            None.
+        """
         self.training = training
         self._ac.train(training)
         if self._encoder is not None:

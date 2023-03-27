@@ -191,6 +191,12 @@ class PPGLearner(BaseLearner):
     
     def train(self, training=True) -> None:
         """ Set the train mode.
+
+        Args:
+            training: True (training) or False (testing).
+
+        Returns:
+            None.
         """
         self.training = training
         self._ac.train(training)
