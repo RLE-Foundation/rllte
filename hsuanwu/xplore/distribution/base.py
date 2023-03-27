@@ -29,6 +29,7 @@ class BaseDistribution(pyd.Normal):
         self._high = high
         self._eps = eps
 
+
     def _clamp(self, x: Tensor) -> Tensor:
         """ Clamping operation.
         Args:
@@ -41,6 +42,7 @@ class BaseDistribution(pyd.Normal):
             x, self._low + self._eps, self._high - self._eps)
         x = x - x.detach() + clamped_x.detach()
         return x
+
 
     def sample(self, clip: float = None, sample_shape = torch.Size()):
         """Generates a sample_shape shaped sample

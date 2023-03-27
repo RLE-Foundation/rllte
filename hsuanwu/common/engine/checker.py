@@ -23,7 +23,7 @@ MATCH_KEYS = {
     },
     'SACLearner': {
         'storage': ['VanillaReplayBuffer', 'NStepReplayBuffer'],
-        'distribution': ['OrnsteinUhlenbeck', 'TruncatedNormal'],
+        'distribution': ['OrnsteinUhlenbeck', 'TruncatedNormal', 'SquashedNormal'],
         'augmentation': [],
         'reward': []
     },

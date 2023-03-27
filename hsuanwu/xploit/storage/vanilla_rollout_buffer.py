@@ -42,13 +42,11 @@ class VanillaRolloutBuffer:
                                dtype=torch.float32,
                                device=self._device)
         if action_type == 'dis':
-            self._action_dim = 1
             self.actions  = torch.empty(size=(num_steps, num_envs, 1), 
                                                     dtype=torch.float32, 
                                                     device=self._device)
         if action_type == 'cont':
-            self._action_dim = action_shape[0]
-            self.actions = torch.empty(size=(num_steps, num_envs, self._action_dim), 
+            self.actions = torch.empty(size=(num_steps, num_envs, action_shape[0]), 
                                                    dtype=torch.float32, 
                                                    device=self._device)
         self.rewards = torch.empty(size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device)

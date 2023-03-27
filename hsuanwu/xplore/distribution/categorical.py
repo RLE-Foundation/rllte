@@ -1,5 +1,4 @@
 import torch.distributions as pyd
-import torch
 
 from hsuanwu.common.typing import *
 

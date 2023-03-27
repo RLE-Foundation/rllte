@@ -1,12 +1,64 @@
 from torch.utils.data import IterableDataset
+from collections import defaultdict
 
 import numpy as np
 import traceback
+import datetime
 import random
 
 from hsuanwu.common.typing import *
-from hsuanwu.xploit.storage.vanilla_replay_buffer import ReplayBufferStorage
-from hsuanwu.xploit.storage.utils import episode_len, load_episode
+from hsuanwu.xploit.storage.utils import episode_len, dump_episode, load_episode
+
+class ReplayBufferStorage:
+    """Storage collected experiences to local files.
+    
+    Args:
+        replay_dir: save directory.
+    
+    Returns:
+        Storage instance.
+    """
+    def __init__(self,
+                 replay_dir: Path) -> None:
+        self._replay_dir = replay_dir
+        replay_dir.mkdir(exist_ok=True)
+        self._current_episode = defaultdict(list)
+        self._num_episodes = 0
+        self._num_transitions = 0
+    
+    def _store_episode(self, episode: Dict) -> None:
+        eps_idx = self._num_episodes
+        eps_len = episode_len(episode)
+        self._num_episodes += 1
+        self._num_transitions += eps_len
+        ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+        eps_fn = f'{ts}_{eps_idx}_{eps_len}.npz'
+        dump_episode(episode, self._replay_dir / eps_fn)
+    
+    @property
+    def num_episodes(self) -> int:
+        return self._num_episodes
+    
+    @property
+    def num_transitions(self) -> int:
+        return self._num_transitions
+
+    def add(self, obs: Any, action: Any, reward: float, done: bool, discount: float) -> None:
+        self._current_episode['observation'].append(obs)
+        self._current_episode['action'].append(action)
+        self._current_episode['reward'].append(np.full((1,), reward, np.float32))
+        self._current_episode['done'].append(np.full((1,), done, np.float32))
+        self._current_episode['discount'].append(np.full((1,), discount, np.float32))
+
+        if done:
+            episode = dict()
+            for key in self._current_episode.keys():
+                episode[key] = np.array(self._current_episode[key])
+
+            # save episode to file
+            self._store_episode(episode)
+            self._current_episode = defaultdict(list)
+
 
 class NStepReplayBuffer(IterableDataset):
     """Replay buffer for off-policy algorithms (N-step returns supported).
@@ -53,17 +105,21 @@ class NStepReplayBuffer(IterableDataset):
         self._fetch_every = fetch_every
         self._fetched_samples = fetch_every
 
+
     @property
     def get_batch_size(self):
         return self._batch_size
-    
+
+
     @property
     def get_num_workers(self):
         return self._num_workers
-    
+
+
     @property
     def get_pin_memory(self):
         return self._pin_memory
+
 
     def _sample_episode(self) -> Dict:
         eps_fn = random.choice(self._worker_eps_fn_pool)
@@ -71,12 +127,15 @@ class NStepReplayBuffer(IterableDataset):
 
 
     def add(self,
-            observation: Any,
+            obs: Any,
             action: Any,
             reward: float,
             done: float,
-            info: Any) -> None:
-        self._replay_storage.add(observation, action, reward, done, info, use_discount=True)
+            info: Dict,
+            next_obs: Any) -> None:
+        
+        assert 'discount' in info.keys(), 'When using NStepReplayBuffer, please put the discount factor in \'info\'!'
+        self._replay_storage.add(obs, action, reward, done, info['discount'])
 
 
     def _store_episode(self, eps_fn: Path) -> bool:

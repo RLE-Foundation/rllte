@@ -25,6 +25,7 @@ class TruncatedNormal(BaseDistribution):
                  eps: float = 1e-6) -> None:
         super().__init__(mu, sigma, low, high, eps)
 
+
     def sample(self, clip: float = None, sample_shape = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped sample
         

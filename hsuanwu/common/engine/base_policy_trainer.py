@@ -106,6 +106,16 @@ class BasePolicyTrainer:
                 cfgs.storage.num_steps = cfgs.num_steps
                 cfgs.storage.num_envs = cfgs.num_envs
         
+
+         # set observation and action shape for replay buffer.
+        if 'Replay' in cfgs.storage._target_ and 'NStep' not in cfgs.storage._target_:
+            with open_dict(cfgs):
+                cfgs.storage.device = cfgs.device
+                cfgs.storage.obs_shape = obs_shape
+                cfgs.storage.action_shape = action_space['shape']
+                cfgs.storage.action_type = action_type
+
+        
         # xplore part
         if cfgs.use_irs:
             with open_dict(cfgs):

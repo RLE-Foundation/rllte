@@ -33,11 +33,12 @@ class FrameStack(gym.Wrapper):
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
 
+
 def make_dmc_env(
     env_id,
-    resource_files,
-    img_source,
-    total_frames,
+    resource_files=None,
+    img_source=None,
+    total_frames=None,
     seed=1,
     visualize_reward=True,
     from_pixels=False,
@@ -81,4 +82,7 @@ def make_dmc_env(
             },
             max_episode_steps=max_episode_steps
         )
-    return FrameStack(gym.make(env_id), k=frame_stack)
+    if visualize_reward:
+        return gym.make(env_id)
+    else:
+        return FrameStack(gym.make(env_id), k=frame_stack)
