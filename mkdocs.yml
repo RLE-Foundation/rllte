@@ -1,6 +1,6 @@
 site_name: "Hsuanwu"
 site_url: https://docs.hsuanwu.dev/
-copyright: Copyright &copy; 2023 Bellman Project
+copyright: Copyright &copy; 2023 Reinforcement Learning Evolution Foundation
 theme:
   name: material
   logo: assets/images/icon.svg
