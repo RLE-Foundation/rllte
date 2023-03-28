@@ -84,7 +84,6 @@ class SquashedNormal(pyd.TransformedDistribution):
         return self._clamp(super().sample(sample_shape))
 
 
-
     def rsample(self, sample_shape=torch.Size()):
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
         """
