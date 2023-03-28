@@ -7,8 +7,8 @@ theme:
   favicon: assets/images/icon.svg
   palette:
     - scheme: hsuanwu
-      primary: teal
-      accent: teal
+      primary: hsuanwu
+      accent: hsuanwu
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -68,8 +68,9 @@ nav:
 
   - API Documentation:
     - Overview: overview/api_overview.md
-    - xploit:
-      - encoder: 
+    - Xploit:
+      - Xploit Overview: overview/xploit_index/index.md
+      - encoder:
         - Base: api/xploit/encoder/base.md
         - VanillaCnnEncoder: api/xploit/encoder/vanilla_cnn_encoder.md
         - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
@@ -83,7 +84,8 @@ nav:
         - NStepReplayBuffer: api/xploit/storage/nstep_replay_buffer.md
         - PrioritizedReplayBuffer: api/xploit/storage/prioritized_replay_buffer.md
 
-    - xplore:
+    - Xplore:
+      - Xplore Overview: overview/xplore_index/index.md
       - reward:
         - Base: api/xplore/reward/base.md
         - ICM: api/xplore/reward/icm.md
@@ -104,4 +106,10 @@ nav:
         - Base: api/xplore/distribution/base.md
         - TruncatedNormal: api/xplore/distribution/truncated_normal.md
         - OrnsteinUhlenbeck: api/xplore/distribution/ornstein_uhlenbeck.md
+    
+    - Pre-training: 
+      - Pre-training Overview: overview/xplore_index/index.md
+    
+    - Deployment: 
+      - Deployment Overview: overview/xplore_index/index.md
   - Benchmarks: benchmarks.md
