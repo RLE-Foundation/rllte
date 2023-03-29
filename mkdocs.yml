@@ -101,7 +101,7 @@ nav:
     - Xplore:
       - Xplore Overview: overview/xplore_index/index.md
       - reward:
-        - Base: api/xplore/reward/base.md
+        - BaseIntrinsicRewardModule: api/xplore/reward/base.md
         - ICM: api/xplore/reward/icm.md
         - RND: api/xplore/reward/rnd.md
         - GIRM: api/xplore/reward/girm.md
@@ -112,7 +112,7 @@ nav:
         - REVD: api/xplore/reward/revd.md
 
       - augmentation:
-        - Base: api/xplore/augmentation/base.md
+        - BaseAugmentation: api/xplore/augmentation/base.md
         - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
         - RandomConvolution: api/xplore/augmentation/random_convolution.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
@@ -124,15 +124,16 @@ nav:
         - RandomTranslate: api/xplore/augmentation/random_translate.md
 
       - distribution:
-        - Base: api/xplore/distribution/base.md
-        - TruncatedNormal: api/xplore/distribution/truncated_normal.md
+        - BaseDistribution: api/xplore/distribution/base.md
+        - Categorical: api/xplore/distribution/categorical.md
         - OrnsteinUhlenbeck: api/xplore/distribution/ornstein_uhlenbeck.md
+        - SquashedNormal: api/xplore/distribution/squashed_normal.md
+        - TruncatedNormal: api/xplore/distribution/truncated_normal.md
     
     - Env:
-        Atari Games: ...
-        DeepMind Control Suite: ...
-        Procgen Games: ...
-        PyBullet Robotics Suite: ...
+      - make_atari_env: api/env/atari.md
+      - make_dmc_env: api/env/dmc.md
+      - make_procgen_env: api/env/procgen.md
 
     - Pre-training: 
       - Pre-training Overview: overview/xplore_index/index.md

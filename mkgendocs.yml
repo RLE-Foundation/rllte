@@ -223,12 +223,12 @@ pages:
   - page: "xplore/augmentation/random_flip.md"
     source: "hsuanwu/xplore/augmentation/random_flip.py"
     classes:
-      - RandoFlip
+      - RandomFlip
   
   - page: "xplore/augmentation/random_rotate.md"
     source: "hsuanwu/xplore/augmentation/random_rotate.py"
     classes:
-      - RandoRotate
+      - RandomRotate
   
   - page: "xplore/augmentation/random_shift.md"
     source: "hsuanwu/xplore/augmentation/random_shift.py"
@@ -242,21 +242,50 @@ pages:
 
 ###################################################################
 
-# xplore.noise
+# xplore.distribution
 ###################################################################
   - page: "xplore/distribution/base.md"
     source: "hsuanwu/xplore/distribution/base.py"
     classes:
       - BaseDistribution
+  
+  - page: "xplore/distribution/categorical.md"
+    source: "hsuanwu/xplore/distribution/categorical.py"
+    classes:
+      - Categorical
+
+  - page: "xplore/distribution/ornstein_uhlenbeck.md"
+    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
+    classes:
+      - OrnsteinUhlenbeck
+  
+  - page: "xplore/distribution/squashed_normal.md"
+    source: "hsuanwu/xplore/distribution/squashed_normal.py"
+    classes:
+      - SquashedNormal
 
   - page: "xplore/distribution/truncated_normal.md"
     source: "hsuanwu/xplore/distribution/truncated_normal.py"
     classes:
       - TruncatedNormal
+
+###################################################################
+
+# env
+###################################################################
+  - page: "env/atari.md"
+    source: "hsuanwu/env/atari/__init__.py"
+    functions:
+      - make_atari_env
+
+  - page: "env/dmc.md"
+    source: "hsuanwu/env/dmc/__init__.py"
+    functions:
+      - make_dmc_env
   
-  - page: "xplore/distribution/ornstein_uhlenbeck.md"
-    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
-    classes:
-      - OrnsteinUhlenbeck
+  - page: "env/procgen.md"
+    source: "hsuanwu/env/procgen/__init__.py"
+    functions:
+      - make_procgen_env
 
 ###################################################################

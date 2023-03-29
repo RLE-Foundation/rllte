@@ -4,6 +4,8 @@ from collections import deque
 import numpy as np
 import gym
 
+from hsuanwu.common.typing import *
+
 class FrameStack(gym.Wrapper):
     def __init__(self, env, k):
         gym.Wrapper.__init__(self, env)
@@ -35,21 +37,42 @@ class FrameStack(gym.Wrapper):
 
 
 def make_dmc_env(
-    env_id,
-    resource_files=None,
-    img_source=None,
-    total_frames=None,
-    seed=1,
-    visualize_reward=True,
-    from_pixels=False,
-    height=84,
-    width=84,
-    camera_id=0,
-    frame_stack=3,
-    frame_skip=1,
-    episode_length=1000,
-    environment_kwargs=None
+    env_id: str = 'cartpole_balance',
+    resource_files: str = None,
+    img_source: str = None,
+    total_frames: int = None,
+    seed: int = 1,
+    visualize_reward: bool = True,
+    from_pixels: bool = False,
+    height: int = 84,
+    width: int = 84,
+    camera_id: int = 0,
+    frame_stack: int = 3,
+    frame_skip: int = 1,
+    episode_length: int = 1000,
+    environment_kwargs: Dict = None
 ):
+    """Build DeepMind Control Suite environments.
+    
+    Args:
+        env_id: Name of environment.
+        resource_files: File path of the resource files.
+        img_source: Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
+        total_frames: for 'images' or 'video' distractor.
+        seed: Random seed.
+        visualize_reward: True when 'from_pixels' is False, False when 'from_pixels' is True.
+        from_pixels: Provide image-based observations or not.
+        height: Image observation height.
+        width: Image observation width.
+        camera_id: Camera id for generating image-based observations.
+        frame_stack: Number of stacked frames.
+        frame_skip: Number of action repeat.
+        episode_length: Maximum length of an episode.
+        environment_kwargs: Other environment arguments.
+
+    Returns:
+        Environments instance.
+    """
     domain_name, task_name = env_id.split('_')
     env_id = 'dmc_%s_%s_%s-v1' % (domain_name, task_name, seed)
 
