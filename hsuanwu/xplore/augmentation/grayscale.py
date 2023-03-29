@@ -8,7 +8,7 @@ class GrayScale(BaseAugmentation):
     """Grayscale operation for image augmentation.
 
     Args:
-       None
+       None.
     
     Returns:
         Augmented grayscale image.
