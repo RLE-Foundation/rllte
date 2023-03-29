@@ -1,21 +1,23 @@
-# 15/04/2023 (Version 0.0.1)
-### New features:
-None.
+!!! abstract "15/04/2023 (Version 0.0.2)"
+    Version 0.0.2 published.
+    - **New features**:
+        + None.
 
-### Bug Fixes:
-None.
+    - **Bug Fixes**:
+        + None.
 
-### Deprecations:
-None.
+    - **Deprecations**:
+        + None.
 
-### Others:
-None.
+    - **Others**:
+        + None.
 
-# 31/03/2023 (Version 0.0.1)
-Version 0.0.1 published.
+!!! abstract "31/03/2023 (Version 0.0.1)"
+    Version 0.0.1 published.
 
-### Supported features:
-None.
+    - Supported features:
 
-### 19/01/2023
-- Repository initialization and first commit.
+
+!!! abstract "19/01/2023"
+
+    - Repository initialization and first commit.
