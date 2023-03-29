@@ -2,7 +2,7 @@
 
 
 ## RND
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L66)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L67)
 ```python 
 RND(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of RND.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L116)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L117)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -117,7 +117,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L36)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L37)
 ```python
 .forward(
    obs: Tensor
@@ -129,7 +129,7 @@ CNN-based encoder.
 
 
 ## MlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L44)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L45)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -156,7 +156,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L61)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L62)
 ```python
 .forward(
    obs: Tensor

@@ -2,12 +2,12 @@
 
 
 ## NStepReplayBuffer
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L11)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L63)
 ```python 
 NStepReplayBuffer(
-   buffer_size: int, batch_size: int, num_workers: int, pin_memory: bool,
-   n_step: int = 2, discount: float = 0.99, fetch_every: int = 1000,
-   save_snapshot: bool = False
+   buffer_size: int = 500000, batch_size: int = 256, num_workers: int = 4,
+   pin_memory: bool = True, n_step: int = 3, discount: float = 0.99,
+   fetch_every: int = 1000, save_snapshot: bool = False
 )
 ```
 
@@ -36,11 +36,32 @@ N-step replay buffer.
 **Methods:**
 
 
+### .get_batch_size
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L110)
+```python
+.get_batch_size()
+```
+
+
+### .get_num_workers
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L115)
+```python
+.get_num_workers()
+```
+
+
+### .get_pin_memory
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L120)
+```python
+.get_pin_memory()
+```
+
+
 ### .add
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L62)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L129)
 ```python
 .add(
-   observation: Any, action: Any, reward: float, done: float, info: Any
+   obs: Any, action: Any, reward: float, done: float, info: Dict, next_obs: Any
 )
 ```
 

@@ -32,7 +32,7 @@ Base distribution instance.
 
 
 ### .sample
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L45)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L47)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()

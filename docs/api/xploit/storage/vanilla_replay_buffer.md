@@ -1,64 +1,12 @@
 #
 
 
-## ReplayBufferStorage
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L11)
-```python 
-ReplayBufferStorage(
-   replay_dir: Path
-)
-```
-
-
----
-Storage collected experiences to local files.
-
-
-**Args**
-
-* **replay_dir**  : save directory.
-
-
-**Returns**
-
-Storage instance.
-
-
-**Methods:**
-
-
-### .num_episodes
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L38)
-```python
-.num_episodes()
-```
-
-
-### .num_transitions
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L42)
-```python
-.num_transitions()
-```
-
-
-### .add
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L45)
-```python
-.add(
-   obs: Any, action: Any, reward: float, done: bool, info: Any, use_discount: bool
-)
-```
-
-
-----
-
-
 ## VanillaReplayBuffer
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L63)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L6)
 ```python 
 VanillaReplayBuffer(
-   buffer_size: int, num_workers: int, discount: float = 0.99, fetch_every: int = 1000,
-   save_snapshot: bool = False
+   device: torch.device, obs_shape: Tuple, action_shape: Tuple, action_type: str,
+   buffer_size: int = 1000000.0, batch_size: int = 1024
 )
 ```
 
@@ -69,11 +17,12 @@ Vanilla replay buffer for off-policy algorithms.
 
 **Args**
 
+* **device**  : Device (cpu, cuda, ...) on which the code should be run.
+* **obs_shape**  : The data shape of observations.
+* **action_shape**  : The data shape of actions.
+* **action_type**  : The type of actions, 'cont' or 'dis'.
 * **buffer_size**  : Max number of element in the buffer.
-* **num_workers**  : Subprocesses to use for data loading.
-* **discount**  : The discount factor for future rewards.
-* **fetch_every**  : Loading interval.
-* **save_snapshot**  : Save loaded file or not.
+* **batch_size**  : Batch size of samples.
 
 
 **Returns**
@@ -85,10 +34,37 @@ Vanilla replay buffer.
 
 
 ### .add
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L105)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L55)
 ```python
 .add(
-   observation: Any, action: Any, reward: float, done: float, info: Any
+   obs: Any, action: Any, reward: Any, done: Any, info: Any, next_obs: Any
 )
 ```
+
+---
+Add sampled transitions into storage.
+
+
+**Args**
+
+* **obs**  : Observations.
+* **actions**  : Actions.
+* **rewards**  : Rewards.
+* **dones**  : Dones.
+* **info**  : Infos.
+* **next_obs**  : Next observations.
+
+
+**Returns**
+
+None.
+
+### .sample
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L79)
+```python
+.sample()
+```
+
+---
+Sample transitions from the storage.
 

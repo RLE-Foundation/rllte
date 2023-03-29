@@ -21,22 +21,27 @@ pages:
     source: "hsuanwu/xploit/encoder/vanilla_mlp_encoder.py"
     classes:
       - VanillaMlpEncoder
+  
+  # - page: "xploit/encoder/identity_encoder.md"
+  #   source: "hsuanwu/xploit/encoder/identity_encoder.py"
+  #   classes:
+  #     - IdentityEncoder
 ###################################################################
 
 
 # xploit.learner
 ###################################################################
-  - page: "xploit/learner/drqv2.md"
-    source: "hsuanwu/xploit/learner/drqv2.py"
-    classes:
-      - Actor
-      - Critic
-      - DrQv2Agent
+  # - page: "xploit/learner/drqv2.md"
+  #   source: "hsuanwu/xploit/learner/drqv2.py"
+  #   classes:
+  #     - Actor
+  #     - Critic
+  #     - DrQv2Agent
 
-  - page: "xploit/learner/ppg.md"
-    source: "hsuanwu/xploit/learner/ppg.py"
-    classes:
-      - PPGAgent
+  # - page: "xploit/learner/ppg.md"
+  #   source: "hsuanwu/xploit/learner/ppg.py"
+  #   classes:
+  #     - PPGAgent
 ###################################################################
 
 
@@ -45,7 +50,6 @@ pages:
   - page: "xploit/storage/vanilla_replay_buffer.md"
     source: "hsuanwu/xploit/storage/vanilla_replay_buffer.py"
     classes:
-      - ReplayBufferStorage
       - VanillaReplayBuffer
 
   - page: "xploit/storage/nstep_replay_buffer.md"

@@ -2,7 +2,7 @@
 
 
 ## REVD
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L63)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L64)
 ```python 
 REVD(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of REVD.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L105)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L106)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3,
@@ -68,7 +68,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L42)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L43)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -95,7 +95,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L59)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L60)
 ```python
 .forward(
    obs: Tensor
@@ -134,7 +134,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L34)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L35)
 ```python
 .forward(
    obs: Tensor

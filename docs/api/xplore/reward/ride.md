@@ -2,7 +2,7 @@
 
 
 ## RIDE
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L63)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L64)
 ```python 
 RIDE(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of RIDE.
 
 
 ### .pseudo_counts
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L102)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L103)
 ```python
 .pseudo_counts(
    src_feats, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -46,7 +46,7 @@ Instance of RIDE.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L127)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L128)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -101,7 +101,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L34)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L35)
 ```python
 .forward(
    obs: Tensor
@@ -113,7 +113,7 @@ CNN-based random encoder.
 
 
 ## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L42)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L43)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -140,7 +140,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L59)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L60)
 ```python
 .forward(
    obs: Tensor

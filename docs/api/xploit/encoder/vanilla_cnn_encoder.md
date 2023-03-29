@@ -22,7 +22,7 @@ Convolutional neural network (CNN)-based encoder for processing image-based obse
 
 **Returns**
 
-CNN-based encoder.
+CNN-based encoder instance.
 
 
 **Methods:**

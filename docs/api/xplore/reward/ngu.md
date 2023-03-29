@@ -2,7 +2,7 @@
 
 
 ## NGU
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L66)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L67)
 ```python 
 NGU(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of NGU.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L116)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L117)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -87,7 +87,7 @@ Update the intrinsic reward module if necessary.
 None
 
 ### .pseudo_counts
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L195)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L197)
 ```python
 .pseudo_counts(
    encoded_obs, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -127,7 +127,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L36)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L37)
 ```python
 .forward(
    obs: Tensor
@@ -139,7 +139,7 @@ CNN-based encoder.
 
 
 ## MlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L44)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L45)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -166,7 +166,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L61)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L62)
 ```python
 .forward(
    obs: Tensor

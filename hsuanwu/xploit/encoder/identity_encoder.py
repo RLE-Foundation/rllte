@@ -14,7 +14,7 @@ class IdentityEncoder(BaseEncoder):
         feature_dim: Number of features extracted.
 
     Returns:
-       Identity encoder instance.
+        Identity encoder instance.
     """
     def __init__(self, observation_space: Space, feature_dim: int = 64) -> None:
         super().__init__(observation_space, feature_dim)

@@ -34,7 +34,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L46)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L37)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -59,7 +59,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L62)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L53)
 ```python
 .update(
    rollouts: Dict

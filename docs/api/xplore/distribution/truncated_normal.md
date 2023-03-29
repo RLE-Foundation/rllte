@@ -32,7 +32,7 @@ Truncated normal distribution instance.
 
 
 ### .sample
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L28)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L29)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()

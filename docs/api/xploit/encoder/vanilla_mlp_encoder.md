@@ -23,7 +23,7 @@ Multi layer perceptron (MLP) for processing state-based inputs.
 
 **Returns**
 
-Mlp-based encoder.
+Mlp-based encoder instance.
 
 
 **Methods:**

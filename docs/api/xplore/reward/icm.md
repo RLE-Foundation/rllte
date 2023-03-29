@@ -2,7 +2,7 @@
 
 
 ## ICM
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L102)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L103)
 ```python 
 ICM(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of ICM.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L185)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L186)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -63,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L230)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L231)
 ```python
 .update(
    rollouts: Dict
@@ -117,7 +117,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L43)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L44)
 ```python
 .forward(
    obs: Tensor, next_obs: Tensor
@@ -129,7 +129,7 @@ CNN-based encoder.
 
 
 ## InverseForwardDynamicsModel
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L58)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L59)
 ```python 
 InverseForwardDynamicsModel(
    latent_dim: int, action_dim: int
@@ -156,7 +156,7 @@ Model instance.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L83)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L84)
 ```python
 .forward(
    obs: Tensor, action: Tensor, next_obs: Tensor, training: bool = True

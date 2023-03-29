@@ -2,7 +2,7 @@
 
 
 ## RE3
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L63)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L64)
 ```python 
 RE3(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L102)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L103)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False
@@ -66,7 +66,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L42)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L43)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -93,7 +93,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L59)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L60)
 ```python
 .forward(
    obs: Tensor
@@ -132,7 +132,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L34)
+[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L35)
 ```python
 .forward(
    obs: Tensor
