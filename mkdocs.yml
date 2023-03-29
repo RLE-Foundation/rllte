@@ -93,10 +93,10 @@ nav:
         - SACLearner: api/xploit/learner/sac.md
       
       - storage:
-        - VanillaRolloutBuffer: api/xploit/storage/vanilla_rollout_buffer.md
-        - VanillaReplayBuffer: api/xploit/storage/vanilla_replay_buffer.md
-        - NStepReplayBuffer: api/xploit/storage/nstep_replay_buffer.md
-        - PrioritizedReplayBuffer: api/xploit/storage/prioritized_replay_buffer.md
+        - VanillaRolloutStorage: api/xploit/storage/vanilla_rollout_storage.md
+        - VanillaReplayStorage: api/xploit/storage/vanilla_replay_storage.md
+        - NStepReplayStorage: api/xploit/storage/nstep_replay_storage.md
+        - PrioritizedReplayStorage: api/xploit/storage/prioritized_replay_storage.md
 
     - Xplore:
       - Xplore Overview: overview/xplore_index/index.md
@@ -113,6 +113,7 @@ nav:
 
       - augmentation:
         - Base: api/xplore/augmentation/base.md
+        - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomShift: api/xplore/augmentation/random_shift.md
 

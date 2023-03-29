@@ -93,8 +93,8 @@ pages:
 
 # xploit.storage
 ###################################################################
-  - page: "xploit/storage/vanilla_replay_storage.md"
-    source: "hsuanwu/xploit/storage/vanilla_replay_storage.py"
+  - page: "xploit/storage/vanilla_rollout_storage.md"
+    source: "hsuanwu/xploit/storage/vanilla_rollout_storage.py"
     classes:
       - VanillaRolloutStorage
 
@@ -189,6 +189,11 @@ pages:
     source: "hsuanwu/xplore/augmentation/base.py"
     classes:
       - BaseAugmentation
+  
+  - page: "xplore/augmentation/random_convolution.md"
+    source: "hsuanwu/xplore/augmentation/random_convolution.py"
+    classes:
+      - RandomConvolution
 
   - page: "xplore/augmentation/random_crop.md"
     source: "hsuanwu/xplore/augmentation/random_crop.py"

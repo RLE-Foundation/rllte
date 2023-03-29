@@ -1,10 +1,10 @@
 #
 
 
-## NStepReplayBuffer
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L63)
+## NStepReplayStorage
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L64)
 ```python 
-NStepReplayBuffer(
+NStepReplayStorage(
    buffer_size: int = 500000, batch_size: int = 256, num_workers: int = 4,
    pin_memory: bool = True, n_step: int = 3, discount: float = 0.99,
    fetch_every: int = 1000, save_snapshot: bool = False
@@ -13,7 +13,7 @@ NStepReplayBuffer(
 
 
 ---
-Replay buffer for off-policy algorithms (N-step returns supported).
+Replay storage for off-policy algorithms (N-step returns supported).
 
 
 **Args**
@@ -30,35 +30,35 @@ Replay buffer for off-policy algorithms (N-step returns supported).
 
 **Returns**
 
-N-step replay buffer.
+N-step replay storage.
 
 
 **Methods:**
 
 
 ### .get_batch_size
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L110)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L111)
 ```python
 .get_batch_size()
 ```
 
 
 ### .get_num_workers
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L115)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L116)
 ```python
 .get_num_workers()
 ```
 
 
 ### .get_pin_memory
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L120)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L121)
 ```python
 .get_pin_memory()
 ```
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_buffer.py/#L129)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L130)
 ```python
 .add(
    obs: Any, action: Any, reward: float, done: float, info: Dict, next_obs: Any

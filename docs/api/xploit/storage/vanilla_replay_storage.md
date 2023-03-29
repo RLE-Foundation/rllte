@@ -1,10 +1,10 @@
 #
 
 
-## VanillaReplayBuffer
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L6)
+## VanillaReplayStorage
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L6)
 ```python 
-VanillaReplayBuffer(
+VanillaReplayStorage(
    device: torch.device, obs_shape: Tuple, action_shape: Tuple, action_type: str,
    buffer_size: int = 1000000.0, batch_size: int = 1024
 )
@@ -12,7 +12,7 @@ VanillaReplayBuffer(
 
 
 ---
-Vanilla replay buffer for off-policy algorithms.
+Vanilla replay storage for off-policy algorithms.
 
 
 **Args**
@@ -27,14 +27,14 @@ Vanilla replay buffer for off-policy algorithms.
 
 **Returns**
 
-Vanilla replay buffer.
+Vanilla replay storage.
 
 
 **Methods:**
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L55)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L55)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, done: Any, info: Any, next_obs: Any
@@ -60,7 +60,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_buffer.py/#L79)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L79)
 ```python
 .sample()
 ```
