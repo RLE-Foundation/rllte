@@ -131,13 +131,14 @@ nav:
         - TruncatedNormal: api/xplore/distribution/truncated_normal.md
     
     - Env:
+      - Overview: overview/env_index/index.md
       - make_atari_env: api/env/atari.md
       - make_dmc_env: api/env/dmc.md
       - make_procgen_env: api/env/procgen.md
 
     - Pre-training: 
-      - Pre-training Overview: overview/xplore_index/index.md
+      - Pre-training Overview: overview/pretraining_index/index.md
     
     - Deployment: 
-      - Deployment Overview: overview/xplore_index/index.md
+      - Deployment Overview: overview/deployment_index/index.md
   - Benchmarks: benchmarks.md
