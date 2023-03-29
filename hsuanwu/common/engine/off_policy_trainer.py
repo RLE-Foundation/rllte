@@ -35,7 +35,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         self._learner.set_encoder(encoder)
-        self._replay_buffer = hydra.utils.instantiate(self._cfgs.storage)
+        self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
 
         # xplore part
         dist = hydra.utils.get_class(self._cfgs.distribution._target_)
@@ -50,10 +50,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         # make data loader
         if self._cfgs.storage._target_ == 'NStepReplayBuffer':
-            self._replay_loader = torch.utils.data.DataLoader(self._replay_buffer,
-                                                    batch_size=self._replay_buffer.get_batch_size,
-                                                    num_workers=self._replay_buffer.get_num_workers,
-                                                    pin_memory=self._replay_buffer.get_pin_memory,
+            self._replay_loader = torch.utils.data.DataLoader(self._replay_storage,
+                                                    batch_size=self._replay_storage.get_batch_size,
+                                                    num_workers=self._replay_storage.get_num_workers,
+                                                    pin_memory=self._replay_storage.get_pin_memory,
                                                     worker_init_fn=worker_init_fn)
             self._replay_iter = None
 
@@ -97,7 +97,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._global_step += 1
 
             # save transition
-            self._replay_buffer.add(obs, action, reward, done, info, next_obs)
+            self._replay_storage.add(obs, action, reward, done, info, next_obs)
 
             # update agent
             if self._global_step >= self._num_init_steps:
@@ -105,7 +105,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                     # TODO: for NStepReplayBuffer
                     metrics = self._learner.update(self.replay_iter, step=self._global_step)
                 except:
-                    metrics = self._learner.update(self._replay_buffer, step=self._global_step)
+                    metrics = self._learner.update(self._replay_storage, step=self._global_step)
 
             # done
             if done:

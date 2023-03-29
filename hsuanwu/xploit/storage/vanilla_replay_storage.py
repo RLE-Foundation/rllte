@@ -3,8 +3,8 @@ import torch
 
 from hsuanwu.common.typing import *
 
-class VanillaReplayBuffer:
-    """Vanilla replay buffer for off-policy algorithms.
+class VanillaReplayStorage:
+    """Vanilla replay storage for off-policy algorithms.
 
     Args:
         device: Device (cpu, cuda, ...) on which the code should be run.
@@ -15,7 +15,7 @@ class VanillaReplayBuffer:
         batch_size: Batch size of samples.
 
     Returns:
-        Vanilla replay buffer.
+        Vanilla replay storage.
     """
     def __init__(self, 
                  device: torch.device,

@@ -12,7 +12,7 @@ import torch
 # from hsuanwu.xploit.drqv2.agent import DrQv2Agent
 # from hsuanwu.xploit.replay_buffer import ReplayBuffer
 from hsuanwu.env.dmc import make_dmc_env, FrameStack
-from hsuanwu.xploit.storage.nstep_replay_buffer import NStepReplayBuffer
+from hsuanwu.xploit.storage.nstep_replay_storage import NStepReplayBuffer
 
 if __name__ == '__main__':
     env = make_dmc_env(domain_name='hopper', 

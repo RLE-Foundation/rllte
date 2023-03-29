@@ -4,8 +4,8 @@ import torch
 
 from hsuanwu.common.typing import *
 
-class VanillaRolloutBuffer:
-    """Vanilla rollout buffer for on-policy algorithms.
+class VanillaRolloutStorage:
+    """Vanilla rollout storage for on-policy algorithms.
     
     Args:
         device: Device (cpu, cuda, ...) on which the code should be run.
@@ -18,7 +18,7 @@ class VanillaRolloutBuffer:
         gae_lambda: Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
-        Vanilla rollout buffer.
+        Vanilla rollout storage.
     """
     def __init__(self,
                  device: torch.device,

@@ -68,18 +68,32 @@ nav:
 
   - API Documentation:
     - Overview: overview/api_overview.md
+    - Common: 
+      - Engine: 
+        - BasePolicyTrainer: api/common/base_policy_trainer.md
+        - OnPolicyTrainer: api/common/on_policy_trainer.md
+        - OffPolicyTrainer: api/common/off_policy_trainer.md
+      - Logger: api/common/logger.md
+      - Timer: api/common/timer.md
+
     - Xploit:
       - Xploit Overview: overview/xploit_index/index.md
       - encoder:
-        - Base: api/xploit/encoder/base.md
+        - BaseEncoder: api/xploit/encoder/base.md
         - VanillaCnnEncoder: api/xploit/encoder/vanilla_cnn_encoder.md
         - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
+        - ResNetEncoder: api/xploit/encoder/resnet_encoder.md
+        - IdentityEncoder: api/xploit/encoder/identity_encoder.md
 
       - learner:
-        - DrQv2Agent: api/xploit/learner/drqv2.md
-        - PPGAgent: api/xploit/learner/ppg.md
+        - DrQv2Learner: api/xploit/learner/drqv2.md
+        - PPGLearner: api/xploit/learner/ppg.md
+        - PPOLearner: api/xploit/learner/ppo.md
+        - DrACLearner: api/xploit/learner/drac.md
+        - SACLearner: api/xploit/learner/sac.md
       
       - storage:
+        - VanillaRolloutBuffer: api/xploit/storage/vanilla_rollout_buffer.md
         - VanillaReplayBuffer: api/xploit/storage/vanilla_replay_buffer.md
         - NStepReplayBuffer: api/xploit/storage/nstep_replay_buffer.md
         - PrioritizedReplayBuffer: api/xploit/storage/prioritized_replay_buffer.md

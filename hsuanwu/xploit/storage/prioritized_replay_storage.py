@@ -2,7 +2,7 @@ import numpy as np
 import random
 import torch
 
-class PrioritizedReplayBuffer:
+class PrioritizedReplayStorage:
     def __init__(self, buffer_size, alpha=0.6, beta=0.4, beta_schedule=None, epsilon=1e-6):
         self.buffer_size = buffer_size
         self.alpha = alpha

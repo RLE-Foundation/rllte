@@ -2,7 +2,7 @@
 
 
 ## BaseDistribution
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L6)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L6)
 ```python 
 BaseDistribution(
    mu: Tensor, sigma: Tensor, low: float = -1.0, high: float = 1.0, eps: float = 1e-06
@@ -32,7 +32,7 @@ Base distribution instance.
 
 
 ### .sample
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L47)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/base.py/#L47)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()

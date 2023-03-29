@@ -96,7 +96,7 @@ class BasePolicyTrainer:
             cfgs.learner.device = cfgs.device
             cfgs.learner.feature_dim = cfgs.encoder.feature_dim
 
-        # set observation and action shape for rollout buffer.
+        # set observation and action shape for rollout storage.
         if 'Rollout' in cfgs.storage._target_:
             with open_dict(cfgs):
                 cfgs.storage.device = cfgs.device
@@ -107,7 +107,7 @@ class BasePolicyTrainer:
                 cfgs.storage.num_envs = cfgs.num_envs
         
 
-         # set observation and action shape for replay buffer.
+         # set observation and action shape for replay storage.
         if 'Replay' in cfgs.storage._target_ and 'NStep' not in cfgs.storage._target_:
             with open_dict(cfgs):
                 cfgs.storage.device = cfgs.device

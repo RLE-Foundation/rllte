@@ -2,7 +2,7 @@
 
 
 ## RISE
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L64)
 ```python 
 RISE(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of RISE.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L103)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L103)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3,
@@ -68,7 +68,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L43)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L43)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -95,7 +95,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L60)
 ```python
 .forward(
    obs: Tensor
@@ -107,7 +107,7 @@ MLP-based random encoder.
 
 
 ## RandomCnnEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L10)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -134,7 +134,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L35)
 ```python
 .forward(
    obs: Tensor

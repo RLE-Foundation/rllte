@@ -9,7 +9,8 @@ import random
 from hsuanwu.common.typing import *
 from hsuanwu.xploit.storage.utils import episode_len, dump_episode, load_episode
 
-class ReplayBufferStorage:
+
+class ReplayStorage:
     """Storage collected experiences to local files.
     
     Args:
@@ -60,8 +61,8 @@ class ReplayBufferStorage:
             self._current_episode = defaultdict(list)
 
 
-class NStepReplayBuffer(IterableDataset):
-    """Replay buffer for off-policy algorithms (N-step returns supported).
+class NStepReplayStorage(IterableDataset):
+    """Replay storage for off-policy algorithms (N-step returns supported).
 
     Args:
         buffer_size: Max number of element in the buffer.
@@ -74,7 +75,7 @@ class NStepReplayBuffer(IterableDataset):
         save_snapshot: Save loaded file or not.
 
     Returns:
-        N-step replay buffer.
+        N-step replay storage.
     """
     def __init__(self,
                  buffer_size: int = 500000,
@@ -88,7 +89,7 @@ class NStepReplayBuffer(IterableDataset):
                  ) -> None:
         # set storage
         self._replay_dir = Path.cwd() / 'buffer'
-        self._replay_storage = ReplayBufferStorage(self._replay_dir)
+        self._replay_storage = ReplayStorage(self._replay_dir)
         self._buffer_size = buffer_size
         self._batch_size = batch_size
         self._num_workers = max(1, num_workers)

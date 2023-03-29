@@ -2,7 +2,7 @@
 
 
 ## OrnsteinUhlenbeck
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L7)
 ```python 
 OrnsteinUhlenbeck(
    mu: Tensor, sigma: Tensor, low: float = -1.0, high: float = 1.0, eps: float = 1e-06,
@@ -37,7 +37,7 @@ Ornstein-Uhlenbeck noise instance.
 
 
 ### .reset
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L41)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L41)
 ```python
 .reset()
 ```
@@ -48,7 +48,7 @@ Reset the Ornstein Uhlenbeck noise, to the initial position
 
 
 ### .sample
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L47)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L47)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()

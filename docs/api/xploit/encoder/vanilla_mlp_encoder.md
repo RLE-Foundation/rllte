@@ -2,7 +2,7 @@
 
 
 ## VanillaMlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_mlp_encoder.py/#L9)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_mlp_encoder.py/#L9)
 ```python 
 VanillaMlpEncoder(
    observation_space: Space, feature_dim: int = 64, hidden_dim: int = 256
@@ -30,7 +30,7 @@ Mlp-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_mlp_encoder.py/#L33)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_mlp_encoder.py/#L33)
 ```python
 .forward(
    obs: Tensor
