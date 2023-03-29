@@ -9,9 +9,9 @@ pip install hsuanwu
 ```
 
 ### with git
-Open up a terminal and clone the repository from [GitHub](https://github.com/BellmanProject/Hsuanwu) witg `git`:
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) witg `git`:
 ``` sh
-git clone https://github.com/BellmanProject/Hsuanwu.git
+git clone https://github.com/RLE-Foundation/Hsuanwu.git
 ```
 After that, run the following command to install package and dependencies:
 ``` sh
