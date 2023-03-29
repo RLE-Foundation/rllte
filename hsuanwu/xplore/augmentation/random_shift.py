@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
+
+
 class RandomShift(BaseAugmentation):
     """Random shift operation for processing image-based observations.
 
@@ -16,6 +18,7 @@ class RandomShift(BaseAugmentation):
     def __init__(self, pad: int = 4) -> None:
         super().__init__()
         self._pad = pad
+
 
     def forward(self, x: Tensor) -> Tensor:
         n, c, h, w = x.size()

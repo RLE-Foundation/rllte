@@ -1,11 +1,11 @@
 import torch
-import torch.nn.functional as F
 
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
-class RandomRotate(BaseAugmentation): 
 
+
+class RandomRotate(BaseAugmentation): 
     """Random rotate operation for processing image-based observations.
 
     Args:
@@ -14,15 +14,16 @@ class RandomRotate(BaseAugmentation):
     Returns:
         Random rotate image in a batch.
     """
-
-    def __init__(self, p=0.3) -> None:
-        super().__init__()
+    def __init__(self, 
+                 p: float = 0.2) -> None:
+        super(RandomRotate, self).__init__()
         self.p = p
         
-    def forward(self, x):
+        
+    def forward(self, x: Tensor) -> Tensor:
         # images: [B, C, H, W]
         device = x.device
-        bs, channels, h, w = x.shape
+        bs, channels, h, w = x.size()
         x = x.to(device)
 
         rot90_images = x.rot90(1, [2, 3])

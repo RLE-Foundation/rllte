@@ -26,7 +26,8 @@ class RandomColorJitter(BaseAugmentation):
                                         saturation=saturation, 
                                         hue=hue)
 
-    def forward(self, x: Tensor):
+
+    def forward(self, x: Tensor) -> Tensor:
         b, c, h, w = x.size()
         x = x.view(-1, 3, h, w)
         x = self.color_jitter(x)
