@@ -2,14 +2,14 @@
 
 
 ## RandomConvolution
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L6)
 ```python 
 
 ```
 
 
 ---
-Random Convolution operation for image augmentation.
+Random Convolution operation for image augmentation. Note that imgs should be normalized and torch tensor.
 
 
 **Args**
@@ -26,13 +26,10 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L23)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L19)
 ```python
 .forward(
-   imgs
+   x: Tensor
 )
 ```
 
----
-random covolution in "network randomization"
-(imgs): B x (C x stack) x H x W, note: imgs should be normalized and torch tensor

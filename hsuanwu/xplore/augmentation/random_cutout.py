@@ -12,7 +12,7 @@ class RandomCutout(BaseAugmentation):
         max_cut: Max size of the cut shape.
     
     Returns:
-       Augmented images.
+        Augmented images.
     """
     def __init__(self,
                  min_cut: int = 10,

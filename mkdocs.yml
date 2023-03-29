@@ -116,7 +116,12 @@ nav:
         - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
         - RandomConvolution: api/xplore/augmentation/random_convolution.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
+        - RandomCutout: api/xplore/augmentation/random_cutout.md
+        - RandomCutoutColor: api/xplore/augmentation/random_cutoutcolor.md
+        - RandomFlip: api/xplore/augmentation/random_flip.md
+        - RandomRotate: api/xplore/augmentation/random_rotate.md
         - RandomShift: api/xplore/augmentation/random_shift.md
+        - RandomTranslate: api/xplore/augmentation/random_translate.md
 
       - distribution:
         - Base: api/xplore/distribution/base.md

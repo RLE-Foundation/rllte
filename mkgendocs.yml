@@ -190,6 +190,16 @@ pages:
     classes:
       - BaseAugmentation
   
+  - page: "xplore/augmentation/grayscale.md"
+    source: "hsuanwu/xplore/augmentation/grayscale.py"
+    classes:
+      - GrayScale
+  
+  - page: "xplore/augmentation/random_colorjitter.md"
+    source: "hsuanwu/xplore/augmentation/random_colorjitter.py"
+    classes:
+      - RandomColorJitter
+  
   - page: "xplore/augmentation/random_convolution.md"
     source: "hsuanwu/xplore/augmentation/random_convolution.py"
     classes:
@@ -200,10 +210,35 @@ pages:
     classes:
       - RandomCrop
   
+  - page: "xplore/augmentation/random_cutout.md"
+    source: "hsuanwu/xplore/augmentation/random_cutout.py"
+    classes:
+      - RandomCutout
+  
+  - page: "xplore/augmentation/random_cutoutcolor.md"
+    source: "hsuanwu/xplore/augmentation/random_cutoutcolor.py"
+    classes:
+      - RandomCutoutColor
+  
+  - page: "xplore/augmentation/random_flip.md"
+    source: "hsuanwu/xplore/augmentation/random_flip.py"
+    classes:
+      - RandoFlip
+  
+  - page: "xplore/augmentation/random_rotate.md"
+    source: "hsuanwu/xplore/augmentation/random_rotate.py"
+    classes:
+      - RandoRotate
+  
   - page: "xplore/augmentation/random_shift.md"
     source: "hsuanwu/xplore/augmentation/random_shift.py"
     classes:
       - RandomShift
+  
+  - page: "xplore/augmentation/random_translate.md"
+    source: "hsuanwu/xplore/augmentation/random_translate.py"
+    classes:
+      - RandomTranslate
 
 ###################################################################
 
