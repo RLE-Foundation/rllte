@@ -114,6 +114,7 @@ nav:
       - augmentation:
         - Base: api/xplore/augmentation/base.md
         - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
+        - RandomConvolution: api/xplore/augmentation/random_convolution.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomShift: api/xplore/augmentation/random_shift.md
 

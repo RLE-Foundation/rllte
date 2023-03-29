@@ -10,10 +10,10 @@ class RandomConvolution(BaseAugmentation):
     """ Random Convolution operation for image augmentation.
 
     Args:
-        
+        None.
     
     Returns:
-       Augmented images.
+        Augmented images.
     """
 
     def __init__(self)->None:
