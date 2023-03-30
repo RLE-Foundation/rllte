@@ -20,10 +20,24 @@ See the project structure below:
 
 # Qucik Start
 ## Installation
+- with pip `recommended`
+
 Open up a terminal and install Hsuanwu with `pip`:
 ```
 pip install hsuanwu
 ```
+
+- with git
+
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) witg `git`:
+``` sh
+git clone https://github.com/RLE-Foundation/Hsuanwu.git
+```
+After that, run the following command to install package and dependencies:
+``` sh
+pip install -e .
+```
+
 ## Build your first Hsuanwu application
 For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we need the following two steps:
 
@@ -62,3 +76,4 @@ View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.h
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/CONTRIBUTING.md) for guide first.
 
 # Acknowledgment
+This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/Hsuanwu/blob/main/.github/FUNDING.yml). Some code for this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/ACKNOWLEDGMENT.md).
