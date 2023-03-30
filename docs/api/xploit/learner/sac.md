@@ -2,7 +2,7 @@
 
 
 ## SACLearner
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L117)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L123)
 ```python 
 SACLearner(
    observation_space: Space, action_space: Space, action_type: str,
@@ -49,7 +49,7 @@ Soft Actor-Critic learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L198)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L214)
 ```python
 .train(
    training = True
@@ -70,7 +70,7 @@ Set the train mode.
 None.
 
 ### .set_dist
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L214)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L229)
 ```python
 .set_dist(
    dist
@@ -91,7 +91,7 @@ Set the distribution for actor.
 None.
 
 ### ._alpha
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L227)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L241)
 ```python
 ._alpha()
 ```
@@ -99,9 +99,8 @@ None.
 ---
 Get the temperature coefficient.
 
-
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L233)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L245)
 ```python
 .act(
    obs: ndarray, training: bool = True, step: int = 0
@@ -124,7 +123,7 @@ Make actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L259)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L270)
 ```python
 .update(
    replay_buffer: Generator, step: int = 0
@@ -146,7 +145,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L310)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L323)
 ```python
 .update_critic(
    obs: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_obs: Tensor,
@@ -173,7 +172,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L354)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/sac.py/#L370)
 ```python
 .update_actor_and_alpha(
    obs: Tensor, step: int

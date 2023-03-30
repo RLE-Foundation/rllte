@@ -2,7 +2,7 @@
 
 
 ## REVD
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L74)
 ```python 
 REVD(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -12,7 +12,7 @@ REVD(
 
 
 ---
-Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD). 
+Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD).
 See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
 
 
@@ -36,7 +36,7 @@ Instance of REVD.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L106)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L121)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, alpha: float = 0.5, k: int = 3,
@@ -50,7 +50,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -68,7 +68,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L43)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L48)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -95,7 +95,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L70)
 ```python
 .forward(
    obs: Tensor
@@ -107,7 +107,7 @@ MLP-based random encoder.
 
 
 ## RandomCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L9)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -134,7 +134,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L40)
 ```python
 .forward(
    obs: Tensor

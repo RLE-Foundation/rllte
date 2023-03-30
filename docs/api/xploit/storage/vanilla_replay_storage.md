@@ -2,7 +2,7 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L6)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L7)
 ```python 
 VanillaReplayStorage(
    device: torch.device, obs_shape: Tuple, action_shape: Tuple, action_type: str,
@@ -34,7 +34,7 @@ Vanilla replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L55)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L56)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, done: Any, info: Any, next_obs: Any
@@ -60,11 +60,10 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L79)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L81)
 ```python
 .sample()
 ```
 
 ---
 Sample transitions from the storage.
-

@@ -2,7 +2,7 @@
 
 
 ## Timer
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/timer.py/#L3)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/timer.py/#L4)
 ```python 
 
 ```
@@ -10,8 +10,6 @@
 
 ---
 The calculagraph class.
-
-
 
 
 **Methods:**

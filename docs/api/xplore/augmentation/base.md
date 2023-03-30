@@ -10,5 +10,3 @@
 
 ---
 Base class of augmentation.
-
-

@@ -46,7 +46,7 @@ PPO learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L146)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L147)
 ```python
 .train(
    training = True
@@ -88,7 +88,7 @@ Set the distribution for actor.
 None.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L174)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L173)
 ```python
 .act(
    obs: ndarray, training: bool = True, step: int = 0
@@ -111,7 +111,7 @@ Make actions based on observations.
 Sampled actions.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L195)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L197)
 ```python
 .get_value(
    obs: Tensor
@@ -132,7 +132,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L208)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppo.py/#L209)
 ```python
 .update(
    rollout_buffer: Any, episode: int = 0

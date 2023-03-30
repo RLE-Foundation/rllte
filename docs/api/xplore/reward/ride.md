@@ -2,7 +2,7 @@
 
 
 ## RIDE
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L74)
 ```python 
 RIDE(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of RIDE.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L103)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L118)
 ```python
 .pseudo_counts(
    src_feats, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -46,7 +46,7 @@ Instance of RIDE.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L128)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L145)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -59,7 +59,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -74,7 +74,7 @@ The intrinsic rewards
 
 
 ## RandomCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L9)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -101,7 +101,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L40)
 ```python
 .forward(
    obs: Tensor
@@ -113,7 +113,7 @@ CNN-based random encoder.
 
 
 ## RandomMlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L43)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L48)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -140,7 +140,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ride.py/#L70)
 ```python
 .forward(
    obs: Tensor

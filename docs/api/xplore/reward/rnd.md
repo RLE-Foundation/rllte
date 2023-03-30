@@ -2,7 +2,7 @@
 
 
 ## RND
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L67)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L76)
 ```python 
 RND(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of RND.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L117)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L127)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -51,7 +51,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -63,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L152)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L164)
 ```python
 .update(
    rollouts: Dict
@@ -76,7 +76,7 @@ Update the intrinsic reward module if necessary.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -90,7 +90,7 @@ None
 
 
 ## CnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L12)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L11)
 ```python 
 CnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -117,7 +117,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L37)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L42)
 ```python
 .forward(
    obs: Tensor
@@ -129,7 +129,7 @@ CNN-based encoder.
 
 
 ## MlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L45)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L50)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -156,7 +156,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L62)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L72)
 ```python
 .forward(
    obs: Tensor

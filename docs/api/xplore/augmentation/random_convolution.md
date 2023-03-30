@@ -2,7 +2,7 @@
 
 
 ## RandomConvolution
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L6)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L7)
 ```python 
 
 ```
@@ -26,7 +26,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L19)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_convolution.py/#L20)
 ```python
 .forward(
    x: Tensor

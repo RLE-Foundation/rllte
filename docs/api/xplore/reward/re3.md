@@ -2,17 +2,17 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L74)
 ```python 
 RE3(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
-   beta: float, kappa: float, latent_dim: int
+   beta: float = 0.05, kappa: float = 1e-05, latent_dim: int = 128
 )
 ```
 
 
 ---
-State Entropy Maximization with Random Encoders for Efficient Exploration (RE3). 
+State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
 See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 
@@ -36,7 +36,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L103)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L118)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False
@@ -49,7 +49,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -66,7 +66,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L43)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L48)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -93,7 +93,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L70)
 ```python
 .forward(
    obs: Tensor
@@ -105,7 +105,7 @@ MLP-based random encoder.
 
 
 ## RandomCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L9)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -132,7 +132,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L40)
 ```python
 .forward(
    obs: Tensor

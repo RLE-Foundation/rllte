@@ -2,7 +2,7 @@
 
 
 ## OnPolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L17)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L12)
 ```python 
 OnPolicyTrainer(
    train_env: Env, test_env: Env, cfgs: DictConfig
@@ -30,7 +30,7 @@ On-policy trainer instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L52)
 ```python
 .train()
 ```
@@ -38,13 +38,11 @@ On-policy trainer instance.
 ---
 Training function.
 
-
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L124)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/on_policy_trainer.py/#L120)
 ```python
 .test()
 ```
 
 ---
 Testing function.
-

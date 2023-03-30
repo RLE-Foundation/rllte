@@ -2,7 +2,7 @@
 
 
 ## PPGLearner
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L115)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L113)
 ```python 
 PPGLearner(
    observation_space: Space, action_space: Space, action_type: str,
@@ -51,7 +51,7 @@ PPG learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L192)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L193)
 ```python
 .train(
    training = True
@@ -93,7 +93,7 @@ Set the distribution for actor.
 None.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L220)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L219)
 ```python
 .get_value(
    obs: Tensor
@@ -114,7 +114,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L233)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L231)
 ```python
 .act(
    obs: Tensor, training: bool = True, step: int = 0
@@ -137,7 +137,7 @@ Sample actions.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L254)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/ppg.py/#L253)
 ```python
 .update(
    rollout_buffer: Any, episode: int = 0

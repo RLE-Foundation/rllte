@@ -2,13 +2,13 @@
 
 
 ### make_dmc_env
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/dmc/__init__.py/#L39)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/dmc/__init__.py/#L40)
 ```python
 .make_dmc_env(
    env_id: str = 'cartpole_balance', resource_files: str = None, img_source: str = None,
-   total_frames: int = None, seed: int = 1, visualize_reward: bool = True,
-   from_pixels: bool = False, height: int = 84, width: int = 84, camera_id: int = 0,
-   frame_stack: int = 3, frame_skip: int = 1, episode_length: int = 1000,
+   total_frames: int = None, seed: int = 1, visualize_reward: bool = False,
+   from_pixels: bool = True, height: int = 84, width: int = 84, camera_id: int = 0,
+   frame_stack: int = 3, frame_skip: int = 2, episode_length: int = 1000,
    environment_kwargs: Dict = None
 )
 ```

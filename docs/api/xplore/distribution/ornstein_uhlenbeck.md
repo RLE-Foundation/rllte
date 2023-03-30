@@ -2,7 +2,7 @@
 
 
 ## OrnsteinUhlenbeck
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L8)
 ```python 
 OrnsteinUhlenbeck(
    mu: Tensor, sigma: Tensor, low: float = -1.0, high: float = 1.0, eps: float = 1e-06,
@@ -12,7 +12,7 @@ OrnsteinUhlenbeck(
 
 
 ---
-Ornstein Uhlenbeck action noise. 
+Ornstein Uhlenbeck action noise.
 Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
 
 
@@ -37,7 +37,7 @@ Ornstein-Uhlenbeck noise instance.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L41)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L45)
 ```python
 .reset()
 ```
@@ -45,10 +45,8 @@ Ornstein-Uhlenbeck noise instance.
 ---
 Reset the Ornstein Uhlenbeck noise, to the initial position
 
-
-
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L47)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/ornstein_uhlenbeck.py/#L53)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()

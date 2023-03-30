@@ -47,7 +47,7 @@ DrAC learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L149)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L150)
 ```python
 .train(
    training = True
@@ -89,7 +89,7 @@ Set the distribution for actor.
 None.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L177)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L176)
 ```python
 .act(
    obs: ndarray, training: bool = True, step: int = 0
@@ -112,7 +112,7 @@ Make actions based on observations.
 Sampled actions.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L198)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L200)
 ```python
 .get_value(
    obs: Tensor
@@ -133,7 +133,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L211)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drac.py/#L212)
 ```python
 .update(
    rollout_buffer: Any, episode: int = 0

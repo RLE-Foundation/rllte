@@ -2,7 +2,7 @@
 
 
 ## Logger
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L21)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L26)
 ```python 
 Logger(
    log_dir: Path
@@ -28,7 +28,7 @@ Logger instance.
 
 
 ### .parse_train_msg
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L61)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L66)
 ```python
 .parse_train_msg(
    msg: Any
@@ -37,7 +37,7 @@ Logger instance.
 
 
 ### .parse_test_msg
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L69)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L73)
 ```python
 .parse_test_msg(
    msg: Any
@@ -46,7 +46,7 @@ Logger instance.
 
 
 ### .log
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L77)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/logger.py/#L80)
 ```python
 .log(
    level: int, msg: Any

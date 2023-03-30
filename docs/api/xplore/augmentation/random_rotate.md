@@ -2,7 +2,7 @@
 
 
 ## RandomRotate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_rotate.py/#L8)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_rotate.py/#L7)
 ```python 
 RandomRotate(
    p: float = 0.2
@@ -28,7 +28,7 @@ Random rotate image in a batch.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_rotate.py/#L23)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_rotate.py/#L21)
 ```python
 .forward(
    x: Tensor

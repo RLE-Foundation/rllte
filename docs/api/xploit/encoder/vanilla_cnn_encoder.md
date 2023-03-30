@@ -2,10 +2,10 @@
 
 
 ## VanillaCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_cnn_encoder.py/#L9)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_cnn_encoder.py/#L8)
 ```python 
 VanillaCnnEncoder(
-   observation_space: Space, feature_dim: int = 64
+   observation_space: Space, feature_dim: int = 50
 )
 ```
 
@@ -29,7 +29,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_cnn_encoder.py/#L38)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/vanilla_cnn_encoder.py/#L44)
 ```python
 .forward(
    obs: Tensor

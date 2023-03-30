@@ -2,7 +2,7 @@
 
 
 ## DrQv2Learner
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L111)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L117)
 ```python 
 DrQv2Learner(
    observation_space: Space, action_space: Space, action_type: str,
@@ -45,7 +45,7 @@ DrQv2 learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L178)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L185)
 ```python
 .train(
    training = True
@@ -66,7 +66,7 @@ Set the train mode.
 None.
 
 ### .set_dist
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L194)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L200)
 ```python
 .set_dist(
    dist
@@ -87,7 +87,7 @@ Set the distribution for actor.
 None.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L206)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L211)
 ```python
 .act(
    obs: ndarray, training: bool = True, step: int = 0
@@ -110,7 +110,7 @@ Make actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L233)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L237)
 ```python
 .update(
    replay_buffer: DataLoader, step: int = 0
@@ -132,7 +132,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L292)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L299)
 ```python
 .update_critic(
    obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs: Tensor,
@@ -159,7 +159,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L339)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L349)
 ```python
 .update_actor(
    obs: Tensor, step: int
