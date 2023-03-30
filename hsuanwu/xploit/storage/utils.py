@@ -1,9 +1,9 @@
 import io
 import random
+
 import numpy as np
 
 from hsuanwu.common.typing import *
-
 
 
 def dump_episode(episode: Dict, fn: Path) -> None:
@@ -12,14 +12,14 @@ def dump_episode(episode: Dict, fn: Path) -> None:
     Args:
         episode: episode to be save.
         fn: file path.
-    
+
     Return:
         None.
     """
     with io.BytesIO() as bs:
         np.savez_compressed(bs, **episode)
         bs.seek(0)
-        with fn.open('wb') as f:
+        with fn.open("wb") as f:
             f.write(bs.read())
 
 
@@ -28,11 +28,11 @@ def load_episode(fn: Path):
 
     Args:
         fn: file path.
-    
+
     Return:
         Episode data.
     """
-    with fn.open('rb') as f:
+    with fn.open("rb") as f:
         episode = np.load(f)
         episode = {k: episode[k] for k in episode.keys()}
         return episode
@@ -40,14 +40,14 @@ def load_episode(fn: Path):
 
 def episode_len(episode: Dict) -> int:
     """Get the length of an episode.
-    
+
     Args:
         episode: Selected episode.
 
     Returns:
         episode length.
     """
-    return len(episode['observation']) - 1
+    return len(episode["observation"]) - 1
 
 
 def worker_init_fn(worker_id):
@@ -55,7 +55,7 @@ def worker_init_fn(worker_id):
 
     Args:
         workder_id: .
-    
+
     Returns:
         None.
     """

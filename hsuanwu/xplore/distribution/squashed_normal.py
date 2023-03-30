@@ -1,14 +1,15 @@
-from torch.nn import functional as F
-from torch import distributions as pyd
-import torch
 import math
+
+import torch
+from torch import distributions as pyd
+from torch.nn import functional as F
 
 from hsuanwu.common.typing import *
 
 
 class TanhTransform(pyd.transforms.Transform):
-    """Tanh transformation. 
-    """
+    """Tanh transformation."""
+
     domain = pyd.constraints.real
     codomain = pyd.constraints.interval(-1.0, 1.0)
     bijective = True
@@ -31,28 +32,31 @@ class TanhTransform(pyd.transforms.Transform):
         return self.atanh(y)
 
     def log_abs_det_jacobian(self, x, y):
-        return 2. * (math.log(2.) - x - F.softplus(-2. * x))
-    
+        return 2.0 * (math.log(2.0) - x - F.softplus(-2.0 * x))
+
 
 class SquashedNormal(pyd.TransformedDistribution):
     """Squashed normal distribution for Soft Actor-Critic.
-    
+
     Args:
         mu: Mean of the distribution.
         sigma: Standard deviation of the distribution.
         low: Lower bound for action range.
         high: Upper bound for action range.
         eps: A constant for clamping.
-    
+
     Returns:
         Squashed normal distribution instance.
     """
-    def __init__(self, 
-                 mu: Tensor, 
-                 sigma: Tensor, 
-                 low: float = -1., 
-                 high: float = 1., 
-                 eps: float = 1e-6) -> None:
+
+    def __init__(
+        self,
+        mu: Tensor,
+        sigma: Tensor,
+        low: float = -1.0,
+        high: float = 1.0,
+        eps: float = 1e-6,
+    ) -> None:
         self._mu = mu
         self._sigma = sigma
         self._low = low
@@ -63,37 +67,29 @@ class SquashedNormal(pyd.TransformedDistribution):
         transforms = [TanhTransform()]
         super().__init__(self._base_dist, transforms)
 
-
     def _clamp(self, x: Tensor) -> Tensor:
-        """ Clamping operation.
+        """Clamping operation.
         Args:
             x: Tensor to be clamped.
-        
+
         Returns:
             Clamped tensor.
         """
-        clamped_x = torch.clamp(
-            x, self._low + self._eps, self._high - self._eps)
+        clamped_x = torch.clamp(x, self._low + self._eps, self._high - self._eps)
         x = x - x.detach() + clamped_x.detach()
         return x
-    
 
     def sample(self, sample_shape=torch.Size()):
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
-        """
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched."""
         return self._clamp(super().sample(sample_shape))
 
-
     def rsample(self, sample_shape=torch.Size()):
-        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
-        """
+        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched."""
         return self._clamp(super().rsample(sample_shape))
-
 
     @property
     def mean(self):
-        """Return the transformed mean.
-        """
+        """Return the transformed mean."""
         mu = self._mu
         for tr in self.transforms:
             mu = tr(mu)

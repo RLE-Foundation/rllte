@@ -1,4 +1,5 @@
 import torch
+
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
@@ -8,25 +9,29 @@ class RandomConvolution(BaseAugmentation):
 
     Args:
         None.
-    
+
     Returns:
         Augmented images.
     """
+
     def __init__(self) -> None:
         super(RandomConvolution, self).__init__()
-
 
     def forward(self, x: Tensor) -> Tensor:
         num_batch, num_stack_channel, img_h, img_w = x.size()
         num_trans = num_batch
         batch_size = int(num_batch / num_trans)
 
-        rand_conv = torch.nn.Conv2d(3, 3, kernel_size=3, bias=False, padding=1).to(x.device)
+        rand_conv = torch.nn.Conv2d(3, 3, kernel_size=3, bias=False, padding=1).to(
+            x.device
+        )
 
         for trans_index in range(num_trans):
             torch.nn.init.xavier_normal_(self.rand_conv.weight.data)
-            temp_imgs = x[trans_index * batch_size:(trans_index+1) * batch_size]
-            temp_imgs = temp_imgs.reshape(-1, 3, img_h, img_w) # (batch x stack, channel, h, w)
+            temp_imgs = x[trans_index * batch_size : (trans_index + 1) * batch_size]
+            temp_imgs = temp_imgs.reshape(
+                -1, 3, img_h, img_w
+            )  # (batch x stack, channel, h, w)
             rand_out = rand_conv(temp_imgs)
             if trans_index == 0:
                 total_out = rand_out

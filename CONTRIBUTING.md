@@ -59,11 +59,6 @@ See the [Pull Request Template](https://github.com/RLE-Foundation/Hsuanwu/blob/m
 All new features must add tests in the `tests/` folder ensuring that everything works fine. We use [pytest](https://pytest.org/). Also, when a bug fix is proposed, tests should be added to avoid regression.
 
 To run tests with `pytest`:
-```sh
-make pytest
-```
-
-To run tests with `pytest`:
 
 ```
 make pytest

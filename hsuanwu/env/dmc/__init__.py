@@ -1,10 +1,11 @@
-from gym.envs.registration import register
 from collections import deque
 
-import numpy as np
 import gym
+import numpy as np
+from gym.envs.registration import register
 
 from hsuanwu.common.typing import *
+
 
 class FrameStack(gym.Wrapper):
     def __init__(self, env, k):
@@ -16,7 +17,7 @@ class FrameStack(gym.Wrapper):
             low=0,
             high=1,
             shape=((shp[0] * k,) + shp[1:]),
-            dtype=env.observation_space.dtype
+            dtype=env.observation_space.dtype,
         )
         self._max_episode_steps = env._max_episode_steps
 
@@ -37,7 +38,7 @@ class FrameStack(gym.Wrapper):
 
 
 def make_dmc_env(
-    env_id: str = 'cartpole_balance',
+    env_id: str = "cartpole_balance",
     resource_files: str = None,
     img_source: str = None,
     total_frames: int = None,
@@ -50,10 +51,10 @@ def make_dmc_env(
     frame_stack: int = 3,
     frame_skip: int = 1,
     episode_length: int = 1000,
-    environment_kwargs: Dict = None
+    environment_kwargs: Dict = None,
 ):
     """Build DeepMind Control Suite environments.
-    
+
     Args:
         env_id: Name of environment.
         resource_files: File path of the resource files.
@@ -73,11 +74,13 @@ def make_dmc_env(
     Returns:
         Environments instance.
     """
-    domain_name, task_name = env_id.split('_')
-    env_id = 'dmc_%s_%s_%s-v1' % (domain_name, task_name, seed)
+    domain_name, task_name = env_id.split("_")
+    env_id = "dmc_%s_%s_%s-v1" % (domain_name, task_name, seed)
 
     if from_pixels:
-        assert not visualize_reward, 'cannot use visualize reward when learning from pixels'
+        assert (
+            not visualize_reward
+        ), "cannot use visualize reward when learning from pixels"
 
     # shorten episode length
     max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
@@ -85,25 +88,23 @@ def make_dmc_env(
     if not env_id in gym.envs.registry.env_specs:
         register(
             id=env_id,
-            entry_point='hsuanwu.env.dmc.wrappers:DMCWrapper',
+            entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",
             kwargs={
-                'domain_name': domain_name,
-                'task_name': task_name,
-                'resource_files': resource_files,
-                'img_source': img_source,
-                'total_frames': total_frames,
-                'task_kwargs': {
-                    'random': seed
-                },
-                'environment_kwargs': environment_kwargs,
-                'visualize_reward': visualize_reward,
-                'from_pixels': from_pixels,
-                'height': height,
-                'width': width,
-                'camera_id': camera_id,
-                'frame_skip': frame_skip,
+                "domain_name": domain_name,
+                "task_name": task_name,
+                "resource_files": resource_files,
+                "img_source": img_source,
+                "total_frames": total_frames,
+                "task_kwargs": {"random": seed},
+                "environment_kwargs": environment_kwargs,
+                "visualize_reward": visualize_reward,
+                "from_pixels": from_pixels,
+                "height": height,
+                "width": width,
+                "camera_id": camera_id,
+                "frame_skip": frame_skip,
             },
-            max_episode_steps=max_episode_steps
+            max_episode_steps=max_episode_steps,
         )
     if visualize_reward:
         return gym.make(env_id)

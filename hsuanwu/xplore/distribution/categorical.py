@@ -11,6 +11,7 @@ class Categorical(pyd.Categorical):
     Returns:
         Categorical distribution instance.
     """
+
     def __init__(self, logits=None):
         super().__init__(probs=None, logits=logits, validate_args=None)
 

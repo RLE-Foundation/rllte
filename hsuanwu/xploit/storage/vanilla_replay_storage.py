@@ -3,6 +3,7 @@ import torch
 
 from hsuanwu.common.typing import *
 
+
 class VanillaReplayStorage:
     """Vanilla replay storage for off-policy algorithms.
 
@@ -17,14 +18,16 @@ class VanillaReplayStorage:
     Returns:
         Vanilla replay storage.
     """
-    def __init__(self, 
-                 device: torch.device,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 action_type: str,
-                 buffer_size: int = 1e+6,
-                 batch_size: int = 1024
-                 ):
+
+    def __init__(
+        self,
+        device: torch.device,
+        obs_shape: Tuple,
+        action_shape: Tuple,
+        action_type: str,
+        buffer_size: int = 1e6,
+        batch_size: int = 1024,
+    ):
         self._obs_shape = obs_shape
         self._action_shape = action_shape
         self._device = torch.device(device)
@@ -36,9 +39,9 @@ class VanillaReplayStorage:
 
         self.obs = np.empty((buffer_size, *obs_shape), dtype=obs_dtype)
 
-        if action_type == 'dis':
-            self.actions  = self.actions = np.empty((buffer_size, 1), dtype=np.float32)
-        if action_type == 'cont':
+        if action_type == "dis":
+            self.actions = self.actions = np.empty((buffer_size, 1), dtype=np.float32)
+        if action_type == "cont":
             self.actions = np.empty((buffer_size, action_shape[0]), dtype=np.float32)
 
         self.rewards = np.empty((buffer_size, 1), dtype=np.float32)
@@ -47,14 +50,14 @@ class VanillaReplayStorage:
         self._global_step = 0
         self._full = False
 
-
     def __len__(self):
         return self._buffer_size if self._full else self._global_step
 
-
-    def add(self, obs: Any, action: Any, reward: Any, done: Any, info: Any, next_obs: Any) -> None:
+    def add(
+        self, obs: Any, action: Any, reward: Any, done: Any, info: Any, next_obs: Any
+    ) -> None:
         """Add sampled transitions into storage.
-        
+
         Args:
             obs: Observations.
             actions: Actions.
@@ -75,18 +78,20 @@ class VanillaReplayStorage:
         self._global_step = (self._global_step + 1) % self._buffer_size
         self._full = self._full or self._global_step == 0
 
-
     def sample(self) -> Batch:
-        """Sample transitions from the storage.
-        """
-        indices = np.random.randint(0,
-                                 self._buffer_size if self._full else self._global_step,
-                                 size=self._batch_size)
+        """Sample transitions from the storage."""
+        indices = np.random.randint(
+            0,
+            self._buffer_size if self._full else self._global_step,
+            size=self._batch_size,
+        )
 
         obs = torch.as_tensor(self.obs[indices], device=self._device).float()
         actions = torch.as_tensor(self.actions[indices], device=self._device).float()
         rewards = torch.as_tensor(self.rewards[indices], device=self._device).float()
-        next_obs = torch.as_tensor(self.obs[(indices + 1) % self._buffer_size], device=self._device).float()
+        next_obs = torch.as_tensor(
+            self.obs[(indices + 1) % self._buffer_size], device=self._device
+        ).float()
         dones = torch.as_tensor(self.dones[indices], device=self._device).float()
 
         return obs, actions, rewards, dones, next_obs

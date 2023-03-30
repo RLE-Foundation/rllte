@@ -1,26 +1,31 @@
-from gym.wrappers import (RecordEpisodeStatistics,
-                          ResizeObservation,
-                          GrayScaleObservation,
-                          FrameStack,
-                          TransformReward)
-from gym.vector import SyncVectorEnv
-
 import gym
 import numpy as np
+from gym.vector import SyncVectorEnv
+from gym.wrappers import (
+    FrameStack,
+    GrayScaleObservation,
+    RecordEpisodeStatistics,
+    ResizeObservation,
+    TransformReward,
+)
 
 from hsuanwu.common.typing import *
-from hsuanwu.env.atari.wrappers import (NoopResetEnv,
-                                        MaxAndSkipEnv,
-                                        EpisodicLifeEnv,
-                                        FireResetEnv)
+from hsuanwu.env.atari.wrappers import (
+    EpisodicLifeEnv,
+    FireResetEnv,
+    MaxAndSkipEnv,
+    NoopResetEnv,
+)
 from hsuanwu.env.utils import TorchVecEnvWrapper
 
-def make_atari_env(env_id: str = 'Alien-v5',
-                   num_envs: int = 8,
-                   seed: int = 0,
-                   frame_stack: int = 4,
-                   device: torch.device = 'cuda'
-                   ) -> Env:
+
+def make_atari_env(
+    env_id: str = "Alien-v5",
+    num_envs: int = 8,
+    seed: int = 0,
+    frame_stack: int = 4,
+    device: torch.device = "cuda",
+) -> Env:
     """Build Atari environments.
 
     Args:
@@ -33,6 +38,7 @@ def make_atari_env(env_id: str = 'Alien-v5',
     Returns:
         Environments instance.
     """
+
     def make_env(env_id: str, seed: int) -> Env:
         def _thunk():
             env = gym.make(env_id)
@@ -55,7 +61,7 @@ def make_atari_env(env_id: str = 'Alien-v5',
 
         return _thunk
 
-    env_id = 'ALE/' + env_id
+    env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
 

@@ -1,9 +1,8 @@
-from torch.nn import functional as F
-from torch import nn, optim
-from torch.utils.data import DataLoader, TensorDataset
-
 import numpy as np
 import torch
+from torch import nn, optim
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
@@ -12,25 +11,31 @@ from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 class CnnEncoder(nn.Module):
     """
     Encoder for encoding image-based observations.
-    
+
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
-    
+
     Returns:
         CNN-based encoder.
     """
+
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
         self.trunk = nn.Sequential(
-            nn.Conv2d(obs_shape[0], 32, (8, 8), stride=(4, 4)), nn.ReLU(),
-            nn.Conv2d(32, 64, (4, 4), stride=(2, 2)), nn.ReLU(),
-            nn.Conv2d(64, 32, (3, 3), stride=(1, 1)), nn.ReLU(), nn.Flatten())
+            nn.Conv2d(obs_shape[0], 32, (8, 8), stride=(4, 4)),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, (4, 4), stride=(2, 2)),
+            nn.ReLU(),
+            nn.Conv2d(64, 32, (3, 3), stride=(1, 1)),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
 
         with torch.no_grad():
             sample = torch.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-        
+
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
 
@@ -48,26 +53,30 @@ class MlpEncoder(nn.Module):
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
-    
+
     Returns:
         MLP-based encoder.
     """
+
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
         self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0], 64), nn.ReLU(),
-            nn.Linear(64, 64), nn.ReLU(),
-            nn.Linear(64, latent_dim), nn.LayerNorm(latent_dim))
+            nn.Linear(obs_shape[0], 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, latent_dim),
+            nn.LayerNorm(latent_dim),
+        )
 
     def forward(self, obs: Tensor) -> Tensor:
         return self.trunk(obs)
 
 
-
 class NGU(BaseIntrinsicRewardModule):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
         See paper: https://arxiv.org/pdf/2002.06038
-    
+
     Args:
         obs_shape: Data shape of observation.
         action_space: Data shape of action.
@@ -78,22 +87,23 @@ class NGU(BaseIntrinsicRewardModule):
         latent_dim: The dimension of encoding vectors of the observations.
         lr: The learning rate of inverse and forward dynamics model.
         batch_size: The batch size to train the dynamic models.
-    
+
     Returns:
         Instance of NGU.
     """
+
     def __init__(
-            self, 
-            obs_shape: Tuple,
-            action_shape: Tuple,
-            action_type: str,
-            device: torch.device, 
-            beta: float, 
-            kappa: float,
-            latent_dim: int,
-            lr: float,
-            batch_size: int
-            ) -> None:
+        self,
+        obs_shape: Tuple,
+        action_shape: Tuple,
+        action_type: str,
+        device: torch.device,
+        beta: float,
+        kappa: float,
+        latent_dim: int,
+        lr: float,
+        batch_size: int,
+    ) -> None:
         super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
 
         self._batch_size = batch_size
@@ -104,7 +114,7 @@ class NGU(BaseIntrinsicRewardModule):
         else:
             self.predictor = MlpEncoder(self._obs_shape, latent_dim)
             self.target = MlpEncoder(self._obs_shape, latent_dim)
-        
+
         self.predictor.to(self._device)
         self.target.to(self._device)
 
@@ -118,7 +128,7 @@ class NGU(BaseIntrinsicRewardModule):
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
+            rollouts: The collected experiences. A python dict like
                 {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -128,13 +138,15 @@ class NGU(BaseIntrinsicRewardModule):
             The intrinsic rewards
         """
         # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1. - self._kappa, step)
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
+        beta_t = self._beta * np.power(1.0 - self._kappa, step)
+        n_steps = rollouts["observations"].shape[0]
+        n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
         # observations shape ((n_steps, n_envs) + obs_shape)
-        obs_tensor = torch.as_tensor(rollouts['observations'], dtype=torch.float32, device=self._device)
+        obs_tensor = torch.as_tensor(
+            rollouts["observations"], dtype=torch.float32, device=self._device
+        )
 
         with torch.no_grad():
             for idx in range(n_envs):
@@ -144,9 +156,13 @@ class NGU(BaseIntrinsicRewardModule):
                 dist = torch.norm(rnd_encoded_obs - rnd_encoded_obs_target, p=2, dim=1)
                 dist = (dist - dist.min()) / (dist.max() - dist.min() + 1e-6)
                 life_long_rewards = dist.cpu().numpy()[1:]
-                life_long_rewards = np.where(life_long_rewards >= 1., life_long_rewards, 1.0)
+                life_long_rewards = np.where(
+                    life_long_rewards >= 1.0, life_long_rewards, 1.0
+                )
                 # L=5
-                life_long_rewards = np.where(life_long_rewards <= 5., life_long_rewards, 1.0)
+                life_long_rewards = np.where(
+                    life_long_rewards <= 5.0, life_long_rewards, 1.0
+                )
                 # compute the episodic intrinsic rewards
                 if len(self._obs_shape) == 3:
                     encoded_obs = self.target(obs_tensor[:, idx])
@@ -160,25 +176,27 @@ class NGU(BaseIntrinsicRewardModule):
         self.update(rollouts)
 
         return beta_t * intrinsic_rewards
-    
-    def update(self, rollouts: Dict,) -> None:
+
+    def update(
+        self,
+        rollouts: Dict,
+    ) -> None:
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
+            rollouts: The collected experiences. A python dict like
                 {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-        
+
         Returns:
             None
         """
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
+        n_steps = rollouts["observations"].shape[0]
+        n_envs = rollouts["observations"].shape[1]
         obs_tensor = torch.as_tensor(
-            rollouts['observations'], 
-            dtype=torch.float32, 
-            device=self._device).reshape(n_steps * n_envs, *self._obs_shape)
+            rollouts["observations"], dtype=torch.float32, device=self._device
+        ).reshape(n_steps * n_envs, *self._obs_shape)
 
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)
@@ -193,16 +211,16 @@ class NGU(BaseIntrinsicRewardModule):
             loss.backward()
             self._opt.step()
 
-    
-    def pseudo_counts(self,
-                     encoded_obs,
-                     k=10,
-                     kernel_cluster_distance=0.008,
-                     kernel_epsilon=0.0001,
-                     c=0.001,
-                     sm=8,
-                     ):
-        counts = np.zeros(shape=(encoded_obs.size()[0], ))
+    def pseudo_counts(
+        self,
+        encoded_obs,
+        k=10,
+        kernel_cluster_distance=0.008,
+        kernel_epsilon=0.0001,
+        c=0.001,
+        sm=8,
+    ):
+        counts = np.zeros(shape=(encoded_obs.size()[0],))
         for step in range(encoded_obs.size(0)):
             ob_dist = torch.norm(encoded_obs[step] - encoded_obs, p=2, dim=1)
             ob_dist = torch.sort(ob_dist).values
@@ -215,7 +233,7 @@ class NGU(BaseIntrinsicRewardModule):
             s = np.sqrt(np.sum(kernel)) + c
 
             if np.isnan(s) or s > sm:
-                counts[step] = 0.
+                counts[step] = 0.0
             else:
                 counts[step] = 1 / s
         return counts

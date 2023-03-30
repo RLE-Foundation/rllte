@@ -3,6 +3,7 @@ import numpy as np
 
 from hsuanwu.common.typing import *
 
+
 class NoopResetEnv(gym.Wrapper):
     """
     Sample initial states by taking random number of no-ops on reset.
@@ -116,7 +117,9 @@ class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env: gym.Env, skip: int = 4) -> None:
         super().__init__(env)
         # most recent raw observations (for max pooling across time steps)
-        self._obs_buffer = np.zeros((2, *env.observation_space.shape), dtype=env.observation_space.dtype)
+        self._obs_buffer = np.zeros(
+            (2, *env.observation_space.shape), dtype=env.observation_space.dtype
+        )
         self._skip = skip
 
     def step(self, action: int) -> Tuple[Any, float, bool, Dict]:

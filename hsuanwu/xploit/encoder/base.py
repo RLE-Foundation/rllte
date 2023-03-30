@@ -9,7 +9,7 @@ class BaseEncoder(nn.Module):
     Args:
         observation_space: Observation space of the environment.
         feature_dim: Number of features extracted.
-    
+
     Returns:
         The base encoder class
     """
