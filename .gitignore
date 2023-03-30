@@ -12,6 +12,7 @@
 .coverage.*
 *.npz
 *.pth
+*.png
 *.egg-info
 .cache
 .ipynb_checkpoints
