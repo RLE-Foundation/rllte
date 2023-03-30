@@ -8,7 +8,9 @@ sys.path.append(parent_dir_path)
 from pathlib import Path
 from hsuanwu.common.logger import *
 
-logger = Logger(Path.cwd() / 'logs/')
+work_dir = Path.cwd() / 'logs/'
+os.mkdir(work_dir)
+logger = Logger(work_dir)
 
 msg_info = 'Invoking Hsuanwu Engine...'
 msg_debug = 'Checking Module Compatibility...'

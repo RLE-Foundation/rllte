@@ -1,12 +1,12 @@
 import os
 import sys
+import numpy as np
 
 curren_dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.env import make_procgen_env, make_atari_env, make_dmc_env
-import numpy as np
 
 if __name__ == '__main__':
     # envs = make_procgen_env(env_id='bigfish', num_envs=2)
