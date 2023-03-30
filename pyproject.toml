@@ -19,6 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
+  "gym==0.21.0",
   "gymnasium==0.28.1",
   "torch==2.0.0",
   "torchvision==0.15.1",
@@ -42,6 +43,7 @@ tests = [
 ]
 envs = [
   "ale-py==0.8.1",
+  "gymnasium[atari]",
   "dm-control==1.0.11",
   "procgen==0.10.7",
   "scikit-image",

@@ -1,8 +1,8 @@
 from collections import deque
 
-import gym
+import gymnasium as gym
 import numpy as np
-from gym.envs.registration import register
+from gymnasium.envs.registration import register
 
 from hsuanwu.common.typing import *
 

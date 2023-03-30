@@ -1,6 +1,8 @@
 import numpy as np
-from gym.spaces.box import Box
-from gym.wrappers import (
+import gymnasium as gym
+import torch
+from gymnasium.spaces.box import Box
+from gymnasium.wrappers import (
     NormalizeReward,
     RecordEpisodeStatistics,
     TransformObservation,
@@ -8,7 +10,7 @@ from gym.wrappers import (
 )
 from procgen import ProcgenEnv
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Ndarray, Env, Device, Tensor, Tuple, Any, Dict
 
 
 class TorchVecEnvWrapper:
@@ -22,7 +24,7 @@ class TorchVecEnvWrapper:
         Environment instance.
     """
 
-    def __init__(self, env: Env, device: torch.device) -> None:
+    def __init__(self, env: Env, device: Device) -> None:
         self._venv = env
         self._device = torch.device(device)
         self.observation_space = Box(
@@ -33,32 +35,53 @@ class TorchVecEnvWrapper:
         )
         self.action_space = env.single_action_space
 
-    def reset(self) -> Any:
-        obs = self._venv.reset()
+    def reset(self) -> Tuple[Ndarray, Dict]:
+        obs, info = self._venv.reset()
         obs = torch.as_tensor(
             obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
         )
-        return obs
+        return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Any]:
+    def step(self, actions: Tensor) -> Tuple[Ndarray, float, bool, bool, Dict]:
         if actions.dtype is torch.int64:
             actions = actions.squeeze(1)
         actions = actions.cpu().numpy()
 
-        obs, reward, done, info = self._venv.step(actions)
+        obs, reward, terminated, truncated, info = self._venv.step(actions)
         obs = torch.as_tensor(
             obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
         )
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device
         ).unsqueeze(dim=1)
-        done = torch.as_tensor(
-            [[1.0] if _ else [0.0] for _ in done],
+        terminated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in terminated],
             dtype=torch.float32,
             device=self._device,
         )
 
-        return obs, reward, done, info
+        return obs, reward, terminated, truncated, info
+
+
+class AdapterEnv(gym.Wrapper):
+    """Procgen games currently doesn't support Gymnasium.
+    
+    Args:
+        env (Env): Environment to wrap.
+    
+    Returns:
+        AdapterEnv instance.
+    """
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
+    
+    def step(self, action: int) -> Tuple[Ndarray, float, bool, bool, Dict]:
+        obs, reward, done, info = self.env.step(action)
+        return obs, reward, done, done, {}
+
+    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
+        obs = self.env.reset()
+        return obs, {}
 
 
 def make_procgen_env(
@@ -91,6 +114,7 @@ def make_procgen_env(
         start_level=start_level,
         distribution_mode=distribution_mode,
     )
+    envs = AdapterEnv(envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"])
     envs.single_action_space = envs.action_space
     envs.single_observation_space = envs.observation_space["rgb"]

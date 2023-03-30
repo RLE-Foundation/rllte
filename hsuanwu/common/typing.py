@@ -16,12 +16,14 @@ from typing import (
 
 import omegaconf
 import torch
+import numpy as np
 from gymnasium import Env, Space
-from numpy import ndarray
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
+Ndarray = np.ndarray
 Tensor = torch.Tensor
+Device = torch.device
 DictConfig = omegaconf.DictConfig
 Batch = collections.namedtuple(
     "Batch", ["observations", "actions", "rewards", "dones", "next_observations"]

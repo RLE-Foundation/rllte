@@ -1,7 +1,7 @@
 import gymnasium as gym
 import numpy as np
+import torch
 
-from gymnasium.spaces import Box
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import (
     FrameStack,
@@ -11,7 +11,7 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Env, Device, Any, Tensor, Tuple, Ndarray, Dict
 from hsuanwu.env.atari.wrappers import (
     EpisodicLifeEnv,
     FireResetEnv,
@@ -23,50 +23,41 @@ class TorchVecEnvWrapper:
     """Build environments that output torch tensors.
 
     Args:
-        env: The environment.
-        device: Device (cpu, cuda, ...) on which the code should be run.
+        env (Env): The environment.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
-        Environment instance.
+        TorchVecEnv instance.
     """
 
-    def __init__(self, env: Env, device: torch.device) -> None:
+    def __init__(self, env: Env, device: Device) -> None:
         self._venv = env
         self._device = torch.device(device)
-        self.observation_space = Box(
-            low=env.single_observation_space.low[0, 0, 0],
-            high=env.single_observation_space.high[0, 0, 0],
-            shape=[3, 84, 84],
-            dtype=env.single_observation_space.dtype,
-        )
+        self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
 
-    def reset(self) -> Any:
-        obs = self._venv.reset()
-        obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
-        )
-        return obs
+    def reset(self) -> Tuple[Ndarray, Dict]:
+        obs, info = self._venv.reset()
+        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Any]:
+    def step(self, actions: Tensor) -> Tuple[Ndarray, float, bool, bool, Dict]:
         if actions.dtype is torch.int64:
             actions = actions.squeeze(1)
         actions = actions.cpu().numpy()
 
-        obs, reward, done, info = self._venv.step(actions)
-        obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
-        )
+        obs, reward, terminated, truncated, info = self._venv.step(actions)
+        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device
         ).unsqueeze(dim=1)
-        done = torch.as_tensor(
-            [[1.0] if _ else [0.0] for _ in done],
+        terminated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in terminated],
             dtype=torch.float32,
             device=self._device,
         )
 
-        return obs, reward, done, info
+        return obs, reward, terminated, truncated, info
 
 
 def make_atari_env(
@@ -79,11 +70,11 @@ def make_atari_env(
     """Build Atari environments.
 
     Args:
-        env_id: Name of environment.
-        num_envs: Number of parallel environments.
-        seed: Random seed.
-        frame_stack: Number of stacked frames.
-        device: Device (cpu, cuda, ...) on which the code should be run.
+        env_id (str): Name of environment.
+        num_envs (int): Number of parallel environments.
+        seed (int): Random seed.
+        frame_stack (int): Number of stacked frames.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.
@@ -115,4 +106,4 @@ def make_atari_env(
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
 
-    return TorchVecEnvWrapper(envs, device, lambda obs: obs)
+    return TorchVecEnvWrapper(envs, device)

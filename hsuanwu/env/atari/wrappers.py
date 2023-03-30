@@ -1,8 +1,9 @@
 import gymnasium as gym
 import numpy as np
 
-from hsuanwu.common.typing import int, ndarray, Any, Env, Tuple, Dict
+from hsuanwu.common.typing import Ndarray, Any, Env, Tuple, Dict
 
+# The following wrappers are re-implemented based on https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
 
 class NoopResetEnv(gym.Wrapper):
     """Sample initial states by taking random number of no-ops on reset. No-op is assumed to be action 0.
@@ -22,12 +23,12 @@ class NoopResetEnv(gym.Wrapper):
         self.noop_action = 0
         assert env.unwrapped.get_action_meanings()[0] == "NOOP"
 
-    def reset(self, **kwargs) -> Tuple[ndarray, Dict]:
+    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
         self.env.reset(**kwargs)
         if self.override_num_noops is not None:
             noops = self.override_num_noops
         else:
-            noops = self.unwrapped.np_random.randint(1, self.noop_max + 1)
+            noops = self.unwrapped.np_random.integers(1, self.noop_max + 1)
         assert noops > 0
         obs = np.zeros(0)
         info = {}
@@ -53,7 +54,7 @@ class FireResetEnv(gym.Wrapper):
         assert env.unwrapped.get_action_meanings()[1] == "FIRE"
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
-    def reset(self, **kwargs) -> ndarray:
+    def reset(self, **kwargs) -> Ndarray:
         self.env.reset(**kwargs)
         obs, _, terminated, truncated, _ = self.env.step(1)
         if terminated or truncated:
@@ -93,7 +94,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = lives
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> ndarray:
+    def reset(self, **kwargs) -> Ndarray:
         if self.was_real_done:
             obs, info = self.env.reset(**kwargs)
         else:
