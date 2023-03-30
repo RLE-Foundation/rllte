@@ -4,6 +4,14 @@ LINT_PATHS=hsuanwu/ tests
 pytest: 
 	sh ./scripts/run_tests.sh
 
+pytype:
+	pytype -j auto ${LINT_PATHS}
+
+mypy:
+	mypy ${LINT_PATHS}
+
+type: pytype mypy
+
 lint:
 	# stop the build if there are Python syntax errors or undefined names
 	# see https://www.flake8rules.com/
