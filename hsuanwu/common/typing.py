@@ -16,7 +16,7 @@ from typing import (
 
 import omegaconf
 import torch
-from gym import Env, Space
+from gymnasium import Env, Space
 from numpy import ndarray
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader

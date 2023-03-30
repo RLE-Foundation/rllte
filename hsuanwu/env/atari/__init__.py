@@ -1,7 +1,7 @@
-import gym
+import gymnasium as gym
 import numpy as np
-from gym.vector import SyncVectorEnv
-from gym.wrappers import (
+from gymnasium.vector import SyncVectorEnv
+from gymnasium.wrappers import (
     FrameStack,
     GrayScaleObservation,
     RecordEpisodeStatistics,
