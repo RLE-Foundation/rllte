@@ -4,19 +4,52 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hsuanwu"
-version = "0.0.1.beta01"
+version = "0.0.1.beta02"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
 requires-python = ">=3.8"
+keywords = ["Reinforcement Learning", "Algorithm", "Evolution", "Baseline"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
+dependencies = [
+  "gymnasium==0.28.1",
+  "torch==2.0.0",
+  "torchvision==0.15.1",
+  "hydra-core==1.3.2",
+  "hydra-submitit-launcher==1.2.0",
+  "opencv-python",
+  "tensorboardX"
+]
+
+[project.optional-dependencies]
+tests = [
+  "pytest",
+  "pytest-cov",
+  "pytest-env",
+  "pytest-xdist",
+  "pytype",
+  "mypy",
+  "ruff",
+  "isort>=5.0",
+  "black"
+]
+envs = [
+  "ale-py==0.8.1",
+  "dm-control==1.0.11",
+  "procgen==0.10.7",
+  "scikit-image",
+  "scikit-video"
+]
+
 [project.urls]
-"Homepage" = "https://github.com/RLE-Foundation/Hsuanwu"
+"Code" = "https://github.com/RLE-Foundation/Hsuanwu"
+"Documentation" = "https://docs.hsuanwu.dev/"
+"Benchmark" = "https://benchmark.hsuanwu.dev/"
 "Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
