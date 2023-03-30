@@ -2,13 +2,24 @@ from collections import deque
 
 import gymnasium as gym
 import numpy as np
+import torch
 from gymnasium.envs.registration import register
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Dict, Tensor, Device, Tuple, List, Env
 
 
-class FrameStack(gym.Wrapper):
-    def __init__(self, env, k):
+class FrameStackEnv(gym.Wrapper):
+    """Observation wrapper that stacks the observations in a rolling manner.
+    
+    Args:
+        env (Env): Environment to wrap.
+        k: Number of stacked frames.
+    
+    Returns:
+        FrameStackEnv instance.
+    """
+
+    def __init__(self, env: Env, k: int):
         gym.Wrapper.__init__(self, env)
         self._k = k
         self._frames = deque([], maxlen=k)
@@ -22,24 +33,64 @@ class FrameStack(gym.Wrapper):
         self._max_episode_steps = env._max_episode_steps
 
     def reset(self):
-        obs = self.env.reset()
+        obs, info = self.env.reset()
         for _ in range(self._k):
             self._frames.append(obs)
-        return self._get_obs()
+        return self._get_obs(), info
 
     def step(self, action):
-        obs, reward, done, info = self.env.step(action)
+        obs, reward, terminated, truncated, info = self.env.step(action)
         self._frames.append(obs)
-        return self._get_obs(), reward, done, info
+        return self._get_obs(), reward, terminated, truncated, info
 
     def _get_obs(self):
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
 
+class TorchVecEnvWrapper:
+    """Build environments that output torch tensors.
+
+    Args:
+        env (Env): The environment.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+
+    Returns:
+        TorchVecEnv instance.
+    """
+
+    def __init__(self, env: Env, device: Device) -> None:
+        self._venv = env
+        self._device = torch.device(device)
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+
+    def reset(self) -> Tuple[Tensor, Dict]:
+        obs, info = self._venv.reset()
+        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        return obs, info
+
+    def step(self, actions: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+        if actions.dtype is torch.int64:
+            actions = actions.squeeze(1)
+        actions = actions.cpu().numpy()
+
+        obs, reward, terminated, truncated, info = self._venv.step(actions)
+        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        reward = torch.as_tensor(
+            reward, dtype=torch.float32, device=self._device
+        ).unsqueeze(dim=1)
+        terminated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in terminated],
+            dtype=torch.float32,
+            device=self._device,
+        )
+
+        return obs, reward, terminated, truncated, info
 
 def make_dmc_env(
     env_id: str = "cartpole_balance",
-    resource_files: str = None,
+    device: Device = 'cuda', 
+    resource_files: List = None,
     img_source: str = None,
     total_frames: int = None,
     seed: int = 1,
@@ -56,20 +107,21 @@ def make_dmc_env(
     """Build DeepMind Control Suite environments.
 
     Args:
-        env_id: Name of environment.
-        resource_files: File path of the resource files.
-        img_source: Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
-        total_frames: for 'images' or 'video' distractor.
-        seed: Random seed.
-        visualize_reward: True when 'from_pixels' is False, False when 'from_pixels' is True.
-        from_pixels: Provide image-based observations or not.
-        height: Image observation height.
-        width: Image observation width.
-        camera_id: Camera id for generating image-based observations.
-        frame_stack: Number of stacked frames.
-        frame_skip: Number of action repeat.
-        episode_length: Maximum length of an episode.
-        environment_kwargs: Other environment arguments.
+        env_id (str): Name of environment.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        resource_files (List): File path of the resource files.
+        img_source (str): Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
+        total_frames (int): for 'images' or 'video' distractor.
+        seed (int): Random seed.
+        visualize_reward (bool): True when 'from_pixels' is False, False when 'from_pixels' is True.
+        from_pixels (bool): Provide image-based observations or not.
+        height (int): Image observation height.
+        width (int): Image observation width.
+        camera_id (int): Camera id for generating image-based observations.
+        frame_stack (int): Number of stacked frames.
+        frame_skip (int): Number of action repeat.
+        episode_length (int): Maximum length of an episode.
+        environment_kwargs (Dict): Other environment arguments.
 
     Returns:
         Environments instance.
@@ -85,7 +137,7 @@ def make_dmc_env(
     # shorten episode length
     max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
 
-    if not env_id in gym.envs.registry.env_specs:
+    if not env_id in gym.envs.registry:
         register(
             id=env_id,
             entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",
@@ -109,4 +161,5 @@ def make_dmc_env(
     if visualize_reward:
         return gym.make(env_id)
     else:
-        return FrameStack(gym.make(env_id), k=frame_stack)
+        env = FrameStackEnv(gym.make(env_id), frame_stack)
+        return TorchVecEnvWrapper(env, device)

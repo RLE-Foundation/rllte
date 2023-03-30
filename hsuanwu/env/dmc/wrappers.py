@@ -2,10 +2,9 @@ import glob
 import os
 
 import numpy as np
-import skimage.io
 from dm_control import suite
 from dm_env import specs
-from gym import core, spaces
+from gymnasium import core, spaces
 
 from hsuanwu.env.dmc import natural_imgsource
 
@@ -187,14 +186,15 @@ class DMCWrapper(core.Env):
         info["discount"] = time_step.discount
         info["step_type"] = time_step.step_type
         if done and time_step.discount == 1.0:
-            info["TimeLimit.truncated"] = True
+            truncated = True
 
-        return obs, reward, done, info
+        terminated = done
+        return obs, reward, terminated, truncated, info
 
     def reset(self):
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
-        return obs
+        return obs, {}
 
     def render(self, mode="rgb_array", height=None, width=None, camera_id=0):
         assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode

@@ -36,12 +36,12 @@ class TorchVecEnvWrapper:
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
 
-    def reset(self) -> Tuple[Ndarray, Dict]:
+    def reset(self) -> Tuple[Tensor, Dict]:
         obs, info = self._venv.reset()
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Ndarray, float, bool, bool, Dict]:
+    def step(self, actions: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
         if actions.dtype is torch.int64:
             actions = actions.squeeze(1)
         actions = actions.cpu().numpy()
@@ -94,7 +94,7 @@ def make_atari_env(
             env = ResizeObservation(env, shape=(84, 84))
             env = GrayScaleObservation(env)
             env = FrameStack(env, frame_stack)
-            env.seed(seed)
+
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
