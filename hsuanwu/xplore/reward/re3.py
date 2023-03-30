@@ -94,9 +94,9 @@ class RE3(BaseIntrinsicRewardModule):
         action_shape: Tuple,
         action_type: str,
         device: torch.device,
-        beta: float,
-        kappa: float,
-        latent_dim: int,
+        beta: float = 0.05,
+        kappa: float = 0.00001,
+        latent_dim: int = 128,
     ) -> None:
         super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
 

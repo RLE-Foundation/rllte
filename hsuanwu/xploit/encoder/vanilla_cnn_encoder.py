@@ -16,7 +16,7 @@ class VanillaCnnEncoder(BaseEncoder):
         CNN-based encoder instance.
     """
 
-    def __init__(self, observation_space: Space, feature_dim: int = 64) -> None:
+    def __init__(self, observation_space: Space, feature_dim: int = 50) -> None:
         super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape

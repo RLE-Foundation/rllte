@@ -1,0 +1,51 @@
+# [M]: Mandatory parameter, 
+# [O]: Optional parameter.
+
+
+########################### Train setup
+device: cuda:0                               # [M] Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                                      # [M] Random seed for reproduction.
+use_aug: true                                # [M] Use observation augmentation?
+use_irs: false                               # [M] Use intrinsic reward?
+num_train_steps: 250000                      # [M] Number of training steps.
+num_init_steps: 2000                         # [M] Number of initial exploration steps, only for off-policy learner.
+
+########################### Test setup
+test_every_steps: 5000                       # [M] Testing interval.
+num_test_episodes: 10                        # [M] Number of testing episodes.
+
+########################### Choose your encoder
+encoder:
+  _target_: VanillaCnnEncoder                # [M] The encoder name. Supported types: https://docs.hsuanwu.dev/overview/xploit_index/
+  feature_dim: 50                            # [M] Dimension of extracted features.
+
+########################### Choose your learner
+learner:
+  _target_: ContinuousLearner                # [M] The learner name. Supported types: https://docs.hsuanwu.dev/overview/xploit_index/
+
+########################### Choose your storage
+storage:
+  _target_: NStepReplayStorage               # [M] The storage name. Supported types: https://docs.hsuanwu.dev/overview/xploit_index/
+
+########################### Choose your distribution
+distribution:
+  _target_: TruncatedNormal                  # [M] The distribution name. Supported types: https://docs.hsuanwu.dev/overview/xplore_index/
+
+########################### Choose your augmentation
+augmentation:
+  _target_: RandomShift                      # [M] The augmentation name. Supported types: https://docs.hsuanwu.dev/overview/xplore_index/
+
+########################### Choose your intrinsic reward
+reward:
+  _target_: RE3                              # [M] The reward name. Supported types: https://docs.hsuanwu.dev/overview/xplore_index/
+
+
+########################### Set the working directory
+hydra:
+  run:
+    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: true

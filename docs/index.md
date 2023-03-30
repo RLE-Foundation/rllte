@@ -16,15 +16,16 @@
 <img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet">
 <img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4">
 
-**Hsuanwu: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable baselines.
-The highlight features of Hsuanwu:
+**Hsuanwu: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. The highlight features of Hsuanwu:
 
-- 🧱 Complete decoupling of RL algorithms, and each method can be invoked separately;
-- 📚 Large number of reusable bechmarking implementations ([See Benchmarks](benchmarks));
+
+- 🧱 Complete decoupling of RL algorithms, and each module can be invoked separately;
+- 📚 Large number of reusable bechmarking results ([See Benchmarks](benchmark.hsuanwu.dev));
 - 🛠️ Support for RL model engineering deployment (C++ API);
-- 🚀 Minimizing the CPU to GPU data transferring to realize full GPU-acceleration.
+- 🚀 Minimizing the CPU to GPU data transferring to realize full GPU-acceleration;
+- 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
 See the project structure below:
 <div align=center>
-<img src='./assets/images/structure.png' style="width: 90%">
+<img src='./assets/images/structure.png' style="width: 70%">
 </div>

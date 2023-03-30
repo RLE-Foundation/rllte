@@ -25,26 +25,35 @@ Open up a terminal and install Hsuanwu with `pip`:
 pip install hsuanwu
 ```
 ## Build your first Hsuanwu application
-Copy the `config.yaml` file to your working directory:
+For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we need the following two steps:
 
-Write a `train.py` file like:
+1. Copy the [config.yaml](https://github.com/RLE-Foundation/Hsuanwu/blob/main/cfgs/config.yaml) file to your working directory:
+
+2. Write a `train.py` file like:
 ``` python
-from hsuanwu.env import make_dmc_env
-from hsuanwu.common.engine import OffPolicyTrainer
+import hydra
 
-train_env = make_dmc_env(env_id='cartpole_balance')
-test_env = make_dmc_env(env_id='cartpole_balance')
+from hsuanwu.env import make_dmc_env
+from hsuanwu.common.engine import OffPolicyTrainer # Select trainer
+
+train_env = make_dmc_env(env_id='cartpole_balance') # Create train env
+test_env = make_dmc_env(env_id='cartpole_balance') # Create test env
 
 @hydra.main(version_base=None, config_path='./', config_name='config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
-    trainer.train()
+    trainer = OffPolicyTrainer(
+        train_env=train_env, 
+        test_env=test_env, 
+        cfgs=cfgs)
+    trainer.train() # Start training
 
 if __name__ == '__main__':
     main()
 ```
 Run `train.py` and you will see the following output:
-
+<div align=center>
+<img src='./docs/assets/images/output.png' style="width: 100%">
+</div>
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)

@@ -92,7 +92,7 @@ class NStepReplayStorage(IterableDataset):
         save_snapshot: bool = False,
     ) -> None:
         # set storage
-        self._replay_dir = Path.cwd() / "buffer"
+        self._replay_dir = Path.cwd() / "storage"
         self._replay_storage = ReplayStorage(self._replay_dir)
         self._buffer_size = buffer_size
         self._batch_size = batch_size
