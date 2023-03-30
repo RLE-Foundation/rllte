@@ -3,25 +3,25 @@ from hsuanwu.common.typing import *
 
 MATCH_KEYS = {
     "ContinuousLearner": {
-        "storage": ["VanillaReplayBuffer", "NStepReplayBuffer"],
+        "storage": ["VanillaReplayStorage", "NStepReplayStorage"],
         "distribution": ["OrnsteinUhlenbeck", "TruncatedNormal"],
         "augmentation": [],
         "reward": [],
     },
     "DiscreteLearner": {
-        "storage": ["VanillaRolloutBuffer"],
+        "storage": ["VanillaRolloutStorage"],
         "distribution": ["Categorical"],
         "augmentation": [],
         "reward": [],
     },
     "PPOLearner": {
-        "storage": ["VanillaRolloutBuffer"],
+        "storage": ["VanillaRolloutStorage"],
         "distribution": ["Categorical"],
         "augmentation": [],
         "reward": [],
     },
     "SACLearner": {
-        "storage": ["VanillaReplayBuffer", "NStepReplayBuffer"],
+        "storage": ["VanillaReplayStorage", "NStepReplayStorage"],
         "distribution": ["OrnsteinUhlenbeck", "TruncatedNormal", "SquashedNormal"],
         "augmentation": [],
         "reward": [],

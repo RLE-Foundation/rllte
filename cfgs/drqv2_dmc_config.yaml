@@ -16,7 +16,7 @@ learner:
   _target_: ContinuousLearner             # learner type
 
 storage:
-  _target_: NStepReplayBuffer
+  _target_: NStepReplayStorage
   buffer_size: 500000
   batch_size: 256
   pin_memory: true

@@ -43,7 +43,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._learner.set_irs(irs)
 
         # make data loader
-        if self._cfgs.storage._target_ == "NStepReplayBuffer":
+        if "NStepReplayStorage" in self._cfgs.storage._target_:
             self._replay_loader = torch.utils.data.DataLoader(
                 self._replay_storage,
                 batch_size=self._replay_storage.get_batch_size,
@@ -94,7 +94,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             # update agent
             if self._global_step >= self._num_init_steps:
                 try:
-                    # TODO: for NStepReplayBuffer
+                    # TODO: for NStepReplayStorage
                     metrics = self._learner.update(
                         self.replay_iter, step=self._global_step
                     )

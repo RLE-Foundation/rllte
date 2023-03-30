@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hsuanwu"
-version = "0.0.1"
+version = "0.0.1.beta01"
 authors = [
-  { name="Bellman Project", email="friedrichyuan19990827@gmail.com" },
+  { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/BellmanProject/Hsuanwu"
-"Bug Tracker" = "https://github.com/BellmanProject/Hsuanwu/issues"
+"Homepage" = "https://github.com/RLE-Foundation/Hsuanwu"
+"Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
