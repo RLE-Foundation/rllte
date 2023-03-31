@@ -54,6 +54,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 worker_init_fn=worker_init_fn,
             )
             self._replay_iter = None
+            self._use_nstep_replay_storage = True
+        else:
+            self._use_nstep_replay_storage = False
 
         # training track
         self._num_train_steps = self._cfgs.num_train_steps
@@ -85,8 +88,12 @@ class OffPolicyTrainer(BasePolicyTrainer):
         """
         encoded_obs = self._learner.encoder(obs.unsqueeze(0))
         # sample actions
-        # TODO: manual exploration noise control? (for continuous control task)
-        std = utils.schedule(self._cfgs.stddev_schedule, step)
+        # TODO: manual exploration noise control? (for continuous control task) \
+        # See paper: https://openreview.net/forum?id=_SJ-_yyes8, Section 3.1.
+        if self._cfgs.stddev_schedule:
+            std = utils.schedule(self._cfgs.stddev_schedule, step)
+        else:
+            std = None
         dist = self._learner.actor(obs=encoded_obs, std=std)
 
         if not training:
@@ -119,16 +126,21 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._global_step += 1
 
             # save transition
-            self._replay_storage.add(obs, action, reward, terminated, info, next_obs)
+            self._replay_storage.add(obs.cpu().numpy(), 
+                                     action.cpu().numpy()[0], 
+                                     reward.cpu().numpy(), 
+                                     terminated.cpu().numpy(), 
+                                     info, 
+                                     next_obs.cpu().numpy())
 
             # update agent
             if self._global_step >= self._num_init_steps:
-                try:
+                if self._use_nstep_replay_storage:
                     # TODO: for NStepReplayStorage
                     metrics = self._learner.update(
                         self.replay_iter, step=self._global_step
                     )
-                except:
+                else:
                     metrics = self._learner.update(
                         self._replay_storage, step=self._global_step
                     )

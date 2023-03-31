@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -12,9 +12,9 @@ class Actor(nn.Module):
     """Actor network.
 
     Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
 
     Returns:
         Actor network instance.
@@ -68,9 +68,9 @@ class Critic(nn.Module):
     """Critic network.
 
     Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
 
     Returns:
         Critic network instance.
@@ -104,8 +104,8 @@ class Critic(nn.Module):
         """Value estimation.
 
         Args:
-            obs: Observations.
-            action: Actions.
+            obs (Tensor): Observations.
+            action (Tensor): Actions.
 
         Returns:
             Estimated values.
@@ -122,23 +122,22 @@ class SACLearner(BaseLearner):
     """Soft Actor-Critic (SAC) Learner
 
     Args:
-        observation_space: Observation space of the environment.
-        action_space: Action shape of the environment.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim: Number of features extracted.
-        lr: The learning rate.
-        eps: Term added to the denominator to improve numerical stability.
+        observation_space (Space): Observation space of the environment.
+        action_space (Space): Action shape of the environment.
+        action_type (str): Continuous or discrete action. "cont" or "dis".
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        feature_dim (int): Number of features extracted.
+        lr (float): The learning rate.
+        eps (float): Term added to the denominator to improve numerical stability.
 
-        hidden_dim: The size of the hidden layers.
-        critic_target_tau: The critic Q-function soft-update rate.
-        update_every_steps: The agent update frequency.
-        num_init_steps: The exploration steps.
-        log_std_range: Range of std for sampling actions.
-        betas: coefficients used for computing running averages of gradient and its square.
-        temperature: Initial temperature coefficient.
-        fixed_temperature: Fixed temperature or not.
-        discount: Discount factor.
+        hidden_dim (int): The size of the hidden layers.
+        critic_target_tau (float): The critic Q-function soft-update rate.
+        update_every_steps (int): The agent update frequency.
+        log_std_range (Tuple[float]): Range of std for sampling actions.
+        betas (Tuple[float]): coefficients used for computing running averages of gradient and its square.
+        temperature (float): Initial temperature coefficient.
+        fixed_temperature (bool): Fixed temperature or not.
+        discount (float): Discount factor.
 
     Returns:
         Soft Actor-Critic learner instance.
@@ -149,7 +148,7 @@ class SACLearner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: torch.device = "cuda",
+        device: Device = "cuda",
         feature_dim: int = 5,
         lr: float = 1e-4,
         eps: float = 0.00008,
@@ -167,97 +166,85 @@ class SACLearner(BaseLearner):
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
 
-        self._critic_target_tau = critic_target_tau
-        self._update_every_steps = update_every_steps
-        self._num_init_steps = num_init_steps
-        self._fixed_temperature = fixed_temperature
-        self._discount = discount
+        self.critic_target_tau = critic_target_tau
+        self.update_every_steps = update_every_steps
+        self.num_init_steps = num_init_steps
+        self.fixed_temperature = fixed_temperature
+        self.discount = discount
 
         # create models
-        self._encoder = None
-        self._actor = Actor(
+        self.actor = Actor(
             action_space=action_space,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
             log_std_range=log_std_range,
-        ).to(self._device)
-        self._critic = Critic(
+        ).to(self.device)
+        self.critic = Critic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
-        self._critic_target = Critic(
+        ).to(self.device)
+        self.critic_target = Critic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
-        self._critic_target.load_state_dict(self._critic.state_dict())
+        ).to(self.device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy
-        self._target_entropy = -np.prod(action_space.shape)
-        self._log_alpha = torch.tensor(
-            np.log(temperature), device=self._device, requires_grad=True
+        self.target_entropy = -np.prod(action_space.shape)
+        self.log_alpha = torch.tensor(
+            np.log(temperature), device=self.device, requires_grad=True
         )
 
         # create optimizers
-        self._actor_opt = torch.optim.Adam(
-            self._actor.parameters(), lr=self._lr, betas=betas
+        self.actor_opt = torch.optim.Adam(
+            self.actor.parameters(), lr=self.lr, betas=betas
         )
-        self._critic_opt = torch.optim.Adam(
-            self._critic.parameters(), lr=self._lr, betas=betas
+        self.critic_opt = torch.optim.Adam(
+            self.critic.parameters(), lr=self.lr, betas=betas
         )
-        self._log_alpha_opt = torch.optim.Adam(
-            [self._log_alpha], lr=self._lr, betas=betas
+        self.log_alpha_opt = torch.optim.Adam(
+            [self.log_alpha], lr=self.lr, betas=betas
         )
 
         self.train()
-        self._critic_target.train()
+        self.critic_target.train()
 
-    def train(self, training=True):
+    def train(self, training: bool = True) -> None:
         """Set the train mode.
 
         Args:
-            training: True (training) or False (testing).
+            training (bool): True (training) or False (testing).
 
         Returns:
             None.
         """
         self.training = training
-        self._actor.train(training)
-        self._critic.train(training)
-        if self._encoder is not None:
-            self._encoder.train(training)
-
-    def set_dist(self, dist):
-        """Set the distribution for actor.
-
-        Args:
-            dist: Hsuanwu distribution class.
-
-        Returns:
-            None.
-        """
-        self._actor.dist = dist
+        self.actor.train(training)
+        self.critic.train(training)
+        if self.encoder is not None:
+            self.encoder.train(training)
 
     @property
-    def _alpha(self):
+    def alpha(self) -> Tensor:
         """Get the temperature coefficient."""
-        return self._log_alpha.exp()
+        return self.log_alpha.exp()
 
-    def update(self, replay_buffer: Generator, step: int = 0) -> Dict:
+    def update(self, replay_storage: Storage, step: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
-            replay_buffer: Hsuanwu replay buffer.
-            step: Global training step.
+            replay_storage (Storage): Hsuanwu replay storage.
+            step (int): Global training step.
 
         Returns:
             Training metrics such as actor loss, critic_loss, etc.
         """
         metrics = {}
-        if step % self._update_every_steps != 0:
+        if step % self.update_every_steps != 0:
             return metrics
 
-        obs, action, reward, done, next_obs = replay_buffer.sample()
+        obs, action, reward, terminated, next_obs = replay_storage.sample()
 
-        if self._irs is not None:
-            intrinsic_reward = self._irs.compute_irs(
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
                 rollouts={
                     "observations": obs.unsqueeze(1).numpy(),
                     "actions": action.unsqueeze(1).numpy(),
@@ -267,19 +254,19 @@ class SACLearner(BaseLearner):
             reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
 
         # obs augmentation
-        if self._aug is not None:
-            obs = self._aug(obs.float())
-            next_obs = self._aug(next_obs.float())
+        if self.aug is not None:
+            obs = self.aug(obs.float())
+            next_obs = self.aug(next_obs.float())
 
         # encode
-        encoded_obs = self._encoder(obs)
+        encoded_obs = self.encoder(obs)
         with torch.no_grad():
-            encoded_next_obs = self._encoder(next_obs)
+            encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
         metrics.update(
             self.update_critic(
-                encoded_obs, action, reward, done, encoded_next_obs, step
+                encoded_obs, action, reward, terminated, encoded_next_obs, step
             )
         )
 
@@ -288,7 +275,7 @@ class SACLearner(BaseLearner):
 
         # udpate critic target
         utils.soft_update_params(
-            self._critic, self._critic_target, self._critic_target_tau
+            self.critic, self.critic_target, self.critic_target_tau
         )
 
         return metrics
@@ -298,40 +285,40 @@ class SACLearner(BaseLearner):
         obs: Tensor,
         action: Tensor,
         reward: Tensor,
-        done: Tensor,
+        terminated: Tensor,
         next_obs: Tensor,
         step: int,
-    ) -> Dict:
+    ) -> Dict[str, float]:
         """Update the critic network.
 
         Args:
-            obs: Observations.
-            action: Actions.
-            reward: Rewards.
-            done: Dones.
-            next_obs: Next observations.
-            step: Global training step.
+            obs (Tensor): Observations.
+            action (Tensor): Actions.
+            reward (Tensor): Rewards.
+            terminated (Tensor): Terminateds.
+            next_obs (Tensor): Next observations.
+            step (int): Global training step.
 
         Returns:
             Critic loss metrics.
         """
         with torch.no_grad():
-            dist = self._actor(next_obs)
+            dist = self.actor(next_obs)
             next_action = dist.rsample()
             log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
-            target_Q1, target_Q2 = self._critic_target(next_obs, next_action)
-            target_V = torch.min(target_Q1, target_Q2) - self._alpha.detach() * log_prob
-            target_Q = reward + (1.0 - done) * self._discount * target_V
+            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+            target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
+            target_Q = reward + (1.0 - terminated) * self.discount * target_V
 
-        Q1, Q2 = self._critic(obs, action)
+        Q1, Q2 = self.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self._encoder_opt.zero_grad(set_to_none=True)
-        self._critic_opt.zero_grad(set_to_none=True)
+        self.encoder_opt.zero_grad(set_to_none=True)
+        self.critic_opt.zero_grad(set_to_none=True)
         critic_loss.backward()
-        self._critic_opt.step()
-        self._encoder_opt.step()
+        self.critic_opt.step()
+        self.encoder_opt.step()
 
         return {
             "critic_loss": critic_loss.item(),
@@ -340,38 +327,38 @@ class SACLearner(BaseLearner):
             "critic_target": target_Q.mean().item(),
         }
 
-    def update_actor_and_alpha(self, obs: Tensor, step: int) -> Dict:
+    def update_actor_and_alpha(self, obs: Tensor, step: int) -> Dict[str, float]:
         """Update the actor network and temperature.
 
         Args:
-            obs: Observations.
-            step: Global training step.
+            obs (Tensor): Observations.
+            step (int): Global training step.
 
         Returns:
             Actor loss metrics.
         """
         # sample actions
-        dist = self._actor(obs)
+        dist = self.actor(obs)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
-        Q1, Q2 = self._critic(obs, action)
+        Q1, Q2 = self.critic(obs, action)
         Q = torch.min(Q1, Q2)
 
-        actor_loss = (self._alpha.detach() * log_prob - Q).mean()
+        actor_loss = (self.alpha.detach() * log_prob - Q).mean()
 
         # optimize actor
-        self._actor_opt.zero_grad(set_to_none=True)
+        self.actor_opt.zero_grad(set_to_none=True)
         actor_loss.backward()
-        self._actor_opt.step()
+        self.actor_opt.step()
 
-        if not self._fixed_temperature:
+        if not self.fixed_temperature:
             # update temperature
-            self._log_alpha_opt.zero_grad(set_to_none=True)
+            self.log_alpha_opt.zero_grad(set_to_none=True)
             alpha_loss = (
-                self._alpha * (-log_prob - self._target_entropy).detach()
+                self.alpha * (-log_prob - self.target_entropy).detach()
             ).mean()
             alpha_loss.backward()
-            self._log_alpha_opt.step()
+            self.log_alpha_opt.step()
         else:
             alpha_loss = torch.scalar_tensor(s=0.0)
 

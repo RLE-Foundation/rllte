@@ -193,12 +193,12 @@ class DrQv2Learner(BaseLearner):
         if self.encoder is not None:
             self.encoder.train(training)
 
-    def update(self, replay_storage: Iterable, step: int = 0) -> Dict:
+    def update(self, replay_iter: Iterable, step: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
-            replay_storage: Hsuanwu replay buffer.
-            step: Global training step.
+            replay_iter (Iterable): Hsuanwu replay storage iterable dataloader.
+            step (int): Global training step.
 
         Returns:
             Training metrics such as actor loss, critic_loss, etc.
@@ -208,10 +208,9 @@ class DrQv2Learner(BaseLearner):
         if step % self.update_every_steps != 0:
             return metrics
 
-        # batch = next(replay_iter)
         obs, action, reward, discount, next_obs = next(
-            replay_storage
-        )  # utils.to_torch(batch, self.device)
+            replay_iter
+        )
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
                 rollouts={
@@ -263,16 +262,16 @@ class DrQv2Learner(BaseLearner):
         discount: Tensor,
         next_obs: Tensor,
         step: int,
-    ) -> Dict:
+    ) -> Dict[str, float]:
         """Update the critic network.
 
         Args:
-            obs: Observations.
-            action: Actions.
-            reward: Rewards.
-            discount: discounts.
-            next_obs: Next observations.
-            step: Global training step.
+            obs (Tensor): Observations.
+            action (Tensor): Actions.
+            reward (Tensor): Rewards.
+            discount (Tensor): discounts.
+            next_obs (Tensor): Next observations.
+            step (int): Global training step.
 
         Returns:
             Critic loss metrics.
@@ -305,12 +304,12 @@ class DrQv2Learner(BaseLearner):
             "critic_target": target_Q.mean().item(),
         }
 
-    def update_actor(self, obs: Tensor, step: int) -> Dict:
+    def update_actor(self, obs: Tensor, step: int) -> Dict[str, float]:
         """Update the actor network.
 
         Args:
-            obs: Observations.
-            step: Global training step.
+            obs (Tensor): Observations.
+            step (int): Global training step.
 
         Returns:
             Actor loss metrics.

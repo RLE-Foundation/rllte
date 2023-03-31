@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Space, Tuple, Tensor, Any, Dict, Device
+from hsuanwu.common.typing import Space, Tuple, Tensor, Dict, Device, Storage
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -11,9 +11,9 @@ class ActorCritic(nn.Module):
     """Actor-Critic network.
 
     Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
 
     Returns:
         Actor-Critic instance.
@@ -39,7 +39,7 @@ class ActorCritic(nn.Module):
         """Get estimated values for observations.
 
         Args:
-            obs: Observations.
+            obs (Tensor): Observations.
 
         Returns:
             Estimated values.
@@ -50,7 +50,7 @@ class ActorCritic(nn.Module):
         """Get deterministic actions for observations.
 
         Args:
-            obs: Observations.
+            obs (Tensor): Observations.
 
         Returns:
             Estimated values.
@@ -64,8 +64,8 @@ class ActorCritic(nn.Module):
         """Get actions and estimated values for observations.
 
         Args:
-            obs: Sampled observations.
-            actions: Sampled actions.
+            obs (Tensor): Sampled observations.
+            actions (Tensor): Sampled actions.
 
         Returns:
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
@@ -164,7 +164,7 @@ class DrACLearner(BaseLearner):
         """Get estimated values for observations.
 
         Args:
-            obs: Observations.
+            obs (Tensor): Observations.
 
         Returns:
             Estimated values.
@@ -172,12 +172,12 @@ class DrACLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_storage: Any, episode: int = 0) -> Dict:
+    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
-            rollout_storage: Hsuanwu rollout storage.
-            episode: Global training episode.
+            rollout_storage (Storage): Hsuanwu rollout storage.
+            episode (int): Global training episode.
 
         Returns:
             Training metrics such as actor loss, critic_loss, etc.

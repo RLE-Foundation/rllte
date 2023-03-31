@@ -21,6 +21,7 @@ from gymnasium import Env, Space
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
+Storage = ''
 NNModule = torch.nn.Module
 Ndarray = np.ndarray
 Tensor = torch.Tensor

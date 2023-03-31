@@ -55,7 +55,7 @@ class BaseLearner:
         """
         self.training = training
 
-    def update(self, *args) -> Dict:
+    def update(self, *args) -> Dict[str, float]:
         """Update learner.
 
         Args:

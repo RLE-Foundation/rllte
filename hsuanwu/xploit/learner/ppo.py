@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Space, Tuple, Tensor, Any, Dict, Device
+from hsuanwu.common.typing import Space, Tuple, Tensor, Any, Dict, Device, Storage
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -161,7 +161,7 @@ class PPOLearner(BaseLearner):
         """Get estimated values for observations.
 
         Args:
-            obs: Observations.
+            obs (Tensor): Observations.
 
         Returns:
             Estimated values.
@@ -169,12 +169,12 @@ class PPOLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_storage: Any, episode: int = 0) -> Dict:
+    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
-            rollout_storage: Hsuanwu rollout storage.
-            episode: Global training episode.
+            rollout_storage (Storage): Hsuanwu rollout storage.
+            episode (int): Global training episode.
 
         Returns:
             Training metrics such as actor loss, critic_loss, etc.

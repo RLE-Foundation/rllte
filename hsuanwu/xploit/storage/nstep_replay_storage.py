@@ -1,3 +1,4 @@
+import torch
 import datetime
 import random
 import traceback
@@ -6,7 +7,7 @@ from collections import defaultdict
 import numpy as np
 from torch.utils.data import IterableDataset
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Path, Any, Dict, Tuple
 from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode
 
 
@@ -14,7 +15,7 @@ class ReplayStorage:
     """Storage collected experiences to local files.
 
     Args:
-        replay_dir: save directory.
+        replay_dir (Path): save directory.
 
     Returns:
         Storage instance.
@@ -67,14 +68,14 @@ class NStepReplayStorage(IterableDataset):
     """Replay storage for off-policy algorithms (N-step returns supported).
 
     Args:
-        buffer_size: Max number of element in the buffer.
-        batch_size: Number of samples per batch to load.
-        num_workers: Subprocesses to use for data loading.
-        pin_memory: Copy Tensors into device/CUDA pinned memory before returning them.
-        n_step: The number of transitions to consider when computing n-step returns
-        discount: The discount factor for future rewards.
-        fetch_every: Loading interval.
-        save_snapshot: Save loaded file or not.
+        buffer_size (int): Max number of element in the buffer.
+        batch_size (int): Number of samples per batch to load.
+        num_workers (int): Subprocesses to use for data loading.
+        pin_memory (bool): Copy Tensors into device/CUDA pinned memory before returning them.
+        n_step (int) The number of transitions to consider when computing n-step returns
+        discount (float): The discount factor for future rewards.
+        fetch_every (int): Loading interval.
+        save_snapshot (bool): Save loaded file or not.
 
     Returns:
         N-step replay storage.
@@ -130,11 +131,24 @@ class NStepReplayStorage(IterableDataset):
         self,
         obs: Any,
         action: Any,
-        reward: float,
-        terminated: float,
-        info: Dict,
+        reward: Any,
+        terminated: Any,
+        info: Any,
         next_obs: Any,
     ) -> None:
+        """Add sampled transitions into storage.
+
+        Args:
+            obs (Any): Observations.
+            action (Any): Actions.
+            reward (Any): Rewards.
+            terminated (Any): Terminateds.
+            info (Any): Infos.
+            next_obs (Any): Next observations.
+
+        Returns:
+            None.
+        """
         assert (
             "discount" in info.keys()
         ), "When using NStepReplayBuffer, please put the discount factor in 'info'!"
@@ -182,7 +196,15 @@ class NStepReplayStorage(IterableDataset):
             if not self._store_episode(eps_fn):
                 break
 
-    def _sample(self) -> Tuple:
+    def sample(self) -> Tuple:
+        """Generate samples.
+
+        Args:
+            None.
+        
+        Returns:
+            Batched samples.
+        """
         try:
             self._try_fetch()
         except:
@@ -204,4 +226,4 @@ class NStepReplayStorage(IterableDataset):
 
     def __iter__(self):
         while True:
-            yield self._sample()
+            yield self.sample()

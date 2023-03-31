@@ -11,15 +11,19 @@ from hsuanwu.common.engine import OffPolicyTrainer
 
 train_env = make_dmc_env(env_id='cartpole_swingup', 
                          seed=1, 
-                         visualize_reward=True)
+                         visualize_reward=True,
+                         from_pixels=False
+                         )
 
 test_env = make_dmc_env(env_id='cartpole_swingup',
                        seed=1, 
-                       visualize_reward=True)
+                       visualize_reward=True,
+                       from_pixels=False
+                       )
 
 print(train_env.observation_space)
 
-@hydra.main(version_base=None, config_path='../cfgs', config_name='sac_dmc_config')
+@hydra.main(version_base=None, config_path='../cfgs/task', config_name='sac_dmc_config')
 def main(cfgs):
     trainer = OffPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
     trainer.train()

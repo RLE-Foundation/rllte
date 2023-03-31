@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from hsuanwu.common.typing import Device, Tuple, Any, Tensor, Batch
+from hsuanwu.common.typing import Device, Tuple, Tensor, Batch
 
 
 class VanillaRolloutStorage:
@@ -90,24 +90,24 @@ class VanillaRolloutStorage:
 
     def add(
         self,
-        obs: Any,
-        actions: Any,
-        rewards: Any,
-        terminateds: Any,
-        truncateds: Any,
-        log_probs: Any,
-        values: Any,
+        obs: Tensor,
+        actions: Tensor,
+        rewards: Tensor,
+        terminateds: Tensor,
+        truncateds: Tensor,
+        log_probs: Tensor,
+        values: Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs: Observations.
-            actions: Actions.
-            rewards: Rewards.
-            terminateds: Terminateds.
-            truncateds: Truncateds.
-            log_probs: Log of the probability evaluated at `actions`.
-            values: Estimated values.
+            obs (Tensor): Observations.
+            actions (Tensor): Actions.
+            rewards (Tensor): Rewards.
+            terminateds (Tensor): Terminateds.
+            truncateds (Tensor): Truncateds.
+            log_probs (Tensor): Log of the probability evaluated at `actions`.
+            values (Tensor): Estimated values.
 
         Returns:
             None.
@@ -131,9 +131,9 @@ class VanillaRolloutStorage:
         """Perform generalized advantage estimation (GAE).
 
         Args:
-            last_values: Estimated values of the last step.
-            gamma: Discount factor.
-            gae_lamdba: Coefficient of GAE.
+            last_values (Tensor): Estimated values of the last step.
+            gamma (float): Discount factor.
+            gae_lamdba (float): Coefficient of GAE.
 
         Returns:
             None.
@@ -163,7 +163,7 @@ class VanillaRolloutStorage:
         """Sample data from storage.
 
         Args:
-            num_mini_batch: Number of mini-batches
+            num_mini_batch (int): Number of mini-batches
 
         Returns:
             Batch data.
