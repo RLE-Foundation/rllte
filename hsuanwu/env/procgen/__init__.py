@@ -13,7 +13,7 @@ from procgen import ProcgenEnv
 from hsuanwu.common.typing import Ndarray, Env, Device, Tensor, Tuple, Any, Dict
 
 
-class TorchVecEnvWrapper:
+class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
 
     Args:
@@ -25,7 +25,7 @@ class TorchVecEnvWrapper:
     """
 
     def __init__(self, env: Env, device: Device) -> None:
-        self._venv = env
+        super().__init__(env)
         self._device = torch.device(device)
         self.observation_space = Box(
             low=env.single_observation_space.low[0, 0, 0],
@@ -35,19 +35,18 @@ class TorchVecEnvWrapper:
         )
         self.action_space = env.single_action_space
 
-    def reset(self) -> Tuple[Tensor, Dict]:
-        obs, info = self._venv.reset()
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+        obs, info = self.env.reset(**kwargs)
         obs = torch.as_tensor(
             obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
         )
         return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
-        if actions.dtype is torch.int64:
-            actions = actions.squeeze(1)
-        actions = actions.cpu().numpy()
-
-        obs, reward, terminated, truncated, info = self._venv.step(actions)
+    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+        # Procgen games currently doesn't support Gymnasium.
+        obs, reward, terminated, truncated, info = self.env.step(
+            action.squeeze(1).cpu().numpy())
+        
         obs = torch.as_tensor(
             obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
         )

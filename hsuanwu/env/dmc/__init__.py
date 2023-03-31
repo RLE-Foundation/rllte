@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from gymnasium.envs.registration import register
 
-from hsuanwu.common.typing import Dict, Tensor, Device, Tuple, List, Env
+from hsuanwu.common.typing import Dict, Tensor, Device, Tuple, List, Env, Any, Ndarray
 
 
 class FrameStackEnv(gym.Wrapper):
@@ -19,8 +19,8 @@ class FrameStackEnv(gym.Wrapper):
         FrameStackEnv instance.
     """
 
-    def __init__(self, env: Env, k: int):
-        gym.Wrapper.__init__(self, env)
+    def __init__(self, env: Env, k: int) -> None:
+        super().__init__(env)
         self._k = k
         self._frames = deque([], maxlen=k)
         shp = env.observation_space.shape
@@ -32,22 +32,22 @@ class FrameStackEnv(gym.Wrapper):
         )
         self._max_episode_steps = env._max_episode_steps
 
-    def reset(self):
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset()
         for _ in range(self._k):
             self._frames.append(obs)
         return self._get_obs(), info
 
-    def step(self, action):
+    def step(self, action: Tuple[float]) -> Tuple[Any, float, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(action)
         self._frames.append(obs)
         return self._get_obs(), reward, terminated, truncated, info
 
-    def _get_obs(self):
+    def _get_obs(self) -> Ndarray:
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
 
-class TorchVecEnvWrapper:
+class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
 
     Args:
@@ -59,28 +59,22 @@ class TorchVecEnvWrapper:
     """
 
     def __init__(self, env: Env, device: Device) -> None:
-        self._venv = env
+        super().__init__(env)
         self._device = torch.device(device)
         self.observation_space = env.observation_space
         self.action_space = env.action_space
 
-    def reset(self) -> Tuple[Tensor, Dict]:
-        obs, info = self._venv.reset()
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+        obs, info = self.env.reset(**kwargs)
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
-        if actions.dtype is torch.int64:
-            actions = actions.squeeze(1)
-        actions = actions.cpu().numpy()
-
-        obs, reward, terminated, truncated, info = self._venv.step(actions)
+    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy())
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
-        reward = torch.as_tensor(
-            reward, dtype=torch.float32, device=self._device
-        ).unsqueeze(dim=1)
+        reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device)
         terminated = torch.as_tensor(
-            [[1.0] if _ else [0.0] for _ in terminated],
+            1.0 if terminated else 0.0,
             dtype=torch.float32,
             device=self._device,
         )
@@ -159,7 +153,7 @@ def make_dmc_env(
             max_episode_steps=max_episode_steps,
         )
     if visualize_reward:
-        return gym.make(env_id)
+        return TorchVecEnvWrapper(gym.make(env_id), device)
     else:
         env = FrameStackEnv(gym.make(env_id), frame_stack)
         return TorchVecEnvWrapper(env, device)

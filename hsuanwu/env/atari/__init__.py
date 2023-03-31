@@ -19,7 +19,7 @@ from hsuanwu.env.atari.wrappers import (
     NoopResetEnv,
 )
 
-class TorchVecEnvWrapper:
+class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
 
     Args:
@@ -31,22 +31,19 @@ class TorchVecEnvWrapper:
     """
 
     def __init__(self, env: Env, device: Device) -> None:
-        self._venv = env
+        super().__init__(env)
         self._device = torch.device(device)
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
 
-    def reset(self) -> Tuple[Tensor, Dict]:
-        obs, info = self._venv.reset()
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+        obs, info = self.env.reset(**kwargs)
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         return obs, info
 
-    def step(self, actions: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
-        if actions.dtype is torch.int64:
-            actions = actions.squeeze(1)
-        actions = actions.cpu().numpy()
-
-        obs, reward, terminated, truncated, info = self._venv.step(actions)
+    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+        obs, reward, terminated, truncated, info = self.env.step(
+            action.squeeze(1).cpu().numpy())
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device
@@ -83,7 +80,6 @@ def make_atari_env(
     def make_env(env_id: str, seed: int) -> Env:
         def _thunk():
             env = gym.make(env_id)
-            env = RecordEpisodeStatistics(env)
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
             env = EpisodicLifeEnv(env)
@@ -105,5 +101,6 @@ def make_atari_env(
     env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
 
     return TorchVecEnvWrapper(envs, device)

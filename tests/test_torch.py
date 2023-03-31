@@ -32,14 +32,14 @@ if __name__ == '__main__':
     encoder = Encoder().to(device)
 
     t_s = time.perf_counter()
-    for i in range(10000):
+    for i in range(10):
         encoder(torch.rand(128, 3, 84, 84, device=device))
     t_e = time.perf_counter()
     print('Uncompiled: ', t_e - t_s)
 
     t_s = time.perf_counter()
     encoder = torch.compile(encoder)
-    for i in range(10000):
+    for i in range(10):
         encoder(torch.rand(128, 3, 84, 84, device=device))
     t_e = time.perf_counter()
     print('Compiled: ', t_e - t_s)
