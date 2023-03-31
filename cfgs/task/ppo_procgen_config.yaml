@@ -17,7 +17,7 @@ learner:
   _target_: PPOLearner
 
 storage:
-  _target_: VanillaRolloutBuffer
+  _target_: VanillaRolloutStorage
   
 
 distribution:

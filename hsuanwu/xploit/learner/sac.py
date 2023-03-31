@@ -42,14 +42,12 @@ class Actor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(
-        self,
-        obs: Tensor,
-    ) -> Tensor:
+    def forward(self, obs: Tensor, std: float = None) -> Tensor:
         """Get actions.
 
         Args:
-            obs: Observations.
+            obs (Tensor): Observations.
+            std (float): Standard deviation for sampling actions.
 
         Returns:
             Hsuanwu distribution.
@@ -241,31 +239,6 @@ class SACLearner(BaseLearner):
     def _alpha(self):
         """Get the temperature coefficient."""
         return self._log_alpha.exp()
-
-    def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
-        """Make actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        obs = torch.as_tensor(obs, device=self._device)
-        encoded_obs = self._encoder(obs.unsqueeze(0))
-        # sample actions
-        dist = self._actor(obs=encoded_obs)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-            if step < self._num_init_steps:
-                action.uniform_(-1.0, 1.0)
-
-        return action.cpu().numpy()[0]
 
     def update(self, replay_buffer: Generator, step: int = 0) -> Dict:
         """Update the learner.

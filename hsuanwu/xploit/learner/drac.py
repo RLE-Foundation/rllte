@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Space, Tuple, Tensor, Any, Dict, Device
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -60,7 +60,7 @@ class ActorCritic(nn.Module):
 
     def get_action_and_value(
         self, obs: Tensor, actions: Tensor = None
-    ) -> Sequence[Tensor]:
+    ) -> Tuple[Tensor]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -86,22 +86,22 @@ class DrACLearner(BaseLearner):
     """Data Regularized Actor-Critic (DrAC) Learner.
 
     Args:
-        observation_space: Observation space of the environment.
-        action_space: Action shape of the environment.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim: Number of features extracted.
-        lr: The learning rate.
-        eps: Term added to the denominator to improve numerical stability.
+        observation_space (Space): Observation space of the environment.
+        action_space (Space): Action shape of the environment.
+        action_type (str): Continuous or discrete action. "cont" or "dis".
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        feature_dim (int): Number of features extracted.
+        lr (float): The learning rate.
+        eps (float): Term added to the denominator to improve numerical stability.
 
-        hidden_dim: The size of the hidden layers.
-        clip_range: Clipping parameter.
-        n_epochs: Times of updating the policy.
-        num_mini_batch: Number of mini-batches.
-        vf_coef: Weighting coefficient of value loss.
-        ent_coef: Weighting coefficient of entropy bonus.
-        aug_coef: Weighting coefficient of augmentation loss.
-        max_grad_norm: Maximum norm of gradients.
+        hidden_dim (int): The size of the hidden layers.
+        clip_range (float): Clipping parameter.
+        n_epochs (int): Times of updating the policy.
+        num_mini_batch (int): Number of mini-batches.
+        vf_coef (float): Weighting coefficient of value loss.
+        ent_coef (float): Weighting coefficient of entropy bonus.
+        aug_coef (float): Weighting coefficient of augmentation loss.
+        max_grad_norm (float): Maximum norm of gradients.
 
     Returns:
         DrAC learner instance.
@@ -112,7 +112,7 @@ class DrACLearner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: torch.device = "cuda",
+        device: Device = 'cuda',
         feature_dim: int = 256,
         lr: float = 5e-4,
         eps: float = 1e-5,
@@ -128,74 +128,37 @@ class DrACLearner(BaseLearner):
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
-
-        self._n_epochs = n_epochs
-        self._clip_range = clip_range
-        self._num_mini_batch = num_mini_batch
-        self._vf_coef = vf_coef
-        self._ent_coef = ent_coef
-        self._aug_coef = aug_coef
-        self._max_grad_norm = max_grad_norm
+        
+        self.n_epochs = n_epochs
+        self.clip_range = clip_range
+        self.num_mini_batch = num_mini_batch
+        self.vf_coef = vf_coef
+        self.ent_coef = ent_coef
+        self.aug_coef = aug_coef
+        self.max_grad_norm = max_grad_norm
 
         # create models
-        self._encoder = None
-        self._ac = ActorCritic(
+        self.ac = ActorCritic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
+        ).to(self.device)
 
         # create optimizers
-        self._ac_opt = torch.optim.Adam(self._ac.parameters(), lr=lr, eps=eps)
+        self.ac_opt = torch.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
         self.train()
 
-    def train(self, training=True):
+    def train(self, training: bool = True) -> None:
         """Set the train mode.
 
         Args:
-            training: True (training) or False (testing).
+            training (bool): True (training) or False (testing).
 
         Returns:
             None.
         """
         self.training = training
-        self._ac.train(training)
-        if self._encoder is not None:
-            self._encoder.train(training)
-
-    def set_dist(self, dist):
-        """Set the distribution for actor.
-
-        Args:
-            dist: Hsuanwu distribution class.
-
-        Returns:
-            None.
-        """
-        self._dist = dist
-        self._ac.dist = dist
-
-    def act(
-        self, obs: ndarray, training: bool = True, step: int = 0
-    ) -> Sequence[Tensor]:
-        """Make actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self._encoder(obs)
-
-        if training:
-            actions, values, log_probs, entropy = self._ac.get_action_and_value(
-                obs=encoded_obs
-            )
-            return actions, values, log_probs, entropy
-        else:
-            actions = self._ac.get_action(obs=encoded_obs)
-            return actions
+        self.ac.train(training)
+        if self.encoder is not None:
+            self.encoder.train(training)
 
     def get_value(self, obs: Tensor) -> Tensor:
         """Get estimated values for observations.
@@ -206,14 +169,14 @@ class DrACLearner(BaseLearner):
         Returns:
             Estimated values.
         """
-        encoded_obs = self._encoder(obs)
-        return self._ac.get_value(obs=encoded_obs)
+        encoded_obs = self.encoder(obs)
+        return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_buffer: Any, episode: int = 0) -> Dict:
+    def update(self, rollout_storage: Any, episode: int = 0) -> Dict:
         """Update the learner.
 
         Args:
-            rollout_buffer: Hsuanwu rollout buffer.
+            rollout_storage: Hsuanwu rollout storage.
             episode: Global training episode.
 
         Returns:
@@ -224,8 +187,8 @@ class DrACLearner(BaseLearner):
         total_entropy_loss = 0.0
         total_aug_loss = 0.0
 
-        for e in range(self._n_epochs):
-            generator = rollout_buffer.generator(self._num_mini_batch)
+        for e in range(self.n_epochs):
+            generator = rollout_storage.generator(self.num_mini_batch)
 
             for batch in generator:
                 (
@@ -233,28 +196,29 @@ class DrACLearner(BaseLearner):
                     batch_actions,
                     batch_values,
                     batch_returns,
-                    batch_dones,
+                    batch_terminateds,
+                    batch_truncateds,
                     batch_old_log_probs,
                     adv_targ,
                 ) = batch
 
                 # evaluate sampled actions
-                _, values, log_probs, entropy = self._ac.get_action_and_value(
-                    obs=self._encoder(batch_obs), actions=batch_actions
+                _, values, log_probs, entropy = self.ac.get_action_and_value(
+                    obs=self.encoder(batch_obs), actions=batch_actions
                 )
 
                 # actor loss part
                 ratio = torch.exp(log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = (
-                    torch.clamp(ratio, 1.0 - self._clip_range, 1.0 + self._clip_range)
+                    torch.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
                     * adv_targ
                 )
                 actor_loss = -torch.min(surr1, surr2).mean()
 
                 # critic loss part
                 values_clipped = batch_values + (values - batch_values).clamp(
-                    -self._clip_range, self._clip_range
+                    -self.clip_range, self.clip_range
                 )
                 values_losses = (batch_values - batch_returns).pow(2)
                 values_losses_clipped = (values_clipped - batch_returns).pow(2)
@@ -263,40 +227,40 @@ class DrACLearner(BaseLearner):
                 )
 
                 # augmentation loss part
-                batch_obs_aug = self._aug(batch_obs)
-                new_batch_actions, _, _, _ = self._ac.get_action_and_value(
-                    obs=self._encoder(batch_obs)
+                batch_obs_aug = self.aug(batch_obs)
+                new_batch_actions, _, _, _ = self.ac.get_action_and_value(
+                    obs=self.encoder(batch_obs)
                 )
 
-                _, values_aug, log_probs_aug, _ = self._ac.get_action_and_value(
-                    obs=self._encoder(batch_obs_aug), actions=new_batch_actions
+                _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
+                    obs=self.encoder(batch_obs_aug), actions=new_batch_actions
                 )
                 action_loss_aug = -log_probs_aug.mean()
                 value_loss_aug = 0.5 * (torch.detach(values) - values_aug).pow(2).mean()
-                aug_loss = self._aug_coef * (action_loss_aug + value_loss_aug)
+                aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
 
                 # update
-                self._encoder_opt.zero_grad(set_to_none=True)
-                self._ac_opt.zero_grad(set_to_none=True)
+                self.encoder_opt.zero_grad(set_to_none=True)
+                self.ac_opt.zero_grad(set_to_none=True)
                 (
-                    critic_loss * self._vf_coef
+                    critic_loss * self.vf_coef
                     + actor_loss
-                    - entropy * self._ent_coef
+                    - entropy * self.ent_coef
                     + aug_loss
                 ).backward()
                 nn.utils.clip_grad_norm_(
-                    self._encoder.parameters(), self._max_grad_norm
+                    self.encoder.parameters(), self.max_grad_norm
                 )
-                nn.utils.clip_grad_norm_(self._ac.parameters(), self._max_grad_norm)
-                self._ac_opt.step()
-                self._encoder_opt.step()
+                nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
+                self.ac_opt.step()
+                self.encoder_opt.step()
 
                 total_actor_loss += actor_loss.item()
                 total_critic_loss += critic_loss.item()
                 total_entropy_loss += entropy.item()
                 total_aug_loss += aug_loss.item()
 
-        num_updates = self._n_epochs * self._num_mini_batch
+        num_updates = self.n_epochs * self.num_mini_batch
 
         total_actor_loss /= num_updates
         total_critic_loss /= num_updates

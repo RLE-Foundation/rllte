@@ -27,7 +27,7 @@ test_env = make_dmc_env(env_id='cartpole_balance',
                        from_pixels=True, 
                        frame_skip=2, frame_stack=3)
 
-@hydra.main(version_base=None, config_path='../cfgs', config_name='drqv2_dmc_config')
+@hydra.main(version_base=None, config_path='../cfgs/task', config_name='drqv2_dmc_config')
 def main(cfgs):
     trainer = OffPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
     trainer.train()

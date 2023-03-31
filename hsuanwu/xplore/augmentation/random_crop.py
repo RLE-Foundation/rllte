@@ -16,7 +16,7 @@ class RandomCrop(BaseAugmentation):
         Augmented images.
     """
 
-    def __init__(self, pad: int, out: int) -> None:
+    def __init__(self, pad: int = 4, out: int = 84) -> None:
         super().__init__()
         self._out = out
         self._pad = pad

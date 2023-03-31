@@ -52,7 +52,12 @@ class TorchVecEnvWrapper(gym.Wrapper):
             [[1.0] if _ else [0.0] for _ in terminated],
             dtype=torch.float32,
             device=self._device,
-        )
+            )
+        truncated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in truncated],
+            dtype=torch.float32,
+            device=self._device,
+            )
 
         return obs, reward, terminated, truncated, info
 

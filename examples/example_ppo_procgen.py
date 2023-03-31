@@ -27,7 +27,7 @@ test_env = make_procgen_env(
     device='cuda'
 )
 
-@hydra.main(version_base=None, config_path='../cfgs', config_name='ppo_procgen_config')
+@hydra.main(version_base=None, config_path='../cfgs/task', config_name='ppo_procgen_config')
 def main(cfgs):
     trainer = OnPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
     trainer.train()

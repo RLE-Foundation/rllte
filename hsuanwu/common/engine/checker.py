@@ -20,6 +20,12 @@ MATCH_KEYS = {
         "augmentation": [],
         "reward": [],
     },
+    "DrACLearner": {
+        "storage": ["VanillaRolloutStorage"],
+        "distribution": ["Categorical"],
+        "augmentation": [],
+        "reward": [],
+    },
     "SACLearner": {
         "storage": ["VanillaReplayStorage", "NStepReplayStorage"],
         "distribution": ["OrnsteinUhlenbeck", "TruncatedNormal", "SquashedNormal"],

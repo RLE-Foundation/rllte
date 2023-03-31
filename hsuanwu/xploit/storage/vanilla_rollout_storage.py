@@ -1,21 +1,21 @@
 import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Device, Tuple, Any, Tensor, Batch
 
 
 class VanillaRolloutStorage:
     """Vanilla rollout storage for on-policy algorithms.
 
     Args:
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape: The data shape of observations.
-        action_shape: The data shape of actions.
-        action_type: The type of actions, 'cont' or 'dis'.
-        num_steps: The sample steps of per rollout.
-        num_envs: The number of parallel environments.
-        discount: discount factor.
-        gae_lambda: Weighting coefficient for generalized advantage estimation (GAE).
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        obs_shape (Tuple): The data shape of observations.
+        action_shape (Tuple): The data shape of actions.
+        action_type (str): The type of actions, 'cont' or 'dis'.
+        num_steps (int): The sample steps of per rollout.
+        num_envs (int): The number of parallel environments.
+        discount (float): discount factor.
+        gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
         Vanilla rollout storage.
@@ -23,7 +23,7 @@ class VanillaRolloutStorage:
 
     def __init__(
         self,
-        device: torch.device,
+        device: Device,
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
@@ -63,11 +63,15 @@ class VanillaRolloutStorage:
         self.rewards = torch.empty(
             size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
         )
-        self.dones = torch.empty(
+        self.terminateds = torch.empty(
             size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device
         )
-        # first next_done
-        self.dones[0].copy_(torch.zeros(num_envs, 1).to(self._device))
+        self.truncateds = torch.empty(
+            size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device
+        )
+        # first next_terminated
+        self.terminateds[0].copy_(torch.zeros(num_envs, 1).to(self._device))
+        self.truncateds[0].copy_(torch.zeros(num_envs, 1).to(self._device))
         # extra part
         self.log_probs = torch.empty(
             size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
@@ -89,7 +93,8 @@ class VanillaRolloutStorage:
         obs: Any,
         actions: Any,
         rewards: Any,
-        dones: Any,
+        terminateds: Any,
+        truncateds: Any,
         log_probs: Any,
         values: Any,
     ) -> None:
@@ -99,7 +104,8 @@ class VanillaRolloutStorage:
             obs: Observations.
             actions: Actions.
             rewards: Rewards.
-            dones: Dones.
+            terminateds: Terminateds.
+            truncateds: Truncateds.
             log_probs: Log of the probability evaluated at `actions`.
             values: Estimated values.
 
@@ -109,7 +115,8 @@ class VanillaRolloutStorage:
         self.obs[self._global_step].copy_(obs)
         self.actions[self._global_step].copy_(actions)
         self.rewards[self._global_step].copy_(rewards)
-        self.dones[self._global_step + 1].copy_(dones)
+        self.terminateds[self._global_step + 1].copy_(terminateds)
+        self.truncateds[self._global_step + 1].copy_(truncateds)
         self.log_probs[self._global_step].copy_(log_probs)
         self.values[self._global_step].copy_(values)
 
@@ -117,7 +124,8 @@ class VanillaRolloutStorage:
 
     def reset(self) -> None:
         """Reset the terminal state of each env."""
-        self.dones[0].copy_(self.dones[-1])
+        self.terminateds[0].copy_(self.terminateds[-1])
+        self.truncateds[0].copy_(self.truncateds[-1])
 
     def compute_returns_and_advantages(self, last_values: Tensor) -> None:
         """Perform generalized advantage estimation (GAE).
@@ -133,10 +141,10 @@ class VanillaRolloutStorage:
         gae = 0
         for step in reversed(range(self._num_steps)):
             if step == self._num_steps - 1:
-                next_non_terminal = 1.0 - self.dones[-1]
+                next_non_terminal = 1.0 - self.terminateds[-1]
                 next_values = last_values
             else:
-                next_non_terminal = 1.0 - self.dones[step + 1]
+                next_non_terminal = 1.0 - self.terminateds[step + 1]
                 next_values = self.values[step + 1]
             delta = (
                 self.rewards[step]
@@ -179,8 +187,9 @@ class VanillaRolloutStorage:
             batch_actions = self.actions.view(-1, self._action_dim)[indices]
             batch_values = self.values.view(-1, 1)[indices]
             batch_returns = self.returns.view(-1, 1)[indices]
-            batch_dones = self.dones[:-1].view(-1, 1)[indices]
+            batch_terminateds = self.terminateds[:-1].view(-1, 1)[indices]
+            batch_truncateds = self.truncateds[:-1].view(-1, 1)[indices]
             batch_old_log_probs = self.log_probs.view(-1, 1)[indices]
             adv_targ = self.advantages.view(-1, 1)[indices]
 
-            yield batch_obs, batch_actions, batch_values, batch_returns, batch_dones, batch_old_log_probs, adv_targ
+            yield batch_obs, batch_actions, batch_values, batch_returns, batch_terminateds, batch_truncateds, batch_old_log_probs, adv_targ

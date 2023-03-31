@@ -2,7 +2,7 @@ import numpy as np
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import List, Space, Tensor, Tuple
 from hsuanwu.xploit.encoder.base import BaseEncoder
 from hsuanwu.xploit.utils import network_init
 
@@ -72,9 +72,9 @@ class ResNetEncoder(BaseEncoder):
     ResNet-like encoder for processing image-based observations.
 
     Args:
-        observation_space: Observation space of the environment.
-        feature_dim: Number of features extracted.
-        net_arch: Architecture of the network.
+        observation_space (Space): Observation space of the environment.
+        feature_dim (int): Number of features extracted.
+        net_arch (List): Architecture of the network.
             It represents the out channels of each residual layer.
             The length of this list is the number of residual layers.
 

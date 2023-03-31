@@ -1,14 +1,14 @@
 from torch import nn
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Space, Tensor
 
 
 class BaseEncoder(nn.Module):
     """Base class that represents a features extractor.
 
     Args:
-        observation_space: Observation space of the environment.
-        feature_dim: Number of features extracted.
+        observation_space (Space): Observation space of the environment.
+        feature_dim (int): Number of features extracted.
 
     Returns:
         The base encoder class

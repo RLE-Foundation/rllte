@@ -1,6 +1,6 @@
 from torch import nn
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Space, Tensor
 from hsuanwu.xploit.encoder.base import BaseEncoder
 from hsuanwu.xploit.utils import network_init
 
@@ -24,4 +24,4 @@ class IdentityEncoder(BaseEncoder):
         self.trunk = nn.Sequential(nn.Linear(1, 1))
 
     def forward(self, obs: Tensor) -> Tensor:
-        return torch.as_tensor(obs, device=obs.device, dtype=torch.float32)
+        return obs

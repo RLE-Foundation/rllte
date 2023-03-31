@@ -45,15 +45,15 @@ class ReplayStorage:
         return self._num_transitions
 
     def add(
-        self, obs: Any, action: Any, reward: float, done: bool, discount: float
+        self, obs: Any, action: Any, reward: float, terminated: bool, discount: float
     ) -> None:
         self._current_episode["observation"].append(obs)
         self._current_episode["action"].append(action)
         self._current_episode["reward"].append(np.full((1,), reward, np.float32))
-        self._current_episode["done"].append(np.full((1,), done, np.float32))
+        self._current_episode["terminated"].append(np.full((1,), terminated, np.float32))
         self._current_episode["discount"].append(np.full((1,), discount, np.float32))
 
-        if done:
+        if terminated:
             episode = dict()
             for key in self._current_episode.keys():
                 episode[key] = np.array(self._current_episode[key])
@@ -131,14 +131,14 @@ class NStepReplayStorage(IterableDataset):
         obs: Any,
         action: Any,
         reward: float,
-        done: float,
+        terminated: float,
         info: Dict,
         next_obs: Any,
     ) -> None:
         assert (
             "discount" in info.keys()
         ), "When using NStepReplayBuffer, please put the discount factor in 'info'!"
-        self._replay_storage.add(obs, action, reward, done, info["discount"])
+        self._replay_storage.add(obs, action, reward, terminated, info["discount"])
 
     def _store_episode(self, eps_fn: Path) -> bool:
         try:

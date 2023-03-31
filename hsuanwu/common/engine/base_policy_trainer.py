@@ -1,10 +1,8 @@
 import os
 os.environ['HYDRA_FULL_ERROR'] = '1'
 import random
-from collections import deque
 from pathlib import Path
 
-import hydra
 import numpy as np
 import torch
 from omegaconf import open_dict
@@ -12,16 +10,16 @@ from omegaconf import open_dict
 from hsuanwu.common.engine.checker import cfgs_checker
 from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Env, DictConfig
 
 
 class BasePolicyTrainer:
     """Base class of policy trainer.
 
     Args:
-        train_env: A Gym-like environment for training.
-        test_env: A Gym-like environment for testing.
-        cfgs: Dict config for configuring RL algorithms.
+        train_env (Env): A Gym-like environment for training.
+        test_env (Env): A Gym-like environment for testing.
+        cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
         Base policy trainer instance.
@@ -36,6 +34,7 @@ class BasePolicyTrainer:
         self._timer = Timer()
         self._device = torch.device(cfgs.device)
         # set seed
+        self._seed = cfgs.seed
         torch.manual_seed(seed=cfgs.seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(cfgs.seed)
@@ -64,7 +63,7 @@ class BasePolicyTrainer:
         """Preprocess the configs.
 
         Args:
-            cfgs: Dict config for configuring RL algorithms.
+            cfgs (DictConfig): Dict config for configuring RL algorithms.
 
         Returns:
             Processed configs.
@@ -124,7 +123,7 @@ class BasePolicyTrainer:
         """Set the class path for each module.
 
         Args:
-            cfgs: Dict config for configuring RL algorithms.
+            cfgs (DictConfig): Dict config for configuring RL algorithms.
 
         Returns:
             Processed configs.
@@ -144,6 +143,21 @@ class BasePolicyTrainer:
             cfgs.reward._target_ = "hsuanwu.xplore." + "reward." + cfgs.reward._target_
 
         return cfgs
+
+    def act(
+        self, obs: Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[Any]:
+        """Sample actions based on observations.
+
+        Args:
+            obs: Observations.
+            training: training mode, True or False.
+            step: Global training step.
+
+        Returns:
+            Sampled actions.
+        """
+        pass
 
     def train(self) -> None:
         """Training function."""

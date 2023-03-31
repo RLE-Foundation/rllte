@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Space, Tuple, Tensor, Dict, Device, Iterable
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -11,9 +11,9 @@ class Actor(nn.Module):
     """Actor network.
 
     Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
 
     Returns:
         Actor network instance.
@@ -43,8 +43,8 @@ class Actor(nn.Module):
         """Get actions.
 
         Args:
-            obs: Observations.
-            std: Standard deviation for sampling actions.
+            obs (Tensor): Observations.
+            std (float): Standard deviation for sampling actions.
 
         Returns:
             Hsuanwu distribution.
@@ -60,9 +60,9 @@ class Critic(nn.Module):
     """Critic network.
 
     Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
 
     Returns:
         Critic network instance.
@@ -95,12 +95,12 @@ class Critic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: Tensor, action: Tensor):
+    def forward(self, obs: Tensor, action: Tensor) -> Tuple[Tensor]:
         """Value estimation.
 
         Args:
-            obs: Observations.
-            action: Actions.
+            obs (Tensor): Observations.
+            action (Tensor): Actions.
 
         Returns:
             Estimated values.
@@ -118,20 +118,19 @@ class DrQv2Learner(BaseLearner):
     """Data Regularized-Q v2 (DrQ-v2).
 
     Args:
-        observation_space: Observation space of the environment.
-        action_space: Action shape of the environment.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim: Number of features extracted.
-        lr: The learning rate.
-        eps: Term added to the denominator to improve numerical stability.
+        observation_space (Space): Observation space of the environment.
+        action_space (Space): Action shape of the environment.
+        action_type (str): Continuous or discrete action. "cont" or "dis".
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        feature_dim (int): Number of features extracted.
+        lr (float): The learning rate.
+        eps (float): Term added to the denominator to improve numerical stability.
 
-        hidden_dim: The size of the hidden layers.
+        hidden_dim (int): The size of the hidden layers.
         critic_target_tau: The critic Q-function soft-update rate.
-        update_every_steps: The agent update frequency.
-        num_init_steps: The exploration steps.
-        stddev_schedule: The exploration std schedule.
-        stddev_clip: The exploration std clip range.
+        update_every_steps (int): The agent update frequency.
+        stddev_schedule (str): The exploration std schedule.
+        stddev_clip (float): The exploration std clip range.
 
     Returns:
         DrQv2 learner instance.
@@ -142,13 +141,12 @@ class DrQv2Learner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: torch.device = "cuda",
+        device: Device = 'cuda',
         feature_dim: int = 50,
         lr: float = 1e-4,
         eps: float = 0.00008,
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.01,
-        num_init_steps: int = 2000,
         update_every_steps: int = 2,
         stddev_schedule: str = "linear(1.0, 0.1, 100000)",
         stddev_clip: float = 0.3,
@@ -157,88 +155,49 @@ class DrQv2Learner(BaseLearner):
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
 
-        self._critic_target_tau = critic_target_tau
-        self._update_every_steps = update_every_steps
-        self._num_init_steps = num_init_steps
-        self._stddev_schedule = stddev_schedule
-        self._stddev_clip = stddev_clip
+        self.critic_target_tau = critic_target_tau
+        self.update_every_steps = update_every_steps
+        self.stddev_schedule = stddev_schedule
+        self.stddev_clip = stddev_clip
 
         # create models
-        self._encoder = None
-        self._actor = Actor(
+        self.actor = Actor(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
-        self._critic = Critic(
+        ).to(self.device)
+        self.critic = Critic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
-        self._critic_target = Critic(
+        ).to(self.device)
+        self.critic_target = Critic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self._device)
-        self._critic_target.load_state_dict(self._critic.state_dict())
+        ).to(self.device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
-        self._actor_opt = torch.optim.Adam(self._actor.parameters(), lr=self._lr)
-        self._critic_opt = torch.optim.Adam(self._critic.parameters(), lr=self._lr)
+        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
         self.train()
-        self._critic_target.train()
+        self.critic_target.train()
 
-    def train(self, training=True):
+    def train(self, training: bool = True) -> None:
         """Set the train mode.
 
         Args:
-            training: True (training) or False (testing).
+            training (bool): True (training) or False (testing).
 
         Returns:
             None.
         """
         self.training = training
-        self._actor.train(training)
-        self._critic.train(training)
-        if self._encoder is not None:
-            self._encoder.train(training)
+        self.actor.train(training)
+        self.critic.train(training)
+        if self.encoder is not None:
+            self.encoder.train(training)
 
-    def set_dist(self, dist):
-        """Set the distribution for actor.
-
-        Args:
-            dist: Hsuanwu distribution class.
-
-        Returns:
-            None.
-        """
-        self._actor.dist = dist
-
-    def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
-        """Make actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        obs = torch.as_tensor(obs, device=self._device)
-        encoded_obs = self._encoder(obs.unsqueeze(0))
-        # sample actions
-        std = utils.schedule(self._stddev_schedule, step)
-        dist = self._actor(obs=encoded_obs, std=std)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample(clip=None)
-            if step < self._num_init_steps:
-                action.uniform_(-1.0, 1.0)
-
-        return action.cpu().numpy()[0]
-
-    def update(self, replay_buffer: DataLoader, step: int = 0) -> Dict:
+    def update(self, replay_storage: Iterable, step: int = 0) -> Dict:
         """Update the learner.
 
         Args:
-            replay_buffer: Hsuanwu replay buffer.
+            replay_storage: Hsuanwu replay buffer.
             step: Global training step.
 
         Returns:
@@ -246,15 +205,15 @@ class DrQv2Learner(BaseLearner):
         """
 
         metrics = {}
-        if step % self._update_every_steps != 0:
+        if step % self.update_every_steps != 0:
             return metrics
 
         # batch = next(replay_iter)
         obs, action, reward, discount, next_obs = next(
-            replay_buffer
+            replay_storage
         )  # utils.to_torch(batch, self.device)
-        if self._irs is not None:
-            intrinsic_reward = self._irs.compute_irs(
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
                 rollouts={
                     "observations": obs.unsqueeze(1).numpy(),
                     "actions": action.unsqueeze(1).numpy(),
@@ -263,21 +222,21 @@ class DrQv2Learner(BaseLearner):
             )
             reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
 
-        obs = obs.float().to(self._device)
-        action = action.float().to(self._device)
-        reward = reward.float().to(self._device)
-        discount = discount.float().to(self._device)
-        next_obs = next_obs.float().to(self._device)
+        obs = obs.float().to(self.device)
+        action = action.float().to(self.device)
+        reward = reward.float().to(self.device)
+        discount = discount.float().to(self.device)
+        next_obs = next_obs.float().to(self.device)
 
         # obs augmentation
-        if self._aug is not None:
-            obs = self._aug(obs.float())
-            next_obs = self._aug(next_obs.float())
+        if self.aug is not None:
+            obs = self.aug(obs.float())
+            next_obs = self.aug(next_obs.float())
 
         # encode
-        encoded_obs = self._encoder(obs)
+        encoded_obs = self.encoder(obs)
         with torch.no_grad():
-            encoded_next_obs = self._encoder(next_obs)
+            encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
         metrics.update(
@@ -291,7 +250,7 @@ class DrQv2Learner(BaseLearner):
 
         # udpate critic target
         utils.soft_update_params(
-            self._critic, self._critic_target, self._critic_target_tau
+            self.critic, self.critic_target, self.critic_target_tau
         )
 
         return metrics
@@ -321,23 +280,23 @@ class DrQv2Learner(BaseLearner):
 
         with torch.no_grad():
             # sample actions
-            std = utils.schedule(self._stddev_schedule, step)
-            dist = self._actor(next_obs, std)
+            std = utils.schedule(self.stddev_schedule, step)
+            dist = self.actor(next_obs, std)
 
-            next_action = dist.sample(clip=self._stddev_clip)
-            target_Q1, target_Q2 = self._critic_target(next_obs, next_action)
+            next_action = dist.sample(clip=self.stddev_clip)
+            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_V = torch.min(target_Q1, target_Q2)
             target_Q = reward + (discount * target_V)
 
-        Q1, Q2 = self._critic(obs, action)
+        Q1, Q2 = self.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self._encoder_opt.zero_grad(set_to_none=True)
-        self._critic_opt.zero_grad(set_to_none=True)
+        self.encoder_opt.zero_grad(set_to_none=True)
+        self.critic_opt.zero_grad(set_to_none=True)
         critic_loss.backward()
-        self._critic_opt.step()
-        self._encoder_opt.step()
+        self.critic_opt.step()
+        self.encoder_opt.step()
 
         return {
             "critic_loss": critic_loss.item(),
@@ -357,18 +316,18 @@ class DrQv2Learner(BaseLearner):
             Actor loss metrics.
         """
         # sample actions
-        std = utils.schedule(self._stddev_schedule, step)
-        dist = self._actor(obs, std)
-        action = dist.sample(clip=self._stddev_clip)
+        std = utils.schedule(self.stddev_schedule, step)
+        dist = self.actor(obs, std)
+        action = dist.sample(clip=self.stddev_clip)
 
-        Q1, Q2 = self._critic(obs, action)
+        Q1, Q2 = self.critic(obs, action)
         Q = torch.min(Q1, Q2)
 
         actor_loss = -Q.mean()
 
         # optimize actor
-        self._actor_opt.zero_grad(set_to_none=True)
+        self.actor_opt.zero_grad(set_to_none=True)
         actor_loss.backward()
-        self._actor_opt.step()
+        self.actor_opt.step()
 
         return {"actor_loss": actor_loss.item()}
