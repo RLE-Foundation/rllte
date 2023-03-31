@@ -24,7 +24,7 @@ storage:
   num_workers: 4
 
 distribution:
-  _target_: TruncatedNormal
+  _target_: TruncatedNormalNoise
 
 ##############################################################
 augmentation:

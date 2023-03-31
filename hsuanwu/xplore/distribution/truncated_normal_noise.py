@@ -1,22 +1,22 @@
 import torch
 from torch.distributions.utils import _standard_normal
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
-class TruncatedNormal(BaseDistribution):
-    """Truncated normal distribution for sampling noise.
+class TruncatedNormalNoise(BaseDistribution):
+    """Truncated normal noise.
 
     Args:
-        mu: Mean of the distribution.
-        sigma: Standard deviation of the distribution.
-        low: Lower bound for action range.
-        high: Upper bound for action range.
-        eps: A constant for clamping.
+        mu (Tensor): mean of the distribution (often referred to as mu).
+        sigma (Tensor): standard deviation of the distribution (often referred to as sigma).
+        low (float): Lower bound for action range.
+        high (float): Upper bound for action range.
+        eps (float): A constant for clamping.
 
     Returns:
-        Truncated normal distribution instance.
+        Truncated normal noise instance.
     """
 
     def __init__(
@@ -29,12 +29,12 @@ class TruncatedNormal(BaseDistribution):
     ) -> None:
         super().__init__(mu, sigma, low, high, eps)
 
-    def sample(self, clip: float = None, sample_shape=torch.Size()) -> Tensor:
+    def sample(self, clip: float = None, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped sample
 
         Args:
-            clip: Range for noise truncation operation.
-            sample_shape: The size of the sample to be drawn.
+            clip (float): Range for noise truncation operation.
+            sample_shape (TorchSize): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.

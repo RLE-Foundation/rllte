@@ -5,7 +5,7 @@ from hsuanwu.common.typing import *
 from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
-class OrnsteinUhlenbeck(BaseDistribution):
+class OrnsteinUhlenbeckNoise(BaseDistribution):
     """Ornstein Uhlenbeck action noise.
         Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
 

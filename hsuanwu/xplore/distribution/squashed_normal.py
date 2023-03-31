@@ -4,10 +4,12 @@ import torch
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor, TorchSize
+from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
 class TanhTransform(pyd.transforms.Transform):
+    # Borrowed from https://github.com/denisyarats/pytorch_sac/blob/master/agent/actor.py.
     """Tanh transformation."""
 
     domain = pyd.constraints.real
@@ -34,63 +36,59 @@ class TanhTransform(pyd.transforms.Transform):
     def log_abs_det_jacobian(self, x, y):
         return 2.0 * (math.log(2.0) - x - F.softplus(-2.0 * x))
 
-
-class SquashedNormal(pyd.TransformedDistribution):
-    """Squashed normal distribution for Soft Actor-Critic.
+class SquashedNormal(BaseDistribution):
+    """Squashed normal distribution for Soft Actor-Critic learner.
 
     Args:
-        mu: Mean of the distribution.
-        sigma: Standard deviation of the distribution.
-        low: Lower bound for action range.
-        high: Upper bound for action range.
-        eps: A constant for clamping.
+        mu (Tensor): mean of the distribution (often referred to as mu).
+        sigma (Tensor): standard deviation of the distribution (often referred to as sigma).
+        low (float): Lower bound for action range.
+        high (float): Upper bound for action range.
+        eps (float): A constant for clamping.
 
     Returns:
         Squashed normal distribution instance.
     """
 
-    def __init__(
-        self,
-        mu: Tensor,
-        sigma: Tensor,
-        low: float = -1.0,
-        high: float = 1.0,
-        eps: float = 1e-6,
-    ) -> None:
-        self._mu = mu
-        self._sigma = sigma
-        self._low = low
-        self._high = high
-        self._eps = eps
+    def __init__(self, mu: Tensor, sigma: Tensor, low: float = -1, high: float = 1, eps: float = 0.000001) -> None:
+        super().__init__(mu, sigma, low, high, eps)
 
-        self._base_dist = pyd.Normal(mu, sigma)
-        transforms = [TanhTransform()]
-        super().__init__(self._base_dist, transforms)
+        self.tfd = pyd.TransformedDistribution(
+            base_distribution=pyd.Normal(loc=mu, scale=sigma),
+            transforms=[TanhTransform()]
+        )
+    
+    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
 
-    def _clamp(self, x: Tensor) -> Tensor:
-        """Clamping operation.
         Args:
-            x: Tensor to be clamped.
+            sample_shape (TorchSize): The size of the sample to be drawn.
 
         Returns:
-            Clamped tensor.
+            A sample_shape shaped sample.
         """
-        clamped_x = torch.clamp(x, self._low + self._eps, self._high - self._eps)
-        x = x - x.detach() + clamped_x.detach()
-        return x
+        return self._clamp(self.tfd.sample(sample_shape))
+    
+    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
+        
+        Args:
+            sample_shape (TorchSize): The size of the sample to be drawn.
 
-    def sample(self, sample_shape=torch.Size()):
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched."""
-        return self._clamp(super().sample(sample_shape))
-
-    def rsample(self, sample_shape=torch.Size()):
-        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched."""
-        return self._clamp(super().rsample(sample_shape))
+        Returns:
+            A sample_shape shaped sample.
+        """
+        return self._clamp(self.tfd.rsample(sample_shape))
 
     @property
-    def mean(self):
+    def mean(self) -> Tensor:
         """Return the transformed mean."""
         mu = self._mu
         for tr in self.transforms:
             mu = tr(mu)
         return mu
+    
+    @property
+    def log_prob(self, value) -> Tensor:
+        """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian."""
+        return self.tfd.log_prob(value)

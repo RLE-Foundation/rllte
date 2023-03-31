@@ -22,6 +22,7 @@ from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
 Storage = ''
+TorchSize = torch.Size()
 NNModule = torch.nn.Module
 Ndarray = np.ndarray
 Tensor = torch.Tensor
