@@ -99,7 +99,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         if not training:
             action = dist.mean
         else:
-            action = dist.sample(clip=None)
+            action = dist.sample()
             if step < self._num_init_steps:
                 action.uniform_(-1.0, 1.0)
 
