@@ -29,8 +29,10 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         initial_noise: Optional[Tensor] = None,
         stddev_schedule: str = "linear(1.0, 0.1, 100000)"
     ) -> None:
-        super().__init__(mu, sigma)
+        super().__init__()
 
+        self._mu = mu
+        self._sigma = sigma
         self._theta = theta
         self._dt = dt
         self._noiseless_action = None
@@ -84,5 +86,41 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         return noise + self._noiseless_action
 
     @property
-    def mean(self):
+    def mean(self) -> Tensor:
+        """Returns the mean of the distribution.
+        """
         return self._noiseless_action
+    
+    @property
+    def mode(self) -> Tensor:
+        """Returns the mode of the distribution.
+        """
+        return self._noiseless_action
+    
+    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
+        samples if the distribution parameters are batched.
+
+        Args:
+            sample_shape (TorchSize): The size of the sample to be drawn.
+        
+        Returns:
+            A sample_shape shaped sample.
+        """
+        raise NotImplementedError
+    
+    def log_prob(self, value: Tensor) -> Tensor:
+        """Returns the log of the probability density/mass function evaluated at `value`.
+
+        Args:
+            value (Tensor): The value to be evaluated.
+        
+        Returns:
+            The log_prob value.
+        """
+        raise NotImplementedError
+
+    def entropy(self) -> Tensor:
+        """Returns the Shannon entropy of distribution.
+        """
+        raise NotImplementedError

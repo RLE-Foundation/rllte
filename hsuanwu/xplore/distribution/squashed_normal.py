@@ -40,20 +40,19 @@ class SquashedNormal(BaseDistribution):
     """Squashed normal distribution for Soft Actor-Critic learner.
 
     Args:
-        mu (Tensor): mean of the distribution (often referred to as mu).
-        sigma (Tensor): standard deviation of the distribution (often referred to as sigma).
-        low (float): Lower bound for action range.
-        high (float): Upper bound for action range.
-        eps (float): A constant for clamping.
+        mu (Tensor): The mean of the distribution (often referred to as mu).
+        sigma (Tensor): The standard deviation of the distribution (often referred to as sigma).
 
     Returns:
         Squashed normal distribution instance.
     """
 
-    def __init__(self, mu: Tensor, sigma: Tensor, low: float = -1, high: float = 1, eps: float = 0.000001) -> None:
-        super().__init__(mu, sigma, low, high, eps)
+    def __init__(self, mu: Tensor, sigma: Tensor) -> None:
+        super().__init__()
 
-        self.tfd = pyd.TransformedDistribution(
+        self._mu = mu
+        self._sigma = sigma
+        self.dist = pyd.TransformedDistribution(
             base_distribution=pyd.Normal(loc=mu, scale=sigma),
             transforms=[TanhTransform()]
         )
@@ -67,7 +66,7 @@ class SquashedNormal(BaseDistribution):
         Returns:
             A sample_shape shaped sample.
         """
-        return self._clamp(self.tfd.sample(sample_shape))
+        return self.dist.sample(sample_shape)
     
     def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
@@ -78,16 +77,37 @@ class SquashedNormal(BaseDistribution):
         Returns:
             A sample_shape shaped sample.
         """
-        return self._clamp(self.tfd.rsample(sample_shape))
+        return self.dist.rsample(sample_shape)
 
     @property
     def mean(self) -> Tensor:
         """Return the transformed mean."""
         mu = self._mu
-        for tr in self.tfd.transforms:
+        for tr in self.dist.transforms:
             mu = tr(mu)
         return mu
     
-    def log_prob(self, value: Tensor) -> Tensor:
-        """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian."""
-        return self.tfd.log_prob(value)
+    def log_prob(self, actions: Tensor) -> Tensor:
+        """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian.
+        Args:
+            actions (Tensor): The actions to be evaluated.
+        
+        Returns:
+            The log_prob value.
+        """
+        return self.dist.log_prob(actions)
+
+    def reset(self) -> None:
+        """Reset the distribution.
+        """
+        raise NotImplementedError
+
+    def entropy(self) -> Tensor:
+        """Returns the Shannon entropy of distribution.
+        """
+        raise NotImplementedError
+    
+    def mode(self) -> Tensor:
+        """Returns the mode of the distribution.
+        """
+        raise NotImplementedError

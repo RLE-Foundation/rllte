@@ -1,24 +1,65 @@
 import torch
-from torch import distributions as pyd
+from hsuanwu.common.typing import Tensor, TorchSize, ABC, abstractmethod
 
-from hsuanwu.common.typing import Tensor    
-
-class BaseDistribution(pyd.Normal):
-    """Base class of distribution.
-
-    Args:
-        mu (Tensor): Mean of the distribution (often referred to as mu).
-        sigma (Tensor): Standard deviation of the distribution (often referred to as sigma).
-
-    Returns:
-        Base distribution instance.
+class BaseDistribution(ABC):
+    """Abstract base class of distributions.
     """
 
-    def __init__(
-        self,
-        mu: Tensor,
-        sigma: Tensor
-    ) -> None:
-        super().__init__(loc=mu, scale=sigma, validate_args=False)
-        self._mu = mu
-        self._sigma = sigma
+    def __init__(self) -> None:
+        super().__init__()
+        self.dist = None
+    
+    @abstractmethod
+    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
+        samples if the distribution parameters are batched.
+
+        Args:
+            sample_shape (TorchSize): The size of the sample to be drawn.
+        
+        Returns:
+            A sample_shape shaped sample.
+        """
+
+    @abstractmethod
+    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
+        samples if the distribution parameters are batched.
+
+        Args:
+            sample_shape (TorchSize): The size of the sample to be drawn.
+        
+        Returns:
+            A sample_shape shaped sample.
+        """
+    
+    @abstractmethod
+    def log_prob(self, value: Tensor) -> Tensor:
+        """Returns the log of the probability density/mass function evaluated at `value`.
+
+        Args:
+            value (Tensor): The value to be evaluated.
+        
+        Returns:
+            The log_prob value.
+        """
+
+    @abstractmethod
+    def entropy(self) -> Tensor:
+        """Returns the Shannon entropy of distribution.
+        """
+    
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the distribution.
+        """
+
+    @abstractmethod
+    def mean(self) -> Tensor:
+        """Returns the mean of the distribution.
+        """
+    
+    @abstractmethod
+    def mode(self) -> Tensor:
+        """Returns the mode of the distribution.
+        """

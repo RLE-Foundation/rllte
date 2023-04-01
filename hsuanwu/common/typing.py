@@ -1,4 +1,5 @@
 import collections
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import (
     Any,
@@ -22,7 +23,7 @@ from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
 Storage = ''
-TorchSize = torch.Size()
+TorchSize = torch.Size
 NNModule = torch.nn.Module
 Ndarray = np.ndarray
 Tensor = torch.Tensor
