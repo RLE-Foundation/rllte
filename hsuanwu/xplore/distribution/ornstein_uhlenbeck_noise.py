@@ -1,23 +1,20 @@
 import torch
 from torch.distributions.utils import _standard_normal
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor, TorchSize, Optional
 from hsuanwu.xplore.distribution.base import BaseDistribution
-
+from hsuanwu.xplore.distribution import utils
 
 class OrnsteinUhlenbeckNoise(BaseDistribution):
     """Ornstein Uhlenbeck action noise.
         Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
 
     Args:
-        mu: Mean of the distribution.
-        sigma: Standard deviation of the distribution.
-        low: Lower bound for action range.
-        high: Upper bound for action range.
-        eps: A constant for clamping.
-        theta: Rate of mean reversion.
-        dt: Timestep for the noise.
-        initial_noise: Initial value for the noise output, (if None: 0)
+        mu (float): mean of the noise (often referred to as mu).
+        sigma (float): standard deviation of the noise (often referred to as sigma).
+        theta (float): Rate of mean reversion.
+        dt (float): Timestep for the noise.
+        initial_noise (float): Initial value for the noise output, (if None: 0)
 
     Returns:
         Ornstein-Uhlenbeck noise instance.
@@ -25,32 +22,48 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
 
     def __init__(
         self,
-        mu: Tensor,
-        sigma: Tensor,
-        low: float = -1.0,
-        high: float = 1.0,
-        eps: float = 1e-6,
+        mu: float = 0.0,
+        sigma: float = 1.0,
         theta: float = 0.15,
         dt: float = 1e-2,
         initial_noise: Optional[Tensor] = None,
+        stddev_schedule: str = "linear(1.0, 0.1, 100000)"
     ) -> None:
-        super().__init__(mu, sigma, low, high, eps)
+        super().__init__(mu, sigma)
 
         self._theta = theta
         self._dt = dt
+        self._noiseless_action = None
+        self._stddev_schedule = stddev_schedule
+
         self.initial_noise = initial_noise
         self.noise_prev = torch.zeros_like(self._mu)
-        self.reset()
+        self.init()
 
-    def reset(self) -> None:
+    def init(self) -> None:
         """Reset the Ornstein Uhlenbeck noise, to the initial position"""
         self.noise_prev = (
             self.initial_noise
             if self.initial_noise is not None
             else torch.zeros_like(self._mu)
         )
+    
+    def reset(self, noiseless_action: Tensor, step: int = None) -> None:
+        """Reset the noise instance.
+        
+        Args:
+            noiseless_action (Tensor): Unprocessed actions.
+            step (int): Global training step that can be None when there is no noise schedule.
+        
+        Returns:
+            None.
+        """
+        self._noiseless_action = noiseless_action
+        if self._stddev_schedule is not None:
+            # TODO: reset the std of 
+            self._sigma = utils.schedule(self._stddev_schedule, step)
 
-    def sample(self, clip: float = None, sample_shape=torch.Size()) -> Tensor:
+    def sample(self, clip: float = None, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped sample
 
         Args:
@@ -60,18 +73,16 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         Returns:
             A sample_shape shaped sample.
         """
-        shape = self._extended_shape(sample_shape)
-        noise = _standard_normal(shape, dtype=self._mu.dtype, device=self._mu.device)
-
         noise = (
             self.noise_prev
             + self._theta * (self._mu - self.noise_prev) * self._dt
-            + self._sigma * torch.sqrt(self._dt) * noise
+            + self._sigma * torch.sqrt(self._dt) * _standard_normal(self._noiseless_action.size())
         )
+        noise = torch.as_tensor(noise, dtype=self._noiseless_action.dtype, device=self._noiseless_action.device)
         self.noise_prev = noise
 
-        if clip is not None:
-            # clip the sampled noises
-            noise = torch.clamp(noise, -clip, clip)
-        x = self._mu + noise
-        return self._clamp(x)
+        return noise + self._noiseless_action
+
+    @property
+    def mean(self):
+        return self._noiseless_action

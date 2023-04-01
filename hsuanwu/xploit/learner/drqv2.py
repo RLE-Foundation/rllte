@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Space, Tuple, Tensor, Dict, Device, Iterable
+from hsuanwu.common.typing import Space, Tuple, Tensor, Dict, Device, Iterable, Distribution
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -39,12 +39,12 @@ class Actor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: Tensor, std: float = None) -> Tensor:
+    def get_action(self, obs: Tensor, step: float = None) -> Distribution:
         """Get actions.
 
         Args:
             obs (Tensor): Observations.
-            std (float): Standard deviation for sampling actions.
+            step (int): Global training step.
 
         Returns:
             Hsuanwu distribution.
@@ -53,7 +53,9 @@ class Actor(nn.Module):
         mu = self.policy(h)
         mu = torch.tanh(mu)
 
-        return self.dist(mu, torch.ones_like(mu) * std)
+        self.dist.reset(mu, step)
+
+        return self.dist
 
 
 class Critic(nn.Module):
@@ -129,8 +131,6 @@ class DrQv2Learner(BaseLearner):
         hidden_dim (int): The size of the hidden layers.
         critic_target_tau: The critic Q-function soft-update rate.
         update_every_steps (int): The agent update frequency.
-        stddev_schedule (str): The exploration std schedule.
-        stddev_clip (float): The exploration std clip range.
 
     Returns:
         DrQv2 learner instance.
@@ -148,8 +148,6 @@ class DrQv2Learner(BaseLearner):
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.01,
         update_every_steps: int = 2,
-        stddev_schedule: str = "linear(1.0, 0.1, 100000)",
-        stddev_clip: float = 0.3,
     ) -> None:
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
@@ -157,8 +155,6 @@ class DrQv2Learner(BaseLearner):
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
-        self.stddev_schedule = stddev_schedule
-        self.stddev_clip = stddev_clip
 
         # create models
         self.actor = Actor(
@@ -279,10 +275,9 @@ class DrQv2Learner(BaseLearner):
 
         with torch.no_grad():
             # sample actions
-            std = utils.schedule(self.stddev_schedule, step)
-            dist = self.actor(next_obs, std)
+            dist = self.actor.get_action(next_obs, step=step)
 
-            next_action = dist.sample(clip=self.stddev_clip)
+            next_action = dist.sample(clip=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_V = torch.min(target_Q1, target_Q2)
             target_Q = reward + (discount * target_V)
@@ -315,9 +310,8 @@ class DrQv2Learner(BaseLearner):
             Actor loss metrics.
         """
         # sample actions
-        std = utils.schedule(self.stddev_schedule, step)
-        dist = self.actor(obs, std)
-        action = dist.sample(clip=self.stddev_clip)
+        dist = self.actor.get_action(obs, step=step)
+        action = dist.sample(clip=True)
 
         Q1, Q2 = self.critic(obs, action)
         Q = torch.min(Q1, Q2)

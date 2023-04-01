@@ -34,7 +34,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         # xplore part
         # TODO: get distribution
-        dist = hydra.utils.get_class(self._cfgs.distribution._target_)
+        if 'Noise' in self._cfgs.distribution._target_:
+            dist = hydra.utils.instantiate(self._cfgs.distribution)
+        else:
+            dist = hydra.utils.get_class(self._cfgs.distribution._target_)
         self._learner.dist = dist
         self._learner.actor.dist = dist
         # TODO: get augmentation
@@ -86,15 +89,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
         Returns:
             Sampled actions.
         """
-        encoded_obs = self._learner.encoder(obs.unsqueeze(0))
         # sample actions
-        # TODO: manual exploration noise control? (for continuous control task) \
-        # See paper: https://openreview.net/forum?id=_SJ-_yyes8, Section 3.1.
-        if self._cfgs.stddev_schedule:
-            std = utils.schedule(self._cfgs.stddev_schedule, step)
-        else:
-            std = None
-        dist = self._learner.actor(obs=encoded_obs, std=std)
+        encoded_obs = self._learner.encoder(obs.unsqueeze(0))
+        dist = self._learner.actor.get_action(obs=encoded_obs, step=self._global_step)
 
         if not training:
             action = dist.mean
@@ -102,8 +99,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             action = dist.sample()
             if step < self._num_init_steps:
                 action.uniform_(-1.0, 1.0)
-
-        return action
+        return action.clamp(*self._action_range)
 
     def train(self) -> None:
         """Training function."""

@@ -74,9 +74,11 @@ class BasePolicyTrainer:
         if self._train_env.action_space.__class__.__name__ == "Discrete":
             action_space = {"shape": (self._train_env.action_space.n,)}
             action_type = "dis"
+            self._action_range = [0, self._train_env.action_space.n - 1]
         elif self._train_env.action_space.__class__.__name__ == "Box":
             action_space = {"shape": self._train_env.action_space.shape}
             action_type = "cont"
+            self._action_range = [self._train_env.action_space.low[0], self._train_env.action_space.high[0]]
         else:
             raise NotImplementedError("Unsupported action type!")
 

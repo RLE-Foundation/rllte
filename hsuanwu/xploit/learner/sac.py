@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage
+from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage, Distribution
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner import BaseLearner
 
@@ -42,12 +42,11 @@ class Actor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: Tensor, std: float = None) -> Tensor:
+    def forward(self, obs: Tensor) -> Distribution:
         """Get actions.
 
         Args:
             obs (Tensor): Observations.
-            std (float): Standard deviation for sampling actions.
 
         Returns:
             Hsuanwu distribution.
@@ -100,7 +99,7 @@ class Critic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: Tensor, action: Tensor):
+    def forward(self, obs: Tensor, action: Tensor) -> Tuple[Tensor]:
         """Value estimation.
 
         Args:

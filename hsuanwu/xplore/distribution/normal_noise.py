@@ -5,31 +5,30 @@ from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution.base import BaseDistribution
 from hsuanwu.xplore.distribution import utils
 
-class TruncatedNormalNoise(BaseDistribution):
-    """Truncated normal action noise. See Section 3.1 of "Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning".
+
+class NormalNoise(BaseDistribution):
+    """Gaussian action noise.
 
     Args:
-        mu (float): mean of the noise (often referred to as mu).
-        sigma (float): standard deviation of the noise (often referred to as sigma).
+        mu (float): Mean of the noise (often referred to as mu).
+        sigma (float): Standard deviation of the noise (often referred to as sigma).
         stddev_schedule (str): Use the exploration std schedule.
         stddev_clip (float): The exploration std clip range.
 
     Returns:
-        Truncated normal noise instance.
+        Gaussian noise instance.
     """
 
     def __init__(
         self,
         mu: float = 0.0,
         sigma: float = 1.0,
-        stddev_schedule: str = "linear(1.0, 0.1, 100000)",
-        stddev_clip: float = 0.3,
+        stddev_schedule: str = "linear(1.0, 0.1, 100000)"
     ) -> None:
         super().__init__(mu, sigma)
 
         self._noiseless_action = None
         self._stddev_schedule = stddev_schedule
-        self._stddev_clip = stddev_clip
     
     def reset(self, noiseless_action: Tensor, step: int = None) -> None:
         """Reset the noise instance.
@@ -45,7 +44,6 @@ class TruncatedNormalNoise(BaseDistribution):
         if self._stddev_schedule is not None:
             # TODO: reset the std of normal distribution.
             self.scale = utils.schedule(self._stddev_schedule, step)
-            
 
     def sample(self, clip: bool = False, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
@@ -60,9 +58,7 @@ class TruncatedNormalNoise(BaseDistribution):
         noise = torch.as_tensor(super().sample(sample_shape=self._noiseless_action.size()), 
                                 device=self._noiseless_action.device, 
                                 dtype=self._noiseless_action.dtype)
-        if clip:
-            # clip the sampled noises
-            noise = torch.clamp(noise, -self._stddev_clip, self._stddev_clip)
+
         return noise + self._noiseless_action
 
     @property

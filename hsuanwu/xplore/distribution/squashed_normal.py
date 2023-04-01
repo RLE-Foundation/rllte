@@ -84,11 +84,10 @@ class SquashedNormal(BaseDistribution):
     def mean(self) -> Tensor:
         """Return the transformed mean."""
         mu = self._mu
-        for tr in self.transforms:
+        for tr in self.tfd.transforms:
             mu = tr(mu)
         return mu
     
-    @property
-    def log_prob(self, value) -> Tensor:
+    def log_prob(self, value: Tensor) -> Tensor:
         """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian."""
         return self.tfd.log_prob(value)

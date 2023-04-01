@@ -3,8 +3,8 @@ from hsuanwu.common.typing import *
 
 MATCH_KEYS = {
     "ContinuousLearner": {
-        "storage": ["VanillaReplayStorage", "NStepReplayStorage"],
-        "distribution": ["OrnsteinUhlenbeck", "TruncatedNormal"],
+        "storage": ["NStepReplayStorage"],
+        "distribution": ["OrnsteinUhlenbeckNoise", "TruncatedNormalNoise"],
         "augmentation": [],
         "reward": [],
     },
@@ -27,7 +27,7 @@ MATCH_KEYS = {
         "reward": [],
     },
     "SACLearner": {
-        "storage": ["VanillaReplayStorage", "NStepReplayStorage"],
+        "storage": ["VanillaReplayStorage"],
         "distribution": ["OrnsteinUhlenbeck", "TruncatedNormal", "SquashedNormal"],
         "augmentation": [],
         "reward": [],
