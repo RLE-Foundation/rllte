@@ -65,9 +65,22 @@ if __name__ == '__main__':
     main()
 ```
 Run `train.py` and you will see the following output:
-<div align=center>
-<img src='./docs/assets/images/output.png' style="width: 100%">
-</div>
+``` sh
+[04/02/2023 08:07:27 PM] - [HSUANWU INFO ] - Invoking Hsuanwu Engine...
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Checking the Compatibility of Modules...
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Selected Encoder: VanillaCnnEncoder
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Selected Learner: ContinuousLearner
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Selected Storage: NStepReplayStorage
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Selected Distribution: TruncatedNormalNoise
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Use Augmentation: True, RandomShift
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Use Intrinsic Reward: False
+[04/02/2023 08:07:27 PM] - [HSUANWU DEBUG] - Check Accomplished. Start Training...
+[04/02/2023 08:07:41 PM] - [HSUANWU TEST ] - S: 0          | E: 0          | L: 500        | R: 336.592    | T: 0:00:14   
+[04/02/2023 08:08:02 PM] - [HSUANWU TRAIN] - S: 2000       | E: 3          | L: 500        | R: 251.272    | FPS: 88.934   | T: 0:00:35   
+[04/02/2023 08:08:14 PM] - [HSUANWU TRAIN] - S: 2500       | E: 4          | L: 500        | R: 172.770    | FPS: 41.888   | T: 0:00:47   
+[04/02/2023 08:08:26 PM] - [HSUANWU TRAIN] - S: 3000       | E: 5          | L: 500        | R: 165.679    | FPS: 42.061   | T: 0:00:59 
+.....
+```
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)
