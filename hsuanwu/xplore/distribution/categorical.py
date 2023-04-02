@@ -1,5 +1,6 @@
-import torch.distributions as pyd
 import torch
+import torch.distributions as pyd
+
 from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution import BaseDistribution
 
@@ -23,8 +24,7 @@ class Categorical(BaseDistribution):
 
     @property
     def logits(self) -> Tensor:
-        """Returns the unnormalized log probabilities.
-        """
+        """Returns the unnormalized log probabilities."""
         return self._logits
 
     def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
@@ -33,7 +33,7 @@ class Categorical(BaseDistribution):
 
         Args:
             sample_shape (TorchSize): The size of the sample to be drawn.
-        
+
         Returns:
             A sample_shape shaped sample.
         """
@@ -44,39 +44,34 @@ class Categorical(BaseDistribution):
 
         Args:
             actions (Tensor): The actions to be evaluated.
-        
+
         Returns:
             The log_prob value.
         """
         return (
-            self.dist
-            .log_prob(actions.squeeze(-1))
+            self.dist.log_prob(actions.squeeze(-1))
             .view(actions.size(0), -1)
             .sum(-1)
             .unsqueeze(-1)
         )
 
     def entropy(self) -> Tensor:
-        """Returns the Shannon entropy of distribution.
-        """
+        """Returns the Shannon entropy of distribution."""
         return self.dist.entropy()
 
     @property
     def mode(self) -> Tensor:
-        """Returns the mode of the distribution.
-        """
+        """Returns the mode of the distribution."""
         return self.dist.probs.argmax(dim=-1, keepdim=True)
 
     @property
     def mean(self) -> Tensor:
-        """Returns the mean of the distribution.
-        """
+        """Returns the mean of the distribution."""
         return self.dist.probs.argmax(dim=-1, keepdim=True)
 
     def reset(self) -> None:
-        """Reset the distribution.
-        """
+        """Reset the distribution."""
         raise NotImplementedError
-    
+
     def rsample(self, sample_shape: TorchSize = ...) -> Tensor:
         raise NotImplementedError

@@ -3,10 +3,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage
+from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor, Tuple
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import StochasticActor, DoubleCritic
+from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
 
 class SACLearner(BaseLearner):
@@ -56,7 +56,7 @@ class SACLearner(BaseLearner):
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
-        
+
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
         self.num_init_steps = num_init_steps
@@ -91,9 +91,7 @@ class SACLearner(BaseLearner):
         self.critic_opt = torch.optim.Adam(
             self.critic.parameters(), lr=self.lr, betas=betas
         )
-        self.log_alpha_opt = torch.optim.Adam(
-            [self.log_alpha], lr=self.lr, betas=betas
-        )
+        self.log_alpha_opt = torch.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
 
         self.train()
         self.critic_target.train()

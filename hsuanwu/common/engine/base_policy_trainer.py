@@ -1,5 +1,6 @@
 import os
-os.environ['HYDRA_FULL_ERROR'] = '1'
+
+os.environ["HYDRA_FULL_ERROR"] = "1"
 import random
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from omegaconf import open_dict
 from hsuanwu.common.engine.checker import cfgs_checker
 from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import Env, DictConfig, ABC, abstractmethod
+from hsuanwu.common.typing import ABC, DictConfig, Env, abstractmethod
 
 
 class BasePolicyTrainer(ABC):
@@ -78,7 +79,10 @@ class BasePolicyTrainer(ABC):
         elif self._train_env.action_space.__class__.__name__ == "Box":
             action_space = {"shape": self._train_env.action_space.shape}
             action_type = "cont"
-            self._action_range = [self._train_env.action_space.low[0], self._train_env.action_space.high[0]]
+            self._action_range = [
+                self._train_env.action_space.low[0],
+                self._train_env.action_space.high[0],
+            ]
         else:
             raise NotImplementedError("Unsupported action type!")
 
@@ -147,9 +151,7 @@ class BasePolicyTrainer(ABC):
         return cfgs
 
     @abstractmethod
-    def act(
-        self, obs: Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[Any]:
+    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Any]:
         """Sample actions based on observations.
 
         Args:
@@ -160,11 +162,11 @@ class BasePolicyTrainer(ABC):
         Returns:
             Sampled actions.
         """
-    
+
     @abstractmethod
     def train(self) -> None:
         """Training function."""
-    
+
     @abstractmethod
     def test(self) -> None:
         """Testing function."""

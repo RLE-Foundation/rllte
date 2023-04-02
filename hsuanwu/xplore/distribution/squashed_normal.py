@@ -36,6 +36,7 @@ class TanhTransform(pyd.transforms.Transform):
     def log_abs_det_jacobian(self, x, y):
         return 2.0 * (math.log(2.0) - x - F.softplus(-2.0 * x))
 
+
 class SquashedNormal(BaseDistribution):
     """Squashed normal distribution for Soft Actor-Critic learner.
 
@@ -54,9 +55,9 @@ class SquashedNormal(BaseDistribution):
         self._sigma = sigma
         self.dist = pyd.TransformedDistribution(
             base_distribution=pyd.Normal(loc=mu, scale=sigma),
-            transforms=[TanhTransform()]
+            transforms=[TanhTransform()],
         )
-    
+
     def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
 
@@ -67,10 +68,10 @@ class SquashedNormal(BaseDistribution):
             A sample_shape shaped sample.
         """
         return self.dist.sample(sample_shape)
-    
+
     def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
-        
+
         Args:
             sample_shape (TorchSize): The size of the sample to be drawn.
 
@@ -86,28 +87,25 @@ class SquashedNormal(BaseDistribution):
         for tr in self.dist.transforms:
             mu = tr(mu)
         return mu
-    
+
     def log_prob(self, actions: Tensor) -> Tensor:
         """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian.
         Args:
             actions (Tensor): The actions to be evaluated.
-        
+
         Returns:
             The log_prob value.
         """
         return self.dist.log_prob(actions)
 
     def reset(self) -> None:
-        """Reset the distribution.
-        """
+        """Reset the distribution."""
         raise NotImplementedError
 
     def entropy(self) -> Tensor:
-        """Returns the Shannon entropy of distribution.
-        """
+        """Returns the Shannon entropy of distribution."""
         raise NotImplementedError
-    
+
     def mode(self) -> Tensor:
-        """Returns the mode of the distribution.
-        """
+        """Returns the mode of the distribution."""
         raise NotImplementedError

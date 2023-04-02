@@ -1,5 +1,7 @@
-import numpy as np
 import re
+
+import numpy as np
+
 
 class eval_mode:
     def __init__(self, *models):

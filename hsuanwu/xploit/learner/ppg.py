@@ -2,9 +2,10 @@ import numpy as np
 import torch
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor, Dict, Device, Storage
+from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
+
 
 class PPGLearner(BaseLearner):
     """Phasic Policy Gradient (PPG) Learner.
@@ -78,9 +79,11 @@ class PPGLearner(BaseLearner):
         # create models
         self.encoder = None
         # create models
-        if self.action_type == 'dis':
+        if self.action_type == "dis":
             self.ac = DiscreteActorAuxiliaryCritic(
-                action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+                action_space=action_space,
+                feature_dim=feature_dim,
+                hidden_dim=hidden_dim,
             ).to(self.device)
         else:
             raise NotImplementedError
@@ -242,9 +245,7 @@ class PPGLearner(BaseLearner):
                     .reshape(-1, *self.aux_obs.size()[2:])
                 )
                 # get logits
-                logits = (
-                    self.ac.get_logits(self.encoder(aux_obs)).logits.cpu().clone()
-                )
+                logits = self.ac.get_logits(self.encoder(aux_obs)).logits.cpu().clone()
                 self.aux_logits[
                     :, idx * self.num_envs : (idx + 1) * self.num_envs
                 ] = logits.reshape(

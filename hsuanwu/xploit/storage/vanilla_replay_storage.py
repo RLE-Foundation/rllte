@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from hsuanwu.common.typing import Device, Tuple, Any, Batch
+from hsuanwu.common.typing import Any, Batch, Device, Tuple
 
 
 class VanillaReplayStorage:
@@ -54,7 +54,13 @@ class VanillaReplayStorage:
         return self._buffer_size if self._full else self._global_step
 
     def add(
-        self, obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
+        self,
+        obs: Any,
+        action: Any,
+        reward: Any,
+        terminated: Any,
+        info: Any,
+        next_obs: Any,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -80,10 +86,10 @@ class VanillaReplayStorage:
 
     def sample(self) -> Batch:
         """Sample transitions from the storage.
-        
+
         Args:
             None.
-        
+
         Returns:
             Batched samples.
         """
@@ -99,6 +105,8 @@ class VanillaReplayStorage:
         next_obs = torch.as_tensor(
             self.obs[(indices + 1) % self._buffer_size], device=self._device
         ).float()
-        terminateds = torch.as_tensor(self.terminateds[indices], device=self._device).float()
+        terminateds = torch.as_tensor(
+            self.terminateds[indices], device=self._device
+        ).float()
 
         return obs, actions, rewards, terminateds, next_obs

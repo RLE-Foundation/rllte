@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Space, Tensor, Dict, Device, Iterable
+from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
@@ -33,7 +33,7 @@ class DrQv2Learner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: Device = 'cuda',
+        device: Device = "cuda",
         feature_dim: int = 50,
         lr: float = 1e-4,
         eps: float = 0.00008,
@@ -96,9 +96,7 @@ class DrQv2Learner(BaseLearner):
         if step % self.update_every_steps != 0:
             return metrics
 
-        obs, action, reward, discount, next_obs = next(
-            replay_iter
-        )
+        obs, action, reward, discount, next_obs = next(replay_iter)
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
                 rollouts={

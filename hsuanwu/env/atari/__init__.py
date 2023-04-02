@@ -1,7 +1,6 @@
 import gymnasium as gym
 import numpy as np
 import torch
-
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import (
     FrameStack,
@@ -11,13 +10,14 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 
-from hsuanwu.common.typing import Env, Device, Any, Tensor, Tuple, Ndarray, Dict
+from hsuanwu.common.typing import Any, Device, Dict, Env, Ndarray, Tensor, Tuple
 from hsuanwu.env.atari.wrappers import (
     EpisodicLifeEnv,
     FireResetEnv,
     MaxAndSkipEnv,
     NoopResetEnv,
 )
+
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
@@ -43,7 +43,8 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(
-            action.squeeze(1).cpu().numpy())
+            action.squeeze(1).cpu().numpy()
+        )
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device
@@ -52,12 +53,12 @@ class TorchVecEnvWrapper(gym.Wrapper):
             [[1.0] if _ else [0.0] for _ in terminated],
             dtype=torch.float32,
             device=self._device,
-            )
+        )
         truncated = torch.as_tensor(
             [[1.0] if _ else [0.0] for _ in truncated],
             dtype=torch.float32,
             device=self._device,
-            )
+        )
 
         return obs, reward, terminated, truncated, info
 

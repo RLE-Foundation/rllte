@@ -6,7 +6,7 @@ import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
 from hsuanwu.common.logger import *
-from hsuanwu.common.typing import Env, DictConfig
+from hsuanwu.common.typing import DictConfig, Env
 
 
 class OnPolicyTrainer(BasePolicyTrainer):
@@ -26,10 +26,14 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
-        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
+        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
+            self._device
+        )
         self._learner.encoder.train()
         self._learner.encoder_opt = torch.optim.Adam(
-            self._learner.encoder.parameters(), lr=self._learner.lr, eps=self._learner.eps
+            self._learner.encoder.parameters(),
+            lr=self._learner.lr,
+            eps=self._learner.eps,
         )
         # TODO: build storage
         self._rollout_storage = hydra.utils.instantiate(self._cfgs.storage)
@@ -41,7 +45,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._learner.ac.dist = dist
         # TODO: get augmentation
         if self._cfgs.use_aug:
-            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
+            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
+                self._device
+            )
         # TODO: get intrinsic reward
         if self._cfgs.use_irs:
             self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
@@ -55,10 +61,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         # debug
         self._logger.log(DEBUG, "Check Accomplished. Start Training...")
-    
-    def act(
-        self, obs: Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[Tensor]:
+
+    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -101,7 +105,13 @@ class OnPolicyTrainer(BasePolicyTrainer):
                     actions, values, log_probs, entropy = self.act(
                         obs, training=True, step=self._global_step
                     )
-                next_obs, rewards, terminateds, truncateds, infos = self._train_env.step(actions)
+                (
+                    next_obs,
+                    rewards,
+                    terminateds,
+                    truncateds,
+                    infos,
+                ) = self._train_env.step(actions)
 
                 if "episode" in infos:
                     indices = np.nonzero(infos["episode"]["r"])
@@ -182,5 +192,5 @@ class OnPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.encoder, save_dir / 'encoder.pth')
-        torch.save(self._learner.ac, save_dir / 'actor_critic.pth')
+        torch.save(self._learner.encoder, save_dir / "encoder.pth")
+        torch.save(self._learner.ac, save_dir / "actor_critic.pth")

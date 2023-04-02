@@ -1,5 +1,5 @@
-import numpy as np
 import gymnasium as gym
+import numpy as np
 import torch
 from gymnasium.spaces.box import Box
 from gymnasium.wrappers import (
@@ -10,7 +10,7 @@ from gymnasium.wrappers import (
 )
 from procgen import ProcgenEnv
 
-from hsuanwu.common.typing import Ndarray, Env, Device, Tensor, Tuple, Any, Dict
+from hsuanwu.common.typing import Any, Device, Dict, Env, Ndarray, Tensor, Tuple
 
 
 class TorchVecEnvWrapper(gym.Wrapper):
@@ -45,8 +45,9 @@ class TorchVecEnvWrapper(gym.Wrapper):
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
         # Procgen games currently doesn't support Gymnasium.
         obs, reward, terminated, truncated, info = self.env.step(
-            action.squeeze(1).cpu().numpy())
-        
+            action.squeeze(1).cpu().numpy()
+        )
+
         obs = torch.as_tensor(
             obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
         )
@@ -69,16 +70,17 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
 class AdapterEnv(gym.Wrapper):
     """Procgen games currently doesn't support Gymnasium.
-    
+
     Args:
         env (Env): Environment to wrap.
-    
+
     Returns:
         AdapterEnv instance.
     """
+
     def __init__(self, env: Env) -> None:
         super().__init__(env)
-    
+
     def step(self, action: int) -> Tuple[Ndarray, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)
         return obs, reward, done, done, {}

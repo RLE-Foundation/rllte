@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor, Dict, Device, Storage
+from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
 
@@ -35,7 +35,7 @@ class PPOLearner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: Device = 'cuda',
+        device: Device = "cuda",
         feature_dim: int = 256,
         lr: float = 5e-4,
         eps: float = 1e-5,
@@ -59,9 +59,11 @@ class PPOLearner(BaseLearner):
         self.max_grad_norm = max_grad_norm
 
         # create models
-        if self.action_type == 'dis':
+        if self.action_type == "dis":
             self.ac = DiscreteActorCritic(
-                action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+                action_space=action_space,
+                feature_dim=feature_dim,
+                hidden_dim=hidden_dim,
             ).to(self.device)
         else:
             raise NotImplementedError
@@ -155,9 +157,7 @@ class PPOLearner(BaseLearner):
                 (
                     critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
                 ).backward()
-                nn.utils.clip_grad_norm_(
-                    self.encoder.parameters(), self.max_grad_norm
-                )
+                nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()
                 self.encoder_opt.step()

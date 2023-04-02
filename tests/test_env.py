@@ -21,19 +21,22 @@ if __name__ == "__main__":
     print(obs.size(), info)
     for step in range(1024):
         obs, reward, terminated, truncated, info = envs.step(
-            torch.randint(low=0, high=18, size=(3, 1)))
-        if 'episode' in info:
-            print(info['episode'])
+            torch.randint(low=0, high=18, size=(3, 1))
+        )
+        if "episode" in info:
+            print(info["episode"])
     envs.close()
-    print('Atari games passed!')
+    print("Atari games passed!")
 
     # Procgen games
     seed = 17
-    envs = make_procgen_env(env_id='bigfish', 
-                            num_envs=3, 
-                            num_levels=200, 
-                            start_level=0, 
-                            distribution_mode='easy')
+    envs = make_procgen_env(
+        env_id="bigfish",
+        num_envs=3,
+        num_levels=200,
+        start_level=0,
+        distribution_mode="easy",
+    )
     print(envs.observation_space, envs.action_space)
     print(envs.action_space.sample())
 
@@ -41,19 +44,22 @@ if __name__ == "__main__":
     print(obs.size(), info)
     for step in range(1024):
         obs, reward, terminated, truncated, info = envs.step(
-            torch.randint(low=0, high=15, size=(3, 1)))
-        if 'episode' in info:
-            print(info['episode'])
+            torch.randint(low=0, high=15, size=(3, 1))
+        )
+        if "episode" in info:
+            print(info["episode"])
     envs.close()
-    print('Procgen games passed!')
+    print("Procgen games passed!")
 
     # DeepMind Control Suite
     seed = 7
-    envs = make_dmc_env(env_id="cartpole_balance",
-                        visualize_reward=False,
-                        from_pixels=True,
-                        frame_stack=3,
-                        seed=seed)
+    envs = make_dmc_env(
+        env_id="cartpole_balance",
+        visualize_reward=False,
+        from_pixels=True,
+        frame_stack=3,
+        seed=seed,
+    )
     print(envs.observation_space, envs.action_space)
     print(envs.action_space.sample())
 
@@ -62,7 +68,8 @@ if __name__ == "__main__":
 
     for step in range(7):
         obs, reward, terminated, truncated, info = envs.step(
-            torch.rand(size=(envs.action_space.shape)))
+            torch.rand(size=(envs.action_space.shape))
+        )
         print(reward, terminated, truncated)
     envs.close()
-    print('DeepMind Control Suite passed!')
+    print("DeepMind Control Suite passed!")

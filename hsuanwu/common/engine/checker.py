@@ -4,7 +4,11 @@ from hsuanwu.common.typing import *
 MATCH_KEYS = {
     "ContinuousLearner": {
         "storage": ["NStepReplayStorage"],
-        "distribution": ["OrnsteinUhlenbeckNoise", "TruncatedNormalNoise", "NormalNoise"],
+        "distribution": [
+            "OrnsteinUhlenbeckNoise",
+            "TruncatedNormalNoise",
+            "NormalNoise",
+        ],
         "augmentation": [],
         "reward": [],
     },

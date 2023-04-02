@@ -15,14 +15,14 @@ from typing import (
     Union,
 )
 
+import numpy as np
 import omegaconf
 import torch
-import numpy as np
 from gymnasium import Env, Space
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
-Storage = ''
+Storage = ""
 TorchSize = torch.Size
 NNModule = torch.nn.Module
 Ndarray = np.ndarray

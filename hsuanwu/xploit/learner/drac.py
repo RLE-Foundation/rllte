@@ -1,9 +1,10 @@
 import torch
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor, Dict, Device, Storage
+from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
+
 
 class DrACLearner(BaseLearner):
     """Data Regularized Actor-Critic (DrAC) Learner.
@@ -51,7 +52,7 @@ class DrACLearner(BaseLearner):
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
-        
+
         self.n_epochs = n_epochs
         self.clip_range = clip_range
         self.num_mini_batch = num_mini_batch
@@ -61,13 +62,15 @@ class DrACLearner(BaseLearner):
         self.max_grad_norm = max_grad_norm
 
         # create models
-        if self.action_type == 'dis':
+        if self.action_type == "dis":
             self.ac = DiscreteActorCritic(
-                action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+                action_space=action_space,
+                feature_dim=feature_dim,
+                hidden_dim=hidden_dim,
             ).to(self.device)
         else:
             raise NotImplementedError
-        
+
         # create optimizers
         self.ac_opt = torch.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
         self.train()
@@ -174,9 +177,7 @@ class DrACLearner(BaseLearner):
                     - entropy * self.ent_coef
                     + aug_loss
                 ).backward()
-                nn.utils.clip_grad_norm_(
-                    self.encoder.parameters(), self.max_grad_norm
-                )
+                nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()
                 self.encoder_opt.step()

@@ -3,7 +3,7 @@ import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
 from hsuanwu.common.logger import *
-from hsuanwu.common.typing import Env, DictConfig
+from hsuanwu.common.typing import DictConfig, Env
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
 
@@ -24,17 +24,21 @@ class OffPolicyTrainer(BasePolicyTrainer):
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
-        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
+        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
+            self._device
+        )
         self._learner.encoder.train()
         self._learner.encoder_opt = torch.optim.Adam(
-            self._learner.encoder.parameters(), lr=self._learner.lr, eps=self._learner.eps
+            self._learner.encoder.parameters(),
+            lr=self._learner.lr,
+            eps=self._learner.eps,
         )
         # TODO: build storage
         self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
 
         # xplore part
         # TODO: get distribution
-        if 'Noise' in self._cfgs.distribution._target_:
+        if "Noise" in self._cfgs.distribution._target_:
             dist = hydra.utils.instantiate(self._cfgs.distribution)
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
@@ -42,7 +46,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._learner.actor.dist = dist
         # TODO: get augmentation
         if self._cfgs.use_aug:
-            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
+            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
+                self._device
+            )
         # TODO: get intrinsic reward
         if self._cfgs.use_irs:
             self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
@@ -75,10 +81,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
         if self._replay_iter is None:
             self._replay_iter = iter(self._replay_loader)
         return self._replay_iter
-    
-    def act(
-        self, obs: Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[Tensor]:
+
+    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -122,12 +126,14 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._global_step += 1
 
             # save transition
-            self._replay_storage.add(obs.cpu().numpy(), 
-                                     action.cpu().numpy()[0], 
-                                     reward.cpu().numpy(), 
-                                     terminated.cpu().numpy(), 
-                                     info, 
-                                     next_obs.cpu().numpy())
+            self._replay_storage.add(
+                obs.cpu().numpy(),
+                action.cpu().numpy()[0],
+                reward.cpu().numpy(),
+                terminated.cpu().numpy(),
+                info,
+                next_obs.cpu().numpy(),
+            )
 
             # update agent
             if self._global_step >= self._num_init_steps:
@@ -161,7 +167,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 continue
 
             obs = next_obs
-        
+
         # save model
         self.save()
 
@@ -197,6 +203,6 @@ class OffPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.encoder, save_dir / 'encoder.pth')
-        torch.save(self._learner.actor, save_dir / 'actor.pth')
-        torch.save(self._learner.critic, save_dir / 'critic.pth')
+        torch.save(self._learner.encoder, save_dir / "encoder.pth")
+        torch.save(self._learner.actor, save_dir / "actor.pth")
+        torch.save(self._learner.critic, save_dir / "critic.pth")

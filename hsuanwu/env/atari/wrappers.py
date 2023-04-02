@@ -1,9 +1,10 @@
 import gymnasium as gym
 import numpy as np
 
-from hsuanwu.common.typing import Ndarray, Any, Env, Tuple, Dict
+from hsuanwu.common.typing import Any, Dict, Env, Ndarray, Tuple
 
 # The following wrappers are re-implemented based on https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
+
 
 class NoopResetEnv(gym.Wrapper):
     """Sample initial states by taking random number of no-ops on reset. No-op is assumed to be action 0.
@@ -11,7 +12,7 @@ class NoopResetEnv(gym.Wrapper):
     Args:
         env (Env): Environment to wrap.
         noop_max (int): Maximum value of no-ops to run.
-    
+
     Returns:
         NoopResetEnv instance.
     """
@@ -41,10 +42,10 @@ class NoopResetEnv(gym.Wrapper):
 
 class FireResetEnv(gym.Wrapper):
     """Take action on reset for environments that are fixed until firing.
-    
+
     Args:
         env (Env): Environment to wrap.
-    
+
     Returns:
         FireResetEnv instance.
     """
@@ -67,7 +68,7 @@ class FireResetEnv(gym.Wrapper):
 
 class EpisodicLifeEnv(gym.Wrapper):
     """Make end-of-life == end-of-episode, but only reset on true game over. Done by DeepMind for the DQN and co. since it helps value estimation.
-    
+
     Args:
         env (Env): Environment to wrap.
 
@@ -116,7 +117,7 @@ class MaxAndSkipEnv(gym.Wrapper):
     Args:
         env (Env): Environment to wrap.
         skip (int): Number of ``skip``-th frame. The same action will be taken ``skip`` times.
-    
+
     Returns:
         MaxAndSkipEnv instance.
     """

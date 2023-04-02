@@ -1,6 +1,6 @@
 import torch
 
-from hsuanwu.common.typing import Space, Dict, Device, ABC, abstractmethod
+from hsuanwu.common.typing import ABC, Device, Dict, Space, abstractmethod
 
 
 class BaseLearner(ABC):

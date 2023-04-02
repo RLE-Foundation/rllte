@@ -5,16 +5,16 @@ import numpy as np
 import torch
 from gymnasium.envs.registration import register
 
-from hsuanwu.common.typing import Dict, Tensor, Device, Tuple, List, Env, Any, Ndarray
+from hsuanwu.common.typing import Any, Device, Dict, Env, List, Ndarray, Tensor, Tuple
 
 
 class FrameStackEnv(gym.Wrapper):
     """Observation wrapper that stacks the observations in a rolling manner.
-    
+
     Args:
         env (Env): Environment to wrap.
         k: Number of stacked frames.
-    
+
     Returns:
         FrameStackEnv instance.
     """
@@ -47,6 +47,7 @@ class FrameStackEnv(gym.Wrapper):
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
 
+
 class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
 
@@ -70,7 +71,9 @@ class TorchVecEnvWrapper(gym.Wrapper):
         return obs, info
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
-        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy()[0])
+        obs, reward, terminated, truncated, info = self.env.step(
+            action.cpu().numpy()[0]
+        )
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device)
         terminated = torch.as_tensor(
@@ -81,9 +84,10 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
         return obs, reward, terminated, truncated, info
 
+
 def make_dmc_env(
     env_id: str = "cartpole_balance",
-    device: Device = 'cuda', 
+    device: Device = "cuda",
     resource_files: List = None,
     img_source: str = None,
     total_frames: int = None,

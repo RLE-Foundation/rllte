@@ -1,9 +1,10 @@
+import torch
 from torch import nn
 from torch.nn import functional as F
 
-import torch
-from hsuanwu.common.typing import Tensor, Distribution, Space, Tuple
+from hsuanwu.common.typing import Distribution, Space, Tensor, Tuple
 from hsuanwu.xploit import utils
+
 
 class StochasticActor(nn.Module):
     """Stochastic actor network for SACLearner. Here the 'self.dist' refers to an sampling distribution instance.
@@ -60,6 +61,7 @@ class StochasticActor(nn.Module):
 
         return self.dist(mu, std)
 
+
 class DeterministicActor(nn.Module):
     """Deterministic actor network for DrQv2Learner. Here the 'self.dist' refers to an action noise instance.
 
@@ -109,6 +111,7 @@ class DeterministicActor(nn.Module):
 
         return self.dist
 
+
 class DoubleCritic(nn.Module):
     """Double critic network for DrQv2Learner and SACLearner.
 
@@ -125,7 +128,7 @@ class DoubleCritic(nn.Module):
         self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
     ) -> None:
         super().__init__()
-        
+
         action_shape = action_space.shape
         self.Q1 = nn.Sequential(
             nn.Linear(feature_dim + action_shape[0], hidden_dim),
@@ -161,6 +164,7 @@ class DoubleCritic(nn.Module):
         q2 = self.Q2(h_action)
 
         return q1, q2
+
 
 class DiscreteActorCritic(nn.Module):
     """Actor-Critic network for discrete control tasks. For PPOLearner, DrACLearner.
@@ -235,6 +239,7 @@ class DiscreteActorCritic(nn.Module):
         entropy = dist.entropy().mean()
 
         return actions, self.critic(h), log_probs, entropy
+
 
 class DiscreteActorAuxiliaryCritic(nn.Module):
     """Actor-Critic network for discrete control tasks. For PPGLearner.

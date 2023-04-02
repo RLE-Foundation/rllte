@@ -1,6 +1,6 @@
 import torch
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Dict, Ndarray, Tuple
 
 
 class BaseIntrinsicRewardModule(object):
@@ -35,7 +35,7 @@ class BaseIntrinsicRewardModule(object):
         self._beta = beta
         self._kappa = kappa
 
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> Ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:

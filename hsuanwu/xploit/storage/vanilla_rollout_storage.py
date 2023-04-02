@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from hsuanwu.common.typing import Device, Tuple, Tensor, Batch
+from hsuanwu.common.typing import Batch, Device, Tensor, Tuple
 
 
 class VanillaRolloutStorage:

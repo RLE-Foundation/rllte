@@ -1,5 +1,7 @@
-import numpy as np
 import re
+
+import numpy as np
+
 
 def schedule(schdl, step):
     try:

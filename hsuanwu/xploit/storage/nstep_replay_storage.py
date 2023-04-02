@@ -1,13 +1,13 @@
-import torch
 import datetime
 import random
 import traceback
 from collections import defaultdict
 
 import numpy as np
+import torch
 from torch.utils.data import IterableDataset
 
-from hsuanwu.common.typing import Path, Any, Dict, Tuple
+from hsuanwu.common.typing import Any, Dict, Path, Tuple
 from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode
 
 
@@ -51,7 +51,9 @@ class ReplayStorage:
         self._current_episode["observation"].append(obs)
         self._current_episode["action"].append(action)
         self._current_episode["reward"].append(np.full((1,), reward, np.float32))
-        self._current_episode["terminated"].append(np.full((1,), terminated, np.float32))
+        self._current_episode["terminated"].append(
+            np.full((1,), terminated, np.float32)
+        )
         self._current_episode["discount"].append(np.full((1,), discount, np.float32))
 
         if terminated:
@@ -201,7 +203,7 @@ class NStepReplayStorage(IterableDataset):
 
         Args:
             None.
-        
+
         Returns:
             Batched samples.
         """

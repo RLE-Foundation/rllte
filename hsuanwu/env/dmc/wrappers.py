@@ -6,10 +6,11 @@ from dm_control import suite
 from dm_env import specs
 from gymnasium import core, spaces
 
+from hsuanwu.common.typing import Dict, Ndarray, Tuple
 from hsuanwu.env.dmc import natural_imgsource
-from hsuanwu.common.typing import Ndarray, Dict, Tuple
 
 # The following DMCWrapper is re-implemented based on: https://github.com/facebookresearch/deep_bisim4control/blob/main/dmc2gym/wrappers.py
+
 
 def _spec_to_box(spec):
     def extract_min_max(s):
