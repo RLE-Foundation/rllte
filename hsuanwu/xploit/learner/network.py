@@ -109,7 +109,6 @@ class DeterministicActor(nn.Module):
 
         return self.dist
 
-
 class DoubleCritic(nn.Module):
     """Double critic network for DrQv2Learner and SACLearner.
 
@@ -163,3 +162,177 @@ class DoubleCritic(nn.Module):
 
         return q1, q2
 
+class DiscreteActorCritic(nn.Module):
+    """Actor-Critic network for discrete control tasks. For PPOLearner, DrACLearner.
+
+    Args:
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Actor-Critic instance.
+    """
+
+    def __init__(self, action_space: Space, feature_dim: int, hidden_dim: int) -> None:
+        super().__init__()
+
+        self.trunk = nn.Sequential(
+            nn.LayerNorm(feature_dim),
+            nn.Tanh(),
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
+        self.critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
+        self.dist = None
+
+        self.apply(utils.network_init)
+
+    def get_value(self, obs: Tensor) -> Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.trunk(obs))
+
+    def get_action(self, obs: Tensor) -> Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        mu = self.actor(self.trunk(obs))
+        return self.dist(mu).mode
+
+    def get_action_and_value(
+        self, obs: Tensor, actions: Tensor = None
+    ) -> Tuple[Tensor]:
+        """Get actions and estimated values for observations.
+
+        Args:
+            obs (Tensor): Sampled observations.
+            actions (Tensor): Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.trunk(obs)
+        mu = self.actor(h)
+        dist = self.dist(mu)
+        if actions is None:
+            actions = dist.sample()
+
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, self.critic(h), log_probs, entropy
+
+class DiscreteActorAuxiliaryCritic(nn.Module):
+    """Actor-Critic network for discrete control tasks. For PPGLearner.
+
+    Args:
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Actor-Critic instance.
+    """
+
+    def __init__(self, action_space: Space, feature_dim: int, hidden_dim: int) -> None:
+        super().__init__()
+
+        self.trunk = nn.Sequential(
+            nn.LayerNorm(feature_dim),
+            nn.Tanh(),
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
+        self.critic = nn.Linear(hidden_dim, 1)
+        self.aux_critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
+        self.dist = None
+
+        self.apply(utils.network_init)
+
+    def get_value(self, obs: Tensor) -> Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.trunk(obs))
+
+    def get_action(self, obs: Tensor) -> Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        logits = self.actor(self.trunk(obs))
+        return self.dist(logits).mode
+
+    def get_action_and_value(
+        self, obs: Tensor, actions: Tensor = None
+    ) -> Tuple[Tensor]:
+        """Get actions and estimated values for observations.
+
+        Args:
+            obs: Sampled observations.
+            actions: Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.trunk(obs)
+        logits = self.actor(h)
+        dist = self.dist(logits)
+        if actions is None:
+            actions = dist.sample()
+
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, self.critic(h), log_probs, entropy
+
+    def get_probs_and_aux_value(self, obs: Tensor) -> Tuple[Tensor]:
+        """Get probs and auxiliary estimated values for auxiliary phase update.
+
+        Args:
+            obs: Sampled observations.
+
+        Returns:
+            Distribution, estimated values, auxiliary estimated values.
+        """
+        h = self.trunk(obs)
+        logits = self.actor(h)
+        dist = self.dist(logits)
+
+        return dist, self.critic(h.detach()), self.aux_critic(h)
+
+    def get_logits(self, obs: Tensor) -> Distribution:
+        """Get the log-odds of sampling.
+
+        Args:
+            obs: Sampled observations.
+
+        Returns:
+            Distribution
+        """
+        return self.dist(self.actor(self.trunk(obs)))
