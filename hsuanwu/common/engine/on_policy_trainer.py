@@ -151,6 +151,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 }
                 self._logger.log(level=TRAIN, msg=train_metrics)
 
+        # save model
+        self.save()
+
     def test(self) -> Dict:
         """Testing function."""
         obs, info = self._test_env.reset(seed=self._seed)
@@ -174,3 +177,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
             "episode_reward": np.mean(episode_rewards),
             "total_time": self._timer.total_time(),
         }
+
+    def save(self) -> None:
+        """Save the trained model."""
+        save_dir = Path.cwd() / "model"
+        save_dir.mkdir(exist_ok=True)
+        torch.save(self._learner.encoder, save_dir / 'encoder.pth')
+        torch.save(self._learner.ac, save_dir / 'actor_critic.pth')

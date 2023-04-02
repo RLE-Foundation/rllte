@@ -161,6 +161,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 continue
 
             obs = next_obs
+        
+        # save model
+        self.save()
 
     def test(self) -> None:
         """Testing function."""
@@ -189,3 +192,11 @@ class OffPolicyTrainer(BasePolicyTrainer):
             "episode_reward": total_reward / episode,
             "total_time": self._timer.total_time(),
         }
+
+    def save(self) -> None:
+        """Save the trained model."""
+        save_dir = Path.cwd() / "model"
+        save_dir.mkdir(exist_ok=True)
+        torch.save(self._learner.encoder, save_dir / 'encoder.pth')
+        torch.save(self._learner.actor, save_dir / 'actor.pth')
+        torch.save(self._learner.critic, save_dir / 'critic.pth')

@@ -10,10 +10,10 @@ from omegaconf import open_dict
 from hsuanwu.common.engine.checker import cfgs_checker
 from hsuanwu.common.logger import *
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import Env, DictConfig
+from hsuanwu.common.typing import Env, DictConfig, ABC, abstractmethod
 
 
-class BasePolicyTrainer:
+class BasePolicyTrainer(ABC):
     """Base class of policy trainer.
 
     Args:
@@ -146,6 +146,7 @@ class BasePolicyTrainer:
 
         return cfgs
 
+    @abstractmethod
     def act(
         self, obs: Tensor, training: bool = True, step: int = 0
     ) -> Tuple[Any]:
@@ -159,12 +160,15 @@ class BasePolicyTrainer:
         Returns:
             Sampled actions.
         """
-        pass
-
+    
+    @abstractmethod
     def train(self) -> None:
         """Training function."""
-        pass
-
+    
+    @abstractmethod
     def test(self) -> None:
         """Testing function."""
-        pass
+
+    @abstractmethod
+    def save(self) -> None:
+        """Save the trained model."""

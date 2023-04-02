@@ -2,118 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Space, Tuple, Tensor, Dict, Device, Iterable, Distribution
+from hsuanwu.common.typing import Space, Tensor, Dict, Device, Iterable
 from hsuanwu.xploit import utils
-from hsuanwu.xploit.learner import BaseLearner
-
-
-class Actor(nn.Module):
-    """Actor network.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network instance.
-    """
-
-    def __init__(
-        self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
-    ) -> None:
-        super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
-        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
-        #                            nn.LayerNorm(feature_dim), nn.Tanh())
-
-        self.policy = nn.Sequential(
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, action_space.shape[0]),
-        )
-        # placeholder for distribution
-        self.dist = None
-
-        self.apply(utils.network_init)
-
-    def get_action(self, obs: Tensor, step: float = None) -> Distribution:
-        """Get actions.
-
-        Args:
-            obs (Tensor): Observations.
-            step (int): Global training step.
-
-        Returns:
-            Hsuanwu distribution.
-        """
-        h = self.trunk(obs)
-        mu = self.policy(h)
-        mu = torch.tanh(mu)
-
-        self.dist.reset(mu, step)
-
-        return self.dist
-
-
-class Critic(nn.Module):
-    """Critic network.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Critic network instance.
-    """
-
-    def __init__(
-        self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
-    ) -> None:
-        super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
-        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
-        #    nn.LayerNorm(feature_dim), nn.Tanh())
-
-        action_shape = action_space.shape
-        self.Q1 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-        self.Q2 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-        self.apply(utils.network_init)
-
-    def forward(self, obs: Tensor, action: Tensor) -> Tuple[Tensor]:
-        """Value estimation.
-
-        Args:
-            obs (Tensor): Observations.
-            action (Tensor): Actions.
-
-        Returns:
-            Estimated values.
-        """
-        h = self.trunk(obs)
-        h_action = torch.cat([h, action], dim=-1)
-
-        q1 = self.Q1(h_action)
-        q2 = self.Q2(h_action)
-
-        return q1, q2
+from hsuanwu.xploit.learner.base import BaseLearner
+from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 
 
 class DrQv2Learner(BaseLearner):
@@ -157,13 +49,13 @@ class DrQv2Learner(BaseLearner):
         self.update_every_steps = update_every_steps
 
         # create models
-        self.actor = Actor(
+        self.actor = DeterministicActor(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
-        self.critic = Critic(
+        self.critic = DoubleCritic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
-        self.critic_target = Critic(
+        self.critic_target = DoubleCritic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())

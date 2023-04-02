@@ -1,9 +1,9 @@
 import torch
 
-from hsuanwu.common.typing import NNModule, Space, Dict, Device
+from hsuanwu.common.typing import Space, Dict, Device, ABC, abstractmethod
 
 
-class BaseLearner:
+class BaseLearner(ABC):
     """Base class of learner.
 
     Args:
@@ -24,10 +24,10 @@ class BaseLearner:
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: Device = 'cuda',
-        feature_dim: int = 50,
-        lr: float = 2.5e-4,
-        eps: float = 1e-5,
+        device: Device,
+        feature_dim: int,
+        lr: float,
+        eps: float,
     ) -> None:
         self.obs_space = observation_space
         self.action_space = action_space
@@ -44,6 +44,7 @@ class BaseLearner:
         self.aug = None
         self.irs = None
 
+    @abstractmethod
     def train(self, training: bool = True) -> None:
         """Set the train mode.
 
@@ -55,6 +56,7 @@ class BaseLearner:
         """
         self.training = training
 
+    @abstractmethod
     def update(self, *args) -> Dict[str, float]:
         """Update learner.
 
@@ -64,4 +66,3 @@ class BaseLearner:
         Returns:
             Training metrics such as loss functions.
         """
-        pass

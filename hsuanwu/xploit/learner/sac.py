@@ -3,118 +3,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage, Distribution
+from hsuanwu.common.typing import Device, Tensor, Dict, Space, Tuple, Storage
 from hsuanwu.xploit import utils
-from hsuanwu.xploit.learner import BaseLearner
-
-
-class Actor(nn.Module):
-    """Actor network.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network instance.
-    """
-
-    def __init__(
-        self,
-        action_space: Space,
-        feature_dim: int = 64,
-        hidden_dim: int = 1024,
-        log_std_range: Tuple = (-10, 2),
-    ) -> None:
-        super().__init__()
-
-        self.policy = nn.Sequential(
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 2 * action_space.shape[0]),
-        )
-        # placeholder for distribution
-        self.dist = None
-        self.log_std_min, self.log_std_max = log_std_range
-
-        self.apply(utils.network_init)
-
-    def forward(self, obs: Tensor) -> Distribution:
-        """Get actions.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Hsuanwu distribution.
-        """
-        mu, log_std = self.policy(obs).chunk(2, dim=-1)
-
-        log_std = torch.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (
-            log_std + 1
-        )
-
-        std = log_std.exp()
-
-        return self.dist(mu, std)
-
-
-class Critic(nn.Module):
-    """Critic network.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Critic network instance.
-    """
-
-    def __init__(
-        self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
-    ) -> None:
-        super().__init__()
-
-        action_shape = action_space.shape
-        self.Q1 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-        self.Q2 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-        self.apply(utils.network_init)
-
-    def forward(self, obs: Tensor, action: Tensor) -> Tuple[Tensor]:
-        """Value estimation.
-
-        Args:
-            obs (Tensor): Observations.
-            action (Tensor): Actions.
-
-        Returns:
-            Estimated values.
-        """
-        h_action = torch.cat([obs, action], dim=-1)
-
-        q1 = self.Q1(h_action)
-        q2 = self.Q2(h_action)
-
-        return q1, q2
+from hsuanwu.xploit.learner.base import BaseLearner
+from hsuanwu.xploit.learner.network import StochasticActor, DoubleCritic
 
 
 class SACLearner(BaseLearner):
@@ -164,7 +56,7 @@ class SACLearner(BaseLearner):
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
-
+        
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
         self.num_init_steps = num_init_steps
@@ -172,16 +64,16 @@ class SACLearner(BaseLearner):
         self.discount = discount
 
         # create models
-        self.actor = Actor(
+        self.actor = StochasticActor(
             action_space=action_space,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
             log_std_range=log_std_range,
         ).to(self.device)
-        self.critic = Critic(
+        self.critic = DoubleCritic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
-        self.critic_target = Critic(
+        self.critic_target = DoubleCritic(
             action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
@@ -302,7 +194,7 @@ class SACLearner(BaseLearner):
             Critic loss metrics.
         """
         with torch.no_grad():
-            dist = self.actor(next_obs)
+            dist = self.actor.get_action(next_obs, step=step)
             next_action = dist.rsample()
             log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
@@ -337,7 +229,7 @@ class SACLearner(BaseLearner):
             Actor loss metrics.
         """
         # sample actions
-        dist = self.actor(obs)
+        dist = self.actor.get_action(obs, step=step)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
         Q1, Q2 = self.critic(obs, action)
