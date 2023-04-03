@@ -53,13 +53,15 @@ class VanillaRolloutStorage:
                 dtype=torch.float32,
                 device=self._device,
             )
-        if action_type == "cont":
+        elif action_type == "cont":
             self._action_dim = action_shape[0]
             self.actions = torch.empty(
                 size=(num_steps, num_envs, self._action_dim),
                 dtype=torch.float32,
                 device=self._device,
             )
+        else:
+            raise NotImplementedError
         self.rewards = torch.empty(
             size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
         )
