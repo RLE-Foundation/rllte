@@ -2,9 +2,7 @@ import torch
 from torch import nn
 
 from hsuanwu.common.typing import Space, Tensor
-from hsuanwu.xploit.encoder.base import BaseEncoder
-from hsuanwu.xploit.utils import network_init
-
+from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 class VanillaCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.

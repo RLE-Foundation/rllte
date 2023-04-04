@@ -56,3 +56,6 @@ def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     lr = initial_lr - (initial_lr * (epoch / float(total_num_epochs)))
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
+
+def lr_lambda(epoch):
+    return 1 - min(epoch * 100 * 32, 100000000) / 100000000

@@ -1,9 +1,12 @@
 import torch
+import threading
 from torch.nn import functional as F
 
 from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor
 from hsuanwu.xploit import utils
 from hsuanwu.xploit.learner.base import BaseLearner
+
+
 
 def init(module, weight_init, bias_init, gain=1):
     weight_init(module.weight.data, gain=gain)
@@ -110,14 +113,96 @@ class IMPALALearner(BaseLearner):
         action_type: str,
         device: Device,
         feature_dim: int,
-        lr: float,
-        eps: float,
+        lr: float = 1e-4,
+        eps: float = 1e-5,
     ) -> None:
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
 
-        self._actor = MinigridPolicyNet(
+        self.actor = MinigridPolicyNet(
             observation_shape=observation_space.shape,
             num_actions=action_space.shape[0]
-        )
+        ).to(self.device)
+        self.actor.share_memory()
+
+        self.learner = MinigridPolicyNet(
+            observation_shape=observation_space.shape,
+            num_actions=action_space.shape[0]
+        ).to(self.device)
+
+        self.opt = torch.optim.RMSprop(
+            self.learner.parameters(),
+            lr=self.lr,
+            eps=self.eps)
+        self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.opt, utils.lr_lambda)
+    
+
+    @staticmethod
+    def update(
+        actor,
+        learner,
+        batch,
+        actor_state,
+        opt,
+        scheduler,
+        cfgs,
+        lock=threading.Lock()
+    ) -> Dict[str, float]:
+        """Update learner.
+        """
+        """Performs a learning (optimization) step."""
+
+        with lock:
+            learner_outputs, unused_state = learner(batch, actor_state)
+        
+            bootstrap_value = learner_outputs['baseline'][-1]
+
+            batch = {key: tensor[1:] for key, tensor in batch.items()}
+            learner_outputs = {
+                key: tensor[:-1]
+                for key, tensor in learner_outputs.items()
+            }
+
+            rewards = batch['reward']
+            clipped_rewards = torch.clamp(rewards, -1, 1)
+            
+            discounts = (~batch['done']).float() * cfgs.discount
+
+            vtrace_returns = vtrace.from_logits(
+                behavior_policy_logits=batch['policy_logits'],
+                target_policy_logits=learner_outputs['policy_logits'],
+                actions=batch['action'],
+                discounts=discounts,
+                rewards=clipped_rewards,
+                values=learner_outputs['baseline'],
+                bootstrap_value=bootstrap_value)
+
+            pg_loss = losses.compute_policy_gradient_loss(learner_outputs['policy_logits'],
+                                                batch['action'],
+                                                vtrace_returns.pg_advantages)
+            baseline_loss = cfgs.learner.baseline_coef * losses.compute_baseline_loss(
+                vtrace_returns.vs - learner_outputs['baseline'])
+            entropy_loss = cfgs.learner.ent_coef * losses.compute_entropy_loss(
+                learner_outputs['policy_logits'])
+
+            total_loss = pg_loss + baseline_loss + entropy_loss
+
+            episode_returns = batch['episode_return'][batch['done']]
+            stats = {
+                'mean_episode_return': torch.mean(episode_returns).item(),
+                'total_loss': total_loss.item(),
+                'pg_loss': pg_loss.item(),
+                'baseline_loss': baseline_loss.item(),
+                'entropy_loss': entropy_loss.item(),
+            }
+            
+            scheduler.step()
+            opt.zero_grad()
+            total_loss.backward()
+            nn.utils.clip_grad_norm_(learner.parameters(), cfgs.learner.max_grad_norm)
+            opt.step()
+
+            actor.load_state_dict(learner.state_dict())
+            return stats
+

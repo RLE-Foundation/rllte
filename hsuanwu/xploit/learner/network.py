@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from hsuanwu.common.typing import Distribution, Space, Tensor, Tuple
-from hsuanwu.xploit import utils
+from hsuanwu.xploit.learner import utils
 
 
 class StochasticActor(nn.Module):

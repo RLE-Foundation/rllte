@@ -22,6 +22,8 @@ from gymnasium import Env, Space
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 
+Logger = ""
+SimpleQueue = torch.multiprocessing.SimpleQueue
 Storage = ""
 TorchSize = torch.Size
 NNModule = torch.nn.Module
