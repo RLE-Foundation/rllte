@@ -8,7 +8,10 @@ curren_dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
-from hsuanwu.env import make_atari_env, make_dmc_env, make_procgen_env
+from hsuanwu.env import (make_atari_env, 
+                         make_dmc_env, 
+                         make_procgen_env,
+                         make_minigrid_env)
 
 if __name__ == "__main__":
     # Atari games
@@ -68,8 +71,30 @@ if __name__ == "__main__":
 
     for step in range(7):
         obs, reward, terminated, truncated, info = envs.step(
-            torch.rand(size=(envs.action_space.shape))
+            torch.rand(size=(1, envs.action_space.shape[0]))
         )
         print(reward, terminated, truncated)
     envs.close()
     print("DeepMind Control Suite passed!")
+
+
+    # MiniGrid
+    seed = 7
+    envs = make_minigrid_env(
+        env_id='MiniGrid-MultiRoom-N4-S5-v0',
+        num_envs=1,
+        fully_observable=True,
+        seed=seed,
+        frame_stack=1,
+        device='cuda'
+    )
+
+    print(envs.observation_space, envs.action_space)
+    obs, info = envs.reset(seed=seed)
+    print(obs.shape, info)
+
+    for step in range(7):
+        obs, reward, terminated, truncated, info = envs.step(torch.randint(low=0, high=7, size=(3, 1)))
+        print(reward, terminated)
+    envs.close()
+    print('MiniGrid passed!')

@@ -2,7 +2,7 @@ import torch
 from torch.nn import functional as F
 
 from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor
-from hsuanwu.xploit import utils
+from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 

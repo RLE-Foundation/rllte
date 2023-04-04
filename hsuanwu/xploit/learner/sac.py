@@ -3,7 +3,7 @@ import torch
 from torch.nn import functional as F
 
 from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor, Tuple
-from hsuanwu.xploit import utils
+from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 

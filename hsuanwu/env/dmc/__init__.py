@@ -6,46 +6,7 @@ import torch
 from gymnasium.envs.registration import register
 
 from hsuanwu.common.typing import Any, Device, Dict, Env, List, Ndarray, Tensor, Tuple
-
-
-class FrameStackEnv(gym.Wrapper):
-    """Observation wrapper that stacks the observations in a rolling manner.
-
-    Args:
-        env (Env): Environment to wrap.
-        k: Number of stacked frames.
-
-    Returns:
-        FrameStackEnv instance.
-    """
-
-    def __init__(self, env: Env, k: int) -> None:
-        super().__init__(env)
-        self._k = k
-        self._frames = deque([], maxlen=k)
-        shp = env.observation_space.shape
-        self.observation_space = gym.spaces.Box(
-            low=0,
-            high=1,
-            shape=((shp[0] * k,) + shp[1:]),
-            dtype=env.observation_space.dtype,
-        )
-        self._max_episode_steps = env._max_episode_steps
-
-    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
-        obs, info = self.env.reset()
-        for _ in range(self._k):
-            self._frames.append(obs)
-        return self._get_obs(), info
-
-    def step(self, action: Tuple[float]) -> Tuple[Any, float, bool, Dict]:
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        self._frames.append(obs)
-        return self._get_obs(), reward, terminated, truncated, info
-
-    def _get_obs(self) -> Ndarray:
-        assert len(self._frames) == self._k
-        return np.concatenate(list(self._frames), axis=0)
+from hsuanwu.env.utils import FrameStack
 
 
 class TorchVecEnvWrapper(gym.Wrapper):
@@ -159,5 +120,5 @@ def make_dmc_env(
     if visualize_reward:
         return TorchVecEnvWrapper(gym.make(env_id), device)
     else:
-        env = FrameStackEnv(gym.make(env_id), frame_stack)
+        env = FrameStack(gym.make(env_id), frame_stack)
         return TorchVecEnvWrapper(env, device)

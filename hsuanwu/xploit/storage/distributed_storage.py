@@ -48,7 +48,7 @@ class DistributedStorage:
                         action_shape: Tuple,
                         action_type: str,
                         num_steps: int = 100,
-                        num_storages: int = 80,) -> List[Storage]:
+                        num_storages: int = 80,) -> List:
         if action_type == "dis":
             action_dim = 1
         elif action_type == "cont":
@@ -83,10 +83,10 @@ class DistributedStorage:
     @staticmethod
     def sample(free_queue: SimpleQueue,
                full_queue: SimpleQueue,
-               storages: List[Storage],
+               storages: List,
                init_actor_state_storages: List,
                cfgs: DictConfig,
-               lock=threading.lock()
+               lock=threading.Lock()
                ) -> Batch:
         """Sample transitions from the storage.
 

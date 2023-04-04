@@ -48,6 +48,7 @@ envs = [
   "gymnasium[atari]",
   "dm-control==1.0.11",
   "procgen==0.10.7",
+  "minigrid",
   "scikit-image",
   "scikit-video",
   "imageio"
