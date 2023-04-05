@@ -1,8 +1,6 @@
 import torch
-from torch import nn
-
-import torch
 import torch.nn.functional as F
+from torch import nn
 
 
 def soft_update_params(net, target_net, tau):
@@ -21,6 +19,7 @@ def network_init(m):
         if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
 
+
 def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device).float() for x in xs)
 
@@ -31,5 +30,6 @@ def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
 
+
 def lr_lambda(epoch):
-    return 1 - min(epoch * 100 * 32, 100000000) / 100000000
+    return 1 - min(epoch * 80 * 4, 30000000) / 30000000

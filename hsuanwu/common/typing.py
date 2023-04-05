@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 
 Logger = ""
 SimpleQueue = torch.multiprocessing.SimpleQueue
-Storage = ""
+Storage = Dict[str, Dict]
 TorchSize = torch.Size
 NNModule = torch.nn.Module
 Ndarray = np.ndarray

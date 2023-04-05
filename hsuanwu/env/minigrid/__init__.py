@@ -1,7 +1,6 @@
 import gymnasium as gym
 import numpy as np
 import torch
-
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
@@ -9,10 +8,11 @@ from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
 from hsuanwu.common.typing import Any, Device, Dict, Env, Ndarray, Tensor, Tuple
 from hsuanwu.env.utils import FrameStack
 
+
 class Minigrid2Image(gym.ObservationWrapper):
     def __init__(self, env):
         gym.ObservationWrapper.__init__(self, env)
-        self.observation_space = env.observation_space['image']
+        self.observation_space = env.observation_space["image"]
         shape = self.observation_space.shape
         self.observation_space = gym.spaces.Box(
             low=0,
@@ -22,7 +22,8 @@ class Minigrid2Image(gym.ObservationWrapper):
         )
 
     def observation(self, observation):
-        return np.transpose(observation['image'], axes=[2, 0, 1])
+        return np.transpose(observation["image"], axes=[2, 0, 1])
+
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
@@ -67,6 +68,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
         return obs, reward, terminated, truncated, info
 
+
 def make_minigrid_env(
     env_id: str = "Alien-v5",
     num_envs: int = 8,
@@ -88,6 +90,7 @@ def make_minigrid_env(
     Returns:
         Environments instance.
     """
+
     def make_env(env_id: str, seed: int) -> Env:
         def _thunk():
             env = gym.make(env_id)
@@ -105,7 +108,7 @@ def make_minigrid_env(
             return env
 
         return _thunk
-    
+
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)

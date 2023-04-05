@@ -1,6 +1,16 @@
-import torch
 import threading
-from hsuanwu.common.typing import Batch, Device, List, Tuple, SimpleQueue, DictConfig, Storage
+
+import torch
+
+from hsuanwu.common.typing import (
+    Batch,
+    Device,
+    DictConfig,
+    List,
+    SimpleQueue,
+    Storage,
+    Tuple,
+)
 
 
 class DistributedStorage:
@@ -26,7 +36,7 @@ class DistributedStorage:
         action_type: str,
         num_steps: int = 100,
         num_storages: int = 80,
-        batch_size: int = 32
+        batch_size: int = 32,
     ) -> None:
         self._obs_shape = obs_shape
         self._action_shape = action_shape
@@ -41,21 +51,22 @@ class DistributedStorage:
             self._action_dim = action_shape[0]
         else:
             raise NotImplementedError
-        
 
     @staticmethod
-    def create_storages(obs_shape: Tuple,
-                        action_shape: Tuple,
-                        action_type: str,
-                        num_steps: int = 100,
-                        num_storages: int = 80,) -> List:
+    def create_storages(
+        obs_shape: Tuple,
+        action_shape: Tuple,
+        action_type: str,
+        num_steps: int = 100,
+        num_storages: int = 80,
+    ) -> List:
         if action_type == "dis":
             action_dim = 1
         elif action_type == "cont":
             action_dim = action_shape[0]
         else:
             raise NotImplementedError
-        
+
         specs = dict(
             frame=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
             reward=dict(size=(num_steps + 1,), dtype=torch.float32),
@@ -66,10 +77,6 @@ class DistributedStorage:
             policy_logits=dict(size=(num_steps + 1, action_dim), dtype=torch.float32),
             baseline=dict(size=(num_steps + 1,), dtype=torch.float32),
             action=dict(size=(num_steps + 1,), dtype=torch.int64),
-            episode_win=dict(size=(num_steps + 1,), dtype=torch.int32),
-            carried_obj=dict(size=(num_steps + 1,), dtype=torch.int32),
-            carried_col=dict(size=(num_steps + 1,), dtype=torch.int32),
-            partial_obs=dict(size=(num_steps + 1, 7, 7, 3), dtype=torch.uint8),
         )
 
         storages = {key: [] for key in specs}
@@ -79,15 +86,16 @@ class DistributedStorage:
                 storages[key].append(torch.empty(**specs[key]).share_memory_())
 
         return storages
-    
+
     @staticmethod
-    def sample(free_queue: SimpleQueue,
-               full_queue: SimpleQueue,
-               storages: List,
-               init_actor_state_storages: List,
-               cfgs: DictConfig,
-               lock=threading.Lock()
-               ) -> Batch:
+    def sample(
+        free_queue: SimpleQueue,
+        full_queue: SimpleQueue,
+        storages: List,
+        init_actor_state_storages: List,
+        cfgs: DictConfig,
+        lock=threading.Lock(),
+    ) -> Batch:
         """Sample transitions from the storage.
 
         Args:
@@ -96,23 +104,26 @@ class DistributedStorage:
         Returns:
             Batched samples.
         """
-
+        print("Generating sample")
         with lock:
             indices = [full_queue.get() for _ in range(cfgs.storage.batch_size)]
-        
+        print("Generated sample")
         batch = {
-            key: torch.stack([storages[key][m] for m in indices], dim=1) for key in storages
+            key: torch.stack([storages[key][m] for m in indices], dim=1)
+            for key in storages
         }
 
         init_actor_state = (
             torch.cat(ts, dim=1)
             for ts in zip(*[init_actor_state_storages[m] for m in indices])
         )
-        
+
         for i in indices:
             free_queue.put(i)
-        
-        batch = {k: t.to(device=torch.device(cfgs.device), non_blocking=True) for k, t in batch.items()}
 
+        batch = {
+            k: t.to(device=torch.device(cfgs.device), non_blocking=True)
+            for k, t in batch.items()
+        }
+        print("Generated sample")
         return batch, init_actor_state
-

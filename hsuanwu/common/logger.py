@@ -82,6 +82,8 @@ class Logger:
             self._logger.info(msg)
         elif level == DEBUG:
             self._logger.debug(msg)
+        elif level == ERROR:
+            self._logger.error(msg)
         elif level == TRAIN:
             self._logger.train(self.parse_train_msg(msg))
             # save data

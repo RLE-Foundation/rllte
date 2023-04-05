@@ -1,8 +1,9 @@
 from collections import deque
+
 import gymnasium as gym
 import numpy as np
 
-from hsuanwu.common.typing import Tuple, Env, Ndarray, Tensor, Any, Dict
+from hsuanwu.common.typing import Any, Dict, Env, Ndarray, Tensor, Tuple
 
 
 class FrameStack(gym.Wrapper):

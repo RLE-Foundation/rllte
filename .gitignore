@@ -23,5 +23,6 @@ __pycache__/
 _build/
 /logs
 /dist
+/outputs
 
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf

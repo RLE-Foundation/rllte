@@ -2,6 +2,7 @@ from torch import nn
 
 from hsuanwu.common.typing import Space, Tensor
 
+
 def network_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
@@ -12,6 +13,7 @@ def network_init(m):
         nn.init.orthogonal_(m.weight.data, gain)
         if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
+
 
 class BaseEncoder(nn.Module):
     """Base class that represents a features extractor.

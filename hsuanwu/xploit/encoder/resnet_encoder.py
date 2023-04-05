@@ -5,6 +5,7 @@ from torch.nn import functional as F
 from hsuanwu.common.typing import List, Space, Tensor, Tuple
 from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
+
 class ResidualBlock(nn.Module):
     """Residual block taken from https://github.com/AIcrowd/neurips2020-procgen-starter-kit/blob/142d09586d2272a17f44481a115c4bd817cf6a94/models/impala_cnn_torch.py
 

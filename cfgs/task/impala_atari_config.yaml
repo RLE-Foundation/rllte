@@ -1,0 +1,21 @@
+device: 'cuda'
+seed: 1
+num_train_steps: 30000000 
+num_actors: 1
+num_threads: 4
+num_steps: 80
+
+
+learner:
+  lr: 0.0004
+  eps: 0.01
+  use_lstm: false
+  ent_coef: 0.01
+  baseline_coef: 0.5
+  discount: 0.99
+  max_grad_norm: 40
+
+storage:
+  num_steps: ${num_steps}
+  num_storages: 2
+  batch_size: 1
