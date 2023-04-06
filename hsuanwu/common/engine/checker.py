@@ -36,6 +36,12 @@ MATCH_KEYS = {
         "augmentation": [],
         "reward": [],
     },
+    "IMPALALearner": {
+        "storage": ["DistributedStorage"],
+        "distribution": ['None'],
+        "augmentation": [],
+        "reward": [],
+    },
 }
 
 

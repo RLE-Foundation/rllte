@@ -115,6 +115,15 @@ class BasePolicyTrainer(ABC):
                 cfgs.storage.action_shape = action_space["shape"]
                 cfgs.storage.action_type = action_type
 
+        # set observation and action shape for distributed storage.
+        if "Distributed" in cfgs.storage._target_:
+            with open_dict(cfgs):
+                cfgs.storage.device = cfgs.device
+                cfgs.storage.obs_shape = obs_shape
+                cfgs.storage.action_shape = action_space["shape"]
+                cfgs.storage.action_type = action_type
+                cfgs.storage.num_steps = cfgs.num_steps
+
         # xplore part
         if cfgs.use_irs:
             with open_dict(cfgs):

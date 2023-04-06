@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class eval_mode:
     def __init__(self, *models):
         self.models = models

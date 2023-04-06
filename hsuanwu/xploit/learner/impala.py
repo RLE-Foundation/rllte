@@ -4,7 +4,7 @@ import threading
 import torch
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor
+from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor, DictConfig
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.utils import lr_lambda
 
@@ -122,7 +122,6 @@ VTraceFromLogitsReturns = collections.namedtuple(
 
 VTraceReturns = collections.namedtuple("VTraceReturns", "vs pg_advantages")
 
-
 class VTrace(object):
     """Compute V-trace off-policy actor critic targets."""
 
@@ -228,9 +227,21 @@ class IMPALALearner(BaseLearner):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
 
     Args:
+        observation_space (Space): Observation space of the environment.
+        action_space (Space): Action shape of the environment.
+        action_type (str): Continuous or discrete action. "cont" or "dis".
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        feature_dim (int): Number of features extracted.
+        lr (float): The learning rate.
+        eps (float): Term added to the denominator to improve numerical stability.
 
+        use_lstm (bool): .
+        ent_coef (float): Weighting coefficient of entropy bonus.
+        baseline_coef(float): .
+        max_grad_norm (float): Maximum norm of gradients.
+        discount (float): Discount factor.
     Returns:
-
+        IMPALALearner distance.
     """
 
     def __init__(
@@ -240,46 +251,65 @@ class IMPALALearner(BaseLearner):
         action_type: str,
         device: Device,
         feature_dim: int,
-        lr: float = 1e-4,
-        eps: float = 1e-5,
+        lr: float = 0.0004,
+        eps: float = 0.01,
+        use_lstm: bool = False,
+        ent_coef: float = 0.01,
+        baseline_coef: float = 0.5,
+        max_grad_norm: float = 40,
+        discount: float = 0.99
     ) -> None:
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
         )
 
+        self.ent_coef = ent_coef
+        self.baseline_coef = baseline_coef
+        self.max_grad_norm = max_grad_norm
+        self.discount = discount
+
         self.actor = AtariNet(
-            observation_shape=(4, 84, 84), num_actions=18
-        )  # .to(self.device)
+            observation_shape=observation_space.shape, 
+            num_actions=action_space.shape[0],
+            use_lstm=use_lstm
+        )
         self.actor.share_memory()
 
-        self.learner = AtariNet(observation_shape=(4, 84, 84), num_actions=18).to(
-            self.device
-        )
+        self.learner = AtariNet(
+            observation_shape=observation_space.shape, 
+            num_actions=action_space.shape[0],
+            use_lstm=use_lstm
+        ).to(self.device)
 
         self.opt = torch.optim.RMSprop(
             self.learner.parameters(), lr=self.lr, eps=self.eps
         )
         self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.opt, lr_lambda)
 
-        self.vtrace = VTrace()
-
     def train(self, training: bool = True) -> None:
+        """Set the train mode.
+
+        Args:
+            training (bool): True (training) or False (testing).
+
+        Returns:
+            None.
+        """
         self.training = training
+        self.actor.train(training)
+        self.learner.train(training)
 
     @staticmethod
     def update(
-        actor,
-        learner,
+        cfgs: DictConfig,
+        actor_model,
+        learner_model,
         batch,
-        actor_state,
-        vtrace,
-        opt,
-        scheduler,
-        cfgs,
+        init_actor_state,
+        optimizer,
+        lr_scheduler,
         lock=threading.Lock(),
-    ) -> Dict[str, float]:
-        """Update learner."""
-
+        ):
         ###########################################################################
         def compute_policy_gradient_loss(logits, actions, advantages):
             cross_entropy = F.nll_loss(
@@ -302,23 +332,24 @@ class IMPALALearner(BaseLearner):
             return torch.sum(policy * log_policy)
 
         ###########################################################################
-
+        """Performs a learning (optimization) step."""
         with lock:
-            learner_outputs, _ = learner(batch, actor_state)
+            learner_outputs, _ = learner_model(batch, init_actor_state)
 
+            # Take final value function slice for bootstrapping.
             bootstrap_value = learner_outputs["baseline"][-1]
 
+            # Move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
-            learner_outputs = {
-                key: tensor[:-1] for key, tensor in learner_outputs.items()
-            }
+            learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
             rewards = batch["reward"]
             clipped_rewards = torch.clamp(rewards, -1, 1)
 
+
             discounts = (~batch["done"]).float() * cfgs.discount
 
-            vtrace_returns = vtrace.from_logits(
+            vtrace_returns = VTrace().from_logits(
                 behavior_policy_logits=batch["policy_logits"],
                 target_policy_logits=learner_outputs["policy_logits"],
                 actions=batch["action"],
@@ -344,15 +375,15 @@ class IMPALALearner(BaseLearner):
 
             episode_returns = batch["episode_return"][batch["done"]]
 
-            opt.zero_grad()
+            optimizer.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(learner.parameters(), cfgs.learner.max_grad_norm)
-            opt.step()
-            scheduler.step()
+            nn.utils.clip_grad_norm_(learner_model.parameters(), cfgs.learner.max_grad_norm)
+            optimizer.step()
+            lr_scheduler.step()
 
-            actor.load_state_dict(learner.state_dict())
-
+            actor_model.load_state_dict(learner_model.state_dict())
             return {
+                "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "mean_episode_return": torch.mean(episode_returns).item(),
                 "total_loss": total_loss.item(),
                 "pg_loss": pg_loss.item(),

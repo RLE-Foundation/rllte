@@ -16,7 +16,6 @@ encoder:
 
 learner:
   _target_: SACLearner             # learner type
-  num_init_steps: ${num_init_steps}
 
 storage:
   _target_: VanillaReplayStorage

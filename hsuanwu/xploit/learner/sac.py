@@ -44,7 +44,6 @@ class SACLearner(BaseLearner):
         eps: float = 0.00008,
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.005,
-        num_init_steps: int = 5000,
         update_every_steps: int = 2,
         log_std_range: Tuple[float] = (-5.0, 2),
         betas: Tuple[float] = (0.9, 0.999),
@@ -58,7 +57,6 @@ class SACLearner(BaseLearner):
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
-        self.num_init_steps = num_init_steps
         self.fixed_temperature = fixed_temperature
         self.discount = discount
 

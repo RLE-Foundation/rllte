@@ -51,22 +51,7 @@ class DistributedStorage:
             self._action_dim = action_shape[0]
         else:
             raise NotImplementedError
-
-    @staticmethod
-    def create_storages(
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
-        num_steps: int = 100,
-        num_storages: int = 80,
-    ) -> List:
-        if action_type == "dis":
-            action_dim = 1
-        elif action_type == "cont":
-            action_dim = action_shape[0]
-        else:
-            raise NotImplementedError
-
+        
         specs = dict(
             frame=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
             reward=dict(size=(num_steps + 1,), dtype=torch.float32),
@@ -74,26 +59,24 @@ class DistributedStorage:
             episode_return=dict(size=(num_steps + 1,), dtype=torch.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=torch.int32),
             last_action=dict(size=(num_steps + 1,), dtype=torch.int64),
-            policy_logits=dict(size=(num_steps + 1, action_dim), dtype=torch.float32),
+            policy_logits=dict(size=(num_steps + 1, action_shape[0]), dtype=torch.float32),
             baseline=dict(size=(num_steps + 1,), dtype=torch.float32),
             action=dict(size=(num_steps + 1,), dtype=torch.int64),
         )
 
-        storages = {key: [] for key in specs}
-
+        self.storages = {key: [] for key in specs}
         for _ in range(num_storages):
-            for key in storages:
-                storages[key].append(torch.empty(**specs[key]).share_memory_())
-
-        return storages
+            for key in self.storages:
+                self.storages[key].append(torch.empty(**specs[key]).share_memory_())
 
     @staticmethod
     def sample(
+        device: Device,
+        batch_size: int,
         free_queue: SimpleQueue,
         full_queue: SimpleQueue,
         storages: List,
-        init_actor_state_storages: List,
-        cfgs: DictConfig,
+        init_actor_states: List,
         lock=threading.Lock(),
     ) -> Batch:
         """Sample transitions from the storage.
@@ -104,10 +87,8 @@ class DistributedStorage:
         Returns:
             Batched samples.
         """
-        print("Generating sample")
         with lock:
-            indices = [full_queue.get() for _ in range(cfgs.storage.batch_size)]
-        print("Generated sample")
+            indices = [full_queue.get() for _ in range(batch_size)]
         batch = {
             key: torch.stack([storages[key][m] for m in indices], dim=1)
             for key in storages
@@ -115,15 +96,14 @@ class DistributedStorage:
 
         init_actor_state = (
             torch.cat(ts, dim=1)
-            for ts in zip(*[init_actor_state_storages[m] for m in indices])
+            for ts in zip(*[init_actor_states[m] for m in indices])
         )
 
         for i in indices:
             free_queue.put(i)
 
         batch = {
-            k: t.to(device=torch.device(cfgs.device), non_blocking=True)
+            k: t.to(device=torch.device(device), non_blocking=True)
             for k, t in batch.items()
         }
-        print("Generated sample")
         return batch, init_actor_state

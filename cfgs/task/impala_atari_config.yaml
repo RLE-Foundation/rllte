@@ -1,21 +1,31 @@
 device: 'cuda'
 seed: 1
+use_aug: false
+use_irs: false
 num_train_steps: 30000000 
-num_actors: 1
-num_threads: 4
+num_actors: 45
+num_learners: 4
 num_steps: 80
+discount: 0.99
 
+encoder:
+  _target_: None
+  feature_dim: 77
 
 learner:
+  _target_: IMPALALearner
   lr: 0.0004
   eps: 0.01
   use_lstm: false
   ent_coef: 0.01
   baseline_coef: 0.5
   discount: 0.99
-  max_grad_norm: 40
+  max_grad_norm: 40.
 
 storage:
-  num_steps: ${num_steps}
-  num_storages: 2
-  batch_size: 1
+  _target_: DistributedStorage
+  num_storages: 60
+  batch_size: 4
+
+distribution:
+  _target_: None
