@@ -5,8 +5,10 @@ from hsuanwu.common.typing import Space, Tensor
 from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
-class VanillaCnnEncoder(BaseEncoder):
-    """Convolutional neural network (CNN)-based encoder for processing image-based observations.
+class TassaCnnEncoder(BaseEncoder):
+    """Convolutional neural network (CNN)-based encoder for processing image-based observations. 
+    Proposed by Tassa Y, Doron Y, Muldal A, et al. Deepmind control suite[J]. arXiv preprint arXiv:1801.00690, 2018.
+    Target task: DeepMind Control Suite.
 
     Args:
         observation_space (Space): Observation space of the environment.

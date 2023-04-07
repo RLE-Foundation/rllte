@@ -8,8 +8,8 @@ class IdentityEncoder(BaseEncoder):
     """Identity encoder for state-based observations.
 
     Args:
-        observation_space: Observation space of the environment.
-        feature_dim: Number of features extracted.
+        observation_space (Space): Observation space of the environment.
+        feature_dim (int): Number of features extracted.
 
     Returns:
         Identity encoder instance.

@@ -66,9 +66,11 @@ class ResidualLayer(nn.Module):
         return (self._out_channels, (h + 1) // 2, (w + 1) // 2)
 
 
-class ResNetEncoder(BaseEncoder):
+class EspeholtResidualEncoder(BaseEncoder):
     """
     ResNet-like encoder for processing image-based observations.
+    Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
+    Target task: Atari games and Procgen games.
 
     Args:
         observation_space (Space): Observation space of the environment.

@@ -127,14 +127,14 @@ class DistributedTrainer(BasePolicyTrainer):
         free_queue = ctx.SimpleQueue()
         full_queue = ctx.SimpleQueue()
 
-        for i in range(self._cfgs.num_actors):
+        for actor_idx in range(self._cfgs.num_actors):
             actor = ctx.Process(
                 target=self.act,
                 args=(
                     self._cfgs,
                     self._logger,
-                    i,
-                    self._train_env[i],
+                    actor_idx,
+                    self._train_env[actor_idx],
                     free_queue,
                     full_queue,
                     self._learner.actor,

@@ -27,8 +27,6 @@ class VanillaMlpEncoder(BaseEncoder):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
             nn.Linear(hidden_dim, feature_dim),
         )
 
