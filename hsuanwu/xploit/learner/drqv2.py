@@ -6,6 +6,38 @@ from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 
+DEFAULT_CFGS = {
+    # Train setup
+    "device": "cpu",
+    "seed": 1,
+    "use_aug": False,
+    "use_irs": False,
+    "num_train_steps": 1000000,
+    "num_init_steps": 2000,  # only for off-policy algorithms.
+    # Test setup
+    "test_every_steps": 5000,
+    "num_test_episodes": 10,
+    # xplore part
+    "encoder": {"name": "TassaCnnEncoder", "observation_space": ..., "feature_dim": 50},
+    "learner": {
+        "observation_space": ...,
+        "action_space": ...,
+        "action_type": ...,
+        "device": ...,
+        "feature_dim": ...,
+        "lr": 1e-4,
+        "eps": 0.00008,
+        "hidden_dim": 1024,
+        "critic_target_tau": 0.01,
+        "update_every_steps": 2,
+    },
+    "storage": {"name": "NStepReplayStorage", "buffer_size": 500000, "batch_size": 256},
+    # xplore part
+    "distribution": {"name": "TruncatedNormalNoise"},
+    "augmentation": {"name": "RansomShift"},
+    "reward": {"name": None},
+}
+
 
 class DrQv2Learner(BaseLearner):
     """Data Regularized-Q v2 (DrQ-v2).
@@ -32,8 +64,8 @@ class DrQv2Learner(BaseLearner):
         observation_space: Space,
         action_space: Space,
         action_type: str,
-        device: Device = "cuda",
-        feature_dim: int = 50,
+        device: Device,
+        feature_dim: int,
         lr: float = 1e-4,
         eps: float = 0.00008,
         hidden_dim: int = 1024,

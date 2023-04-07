@@ -1,8 +1,8 @@
-from hsuanwu.common.logger import *
-from hsuanwu.common.typing import *
+from hsuanwu.common.logger import Logger, DEBUG
+from hsuanwu.common.typing import DictConfig
 
 MATCH_KEYS = {
-    "ContinuousLearner": {
+    "DrQv2Learner": {
         "storage": ["NStepReplayStorage"],
         "distribution": [
             "OrnsteinUhlenbeckNoise",
@@ -12,7 +12,7 @@ MATCH_KEYS = {
         "augmentation": [],
         "reward": [],
     },
-    "DiscreteLearner": {
+    "PPGLearner": {
         "storage": ["VanillaRolloutStorage"],
         "distribution": ["Categorical"],
         "augmentation": [],
@@ -45,12 +45,12 @@ MATCH_KEYS = {
 }
 
 
-def cfgs_checker(logger: Callable, cfgs: DictConfig):
+def cfgs_checker(logger: Logger, cfgs: DictConfig) -> None:
     """Check the compatibility of modules.
 
     Args:
-        logger: Hsuanwu logger instance.
-        cfgs: Dict Config.
+        logge (Logger): Hsuanwu logger instance.
+        cfgs (DictConfig): Dict Config.
 
     """
     logger.log(DEBUG, "Checking the Compatibility of Modules...")
