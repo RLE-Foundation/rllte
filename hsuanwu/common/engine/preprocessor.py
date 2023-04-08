@@ -13,6 +13,7 @@ def cfgs_preprocessor(logger: Logger, cfgs: DictConfig):
     Returns:
         Processed configs.
     """
+    
     new_cfgs = OmegaConf.create()
 
 
