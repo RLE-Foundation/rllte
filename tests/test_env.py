@@ -60,6 +60,7 @@ if __name__ == "__main__":
     seed = 7
     envs = make_dmc_env(
         env_id="cartpole_balance",
+        num_envs=3,
         visualize_reward=False,
         from_pixels=True,
         frame_stack=3,
@@ -71,11 +72,14 @@ if __name__ == "__main__":
     obs, info = envs.reset(seed=seed)
     print(obs.size(), info)
 
-    for step in range(7):
+    for step in range(1000):
         obs, reward, terminated, truncated, info = envs.step(
-            torch.rand(size=(1, envs.action_space.shape[0]))
+            torch.rand(size=(3, envs.action_space.shape[0]))
         )
-        print(reward, terminated, truncated)
+        # print(reward, terminated, truncated)
+        if "episode" in info:
+            print(info['episode'])
+
     envs.close()
     print("DeepMind Control Suite passed!")
 

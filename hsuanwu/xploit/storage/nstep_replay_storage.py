@@ -151,10 +151,14 @@ class NStepReplayStorage(IterableDataset):
         Returns:
             None.
         """
-        assert (
-            "discount" in info.keys()
-        ), "When using NStepReplayBuffer, please put the discount factor in 'info'!"
-        self._replay_storage.add(obs, action, reward, terminated, info["discount"])
+        if "discount" in info.keys():
+            discount = info['discount'][0]
+        elif "discount" in info['final_info'][0].keys():
+            discount = info['final_info'][0]['discount']
+        else:
+            raise ValueError("When using NStepReplayBuffer, please put the discount factor in 'info'!")
+
+        self._replay_storage.add(obs, action, reward, terminated, discount)
 
     def _store_episode(self, eps_fn: Path) -> bool:
         try:

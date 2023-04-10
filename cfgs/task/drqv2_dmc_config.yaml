@@ -1,46 +1,15 @@
-seed: 1 
-device: cuda                            
-use_aug: true                           
-use_irs: false                            
-num_train_steps: 250000                  
-num_init_steps: 2000
-# test setup
-test_every_steps: 5000
-num_test_episodes: 10                   
-
-encoder:
-  _target_: VanillaCnnEncoder             # encoder name
-  feature_dim: 50  
+########################### Train setup
+experiment: drqv2_dmc
+device: cuda:0            # Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                   # Random seed for reproduction.
+num_train_steps: 250000   # Number of training steps.
 
 learner:
-  _target_: ContinuousLearner             # learner type
+  name: DrQv2Learner
 
-storage:
-  _target_: NStepReplayStorage
-  buffer_size: 500000
-  batch_size: 256
-  pin_memory: true
-  num_workers: 4
-
-distribution:
-  _target_: TruncatedNormalNoise
-
-##############################################################
-augmentation:
-  _target_: RandomShift
-  pad: 4
-
-##############################################################
-reward:
-  _target_: RE3
-  beta: 0.05
-  kappa: 0.00001
-  latent_dim: 128
-
-##############################################################
 hydra:
   run:
-    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+    dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
   sweep:
     dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
     subdir: ${hydra.job.num}

@@ -1,17 +1,20 @@
 import torch
 
-from hsuanwu.common.typing import ABC, Device, Dict, Space, abstractmethod
+from hsuanwu.common.typing import ABC, Device, Dict, abstractmethod
 
 
 class BaseLearner(ABC):
     """Base class of learner.
 
     Args:
-        observation_space (Space): Observation space of the environment.
-        action_space (Space): Action shape of the environment.
-        action_type (str): Continuous or discrete action. "cont" or "dis".
+        observation_space (Dict): Observation space of the environment. 
+            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+        action_space (Dict): Action shape of the environment.
+            For supporting Hydra, the original 'action_space' is transformed into a dict like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim (int): Number of features extracted.
+        feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
 
@@ -21,9 +24,8 @@ class BaseLearner(ABC):
 
     def __init__(
         self,
-        observation_space: Space,
-        action_space: Space,
-        action_type: str,
+        observation_space: Dict,
+        action_space: Dict,
         device: Device,
         feature_dim: int,
         lr: float,
@@ -31,7 +33,6 @@ class BaseLearner(ABC):
     ) -> None:
         self.obs_space = observation_space
         self.action_space = action_space
-        self.action_type = action_type
         self.device = torch.device(device)
         self.feature_dim = feature_dim
         self.lr = lr

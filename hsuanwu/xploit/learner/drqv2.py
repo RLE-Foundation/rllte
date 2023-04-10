@@ -7,24 +7,17 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 
 DEFAULT_CFGS = {
-    # Train setup
-    "device": "cpu",
-    "seed": 1,
-    "use_aug": False,
-    "use_irs": False,
-    "num_train_steps": 1000000,
-    "num_init_steps": 2000,  # only for off-policy algorithms.
-    # Test setup
-    "test_every_steps": 5000,
-    "num_test_episodes": 10,
+    'use_aug': True,
+    'use_irs': False,
+    'num_init_steps': 2000, # only for off-policy algorithms
     # xplore part
-    "encoder": {"name": "TassaCnnEncoder", "observation_space": ..., "feature_dim": 50},
+    "encoder": {"name": "TassaCnnEncoder", "observation_space": dict(), "feature_dim": 50},
     "learner": {
-        "observation_space": ...,
-        "action_space": ...,
-        "action_type": ...,
-        "device": ...,
-        "feature_dim": ...,
+        "name": "DrQv2Learner",
+        "observation_space": dict(),
+        "action_space": dict(),
+        "device": str,
+        "feature_dim": int,
         "lr": 1e-4,
         "eps": 0.00008,
         "hidden_dim": 1024,
@@ -34,7 +27,7 @@ DEFAULT_CFGS = {
     "storage": {"name": "NStepReplayStorage", "buffer_size": 500000, "batch_size": 256},
     # xplore part
     "distribution": {"name": "TruncatedNormalNoise"},
-    "augmentation": {"name": "RansomShift"},
+    "augmentation": {"name": "RandomShift"},
     "reward": {"name": None},
 }
 
@@ -43,11 +36,14 @@ class DrQv2Learner(BaseLearner):
     """Data Regularized-Q v2 (DrQ-v2).
 
     Args:
-        observation_space (Space): Observation space of the environment.
-        action_space (Space): Action shape of the environment.
-        action_type (str): Continuous or discrete action. "cont" or "dis".
+        observation_space (Dict): Observation space of the environment. 
+            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+        action_space (Dict): Action shape of the environment.
+            For supporting Hydra, the original 'action_space' is transformed into a dict like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim (int): Number of features extracted.
+        feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
 
@@ -61,9 +57,8 @@ class DrQv2Learner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Space,
-        action_space: Space,
-        action_type: str,
+        observation_space: Dict,
+        action_space: Dict,
         device: Device,
         feature_dim: int,
         lr: float = 1e-4,
@@ -73,7 +68,7 @@ class DrQv2Learner(BaseLearner):
         update_every_steps: int = 2,
     ) -> None:
         super().__init__(
-            observation_space, action_space, action_type, device, feature_dim, lr, eps
+            observation_space, action_space, device, feature_dim, lr, eps
         )
 
         self.critic_target_tau = critic_target_tau

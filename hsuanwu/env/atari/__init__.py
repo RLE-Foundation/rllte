@@ -10,7 +10,7 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 
-from hsuanwu.common.typing import Any, Device, Dict, Env, Ndarray, Tensor, Tuple
+from hsuanwu.common.typing import Device, Dict, Env, Tensor, Tuple, Callable
 from hsuanwu.env.atari.wrappers import (
     EpisodicLifeEnv,
     FireResetEnv,
@@ -35,6 +35,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self._device = torch.device(device)
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
+        self.num_envs = len(env.envs)
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
@@ -66,24 +67,24 @@ class TorchVecEnvWrapper(gym.Wrapper):
 def make_atari_env(
     env_id: str = "Alien-v5",
     num_envs: int = 8,
+    device: torch.device = "cuda",
     seed: int = 0,
     frame_stack: int = 4,
-    device: torch.device = "cuda",
 ) -> Env:
     """Build Atari environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.
     """
 
-    def make_env(env_id: str, seed: int) -> Env:
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
             env = NoopResetEnv(env, noop_max=30)

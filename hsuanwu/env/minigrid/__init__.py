@@ -41,6 +41,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self._device = torch.device(device)
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
+        self.num_envs = len(env.envs)
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)

@@ -1,9 +1,10 @@
 import hydra
 import torch
+from pathlib import Path
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import *
-from hsuanwu.common.typing import DictConfig, Env
+from hsuanwu.common.logger import Logger, INFO, DEBUG, TEST, TRAIN
+from hsuanwu.common.typing import DictConfig, Env, Iterable, Tensor, Tuple
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
 
@@ -86,15 +87,15 @@ class OffPolicyTrainer(BasePolicyTrainer):
         """Sample actions based on observations.
 
         Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
+            obs (Tensor): Observations.
+            training (bool): training mode, True or False.
+            step (int): Global training step.
 
         Returns:
             Sampled actions.
         """
         # sample actions
-        encoded_obs = self._learner.encoder(obs.unsqueeze(0))
+        encoded_obs = self._learner.encoder(obs)
         dist = self._learner.actor.get_action(obs=encoded_obs, step=self._global_step)
 
         if not training:
@@ -103,7 +104,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             action = dist.sample()
             if step < self._num_init_steps:
                 action.uniform_(-1.0, 1.0)
-        return action.clamp(*self._action_range)
+        return action.clamp(*self._cfgs.action_space['range'])
 
     def train(self) -> None:
         """Training function."""
@@ -121,18 +122,18 @@ class OffPolicyTrainer(BasePolicyTrainer):
             with torch.no_grad(), utils.eval_mode(self._learner):
                 action = self.act(obs, training=True, step=self._global_step)
             next_obs, reward, terminated, truncated, info = self._train_env.step(action)
-            episode_reward += reward
+            episode_reward += reward[0].cpu().numpy()
             episode_step += 1
             self._global_step += 1
 
             # save transition
             self._replay_storage.add(
-                obs.cpu().numpy(),
-                action.cpu().numpy()[0],
-                reward.cpu().numpy(),
-                terminated.cpu().numpy(),
+                obs[0].cpu().numpy(),
+                action[0].cpu().numpy(),
+                reward[0].cpu().numpy(),
+                terminated[0].cpu().numpy(),
                 info,
-                next_obs.cpu().numpy(),
+                next_obs[0].cpu().numpy(),
             )
 
             # update agent
@@ -181,7 +182,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 action = self.act(obs, training=False, step=self._global_step)
 
             next_obs, reward, terminated, truncated, info = self._test_env.step(action)
-            total_reward += reward
+            total_reward += reward[0].cpu().numpy()
             step += 1
 
             if terminated or truncated:

@@ -6,12 +6,24 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from omegaconf import open_dict
+from omegaconf import open_dict, OmegaConf
 
 from hsuanwu.common.engine.checker import cfgs_checker
-from hsuanwu.common.logger import *
+from hsuanwu.common.logger import Logger, DEBUG, INFO
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import ABC, DictConfig, Env, abstractmethod
+from hsuanwu.common.typing import ABC, DictConfig, Env, abstractmethod, Tuple, Tensor, Space, Dict
+from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
+
+
+_DEFAULT_CFGS = {
+    # TODO: Train setup
+    'device': 'cpu',
+    'seed': 1,
+    'num_train_steps': 10000,
+    # TODO: Test setup
+    "test_every_steps": 5000,
+    "num_test_episodes": 10,
+}
 
 
 class BasePolicyTrainer(ABC):
@@ -43,9 +55,10 @@ class BasePolicyTrainer(ABC):
         random.seed(cfgs.seed)
         # debug
         self._logger.log(INFO, "Invoking Hsuanwu Engine...")
-        cfgs_checker(logger=self._logger, cfgs=cfgs)
         # preprocess the cfgs
-        self._cfgs = self._process_cfgs(cfgs)
+        processed_cfgs = self._process_cfgs(cfgs)
+        cfgs_checker(logger=self._logger, cfgs=processed_cfgs)
+        self._cfgs = self._set_class_path(processed_cfgs)
         # training track
         self._global_step = 0
         self._global_episode = 0
@@ -59,6 +72,35 @@ class BasePolicyTrainer(ABC):
     def global_episode(self) -> int:
         """Get global training episodes."""
         return self._global_episode
+    
+    def _remake_observation_and_action_space(self, observation_space: Space, action_space: Space) -> Tuple[Dict]:
+        """Transform the original 'Box' space into Hydra supported type.
+
+        Args:
+            observation_space (Space): The observation space.
+            action_space (Space): The action space.
+        
+        Returns:
+            Processed spaces.
+        """
+        new_observation_space = {"shape": observation_space.shape}
+
+        if action_space.__class__.__name__ == "Discrete":
+            n = int(action_space.n)
+            new_action_space = {"shape": (n, ), 
+                                "type": "Discrete", 
+                                "range": [0, n - 1]}
+        elif action_space.__class__.__name__ == "Box":
+            low, high = float(action_space.low[0]), float(action_space.high[0])
+            new_action_space = {"shape": action_space.shape, 
+                                "type": "Box", 
+                                "range": [low, high]}
+        else:
+            raise NotImplementedError("Unsupported action type!")
+        
+        return new_observation_space, new_action_space
+
+
 
     def _process_cfgs(self, cfgs: DictConfig) -> DictConfig:
         """Preprocess the configs.
@@ -69,70 +111,84 @@ class BasePolicyTrainer(ABC):
         Returns:
             Processed configs.
         """
-        # remake observation and action sapce
-        obs_shape = self._train_env.observation_space.shape
-        observation_space = {"shape": self._train_env.observation_space.shape}
-        if self._train_env.action_space.__class__.__name__ == "Discrete":
-            action_space = {"shape": (self._train_env.action_space.n,)}
-            action_type = "dis"
-            self._action_range = [0, self._train_env.action_space.n - 1]
-        elif self._train_env.action_space.__class__.__name__ == "Box":
-            action_space = {"shape": self._train_env.action_space.shape}
-            action_type = "cont"
-            self._action_range = [
-                self._train_env.action_space.low[0],
-                self._train_env.action_space.high[0],
-            ]
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        new_cfgs = OmegaConf.create(_DEFAULT_CFGS)
+        try:
+            cfgs.learner.name
+        except:
+            raise ValueError(f"The learner name must be specified!")
 
-        # set observation and action space for learner and encoder
-        with open_dict(cfgs):
-            # for encoder
-            cfgs.encoder.observation_space = observation_space
-            # for learner
-            cfgs.learner.observation_space = observation_space
-            cfgs.learner.action_space = action_space
-            cfgs.learner.action_type = action_type
-            cfgs.learner.device = cfgs.device
-            cfgs.learner.feature_dim = cfgs.encoder.feature_dim
+        if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
+            raise NotImplementedError(f'Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/.')
+        
+        # TODO: try to load common configs
+        for key in _DEFAULT_CFGS.keys():
+            try:
+                new_cfgs[key] = cfgs[key]
+            except:
+                pass
+        
+        # TODO: load the default configs of learner
+        learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
+        new_cfgs.merge_with(learner_default_cfgs)
 
-        # set observation and action shape for rollout storage.
-        if "Rollout" in cfgs.storage._target_:
-            with open_dict(cfgs):
-                cfgs.storage.device = cfgs.device
-                cfgs.storage.obs_shape = obs_shape
-                cfgs.storage.action_shape = action_space["shape"]
-                cfgs.storage.action_type = action_type
-                cfgs.storage.num_steps = cfgs.num_steps
-                cfgs.storage.num_envs = cfgs.num_envs
+        # TODO: try to load self-defined configs
+        for part in ['encoder', 'learner', 'storage', 'distribution', 'augmentation', 'reward']:
+            if part == 'augmentation' and not new_cfgs.use_aug: # don't use observation augmentation
+                continue
+            if part == 'reward' and not new_cfgs.use_irs: # don't use intrinsic reward
+                continue
 
-        # set observation and action shape for replay storage.
-        if "Replay" in cfgs.storage._target_ and "NStep" not in cfgs.storage._target_:
-            with open_dict(cfgs):
-                cfgs.storage.device = cfgs.device
-                cfgs.storage.obs_shape = obs_shape
-                cfgs.storage.action_shape = action_space["shape"]
-                cfgs.storage.action_type = action_type
+            for key in new_cfgs[part].keys():
+                try:
+                    new_cfgs[part][key] = cfgs[part][key]
+                except:
+                    pass
+        
+        # TODO: replace 'name' with '_target_' to use 'hydra.utils.instantiate'
+        for part in ['encoder', 'learner', 'storage', 'distribution', 'augmentation', 'reward']:
+            new_cfgs[part]['_target_'] = new_cfgs[part]['name']
+            new_cfgs[part].pop('name')
 
-        # set observation and action shape for distributed storage.
-        if "Distributed" in cfgs.storage._target_:
-            with open_dict(cfgs):
-                cfgs.storage.device = cfgs.device
-                cfgs.storage.obs_shape = obs_shape
-                cfgs.storage.action_shape = action_space["shape"]
-                cfgs.storage.action_type = action_type
-                cfgs.storage.num_steps = cfgs.num_steps
+        # TODO: remake observation and action sapce
+        observation_space, action_space = self._remake_observation_and_action_space(
+            self._train_env.observation_space, self._train_env.action_space)
+        new_cfgs.observation_space = observation_space
+        new_cfgs.action_space = action_space
 
-        # xplore part
-        if cfgs.use_irs:
-            with open_dict(cfgs):
-                cfgs.reward.obs_shape = observation_space["shape"]
-                cfgs.reward.action_shape = action_space["shape"]
-                cfgs.reward.action_type = action_type
-                cfgs.reward.device = cfgs.device
+        # TODO: fill parameters for encoder, learner, and storage
+        ## for encoder
+        new_cfgs.encoder.observation_space = observation_space
+        new_cfgs.learner.observation_space = observation_space
+        new_cfgs.learner.action_space = action_space
+        new_cfgs.learner.device = new_cfgs.device
+        new_cfgs.learner.feature_dim = new_cfgs.encoder.feature_dim
 
-        return self._set_class_path(cfgs)
+        ## for storage
+        if "Rollout" in new_cfgs.storage._target_:
+            new_cfgs.storage.device = new_cfgs.device
+            new_cfgs.storage.obs_shape = observation_space['shape']
+            new_cfgs.storage.action_shape = action_space['shape']
+            new_cfgs.storage.num_steps = new_cfgs.num_steps
+            new_cfgs.storage.num_envs = self._train_env.num_envs
+
+        if "Replay" in new_cfgs.storage._target_ and "NStep" not in new_cfgs.storage._target_:
+            new_cfgs.storage.device = new_cfgs.device
+            new_cfgs.storage.obs_shape = observation_space['shape']
+            new_cfgs.storage.action_shape = action_space['shape']
+        
+        if "Distributed" in new_cfgs.storage._target_:
+            new_cfgs.storage.device = new_cfgs.device
+            new_cfgs.storage.obs_shape = observation_space['shape']
+            new_cfgs.storage.action_shape = action_space['shape']
+            new_cfgs.storage.num_steps = new_cfgs.num_steps
+
+        ## for reward
+        if new_cfgs.use_irs:
+            new_cfgs.reward.device = new_cfgs.device
+            new_cfgs.reward.obs_shape = observation_space["shape"]
+            new_cfgs.reward.action_shape = action_space["shape"]
+
+        return new_cfgs
 
     def _set_class_path(self, cfgs: DictConfig) -> DictConfig:
         """Set the class path for each module.
@@ -159,27 +215,27 @@ class BasePolicyTrainer(ABC):
 
         return cfgs
 
-    @abstractmethod
-    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Any]:
-        """Sample actions based on observations.
+    # @abstractmethod
+    # def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
+    #     """Sample actions based on observations.
 
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
+    #     Args:
+    #         obs: Observations.
+    #         training: training mode, True or False.
+    #         step: Global training step.
 
-        Returns:
-            Sampled actions.
-        """
+    #     Returns:
+    #         Sampled actions.
+    #     """
 
-    @abstractmethod
-    def train(self) -> None:
-        """Training function."""
+    # @abstractmethod
+    # def train(self) -> None:
+    #     """Training function."""
 
-    @abstractmethod
-    def test(self) -> None:
-        """Testing function."""
+    # @abstractmethod
+    # def test(self) -> None:
+    #     """Testing function."""
 
-    @abstractmethod
-    def save(self) -> None:
-        """Save the trained model."""
+    # @abstractmethod
+    # def save(self) -> None:
+    #     """Save the trained model."""

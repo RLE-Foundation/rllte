@@ -4,8 +4,10 @@ import gymnasium as gym
 import numpy as np
 import torch
 from gymnasium.envs.registration import register
+from gymnasium.vector import SyncVectorEnv
+from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.common.typing import Any, Device, Dict, Env, List, Ndarray, Tensor, Tuple
+from hsuanwu.common.typing import Device, Dict, Env, List, Tensor, Tuple, Callable
 from hsuanwu.env.utils import FrameStack
 
 
@@ -23,8 +25,9 @@ class TorchVecEnvWrapper(gym.Wrapper):
     def __init__(self, env: Env, device: Device) -> None:
         super().__init__(env)
         self._device = torch.device(device)
-        self.observation_space = env.observation_space
-        self.action_space = env.action_space
+        self.observation_space = env.single_observation_space
+        self.action_space = env.single_action_space
+        self.num_envs = len(env.envs)
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
@@ -33,12 +36,17 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(
-            action.cpu().numpy()[0]
+            action.cpu().numpy()
         )
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
         reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device)
         terminated = torch.as_tensor(
-            1.0 if terminated else 0.0,
+            [[1.0] if _ else [0.0] for _ in terminated],
+            dtype=torch.float32,
+            device=self._device,
+        )
+        truncated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in truncated],
             dtype=torch.float32,
             device=self._device,
         )
@@ -48,6 +56,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
 def make_dmc_env(
     env_id: str = "cartpole_balance",
+    num_envs: int = 1,
     device: Device = "cuda",
     resource_files: List = None,
     img_source: str = None,
@@ -67,6 +76,7 @@ def make_dmc_env(
 
     Args:
         env_id (str): Name of environment.
+        num_envs (int): Number of parallel environments.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         resource_files (List): File path of the resource files.
         img_source (str): Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
@@ -85,40 +95,52 @@ def make_dmc_env(
     Returns:
         Environments instance.
     """
-    domain_name, task_name = env_id.split("_")
-    env_id = "dmc_%s_%s_%s-v1" % (domain_name, task_name, seed)
 
-    if from_pixels:
-        assert (
-            not visualize_reward
-        ), "cannot use visualize reward when learning from pixels"
+    def make_env(env_id: str, seed: int) -> Callable:
+        def _thunk():
+            domain_name, task_name = env_id.split("_")
+            _env_id = "dmc_%s_%s_%s-v1" % (domain_name, task_name, seed)
 
-    # shorten episode length
-    max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
+            if from_pixels:
+                assert (
+                    not visualize_reward
+                ), "Cannot use visualize reward when learning from pixels!"
 
-    if not env_id in gym.envs.registry:
-        register(
-            id=env_id,
-            entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",
-            kwargs={
-                "domain_name": domain_name,
-                "task_name": task_name,
-                "resource_files": resource_files,
-                "img_source": img_source,
-                "total_frames": total_frames,
-                "task_kwargs": {"random": seed},
-                "environment_kwargs": environment_kwargs,
-                "visualize_reward": visualize_reward,
-                "from_pixels": from_pixels,
-                "height": height,
-                "width": width,
-                "camera_id": camera_id,
-                "frame_skip": frame_skip,
-            },
-            max_episode_steps=max_episode_steps,
-        )
-    if visualize_reward:
-        return TorchVecEnvWrapper(gym.make(env_id), device)
-    else:
-        env = FrameStack(gym.make(env_id), frame_stack)
-        return TorchVecEnvWrapper(env, device)
+            # shorten episode length
+            max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
+
+            if not _env_id in gym.envs.registry:
+                register(
+                    id=env_id,
+                    entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",
+                    kwargs={
+                        "domain_name": domain_name,
+                        "task_name": task_name,
+                        "resource_files": resource_files,
+                        "img_source": img_source,
+                        "total_frames": total_frames,
+                        "task_kwargs": {"random": seed},
+                        "environment_kwargs": environment_kwargs,
+                        "visualize_reward": visualize_reward,
+                        "from_pixels": from_pixels,
+                        "height": height,
+                        "width": width,
+                        "camera_id": camera_id,
+                        "frame_skip": frame_skip,
+                    },
+                    max_episode_steps=max_episode_steps,
+                )
+            
+            if visualize_reward:
+                return gym.make(env_id)
+            else:
+                return FrameStack(gym.make(env_id), frame_stack)
+        
+        return _thunk
+
+
+    envs = [make_env(env_id, seed + i) for i in range(num_envs)]
+    envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
+
+    return TorchVecEnvWrapper(envs, device)
