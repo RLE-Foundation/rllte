@@ -1,5 +1,4 @@
 from .base import BaseLearner
-from .drac import DrACLearner
 from .drqv2 import DrQv2Learner
 from .impala import IMPALALearner
 from .network import *

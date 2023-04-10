@@ -40,6 +40,7 @@ class TassaCnnEncoder(BaseEncoder):
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, feature_dim)
+        self.layer_norm = nn.LayerNorm(feature_dim)
 
         self.apply(network_init)
 
@@ -47,4 +48,4 @@ class TassaCnnEncoder(BaseEncoder):
         obs = obs / 255.0 - 0.5
         h = self.trunk(obs)
 
-        return self.linear(h.view(h.size()[0], -1))
+        return self.layer_norm(self.linear(h.view(h.size()[0], -1)))

@@ -20,12 +20,14 @@ _DEFAULT_CFGS = {
     ## TODO: Train setup
     'device': 'cpu',
     'seed': 1,
-    'num_train_steps': 10000,
+    'num_train_steps': 100000,
     ## TODO: Test setup
     "test_every_steps": 5000, # only for off-policy algorithms
     "test_every_episodes": 10, # only for on-policy algorithms
     "num_test_episodes": 10,
 }
+
+_COMMON_KEYS = ['device', 'seed', 'num_train_steps', 'use_aug', 'use_irs']
 
 
 class BasePolicyTrainer(ABC):
@@ -125,18 +127,18 @@ class BasePolicyTrainer(ABC):
         if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
             raise NotImplementedError(f'Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/.')
         
-        # TODO: try to load common configs
-        for key in _DEFAULT_CFGS.keys():
-            try:
-                new_cfgs[key] = cfgs[key]
-            except:
-                pass
-        
         # TODO: load the default configs of learner
         learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
         new_cfgs.merge_with(learner_default_cfgs)
 
         # TODO: try to load self-defined configs
+        ## common configs
+        for key in _COMMON_KEYS:
+            try:
+                new_cfgs[key] = cfgs[key]
+            except:
+                pass
+
         for part in ['encoder', 'learner', 'storage', 'distribution', 'augmentation', 'reward']:
             if part == 'augmentation' and not new_cfgs.use_aug: # don't use observation augmentation
                 continue

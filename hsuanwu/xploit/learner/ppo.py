@@ -25,6 +25,7 @@ DEFAULT_CFGS = {
         "num_mini_batch": 8,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
+        "aug_coef": 0.1,
         "max_grad_norm": 0.5,
     },
     "storage": {"name": "VanillaRolloutStorage"},
@@ -35,7 +36,8 @@ DEFAULT_CFGS = {
 }
 
 class PPOLearner(BaseLearner):
-    """Proximal Policy Optimization (PPO) Learner.
+    """Proximal Policy Optimization (PPO) Learner. 
+        When 'use_aug' is True, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
 
     Args:
         observation_space (Dict): Observation space of the environment. 
@@ -55,6 +57,7 @@ class PPOLearner(BaseLearner):
         num_mini_batch (int): Number of mini-batches.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
+        aug_coef (float): Weighting coefficient of augmentation loss.
         max_grad_norm (float): Maximum norm of gradients.
 
     Returns:
@@ -75,6 +78,7 @@ class PPOLearner(BaseLearner):
         num_mini_batch: int,
         vf_coef: float,
         ent_coef: float,
+        aug_coef: float,
         max_grad_norm: float
     ) -> None:
         super().__init__(
@@ -86,6 +90,7 @@ class PPOLearner(BaseLearner):
         self.num_mini_batch = num_mini_batch
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
+        self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
 
         # create models
@@ -141,6 +146,7 @@ class PPOLearner(BaseLearner):
         total_actor_loss = 0.0
         total_critic_loss = 0.0
         total_entropy_loss = 0.0
+        total_aug_loss = 0.0
 
         for e in range(self.n_epochs):
             generator = rollout_storage.generator(self.num_mini_batch)
@@ -180,12 +186,31 @@ class PPOLearner(BaseLearner):
                 critic_loss = (
                     0.5 * torch.max(values_losses, values_losses_clipped).mean()
                 )
+                
+                if self.aug is not None:
+                    # augmentation loss part
+                    batch_obs_aug = self.aug(batch_obs)
+                    new_batch_actions, _, _, _ = self.ac.get_action_and_value(
+                        obs=self.encoder(batch_obs)
+                    )
+
+                    _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
+                        obs=self.encoder(batch_obs_aug), actions=new_batch_actions
+                    )
+                    action_loss_aug = -log_probs_aug.mean()
+                    value_loss_aug = 0.5 * (torch.detach(values) - values_aug).pow(2).mean()
+                    aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
+                else:
+                    aug_loss = torch.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
                 # update
                 self.encoder_opt.zero_grad(set_to_none=True)
                 self.ac_opt.zero_grad(set_to_none=True)
                 (
-                    critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
+                    critic_loss * self.vf_coef
+                    + actor_loss
+                    - entropy * self.ent_coef
+                    + aug_loss
                 ).backward()
                 nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
@@ -195,15 +220,18 @@ class PPOLearner(BaseLearner):
                 total_actor_loss += actor_loss.item()
                 total_critic_loss += critic_loss.item()
                 total_entropy_loss += entropy.item()
+                total_aug_loss += aug_loss.item()
 
         num_updates = self.n_epochs * self.num_mini_batch
 
         total_actor_loss /= num_updates
         total_critic_loss /= num_updates
         total_entropy_loss /= num_updates
+        total_aug_loss /= num_updates
 
         return {
             "actor_loss": total_actor_loss,
             "critic_loss": total_critic_loss,
             "entropy": total_entropy_loss,
+            "aug_loss": total_aug_loss,
         }
