@@ -25,8 +25,8 @@ class DistributedTrainer(BasePolicyTrainer):
     Returns:
         On-policy trainer instance.
     """
-    def __init__(self, train_env: Env, test_env: Env, cfgs: DictConfig) -> None:
-        super().__init__(train_env, test_env, cfgs)
+    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+        super().__init__(cfgs, train_env, test_env)
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build storage

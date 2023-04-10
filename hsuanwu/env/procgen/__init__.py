@@ -34,7 +34,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
             dtype=env.single_observation_space.dtype,
         )
         self.action_space = env.single_action_space
-        self.num_envs = len(env.envs)
+        self.num_envs = env.num_envs
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
@@ -74,13 +74,15 @@ class AdapterEnv(gym.Wrapper):
 
     Args:
         env (Env): Environment to wrap.
+        num_envs (int): Number of parallel environments.
 
     Returns:
         AdapterEnv instance.
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: Env, num_envs: int) -> None:
         super().__init__(env)
+        self.num_envs = num_envs
 
     def step(self, action: int) -> Tuple[Ndarray, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)
@@ -121,7 +123,7 @@ def make_procgen_env(
         start_level=start_level,
         distribution_mode=distribution_mode,
     )
-    envs = AdapterEnv(envs)
+    envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"])
     envs.single_action_space = envs.action_space
     envs.single_observation_space = envs.observation_space["rgb"]

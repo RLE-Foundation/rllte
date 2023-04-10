@@ -36,7 +36,7 @@ class TrainEnvs:
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='impala_atari_config')
 def main(cfgs):
     trainer = DistributedTrainer(
-        TrainEnvs(), None, cfgs
+        cfgs, TrainEnvs()
     )
     trainer.train()
 

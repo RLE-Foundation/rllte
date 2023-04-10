@@ -27,7 +27,7 @@ print(train_env.observation_space)
 
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='sac_dmc_config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
+    trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
     trainer.train()
 
 if __name__ == '__main__':

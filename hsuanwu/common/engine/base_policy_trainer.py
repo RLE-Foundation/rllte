@@ -6,10 +6,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from omegaconf import open_dict, OmegaConf
+from omegaconf import OmegaConf
 
 from hsuanwu.common.engine.checker import cfgs_checker
-from hsuanwu.common.logger import Logger, DEBUG, INFO
+from hsuanwu.common.logger import Logger, INFO
 from hsuanwu.common.timer import Timer
 from hsuanwu.common.typing import ABC, DictConfig, Env, abstractmethod, Tuple, Tensor, Space, Dict
 from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
@@ -22,7 +22,8 @@ _DEFAULT_CFGS = {
     'seed': 1,
     'num_train_steps': 10000,
     ## TODO: Test setup
-    "test_every_steps": 5000,
+    "test_every_steps": 5000, # only for off-policy algorithms
+    "test_every_episodes": 10, # only for on-policy algorithms
     "num_test_episodes": 10,
 }
 
@@ -31,15 +32,15 @@ class BasePolicyTrainer(ABC):
     """Base class of policy trainer.
 
     Args:
+        cfgs (DictConfig): Dict config for configuring RL algorithms.
         train_env (Env): A Gym-like environment for training.
         test_env (Env): A Gym-like environment for testing.
-        cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
         Base policy trainer instance.
     """
 
-    def __init__(self, train_env: Env, test_env: Env, cfgs: DictConfig) -> None:
+    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
         # basic setup
         self._train_env = train_env
         self._test_env = test_env
@@ -61,6 +62,10 @@ class BasePolicyTrainer(ABC):
         cfgs_checker(logger=self._logger, cfgs=processed_cfgs)
         self._cfgs = self._set_class_path(processed_cfgs)
         # training track
+        self._num_train_steps = self._cfgs.num_train_steps
+        self._num_test_episodes = self._cfgs.num_test_episodes
+        self._test_every_steps = self._cfgs.test_every_steps # only for off-policy algorithms
+        self._test_every_episodes = self._cfgs.test_every_episodes # only for on-policy algorithms
         self._global_step = 0
         self._global_episode = 0
 
@@ -100,7 +105,6 @@ class BasePolicyTrainer(ABC):
             raise NotImplementedError("Unsupported action type!")
         
         return new_observation_space, new_action_space
-
 
 
     def _process_cfgs(self, cfgs: DictConfig) -> DictConfig:
@@ -153,6 +157,7 @@ class BasePolicyTrainer(ABC):
         # TODO: remake observation and action sapce
         observation_space, action_space = self._remake_observation_and_action_space(
             self._train_env.observation_space, self._train_env.action_space)
+        new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space
         new_cfgs.action_space = action_space
 
@@ -174,7 +179,7 @@ class BasePolicyTrainer(ABC):
             new_cfgs.storage.action_shape = action_space['shape']
             new_cfgs.storage.action_type = action_space['type']
             new_cfgs.storage.num_steps = new_cfgs.num_steps
-            new_cfgs.storage.num_envs = self._train_env.num_envs
+            new_cfgs.storage.num_envs = new_cfgs.num_envs
 
         if "Replay" in new_cfgs.storage._target_ and "NStep" not in new_cfgs.storage._target_:
             new_cfgs.storage.device = new_cfgs.device
@@ -221,27 +226,27 @@ class BasePolicyTrainer(ABC):
 
         return cfgs
 
-    # @abstractmethod
-    # def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
-    #     """Sample actions based on observations.
+    @abstractmethod
+    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
+        """Sample actions based on observations.
 
-    #     Args:
-    #         obs: Observations.
-    #         training: training mode, True or False.
-    #         step: Global training step.
+        Args:
+            obs: Observations.
+            training: training mode, True or False.
+            step: Global training step.
 
-    #     Returns:
-    #         Sampled actions.
-    #     """
+        Returns:
+            Sampled actions.
+        """
 
-    # @abstractmethod
-    # def train(self) -> None:
-    #     """Training function."""
+    @abstractmethod
+    def train(self) -> None:
+        """Training function."""
 
-    # @abstractmethod
-    # def test(self) -> None:
-    #     """Testing function."""
+    @abstractmethod
+    def test(self) -> None:
+        """Testing function."""
 
-    # @abstractmethod
-    # def save(self) -> None:
-    #     """Save the trained model."""
+    @abstractmethod
+    def save(self) -> None:
+        """Save the trained model."""

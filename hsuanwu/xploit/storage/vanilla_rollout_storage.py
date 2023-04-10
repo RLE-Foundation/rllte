@@ -11,8 +11,8 @@ class VanillaRolloutStorage:
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         obs_shape (Tuple): The data shape of observations.
         action_shape (Tuple): The data shape of actions.
-        action_type (str): The type of actions, 'cont' or 'dis'.
-        num_steps (int): The sample steps of per rollout.
+        action_type (str): The type of actions, 'Discrete' or 'Box'.
+        num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
         discount (float): discount factor.
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
@@ -46,14 +46,14 @@ class VanillaRolloutStorage:
             dtype=torch.float32,
             device=self._device,
         )
-        if action_type == "dis":
+        if action_type == "Discrete":
             self._action_dim = 1
             self.actions = torch.empty(
                 size=(num_steps, num_envs, self._action_dim),
                 dtype=torch.float32,
                 device=self._device,
             )
-        elif action_type == "cont":
+        elif action_type == "Box":
             self._action_dim = action_shape[0]
             self.actions = torch.empty(
                 size=(num_steps, num_envs, self._action_dim),

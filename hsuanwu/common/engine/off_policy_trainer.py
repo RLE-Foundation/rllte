@@ -12,16 +12,16 @@ class OffPolicyTrainer(BasePolicyTrainer):
     """Trainer for off-policy algorithms.
 
     Args:
+        cfgs (DictConfig): Dict config for configuring RL algorithms.
         train_env (Env): A Gym-like environment for training.
         test_env (Env): A Gym-like environment for testing.
-        cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
         Off-policy trainer instance.
     """
 
-    def __init__(self, train_env: Env, test_env: Env, cfgs: DictConfig) -> None:
-        super().__init__(train_env, test_env, cfgs)
+    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+        super().__init__(cfgs, train_env, test_env)
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
@@ -68,10 +68,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         else:
             self._use_nstep_replay_storage = False
 
-        # training track
-        self._num_train_steps = self._cfgs.num_train_steps
         self._num_init_steps = self._cfgs.num_init_steps
-        self._test_every_steps = self._cfgs.test_every_steps
 
         # debug
         self._logger.log(DEBUG, "Check Accomplished. Start Training...")
@@ -114,7 +111,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         while self._global_step <= self._num_train_steps:
             # try to test
-            if self._global_step % self._test_every_steps == 0:
+            if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
                 test_metrics = self.test()
                 self._logger.log(level=TEST, msg=test_metrics)
 
@@ -177,7 +174,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         step, episode, total_reward = 0, 0, 0
         obs, info = self._test_env.reset(seed=self._seed)
 
-        while episode <= self._cfgs.num_test_episodes:
+        while episode <= self._num_test_episodes:
             with torch.no_grad(), utils.eval_mode(self._learner):
                 action = self.act(obs, training=False, step=self._global_step)
 

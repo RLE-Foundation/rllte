@@ -1,28 +1,29 @@
 from collections import deque
+from pathlib import Path
 
 import hydra
 import numpy as np
 import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import *
-from hsuanwu.common.typing import DictConfig, Env
+from hsuanwu.common.logger import Logger, INFO, DEBUG, TEST, TRAIN
+from hsuanwu.common.typing import DictConfig, Env, Tensor, Tuple, Dict
 
 
 class OnPolicyTrainer(BasePolicyTrainer):
     """Trainer for on-policy algorithms.
 
     Args:
+        cfgs (DictConfig): Dict config for configuring RL algorithms.
         train_env (Env): A Gym-like environment for training.
         test_env (Env): A Gym-like environment for testing.
-        cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
         On-policy trainer instance.
     """
 
-    def __init__(self, train_env: Env, test_env: Env, cfgs: DictConfig) -> None:
-        super().__init__(train_env, test_env, cfgs)
+    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+        super().__init__(cfgs, train_env, test_env)
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
@@ -52,12 +53,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
         if self._cfgs.use_irs:
             self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
 
-        # training track
-        self._num_train_steps = self._cfgs.num_train_steps
         self._num_steps = self._cfgs.num_steps
         self._num_envs = self._cfgs.num_envs
-        self._num_test_episodes = self._cfgs.num_test_episodes
-        self._test_every_episodes = self._cfgs.test_every_episodes
 
         # debug
         self._logger.log(DEBUG, "Check Accomplished. Start Training...")
@@ -95,7 +92,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         for update in range(num_updates):
             # try to test
-            if update % self._test_every_episodes == 0:
+            if (update % self._test_every_episodes) == 0 and (self._test_env is not None):
                 test_metrics = self.test()
                 self._logger.log(level=TEST, msg=test_metrics)
 
