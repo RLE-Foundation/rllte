@@ -10,16 +10,18 @@ from hsuanwu.env import make_dmc_env
 from hsuanwu.common.engine import OffPolicyTrainer
 
 train_env = make_dmc_env(env_id='cartpole_swingup', 
+                         num_envs=1,
                          seed=1, 
                          visualize_reward=True,
                          from_pixels=False
                          )
 
 test_env = make_dmc_env(env_id='cartpole_swingup',
-                       seed=1, 
-                       visualize_reward=True,
-                       from_pixels=False
-                       )
+                        num_envs=1,
+                        seed=1, 
+                        visualize_reward=True,
+                        from_pixels=False
+                        )
 
 print(train_env.observation_space)
 

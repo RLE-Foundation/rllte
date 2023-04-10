@@ -1,42 +1,15 @@
-seed: 1 
-device: cuda                            
-use_aug: false                           
-use_irs: false                            
-num_train_steps: 1000000                  
-num_init_steps: 5000
-stddev_schedule: linear(1.0, 0.1, 100000)
-# test setup
-test_every_steps: 10000
-num_test_episodes: 10                   
-
-encoder:
-  _target_: IdentityEncoder             # encoder name
-  feature_dim: 5
-
+########################### Train setup
+experiment: sac_dmc_state
+device: cuda:0            # Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                   # Random seed for reproduction.
+num_train_steps: 1000000   # Number of training steps.
 
 learner:
-  _target_: SACLearner             # learner type
+  name: SACLearner
 
-storage:
-  _target_: VanillaReplayStorage
-  buffer_size: ${num_train_steps}
-  batch_size: 1024
-
-distribution:
-  _target_: SquashedNormal
-
-##############################################################
-augmentation:
-  _target_: RandomShift
-
-##############################################################
-reward:
-  _target_: RE3
-
-##############################################################
 hydra:
   run:
-    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+    dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
   sweep:
     dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
     subdir: ${hydra.job.num}

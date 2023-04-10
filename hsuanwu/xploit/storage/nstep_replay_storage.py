@@ -70,7 +70,7 @@ class NStepReplayStorage(IterableDataset):
     """Replay storage for off-policy algorithms (N-step returns supported).
 
     Args:
-        buffer_size (int): Max number of element in the buffer.
+        storage_size (int): Max number of element in the storage.
         batch_size (int): Number of samples per batch to load.
         num_workers (int): Subprocesses to use for data loading.
         pin_memory (bool): Copy Tensors into device/CUDA pinned memory before returning them.
@@ -85,7 +85,7 @@ class NStepReplayStorage(IterableDataset):
 
     def __init__(
         self,
-        buffer_size: int = 500000,
+        storage_size: int = 500000,
         batch_size: int = 256,
         num_workers: int = 4,
         pin_memory: bool = True,
@@ -97,7 +97,7 @@ class NStepReplayStorage(IterableDataset):
         # set storage
         self._replay_dir = Path.cwd() / "storage"
         self._replay_storage = ReplayStorage(self._replay_dir)
-        self._buffer_size = buffer_size
+        self._storage_size = storage_size
         self._batch_size = batch_size
         self._num_workers = max(1, num_workers)
         self._pin_memory = pin_memory
@@ -109,7 +109,7 @@ class NStepReplayStorage(IterableDataset):
         self._worker_eps_pool = dict()
         self._worker_eps_fn_pool = list()
         self._worker_size = 0
-        self._worker_max_size = buffer_size // max(1, num_workers)
+        self._worker_max_size = storage_size // max(1, num_workers)
         self._fetch_every = fetch_every
         self._fetched_samples = fetch_every
 
@@ -156,7 +156,7 @@ class NStepReplayStorage(IterableDataset):
         elif "discount" in info['final_info'][0].keys():
             discount = info['final_info'][0]['discount']
         else:
-            raise ValueError("When using NStepReplayBuffer, please put the discount factor in 'info'!")
+            raise ValueError("When using NStepReplayStorage, please put the discount factor in 'info'!")
 
         self._replay_storage.add(obs, action, reward, terminated, discount)
 

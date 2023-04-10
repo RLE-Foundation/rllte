@@ -2,11 +2,40 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor, Tuple
+from hsuanwu.common.typing import Device, Dict, Storage, Tensor, Tuple
 from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
+DEFAULT_CFGS = {
+    'use_aug': False,
+    'use_irs': False,
+    'num_init_steps': 5000, # only for off-policy algorithms
+    # xploit part
+    "encoder": {"name": "IdentityEncoder", "observation_space": dict(), "feature_dim": 5},
+    "learner": {
+        "name": "SACLearner",
+        "observation_space": dict(),
+        "action_space": dict(),
+        "device": str,
+        "feature_dim": int,
+        "lr": 1e-4,
+        "eps": 0.00008,
+        "hidden_dim": 1024,
+        "critic_target_tau": 0.005,
+        "update_every_steps": 2,
+        "log_std_range": (-5.0, 2),
+        "betas": (0.9, 0.999),
+        "temperature":  0.1,
+        "fixed_temperature": False,
+        "discount": 0.99,
+    },
+    "storage": {"name": "VanillaReplayStorage", "storage_size": 1000000, "batch_size": 1024},
+    # xplore part
+    "distribution": {"name": "SquashedNormal"},
+    "augmentation": {"name": None},
+    "reward": {"name": None},
+}
 
 class SACLearner(BaseLearner):
     """Soft Actor-Critic (SAC) Learner
@@ -42,19 +71,19 @@ class SACLearner(BaseLearner):
         action_space: Dict,
         device: Device,
         feature_dim: int,
-        lr: float = 1e-4,
-        eps: float = 0.00008,
-        hidden_dim: int = 1024,
-        critic_target_tau: float = 0.005,
-        update_every_steps: int = 2,
-        log_std_range: Tuple[float] = (-5.0, 2),
-        betas: Tuple[float] = (0.9, 0.999),
-        temperature: float = 0.1,
-        fixed_temperature: bool = False,
-        discount: float = 0.99,
+        lr: float,
+        eps: float,
+        hidden_dim: int,
+        critic_target_tau: float,
+        update_every_steps: int,
+        log_std_range: Tuple[float],
+        betas: Tuple[float],
+        temperature: float,
+        fixed_temperature: bool,
+        discount: float,
     ) -> None:
         super().__init__(
-            observation_space, action_space, action_type, device, feature_dim, lr, eps
+            observation_space, action_space, device, feature_dim, lr, eps
         )
 
         self.critic_target_tau = critic_target_tau

@@ -1,7 +1,7 @@
 import torch
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor
+from hsuanwu.common.typing import Device, Dict, Iterable, Tensor
 from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
@@ -10,7 +10,7 @@ DEFAULT_CFGS = {
     'use_aug': True,
     'use_irs': False,
     'num_init_steps': 2000, # only for off-policy algorithms
-    # xplore part
+    # xploit part
     "encoder": {"name": "TassaCnnEncoder", "observation_space": dict(), "feature_dim": 50},
     "learner": {
         "name": "DrQv2Learner",
@@ -24,7 +24,7 @@ DEFAULT_CFGS = {
         "critic_target_tau": 0.01,
         "update_every_steps": 2,
     },
-    "storage": {"name": "NStepReplayStorage", "buffer_size": 500000, "batch_size": 256},
+    "storage": {"name": "NStepReplayStorage", "storage_size": 500000, "batch_size": 256},
     # xplore part
     "distribution": {"name": "TruncatedNormalNoise"},
     "augmentation": {"name": "RandomShift"},
@@ -61,11 +61,11 @@ class DrQv2Learner(BaseLearner):
         action_space: Dict,
         device: Device,
         feature_dim: int,
-        lr: float = 1e-4,
-        eps: float = 0.00008,
-        hidden_dim: int = 1024,
-        critic_target_tau: float = 0.01,
-        update_every_steps: int = 2,
+        lr: float,
+        eps: float,
+        hidden_dim: int,
+        critic_target_tau: float,
+        update_every_steps: int,
     ) -> None:
         super().__init__(
             observation_space, action_space, device, feature_dim, lr, eps

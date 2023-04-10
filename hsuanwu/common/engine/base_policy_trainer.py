@@ -16,11 +16,12 @@ from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
 
 
 _DEFAULT_CFGS = {
-    # TODO: Train setup
+    # Mandatory parameters
+    ## TODO: Train setup
     'device': 'cpu',
     'seed': 1,
     'num_train_steps': 10000,
-    # TODO: Test setup
+    ## TODO: Test setup
     "test_every_steps": 5000,
     "num_test_episodes": 10,
 }
@@ -157,6 +158,9 @@ class BasePolicyTrainer(ABC):
 
         # TODO: fill parameters for encoder, learner, and storage
         ## for encoder
+        if new_cfgs.encoder._target_ == 'IdentityEncoder':
+            new_cfgs.encoder.feature_dim = observation_space['shape'][0]
+
         new_cfgs.encoder.observation_space = observation_space
         new_cfgs.learner.observation_space = observation_space
         new_cfgs.learner.action_space = action_space
@@ -168,6 +172,7 @@ class BasePolicyTrainer(ABC):
             new_cfgs.storage.device = new_cfgs.device
             new_cfgs.storage.obs_shape = observation_space['shape']
             new_cfgs.storage.action_shape = action_space['shape']
+            new_cfgs.storage.action_type = action_space['type']
             new_cfgs.storage.num_steps = new_cfgs.num_steps
             new_cfgs.storage.num_envs = self._train_env.num_envs
 
@@ -175,6 +180,7 @@ class BasePolicyTrainer(ABC):
             new_cfgs.storage.device = new_cfgs.device
             new_cfgs.storage.obs_shape = observation_space['shape']
             new_cfgs.storage.action_shape = action_space['shape']
+            new_cfgs.storage.action_type = action_space['type']
         
         if "Distributed" in new_cfgs.storage._target_:
             new_cfgs.storage.device = new_cfgs.device
