@@ -9,19 +9,39 @@ sys.path.append(parent_dir_path)
 from hsuanwu.env import make_dmc_env
 from hsuanwu.common.engine import OffPolicyTrainer
 
-train_env = make_dmc_env(env_id='cartpole_swingup', 
-                         num_envs=1,
-                         seed=1, 
-                         visualize_reward=True,
-                         from_pixels=False
-                         )
+# train_env = make_dmc_env(env_id='cartpole_swingup', 
+#                          num_envs=1,
+#                          seed=1, 
+#                          visualize_reward=True,
+#                          from_pixels=False
+#                          )
 
-test_env = make_dmc_env(env_id='cartpole_swingup',
+# test_env = make_dmc_env(env_id='cartpole_swingup',
+#                         num_envs=1,
+#                         seed=1, 
+#                         visualize_reward=True,
+#                         from_pixels=False
+#                         )
+
+train_env = make_dmc_env(env_id='cartpole_balance',
                         num_envs=1,
+                        resource_files=None, 
+                        img_source=None,
+                        total_frames=None,
                         seed=1, 
-                        visualize_reward=True,
-                        from_pixels=False
-                        )
+                        visualize_reward=False, 
+                        from_pixels=True, 
+                        frame_skip=2, frame_stack=3)
+
+test_env = make_dmc_env(env_id='cartpole_balance',
+                        num_envs=1,
+                        resource_files=None, 
+                        img_source=None,
+                        total_frames=None,
+                        seed=1, 
+                        visualize_reward=False, 
+                        from_pixels=True, 
+                        frame_skip=2, frame_stack=3)
 
 print(train_env.observation_space)
 

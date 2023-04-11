@@ -6,16 +6,51 @@ from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
 
+DEFAULT_CFGS = {
+    'use_aug': False, # True for enabling DrAC
+    'use_irs': False,
+    'num_steps': 256, # The sample length of per rollout.
+    # xploit part
+    "encoder": {"name": "EspeholtResidualEncoder", "observation_space": dict(), "feature_dim": 256},
+    "learner": {
+        "name": "PPGLearner",
+        "observation_space": dict(),
+        "action_space": dict(),
+        "device": str,
+        "feature_dim": int,
+        "lr": 5e-4,
+        "eps": 1e-5,
+        "hidden_dim": 256,
+        "clip_range": 0.2,
+        "num_policy_mini_batch": 8,
+        "num_aux_mini_batch": 4,
+        "vf_coef": 0.5,
+        "ent_coef": 0.01,
+        "max_grad_norm": 0.5,
+        "policy_epochs": 32,
+        "aux_epochs": 6,
+        "kl_coef": 1.0,
+        "num_aux_grad_accum": 1,
+    },
+    "storage": {"name": "VanillaRolloutStorage"},
+    # xplore part
+    "distribution": {"name": "Categorical"},
+    "augmentation": {"name": None},
+    "reward": {"name": None},
+}
 
 class PPGLearner(BaseLearner):
     """Phasic Policy Gradient (PPG) Learner.
 
     Args:
-        observation_space (Space): Observation space of the environment.
-        action_space (Space): Action shape of the environment.
-        action_type (str): Continuous or discrete action. "cont" or "dis".
+        observation_space (Dict): Observation space of the environment. 
+            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+        action_space (Dict): Action shape of the environment.
+            For supporting Hydra, the original 'action_space' is transformed into a dict like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim (int): Number of features extracted.
+        feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
 
@@ -37,9 +72,8 @@ class PPGLearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Space,
-        action_space: Space,
-        action_type: str,
+        observation_space: Dict,
+        action_space: Dict,
         device: Device,
         feature_dim: int = 256,
         lr: float = 5e-4,
@@ -57,7 +91,7 @@ class PPGLearner(BaseLearner):
         num_aux_grad_accum: int = 1,
     ) -> None:
         super().__init__(
-            observation_space, action_space, action_type, device, feature_dim, lr, eps
+            observation_space, action_space, device, feature_dim, lr, eps
         )
 
         self.clip_range = clip_range
@@ -79,7 +113,7 @@ class PPGLearner(BaseLearner):
         # create models
         self.encoder = None
         # create models
-        if self.action_type == "dis":
+        if action_space['type'] == "Discrete":
             self.ac = DiscreteActorAuxiliaryCritic(
                 action_space=action_space,
                 feature_dim=feature_dim,

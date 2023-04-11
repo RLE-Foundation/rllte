@@ -1,39 +1,18 @@
-seed: 0
-device: cuda                            
-use_aug: false                           
-use_irs: false                           
-num_train_steps: 10000000                                      
-num_steps: 256
-num_envs: 64
-# test setup
-test_every_episodes: 10
-num_test_episodes: 10                
-
-encoder:
-  _target_: ResNetEncoder
-  feature_dim: 256  
+########################### Train setup
+experiment: ppg_procgen
+device: cuda:0            # Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                   # Random seed for reproduction.
+num_train_steps: 10000000   # Number of training steps.
 
 learner:
-  _target_: DiscreteLearner
+  name: PPGLearner
 
-storage:
-  _target_: VanillaRolloutStorage
-  
-distribution:
-  _target_: Categorical
+# augmentation:
+#   name: RandomShift
 
-##############################################################
-augmentation:
-  _target_: RandomShift
-
-##############################################################
-reward:
-  _target_: RE3
-
-##############################################################
 hydra:
   run:
-    dir: ./logs/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+    dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
   sweep:
     dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
     subdir: ${hydra.job.num}

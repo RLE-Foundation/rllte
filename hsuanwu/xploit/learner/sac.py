@@ -38,7 +38,8 @@ DEFAULT_CFGS = {
 }
 
 class SACLearner(BaseLearner):
-    """Soft Actor-Critic (SAC) Learner
+    """Soft Actor-Critic (SAC) Learner.
+        When 'use_aug' is True, this learner will transform into Data Regularized Q (DrQ) Learner.
 
     Args:
         observation_space (Dict): Observation space of the environment. 
@@ -172,8 +173,14 @@ class SACLearner(BaseLearner):
 
         # obs augmentation
         if self.aug is not None:
-            obs = self.aug(obs.float())
-            next_obs = self.aug(next_obs.float())
+            aug_obs = self.aug(obs.clone().float())
+            aug_next_obs = self.aug(next_obs.clone().float())
+            with torch.no_grad():
+                encoded_aug_obs = self.encoder(aug_obs)
+            encoded_aug_next_obs = self.encoder(aug_next_obs)
+        else:
+            encoded_aug_obs = None
+            encoded_aug_next_obs = None
 
         # encode
         encoded_obs = self.encoder(obs)
@@ -183,7 +190,9 @@ class SACLearner(BaseLearner):
         # update criitc
         metrics.update(
             self.update_critic(
-                encoded_obs, action, reward, terminated, encoded_next_obs, step
+                encoded_obs, action, reward, terminated, encoded_next_obs,
+                encoded_aug_obs, encoded_aug_next_obs,
+                step
             )
         )
 
@@ -204,6 +213,8 @@ class SACLearner(BaseLearner):
         reward: Tensor,
         terminated: Tensor,
         next_obs: Tensor,
+        aug_obs: Tensor,
+        aug_next_obs: Tensor,
         step: int,
     ) -> Dict[str, float]:
         """Update the critic network.
@@ -214,6 +225,8 @@ class SACLearner(BaseLearner):
             reward (Tensor): Rewards.
             terminated (Tensor): Terminateds.
             next_obs (Tensor): Next observations.
+            aug_obs (Tensor): Augmented observations.
+            aug_next_obs (Tensor): Augmented next observations.
             step (int): Global training step.
 
         Returns:
@@ -227,8 +240,23 @@ class SACLearner(BaseLearner):
             target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
             target_Q = reward + (1.0 - terminated) * self.discount * target_V
 
+            # enable observation augmentation
+            if self.aug is not None:
+                dist_aug = self.actor.get_action(aug_next_obs, step=step)
+                next_action_aug = dist_aug.rsample()
+                log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
+                target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
+                target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
+                target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
+                # mixed target Q-function
+                target_Q = (target_Q + target_Q_aug) / 2
+
         Q1, Q2 = self.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+
+        if self.aug is not None:
+            Q1_aug, Q2_aug = self.critic(aug_obs, action)
+            critic_loss += F.mse_loss(Q1_aug, target_Q) + F.mse_loss(Q2_aug, target_Q)
 
         # optimize encoder and critic
         self.encoder_opt.zero_grad(set_to_none=True)

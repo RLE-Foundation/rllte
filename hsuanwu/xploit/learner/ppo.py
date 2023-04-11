@@ -12,7 +12,7 @@ DEFAULT_CFGS = {
     # xploit part
     "encoder": {"name": "EspeholtResidualEncoder", "observation_space": dict(), "feature_dim": 256},
     "learner": {
-        "name": "DrQv2Learner",
+        "name": "PPOLearner",
         "observation_space": dict(),
         "action_space": dict(),
         "device": str,

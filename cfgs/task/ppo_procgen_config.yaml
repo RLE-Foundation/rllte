@@ -9,8 +9,8 @@ use_aug: true
 learner:
   name: PPOLearner
 
-augmentation:
-  name: RandomShift
+# augmentation:
+#   name: RandomShift
 
 hydra:
   run:

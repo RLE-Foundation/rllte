@@ -39,7 +39,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
         obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
+            obs.transpose(0, 3, 1, 2), device=self._device
         )
         return obs, info
 
@@ -50,7 +50,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         )
 
         obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device
+            obs.transpose(0, 3, 1, 2), device=self._device
         )
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device

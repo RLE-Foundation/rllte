@@ -31,14 +31,14 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
-        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        obs = torch.as_tensor(obs, device=self._device)
         return obs, info
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(
             action.cpu().numpy()
         )
-        obs = torch.as_tensor(obs, dtype=torch.float32, device=self._device)
+        obs = torch.as_tensor(obs, device=self._device)
         reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device)
         terminated = torch.as_tensor(
             [[1.0] if _ else [0.0] for _ in terminated],
