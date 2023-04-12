@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Dict, Path
 
 
 def dump_episode(episode: Dict, fn: Path) -> None:

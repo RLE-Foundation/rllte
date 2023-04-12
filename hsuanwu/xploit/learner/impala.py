@@ -4,7 +4,7 @@ import threading
 import torch
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Iterable, Space, Tensor, DictConfig
+from hsuanwu.common.typing import Device, Dict, DictConfig, Iterable, Space, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.utils import lr_lambda
 
@@ -57,7 +57,7 @@ class AtariNet(nn.Module):
 
     def forward(self, inputs, core_state=()):
         x = inputs["frame"]  # [T, B, C, H, W].
-        
+
         T, B, *_ = x.shape
         x = torch.flatten(x, 0, 1)  # Merge time and batch.
         x = x.float() / 255.0
@@ -66,13 +66,13 @@ class AtariNet(nn.Module):
         x = F.relu(self.conv3(x))
         x = x.view(T * B, -1)
         x = F.relu(self.fc(x))
-        
+
         one_hot_last_action = F.one_hot(
             inputs["last_action"].view(T * B), self.num_actions
         ).float()
         clipped_reward = torch.clamp(inputs["reward"], -1, 1).view(T * B, 1)
         core_input = torch.cat([x, clipped_reward, one_hot_last_action], dim=-1)
-        
+
         if self.use_lstm:
             core_input = core_input.view(T, B, -1)
             core_output_list = []
@@ -121,6 +121,7 @@ VTraceFromLogitsReturns = collections.namedtuple(
 )
 
 VTraceReturns = collections.namedtuple("VTraceReturns", "vs pg_advantages")
+
 
 class VTrace(object):
     """Compute V-trace off-policy actor critic targets."""
@@ -257,7 +258,7 @@ class IMPALALearner(BaseLearner):
         ent_coef: float = 0.01,
         baseline_coef: float = 0.5,
         max_grad_norm: float = 40,
-        discount: float = 0.99
+        discount: float = 0.99,
     ) -> None:
         super().__init__(
             observation_space, action_space, action_type, device, feature_dim, lr, eps
@@ -269,16 +270,16 @@ class IMPALALearner(BaseLearner):
         self.discount = discount
 
         self.actor = AtariNet(
-            observation_shape=observation_space.shape, 
+            observation_shape=observation_space.shape,
             num_actions=action_space.shape[0],
-            use_lstm=use_lstm
+            use_lstm=use_lstm,
         )
         self.actor.share_memory()
 
         self.learner = AtariNet(
-            observation_shape=observation_space.shape, 
+            observation_shape=observation_space.shape,
             num_actions=action_space.shape[0],
-            use_lstm=use_lstm
+            use_lstm=use_lstm,
         ).to(self.device)
 
         self.opt = torch.optim.RMSprop(
@@ -309,7 +310,7 @@ class IMPALALearner(BaseLearner):
         optimizer,
         lr_scheduler,
         lock=threading.Lock(),
-        ):
+    ):
         ###########################################################################
         def compute_policy_gradient_loss(logits, actions, advantages):
             cross_entropy = F.nll_loss(
@@ -341,11 +342,12 @@ class IMPALALearner(BaseLearner):
 
             # Move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
-            learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
+            learner_outputs = {
+                key: tensor[:-1] for key, tensor in learner_outputs.items()
+            }
 
             rewards = batch["reward"]
             clipped_rewards = torch.clamp(rewards, -1, 1)
-
 
             discounts = (~batch["done"]).float() * cfgs.discount
 
@@ -377,7 +379,9 @@ class IMPALALearner(BaseLearner):
 
             optimizer.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(learner_model.parameters(), cfgs.learner.max_grad_norm)
+            nn.utils.clip_grad_norm_(
+                learner_model.parameters(), cfgs.learner.max_grad_norm
+            )
             optimizer.step()
             lr_scheduler.step()
 

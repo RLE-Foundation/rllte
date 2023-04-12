@@ -1,9 +1,10 @@
-import hydra
-import torch
 from pathlib import Path
 
+import hydra
+import torch
+
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import Logger, INFO, DEBUG, TEST, TRAIN
+from hsuanwu.common.logger import DEBUG, INFO, TEST, TRAIN, Logger
 from hsuanwu.common.typing import DictConfig, Env, Iterable, Tensor, Tuple
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
@@ -101,7 +102,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             action = dist.sample()
             if step < self._num_init_steps:
                 action.uniform_(-1.0, 1.0)
-        return action.clamp(*self._cfgs.action_space['range'])
+        return action.clamp(*self._cfgs.action_space["range"])
 
     def train(self) -> None:
         """Training function."""
@@ -111,7 +112,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         while self._global_step <= self._num_train_steps:
             # try to test
-            if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
+            if (self._global_step % self._test_every_steps) == 0 and (
+                self._test_env is not None
+            ):
                 test_metrics = self.test()
                 self._logger.log(level=TEST, msg=test_metrics)
 

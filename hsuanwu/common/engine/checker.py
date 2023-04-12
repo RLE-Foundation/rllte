@@ -1,4 +1,4 @@
-from hsuanwu.common.logger import Logger, DEBUG
+from hsuanwu.common.logger import DEBUG, Logger
 from hsuanwu.common.typing import DictConfig
 
 MATCH_KEYS = {
@@ -32,7 +32,7 @@ MATCH_KEYS = {
     },
     "IMPALALearner": {
         "storage": ["DistributedStorage"],
-        "distribution": ['None'],
+        "distribution": ["None"],
         "augmentation": [],
         "reward": [],
     },

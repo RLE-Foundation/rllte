@@ -25,8 +25,4 @@ format:
 	# Reformat using black
 	black ${LINT_PATHS}
 
-check-codestyle:
-	# Sort imports
-	isort --check ${LINT_PATHS}
-	# Reformat using black
-	black --check ${LINT_PATHS}
+commit-checks: format type lint

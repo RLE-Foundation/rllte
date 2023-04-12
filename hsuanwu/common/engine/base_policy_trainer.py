@@ -9,25 +9,33 @@ import torch
 from omegaconf import OmegaConf
 
 from hsuanwu.common.engine.checker import cfgs_checker
-from hsuanwu.common.logger import Logger, INFO
+from hsuanwu.common.logger import INFO, Logger
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import ABC, DictConfig, Env, abstractmethod, Tuple, Tensor, Space, Dict
+from hsuanwu.common.typing import (
+    ABC,
+    Dict,
+    DictConfig,
+    Env,
+    Space,
+    Tensor,
+    Tuple,
+    abstractmethod,
+)
 from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
-
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
     ## TODO: Train setup
-    'device': 'cpu',
-    'seed': 1,
-    'num_train_steps': 100000,
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 100000,
     ## TODO: Test setup
-    "test_every_steps": 5000, # only for off-policy algorithms
-    "test_every_episodes": 10, # only for on-policy algorithms
+    "test_every_steps": 5000,  # only for off-policy algorithms
+    "test_every_episodes": 10,  # only for on-policy algorithms
     "num_test_episodes": 10,
 }
 
-_COMMON_KEYS = ['device', 'seed', 'num_train_steps', 'use_aug', 'use_irs']
+_COMMON_KEYS = ["device", "seed", "num_train_steps", "use_aug", "use_irs"]
 
 
 class BasePolicyTrainer(ABC):
@@ -66,8 +74,12 @@ class BasePolicyTrainer(ABC):
         # training track
         self._num_train_steps = self._cfgs.num_train_steps
         self._num_test_episodes = self._cfgs.num_test_episodes
-        self._test_every_steps = self._cfgs.test_every_steps # only for off-policy algorithms
-        self._test_every_episodes = self._cfgs.test_every_episodes # only for on-policy algorithms
+        self._test_every_steps = (
+            self._cfgs.test_every_steps
+        )  # only for off-policy algorithms
+        self._test_every_episodes = (
+            self._cfgs.test_every_episodes
+        )  # only for on-policy algorithms
         self._global_step = 0
         self._global_episode = 0
 
@@ -80,14 +92,16 @@ class BasePolicyTrainer(ABC):
     def global_episode(self) -> int:
         """Get global training episodes."""
         return self._global_episode
-    
-    def _remake_observation_and_action_space(self, observation_space: Space, action_space: Space) -> Tuple[Dict]:
+
+    def _remake_observation_and_action_space(
+        self, observation_space: Space, action_space: Space
+    ) -> Tuple[Dict]:
         """Transform the original 'Box' space into Hydra supported type.
 
         Args:
             observation_space (Space): The observation space.
             action_space (Space): The action space.
-        
+
         Returns:
             Processed spaces.
         """
@@ -95,19 +109,18 @@ class BasePolicyTrainer(ABC):
 
         if action_space.__class__.__name__ == "Discrete":
             n = int(action_space.n)
-            new_action_space = {"shape": (n, ), 
-                                "type": "Discrete", 
-                                "range": [0, n - 1]}
+            new_action_space = {"shape": (n,), "type": "Discrete", "range": [0, n - 1]}
         elif action_space.__class__.__name__ == "Box":
             low, high = float(action_space.low[0]), float(action_space.high[0])
-            new_action_space = {"shape": action_space.shape, 
-                                "type": "Box", 
-                                "range": [low, high]}
+            new_action_space = {
+                "shape": action_space.shape,
+                "type": "Box",
+                "range": [low, high],
+            }
         else:
             raise NotImplementedError("Unsupported action type!")
-        
-        return new_observation_space, new_action_space
 
+        return new_observation_space, new_action_space
 
     def _process_cfgs(self, cfgs: DictConfig) -> DictConfig:
         """Preprocess the configs.
@@ -125,8 +138,10 @@ class BasePolicyTrainer(ABC):
             raise ValueError(f"The learner name must be specified!")
 
         if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
-            raise NotImplementedError(f'Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/.')
-        
+            raise NotImplementedError(
+                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/."
+            )
+
         # TODO: load the default configs of learner
         learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
         new_cfgs.merge_with(learner_default_cfgs)
@@ -139,10 +154,19 @@ class BasePolicyTrainer(ABC):
             except:
                 pass
 
-        for part in ['encoder', 'learner', 'storage', 'distribution', 'augmentation', 'reward']:
-            if part == 'augmentation' and not new_cfgs.use_aug: # don't use observation augmentation
+        for part in [
+            "encoder",
+            "learner",
+            "storage",
+            "distribution",
+            "augmentation",
+            "reward",
+        ]:
+            if (
+                part == "augmentation" and not new_cfgs.use_aug
+            ):  # don't use observation augmentation
                 continue
-            if part == 'reward' and not new_cfgs.use_irs: # don't use intrinsic reward
+            if part == "reward" and not new_cfgs.use_irs:  # don't use intrinsic reward
                 continue
 
             for key in new_cfgs[part].keys():
@@ -150,23 +174,31 @@ class BasePolicyTrainer(ABC):
                     new_cfgs[part][key] = cfgs[part][key]
                 except:
                     pass
-        
+
         # TODO: replace 'name' with '_target_' to use 'hydra.utils.instantiate'
-        for part in ['encoder', 'learner', 'storage', 'distribution', 'augmentation', 'reward']:
-            new_cfgs[part]['_target_'] = new_cfgs[part]['name']
-            new_cfgs[part].pop('name')
+        for part in [
+            "encoder",
+            "learner",
+            "storage",
+            "distribution",
+            "augmentation",
+            "reward",
+        ]:
+            new_cfgs[part]["_target_"] = new_cfgs[part]["name"]
+            new_cfgs[part].pop("name")
 
         # TODO: remake observation and action sapce
         observation_space, action_space = self._remake_observation_and_action_space(
-            self._train_env.observation_space, self._train_env.action_space)
+            self._train_env.observation_space, self._train_env.action_space
+        )
         new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space
         new_cfgs.action_space = action_space
 
         # TODO: fill parameters for encoder, learner, and storage
         ## for encoder
-        if new_cfgs.encoder._target_ == 'IdentityEncoder':
-            new_cfgs.encoder.feature_dim = observation_space['shape'][0]
+        if new_cfgs.encoder._target_ == "IdentityEncoder":
+            new_cfgs.encoder.feature_dim = observation_space["shape"][0]
 
         new_cfgs.encoder.observation_space = observation_space
         new_cfgs.learner.observation_space = observation_space
@@ -177,22 +209,25 @@ class BasePolicyTrainer(ABC):
         ## for storage
         if "Rollout" in new_cfgs.storage._target_:
             new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space['shape']
-            new_cfgs.storage.action_shape = action_space['shape']
-            new_cfgs.storage.action_type = action_space['type']
+            new_cfgs.storage.obs_shape = observation_space["shape"]
+            new_cfgs.storage.action_shape = action_space["shape"]
+            new_cfgs.storage.action_type = action_space["type"]
             new_cfgs.storage.num_steps = new_cfgs.num_steps
             new_cfgs.storage.num_envs = new_cfgs.num_envs
 
-        if "Replay" in new_cfgs.storage._target_ and "NStep" not in new_cfgs.storage._target_:
+        if (
+            "Replay" in new_cfgs.storage._target_
+            and "NStep" not in new_cfgs.storage._target_
+        ):
             new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space['shape']
-            new_cfgs.storage.action_shape = action_space['shape']
-            new_cfgs.storage.action_type = action_space['type']
-        
+            new_cfgs.storage.obs_shape = observation_space["shape"]
+            new_cfgs.storage.action_shape = action_space["shape"]
+            new_cfgs.storage.action_type = action_space["type"]
+
         if "Distributed" in new_cfgs.storage._target_:
             new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space['shape']
-            new_cfgs.storage.action_shape = action_space['shape']
+            new_cfgs.storage.obs_shape = observation_space["shape"]
+            new_cfgs.storage.action_shape = action_space["shape"]
             new_cfgs.storage.num_steps = new_cfgs.num_steps
 
         ## for reward

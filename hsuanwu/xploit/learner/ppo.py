@@ -6,11 +6,15 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
 
 DEFAULT_CFGS = {
-    'use_aug': False, # True for enabling DrAC
-    'use_irs': False,
-    'num_steps': 256, # The sample length of per rollout.
+    "use_aug": False,  # True for enabling DrAC
+    "use_irs": False,
+    "num_steps": 256,  # The sample length of per rollout.
     # xploit part
-    "encoder": {"name": "EspeholtResidualEncoder", "observation_space": dict(), "feature_dim": 256},
+    "encoder": {
+        "name": "EspeholtResidualEncoder",
+        "observation_space": dict(),
+        "feature_dim": 256,
+    },
     "learner": {
         "name": "PPOLearner",
         "observation_space": dict(),
@@ -35,16 +39,17 @@ DEFAULT_CFGS = {
     "reward": {"name": None},
 }
 
+
 class PPOLearner(BaseLearner):
-    """Proximal Policy Optimization (PPO) Learner. 
+    """Proximal Policy Optimization (PPO) Learner.
         When 'use_aug' is True, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment. 
+        observation_space (Dict): Observation space of the environment.
             For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
         action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like 
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -79,11 +84,9 @@ class PPOLearner(BaseLearner):
         vf_coef: float,
         ent_coef: float,
         aug_coef: float,
-        max_grad_norm: float
+        max_grad_norm: float,
     ) -> None:
-        super().__init__(
-            observation_space, action_space, device, feature_dim, lr, eps
-        )
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.n_epochs = n_epochs
         self.clip_range = clip_range
@@ -94,7 +97,7 @@ class PPOLearner(BaseLearner):
         self.max_grad_norm = max_grad_norm
 
         # create models
-        if action_space['type'] == "Discrete":
+        if action_space["type"] == "Discrete":
             self.ac = DiscreteActorCritic(
                 action_space=action_space,
                 feature_dim=feature_dim,
@@ -186,7 +189,7 @@ class PPOLearner(BaseLearner):
                 critic_loss = (
                     0.5 * torch.max(values_losses, values_losses_clipped).mean()
                 )
-                
+
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
@@ -198,10 +201,14 @@ class PPOLearner(BaseLearner):
                         obs=self.encoder(batch_obs_aug), actions=new_batch_actions
                     )
                     action_loss_aug = -log_probs_aug.mean()
-                    value_loss_aug = 0.5 * (torch.detach(values) - values_aug).pow(2).mean()
+                    value_loss_aug = (
+                        0.5 * (torch.detach(values) - values_aug).pow(2).mean()
+                    )
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
                 else:
-                    aug_loss = torch.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
+                    aug_loss = torch.scalar_tensor(
+                        s=0.0, requires_grad=False, device=critic_loss.device
+                    )
 
                 # update
                 self.encoder_opt.zero_grad(set_to_none=True)

@@ -6,7 +6,7 @@ from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
 class TassaCnnEncoder(BaseEncoder):
-    """Convolutional neural network (CNN)-based encoder for processing image-based observations. 
+    """Convolutional neural network (CNN)-based encoder for processing image-based observations.
     Proposed by Tassa Y, Doron Y, Muldal A, et al. Deepmind control suite[J]. arXiv preprint arXiv:1801.00690, 2018.
     Target task: DeepMind Control Suite.
 

@@ -78,7 +78,7 @@ if __name__ == "__main__":
         )
         # print(reward, terminated, truncated)
         if "episode" in info:
-            print(info['episode'])
+            print(info["episode"])
 
     envs.close()
     print("DeepMind Control Suite passed!")

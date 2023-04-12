@@ -7,7 +7,7 @@ from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.common.typing import Device, Dict, Env, List, Tensor, Tuple, Callable
+from hsuanwu.common.typing import Callable, Device, Dict, Env, List, Tensor, Tuple
 from hsuanwu.env.utils import FrameStack
 
 
@@ -35,9 +35,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         return obs, info
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
-        obs, reward, terminated, truncated, info = self.env.step(
-            action.cpu().numpy()
-        )
+        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy())
         obs = torch.as_tensor(obs, device=self._device)
         reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device)
         terminated = torch.as_tensor(
@@ -130,14 +128,13 @@ def make_dmc_env(
                     },
                     max_episode_steps=max_episode_steps,
                 )
-            
+
             if visualize_reward:
                 return gym.make(env_id)
             else:
                 return FrameStack(gym.make(env_id), frame_stack)
-        
-        return _thunk
 
+        return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)

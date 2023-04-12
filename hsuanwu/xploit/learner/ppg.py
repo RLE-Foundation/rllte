@@ -7,11 +7,15 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
 
 DEFAULT_CFGS = {
-    'use_aug': False, # True for enabling DrAC
-    'use_irs': False,
-    'num_steps': 256, # The sample length of per rollout.
+    "use_aug": False,  # True for enabling DrAC
+    "use_irs": False,
+    "num_steps": 256,  # The sample length of per rollout.
     # xploit part
-    "encoder": {"name": "EspeholtResidualEncoder", "observation_space": dict(), "feature_dim": 256},
+    "encoder": {
+        "name": "EspeholtResidualEncoder",
+        "observation_space": dict(),
+        "feature_dim": 256,
+    },
     "learner": {
         "name": "PPGLearner",
         "observation_space": dict(),
@@ -39,15 +43,16 @@ DEFAULT_CFGS = {
     "reward": {"name": None},
 }
 
+
 class PPGLearner(BaseLearner):
     """Phasic Policy Gradient (PPG) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment. 
+        observation_space (Dict): Observation space of the environment.
             For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
         action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like 
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -90,9 +95,7 @@ class PPGLearner(BaseLearner):
         kl_coef: float = 1.0,
         num_aux_grad_accum: int = 1,
     ) -> None:
-        super().__init__(
-            observation_space, action_space, device, feature_dim, lr, eps
-        )
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.clip_range = clip_range
         self.num_policy_mini_batch = num_policy_mini_batch
@@ -113,7 +116,7 @@ class PPGLearner(BaseLearner):
         # create models
         self.encoder = None
         # create models
-        if action_space['type'] == "Discrete":
+        if action_space["type"] == "Discrete":
             self.ac = DiscreteActorAuxiliaryCritic(
                 action_space=action_space,
                 feature_dim=feature_dim,

@@ -38,9 +38,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
-        obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), device=self._device
-        )
+        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
         return obs, info
 
     def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
@@ -49,9 +47,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
             action.squeeze(1).cpu().numpy()
         )
 
-        obs = torch.as_tensor(
-            obs.transpose(0, 3, 1, 2), device=self._device
-        )
+        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
         reward = torch.as_tensor(
             reward, dtype=torch.float32, device=self._device
         ).unsqueeze(dim=1)

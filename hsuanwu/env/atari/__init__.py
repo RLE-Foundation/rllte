@@ -10,7 +10,7 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 
-from hsuanwu.common.typing import Device, Dict, Env, Tensor, Tuple, Callable
+from hsuanwu.common.typing import Callable, Device, Dict, Env, Tensor, Tuple
 from hsuanwu.env.atari.wrappers import (
     EpisodicLifeEnv,
     FireResetEnv,

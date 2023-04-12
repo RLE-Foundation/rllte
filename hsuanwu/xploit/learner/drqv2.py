@@ -7,11 +7,15 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 
 DEFAULT_CFGS = {
-    'use_aug': True,
-    'use_irs': False,
-    'num_init_steps': 2000, # only for off-policy algorithms
+    "use_aug": True,
+    "use_irs": False,
+    "num_init_steps": 2000,  # only for off-policy algorithms
     # xploit part
-    "encoder": {"name": "TassaCnnEncoder", "observation_space": dict(), "feature_dim": 50},
+    "encoder": {
+        "name": "TassaCnnEncoder",
+        "observation_space": dict(),
+        "feature_dim": 50,
+    },
     "learner": {
         "name": "DrQv2Learner",
         "observation_space": dict(),
@@ -24,7 +28,11 @@ DEFAULT_CFGS = {
         "critic_target_tau": 0.01,
         "update_every_steps": 2,
     },
-    "storage": {"name": "NStepReplayStorage", "storage_size": 500000, "batch_size": 256},
+    "storage": {
+        "name": "NStepReplayStorage",
+        "storage_size": 500000,
+        "batch_size": 256,
+    },
     # xplore part
     "distribution": {"name": "TruncatedNormalNoise"},
     "augmentation": {"name": "RandomShift"},
@@ -36,11 +44,11 @@ class DrQv2Learner(BaseLearner):
     """Data Regularized-Q v2 (DrQ-v2).
 
     Args:
-        observation_space (Dict): Observation space of the environment. 
+        observation_space (Dict): Observation space of the environment.
             For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
         action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like 
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -67,9 +75,7 @@ class DrQv2Learner(BaseLearner):
         critic_target_tau: float,
         update_every_steps: int,
     ) -> None:
-        super().__init__(
-            observation_space, action_space, device, feature_dim, lr, eps
-        )
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps

@@ -7,11 +7,11 @@ class BaseLearner(ABC):
     """Base class of learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment. 
+        observation_space (Dict): Observation space of the environment.
             For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
         action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like 
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.

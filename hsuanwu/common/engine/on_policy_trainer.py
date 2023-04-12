@@ -6,8 +6,8 @@ import numpy as np
 import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import Logger, INFO, DEBUG, TEST, TRAIN
-from hsuanwu.common.typing import DictConfig, Env, Tensor, Tuple, Dict
+from hsuanwu.common.logger import DEBUG, INFO, TEST, TRAIN, Logger
+from hsuanwu.common.typing import Dict, DictConfig, Env, Tensor, Tuple
 
 
 class OnPolicyTrainer(BasePolicyTrainer):
@@ -92,7 +92,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         for update in range(num_updates):
             # try to test
-            if (update % self._test_every_episodes) == 0 and (self._test_env is not None):
+            if (update % self._test_every_episodes) == 0 and (
+                self._test_env is not None
+            ):
                 test_metrics = self.test()
                 self._logger.log(level=TEST, msg=test_metrics)
 

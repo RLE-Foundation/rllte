@@ -1,7 +1,10 @@
 import os
-os.environ["OMP_NUM_THREADS"] = "1" 
+
+os.environ["OMP_NUM_THREADS"] = "1"
+import pprint
 import threading
 import time
+import timeit
 import traceback
 
 import hydra
@@ -9,10 +12,9 @@ import torch
 from torch import multiprocessing as mp
 
 from hsuanwu.common.engine import BasePolicyTrainer
-from hsuanwu.common.logger import *
+from hsuanwu.common.logger import INFO, List, Logger, Storage, Tensor
 from hsuanwu.common.typing import DictConfig, Env, NNModule
 
-import timeit, pprint
 
 class DistributedTrainer(BasePolicyTrainer):
     """Trainer for on-policy algorithms.
@@ -25,6 +27,7 @@ class DistributedTrainer(BasePolicyTrainer):
     Returns:
         On-policy trainer instance.
     """
+
     def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         # xploit part
@@ -45,7 +48,7 @@ class DistributedTrainer(BasePolicyTrainer):
         actor_model: NNModule,
         storages: List[Storage],
         init_actor_states: List[Tensor],
-        ):
+    ):
         try:
             logger.log(INFO, f"Actor {actor_idx} started.")
 
@@ -56,7 +59,7 @@ class DistributedTrainer(BasePolicyTrainer):
                 idx = free_queue.get()
                 if idx is None:
                     break
-                
+
                 # Write old rollout end.
                 for key in env_output:
                     storages[key][idx][0, ...] = env_output[key]
@@ -108,7 +111,7 @@ class DistributedTrainer(BasePolicyTrainer):
                     batch=batch,
                     init_actor_state=actor_state,
                     optimizer=self._learner.opt,
-                    lr_scheduler=self._learner.lr_scheduler
+                    lr_scheduler=self._learner.lr_scheduler,
                 )
                 with lock:
                     global_step += self._cfgs.num_steps * self._cfgs.storage.batch_size
@@ -155,7 +158,7 @@ class DistributedTrainer(BasePolicyTrainer):
             )
             thread.start()
             threads.append(thread)
-        
+
         timer = timeit.default_timer
         try:
             last_checkpoint_time = timer()
@@ -175,7 +178,10 @@ class DistributedTrainer(BasePolicyTrainer):
                 else:
                     mean_return = ""
                 total_loss = metrics.get("total_loss", float("inf"))
-                self._logger.log(INFO, f"Steps {global_step} @ {sps} SPS. Loss {total_loss}. {mean_return}Stats:\n{pprint.pformat(metrics)}")
+                self._logger.log(
+                    INFO,
+                    f"Steps {global_step} @ {sps} SPS. Loss {total_loss}. {mean_return}Stats:\n{pprint.pformat(metrics)}",
+                )
         except KeyboardInterrupt:
             # TODO: join actors then quit.
             return
@@ -188,7 +194,7 @@ class DistributedTrainer(BasePolicyTrainer):
                 free_queue.put(None)
             for actor in actor_pool:
                 actor.join(timeout=1)
-    
+
     def test(self) -> None:
         pass
 

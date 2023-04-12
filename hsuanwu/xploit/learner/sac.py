@@ -8,11 +8,15 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
 DEFAULT_CFGS = {
-    'use_aug': False,
-    'use_irs': False,
-    'num_init_steps': 5000, # only for off-policy algorithms
+    "use_aug": False,
+    "use_irs": False,
+    "num_init_steps": 5000,  # only for off-policy algorithms
     # xploit part
-    "encoder": {"name": "IdentityEncoder", "observation_space": dict(), "feature_dim": 5},
+    "encoder": {
+        "name": "IdentityEncoder",
+        "observation_space": dict(),
+        "feature_dim": 5,
+    },
     "learner": {
         "name": "SACLearner",
         "observation_space": dict(),
@@ -26,27 +30,32 @@ DEFAULT_CFGS = {
         "update_every_steps": 2,
         "log_std_range": (-5.0, 2),
         "betas": (0.9, 0.999),
-        "temperature":  0.1,
+        "temperature": 0.1,
         "fixed_temperature": False,
         "discount": 0.99,
     },
-    "storage": {"name": "VanillaReplayStorage", "storage_size": 1000000, "batch_size": 1024},
+    "storage": {
+        "name": "VanillaReplayStorage",
+        "storage_size": 1000000,
+        "batch_size": 1024,
+    },
     # xplore part
     "distribution": {"name": "SquashedNormal"},
     "augmentation": {"name": None},
     "reward": {"name": None},
 }
 
+
 class SACLearner(BaseLearner):
     """Soft Actor-Critic (SAC) Learner.
         When 'use_aug' is True, this learner will transform into Data Regularized Q (DrQ) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment. 
+        observation_space (Dict): Observation space of the environment.
             For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
         action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like 
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or 
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -83,9 +92,7 @@ class SACLearner(BaseLearner):
         fixed_temperature: bool,
         discount: float,
     ) -> None:
-        super().__init__(
-            observation_space, action_space, device, feature_dim, lr, eps
-        )
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -190,9 +197,14 @@ class SACLearner(BaseLearner):
         # update criitc
         metrics.update(
             self.update_critic(
-                encoded_obs, action, reward, terminated, encoded_next_obs,
-                encoded_aug_obs, encoded_aug_next_obs,
-                step
+                encoded_obs,
+                action,
+                reward,
+                terminated,
+                encoded_next_obs,
+                encoded_aug_obs,
+                encoded_aug_next_obs,
+                step,
             )
         )
 
@@ -246,7 +258,9 @@ class SACLearner(BaseLearner):
                 next_action_aug = dist_aug.rsample()
                 log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
                 target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
-                target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
+                target_V = (
+                    torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
+                )
                 target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
                 # mixed target Q-function
                 target_Q = (target_Q + target_Q_aug) / 2

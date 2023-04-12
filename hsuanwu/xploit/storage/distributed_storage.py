@@ -51,7 +51,7 @@ class DistributedStorage:
             self._action_dim = action_shape[0]
         else:
             raise NotImplementedError
-        
+
         specs = dict(
             frame=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
             reward=dict(size=(num_steps + 1,), dtype=torch.float32),
@@ -59,7 +59,9 @@ class DistributedStorage:
             episode_return=dict(size=(num_steps + 1,), dtype=torch.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=torch.int32),
             last_action=dict(size=(num_steps + 1,), dtype=torch.int64),
-            policy_logits=dict(size=(num_steps + 1, action_shape[0]), dtype=torch.float32),
+            policy_logits=dict(
+                size=(num_steps + 1, action_shape[0]), dtype=torch.float32
+            ),
             baseline=dict(size=(num_steps + 1,), dtype=torch.float32),
             action=dict(size=(num_steps + 1,), dtype=torch.int64),
         )
@@ -95,8 +97,7 @@ class DistributedStorage:
         }
 
         init_actor_state = (
-            torch.cat(ts, dim=1)
-            for ts in zip(*[init_actor_states[m] for m in indices])
+            torch.cat(ts, dim=1) for ts in zip(*[init_actor_states[m] for m in indices])
         )
 
         for i in indices:

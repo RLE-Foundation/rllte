@@ -6,7 +6,7 @@ from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
 class MnihCnnEncoder(BaseEncoder):
-    """Convolutional neural network (CNN)-based encoder for processing image-based observations. 
+    """Convolutional neural network (CNN)-based encoder for processing image-based observations.
     Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
     Target task: Atari games.
 
@@ -17,6 +17,7 @@ class MnihCnnEncoder(BaseEncoder):
     Returns:
         CNN-based encoder instance.
     """
+
     def __init__(self, observation_space: Space, feature_dim: int = 0) -> None:
         super().__init__(observation_space, feature_dim)
 
@@ -30,7 +31,7 @@ class MnihCnnEncoder(BaseEncoder):
             nn.ReLU(),
             nn.Conv2d(32, 32, 3, stride=1),
             nn.ReLU(),
-            nn.Flatten()
+            nn.Flatten(),
         )
 
         with torch.no_grad():

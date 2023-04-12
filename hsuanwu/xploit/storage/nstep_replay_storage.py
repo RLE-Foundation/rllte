@@ -152,11 +152,13 @@ class NStepReplayStorage(IterableDataset):
             None.
         """
         if "discount" in info.keys():
-            discount = info['discount'][0]
-        elif "discount" in info['final_info'][0].keys():
-            discount = info['final_info'][0]['discount']
+            discount = info["discount"][0]
+        elif "discount" in info["final_info"][0].keys():
+            discount = info["final_info"][0]["discount"]
         else:
-            raise ValueError("When using NStepReplayStorage, please put the discount factor in 'info'!")
+            raise ValueError(
+                "When using NStepReplayStorage, please put the discount factor in 'info'!"
+            )
 
         self._replay_storage.add(obs, action, reward, terminated, discount)
 
