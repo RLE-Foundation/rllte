@@ -132,16 +132,6 @@ class BasePolicyTrainer(ABC):
             Processed configs.
         """
         new_cfgs = OmegaConf.create(_DEFAULT_CFGS)
-        try:
-            cfgs.learner.name
-        except:
-            raise ValueError(f"The learner name must be specified!")
-
-        if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
-            raise NotImplementedError(
-                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/."
-            )
-
         # TODO: load the default configs of learner
         learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
         new_cfgs.merge_with(learner_default_cfgs)
@@ -228,6 +218,7 @@ class BasePolicyTrainer(ABC):
             new_cfgs.storage.device = new_cfgs.device
             new_cfgs.storage.obs_shape = observation_space["shape"]
             new_cfgs.storage.action_shape = action_space["shape"]
+            new_cfgs.storage.action_type = action_space["type"]
             new_cfgs.storage.num_steps = new_cfgs.num_steps
 
         ## for reward

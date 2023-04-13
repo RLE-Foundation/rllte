@@ -45,17 +45,18 @@ class DistributedStorage:
         self._num_storages = num_storages
         self._batch_size = batch_size
 
-        if action_type == "dis":
+        if action_type == "Discrete":
             self._action_dim = 1
-        elif action_type == "cont":
+        elif action_type == "Box":
             self._action_dim = action_shape[0]
         else:
             raise NotImplementedError
 
         specs = dict(
-            frame=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
+            obs=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
             reward=dict(size=(num_steps + 1,), dtype=torch.float32),
-            done=dict(size=(num_steps + 1,), dtype=torch.bool),
+            terminated=dict(size=(num_steps + 1,), dtype=torch.bool),
+            truncated=dict(size=(num_steps + 1,), dtype=torch.bool),
             episode_return=dict(size=(num_steps + 1,), dtype=torch.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=torch.int32),
             last_action=dict(size=(num_steps + 1,), dtype=torch.int64),
@@ -84,7 +85,13 @@ class DistributedStorage:
         """Sample transitions from the storage.
 
         Args:
-            None.
+            device (Device): Device (cpu, cuda, ...) on which the code should be run.
+            batch_size (int): The batch size.
+            free_queue (Queue): Free queue for communication.
+            full_queue (Queue): Full queue for communication.
+            storages (List[Storage]): A list of shared storages.
+            init_actor_states: (List[Tensor]): Initial states for LSTM.
+            lock (Lock): Thread lock.
 
         Returns:
             Batched samples.

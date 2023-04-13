@@ -13,6 +13,8 @@ class eval_mode:
             model.train(state)
         return False
 
+def lr_lambda(step, totoal_steps):
+    return 1 - min(step, totoal_steps) / totoal_steps
 
 from collections import deque
 
@@ -112,9 +114,9 @@ class Environment:
         initial_done = torch.ones(1, 1, dtype=torch.uint8)
         initial_frame = _format_frame(self.gym_env.reset())
         return dict(
-            frame=initial_frame,
+            obs=initial_frame,
             reward=initial_reward,
-            done=initial_done,
+            terminated=initial_done,
             episode_return=self.episode_return,
             episode_step=self.episode_step,
             last_action=initial_last_action,
@@ -136,9 +138,9 @@ class Environment:
         done = torch.tensor(done).view(1, 1)
 
         return dict(
-            frame=frame,
+            obs=frame,
             reward=reward,
-            done=done,
+            terminated=done,
             episode_return=episode_return,
             episode_step=episode_step,
             last_action=action,
@@ -424,7 +426,6 @@ def make_atari(env_id, max_episode_steps=None):
     assert max_episode_steps is None
 
     return env
-
 
 def wrap_deepmind(
     env, episode_life=True, clip_rewards=True, frame_stack=False, scale=False

@@ -105,7 +105,8 @@ def make_atari_env(
 
         return _thunk
 
-    env_id = "ALE/" + env_id
+    if 'NoFrameskip-v4' not in env_id:
+        env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)

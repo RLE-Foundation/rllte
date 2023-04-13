@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Distribution, Space, Tensor, Tuple
+from hsuanwu.common.typing import Distribution, Space, Tensor, Tuple, Dict
 from hsuanwu.xploit.learner import utils
 
 
@@ -341,3 +341,106 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
             Distribution
         """
         return self.dist(self.actor(self.trunk(obs)))
+
+class DiscreteLSTMActor(nn.Module):
+    def __init__(self, 
+                 action_space,
+                 feature_dim,
+                 hidden_dim: int = 512,
+                 use_lstm: bool = False,
+                 ) -> None:
+        super().__init__()
+        self.num_actions = action_space.shape[0]
+        self.use_lstm = use_lstm
+
+        self.trunk = nn.Linear(feature_dim, hidden_dim)
+
+        # feature_dim + one-hot of last action + last reward
+        lstm_output_size = feature_dim + self.num_actions + 1
+        if use_lstm:
+            self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
+        
+        # policy logits
+        self.policy = nn.Linear(lstm_output_size, self.num_actions)
+        # baseline value function
+        self.baseline = nn.Linear(lstm_output_size, 1)
+
+        # internal encoder
+        self.encoder = None
+        self.dist = None
+
+    def init_state(self, batch_size: int) -> Tuple[Tensor, ...]:
+        """Generate the initial states for LSTM.
+
+        Args:
+            batch_size (int): The batch size for training.
+        
+        Returns:
+            Initial states.
+        """
+        if not self.use_lstm:
+            return tuple()
+        return tuple(
+            torch.zeros(self.lstm.num_layers, 
+                        batch_size, 
+                        self.lstm.hidden_size)
+            for _ in range(2)
+        )
+
+    def get_action(self, 
+                   inputs: Dict, 
+                   lstm_state: Tuple = (),
+                   training: bool = True,
+                   ) -> Tensor:
+        x = inputs['obs'] # [T, B, *obs_shape], T: rollout length, B: batch size
+        T, B, *_ = x.shape
+        # TODO: merge time and batch
+        x = torch.flatten(x, 0, 1)
+        # TODO: extract features from observations
+        features = F.relu(self.encoder(x))
+        # TODO: get one-hot last actions
+        one_hot_last_actions = F.one_hot(
+            inputs['last_action'].view(T * B), 
+            self.num_actions
+        ).float()
+
+        clipped_reward = torch.clamp(inputs["reward"], -1, 1).view(T * B, 1)
+        lstm_input = torch.cat([features, clipped_reward, one_hot_last_actions], dim=-1)
+
+        if self.use_lstm:
+            lstm_input = lstm_input.view(T, B, -1)
+            lstm_output_list = []
+            notdone = (~inputs["terminated"]).float()
+            for input, nd in zip(lstm_input.unbind(), notdone.unbind()):
+                # Reset lstm state to zero whenever an episode ended.
+                # Make `done` broadcastable with (num_layers, B, hidden_size)
+                # states:
+                nd = nd.view(1, -1, 1)
+                lstm_state = tuple(nd * s for s in lstm_state)
+                output, lstm_state = self.lstm(input.unsqueeze(0), lstm_state)
+                lstm_output_list.append(output)
+            lstm_output = torch.flatten(torch.cat(lstm_output_list), 0, 1)
+        else:
+            lstm_output = lstm_input
+            lstm_state = tuple()
+        
+        policy_logits = self.policy(lstm_output)
+        baseline = self.baseline(lstm_output)
+
+        if training:
+            action = self.dist(policy_logits).sample()
+        else:
+            action = self.dist(policy_logits).mode
+        
+        policy_logits = policy_logits.view(T, B, self.num_actions)
+        baseline = baseline.view(T, B)
+        action = action.view(T, B)
+
+        return (
+            dict(
+            policy_logits=policy_logits,
+            baseline=baseline,
+            action=action),
+            lstm_state
+            )
+

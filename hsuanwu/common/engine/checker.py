@@ -32,7 +32,7 @@ MATCH_KEYS = {
     },
     "IMPALALearner": {
         "storage": ["DistributedStorage"],
-        "distribution": ["None"],
+        "distribution": ["Categorical"],
         "augmentation": [],
         "reward": [],
     },

@@ -23,6 +23,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
+        self._logger.log(INFO, f"Deploying OffPolicyTrainer...")
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder

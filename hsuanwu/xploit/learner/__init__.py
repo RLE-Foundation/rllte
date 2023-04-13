@@ -1,6 +1,7 @@
 from .base import BaseLearner
 from .drqv2 import DEFAULT_CFGS as DRQV2_DEFAULT_CFGS
 from .drqv2 import DrQv2Learner
+from .impala import DEFAULT_CFGS as IMPALA_DEFAULT_CFGS
 from .impala import IMPALALearner
 from .network import *
 from .ppg import DEFAULT_CFGS as PPG_DEFAULT_CFGS
@@ -15,4 +16,5 @@ ALL_DEFAULT_CFGS = {
     "PPGLearner": PPG_DEFAULT_CFGS,
     "SACLearner": SAC_DEFAULT_CFGS,
     "PPOLearner": PPO_DEFAULT_CFGS,
+    "IMPALALearner": IMPALA_DEFAULT_CFGS,
 }

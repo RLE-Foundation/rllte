@@ -29,7 +29,7 @@ class MnihCnnEncoder(BaseEncoder):
             nn.ReLU(),
             nn.Conv2d(32, 64, 4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(32, 32, 3, stride=1),
+            nn.Conv2d(64, 64, 3, stride=1),
             nn.ReLU(),
             nn.Flatten(),
         )
