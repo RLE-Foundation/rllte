@@ -79,7 +79,7 @@ class DistributedStorage:
         free_queue: SimpleQueue,
         full_queue: SimpleQueue,
         storages: List,
-        init_actor_states: List,
+        init_actor_state_storages: List,
         lock=threading.Lock(),
     ) -> Batch:
         """Sample transitions from the storage.
@@ -90,7 +90,7 @@ class DistributedStorage:
             free_queue (Queue): Free queue for communication.
             full_queue (Queue): Full queue for communication.
             storages (List[Storage]): A list of shared storages.
-            init_actor_states: (List[Tensor]): Initial states for LSTM.
+            init_actor_state_storages: (List[Tensor]): Initial states for LSTM.
             lock (Lock): Thread lock.
 
         Returns:
@@ -99,19 +99,19 @@ class DistributedStorage:
         with lock:
             indices = [full_queue.get() for _ in range(batch_size)]
         batch = {
-            key: torch.stack([storages[key][m] for m in indices], dim=1)
+            key: torch.stack([storages[key][i] for i in indices], dim=1)
             for key in storages
         }
 
-        init_actor_state = (
-            torch.cat(ts, dim=1) for ts in zip(*[init_actor_states[m] for m in indices])
+        init_actor_states = (
+            torch.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices])
         )
 
         for i in indices:
             free_queue.put(i)
 
         batch = {
-            k: t.to(device=torch.device(device), non_blocking=True)
-            for k, t in batch.items()
+            key: tensor.to(device=torch.device(device), non_blocking=True)
+            for key, tensor in batch.items()
         }
-        return batch, init_actor_state
+        return batch, init_actor_states

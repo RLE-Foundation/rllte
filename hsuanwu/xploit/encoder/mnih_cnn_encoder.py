@@ -40,7 +40,7 @@ class MnihCnnEncoder(BaseEncoder):
 
         self.linear = nn.Linear(n_flatten, feature_dim)
 
-        self.apply(network_init)
+        # self.apply(network_init)
 
     def forward(self, obs: Tensor) -> Tensor:
         obs = obs / 255.0

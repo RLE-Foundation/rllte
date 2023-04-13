@@ -67,14 +67,14 @@ class Logger:
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
             value = msg.get(key, 0)
-            pieces.append(self._format(disp_key, value, ty).ljust(13, " "))
+            pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
     def parse_test_msg(self, msg: Any):
         pieces = []
         for key, disp_key, ty in TEST_MSG_FORMAT:
             value = msg.get(key, 0)
-            pieces.append(self._format(disp_key, value, ty).ljust(13, " "))
+            pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
     def log(self, level: int, msg: Any):

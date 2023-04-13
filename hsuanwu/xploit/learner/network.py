@@ -350,10 +350,11 @@ class DiscreteLSTMActor(nn.Module):
                  use_lstm: bool = False,
                  ) -> None:
         super().__init__()
+        """
+        
+        """
         self.num_actions = action_space.shape[0]
         self.use_lstm = use_lstm
-
-        self.trunk = nn.Linear(feature_dim, hidden_dim)
 
         # feature_dim + one-hot of last action + last reward
         lstm_output_size = feature_dim + self.num_actions + 1
