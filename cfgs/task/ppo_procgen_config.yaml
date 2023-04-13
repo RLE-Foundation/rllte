@@ -4,7 +4,7 @@ device: cuda:0            # Device (cpu, cuda, ...) on which the code should be 
 seed: 1                   # Random seed for reproduction.
 num_train_steps: 10000000   # Number of training steps.
 
-use_aug: true
+# use_aug: true
 
 learner:
   name: PPOLearner

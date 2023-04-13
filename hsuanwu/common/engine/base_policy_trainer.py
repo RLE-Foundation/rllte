@@ -9,7 +9,7 @@ import torch
 from omegaconf import OmegaConf
 
 from hsuanwu.common.engine.checker import cfgs_checker
-from hsuanwu.common.logger import INFO, Logger
+from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.common.typing import (
     ABC,
@@ -66,7 +66,7 @@ class BasePolicyTrainer(ABC):
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
         # debug
-        self._logger.log(INFO, "Invoking Hsuanwu Engine...")
+        self._logger.info("Invoking Hsuanwu Engine...")
         # preprocess the cfgs
         processed_cfgs = self._process_cfgs(cfgs)
         cfgs_checker(logger=self._logger, cfgs=processed_cfgs)

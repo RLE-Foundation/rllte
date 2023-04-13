@@ -1,7 +1,4 @@
-from collections import deque
-
 import gymnasium as gym
-import numpy as np
 import torch
 from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv

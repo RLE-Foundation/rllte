@@ -5,7 +5,16 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, DictConfig, Space, Tensor, NNModule, Batch, Tuple
+from hsuanwu.common.typing import (
+    Batch,
+    Device,
+    Dict,
+    DictConfig,
+    NNModule,
+    Space,
+    Tensor,
+    Tuple,
+)
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteLSTMActor
 
@@ -62,7 +71,7 @@ class VTrace(object):
 
     def __init__(self) -> None:
         pass
-    
+
     def action_log_probs(self, policy_logits, actions):
         return -F.nll_loss(
             F.log_softmax(torch.flatten(policy_logits, 0, -2), dim=-1),
@@ -85,7 +94,9 @@ class VTrace(object):
         """V-trace for softmax policies."""
 
         target_action_log_probs = self.action_log_probs(target_policy_logits, actions)
-        behavior_action_log_probs = self.action_log_probs(behavior_policy_logits, actions)
+        behavior_action_log_probs = self.action_log_probs(
+            behavior_policy_logits, actions
+        )
         log_rhos = target_action_log_probs - behavior_action_log_probs
         vtrace_returns = self.from_importance_weights(
             log_rhos=log_rhos,
@@ -149,7 +160,9 @@ class VTrace(object):
                 clipped_pg_rhos = torch.clamp(rhos, max=clip_pg_rho_threshold)
             else:
                 clipped_pg_rhos = rhos
-            pg_advantages = clipped_pg_rhos * (rewards + discounts * vs_t_plus_1 - values)
+            pg_advantages = clipped_pg_rhos * (
+                rewards + discounts * vs_t_plus_1 - values
+            )
 
             # Make sure no gradients backpropagated through the returned values.
             return VTraceReturns(vs=vs, pg_advantages=pg_advantages)
@@ -193,9 +206,7 @@ class IMPALALearner(BaseLearner):
         max_grad_norm: float,
         discount: float,
     ) -> None:
-        super().__init__(
-            observation_space, action_space, device, feature_dim, lr, eps
-        )
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.ent_coef = ent_coef
         self.baseline_coef = baseline_coef
@@ -203,15 +214,11 @@ class IMPALALearner(BaseLearner):
         self.discount = discount
 
         self.actor = DiscreteLSTMActor(
-            action_space=action_space,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm
+            action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm
         )
 
         self.learner = DiscreteLSTMActor(
-            action_space=action_space,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm
+            action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm
         )
 
     def train(self, training: bool = True) -> None:
@@ -250,10 +257,11 @@ class IMPALALearner(BaseLearner):
             optimizer (torch.optim.Optimizer): Optimizer.
             lr_scheduler (torch.optim.lr_scheduler): Learning rate scheduler.
             lock (Lock): Thread lock.
-        
+
         Returns:
             Training metrics.
         """
+
         ###########################################################################
         def compute_policy_gradient_loss(logits, actions, advantages):
             cross_entropy = F.nll_loss(
@@ -272,6 +280,7 @@ class IMPALALearner(BaseLearner):
             policy = F.softmax(logits, dim=-1)
             log_policy = F.log_softmax(logits, dim=-1)
             return torch.sum(policy * log_policy)
+
         ###########################################################################
         """Performs a learning (optimization) step."""
         with lock:

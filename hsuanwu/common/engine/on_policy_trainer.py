@@ -6,7 +6,6 @@ import numpy as np
 import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import DEBUG, INFO, TEST, TRAIN, Logger
 from hsuanwu.common.typing import Dict, DictConfig, Env, Tensor, Tuple
 
 
@@ -24,7 +23,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.log(INFO, f"Deploying OnPolicyTrainer...")
+        self._logger.info(f"Deploying OnPolicyTrainer...")
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
@@ -58,7 +57,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._num_envs = self._cfgs.num_envs
 
         # debug
-        self._logger.log(DEBUG, "Check Accomplished. Start Training...")
+        self._logger.debug("Check Accomplished. Start Training...")
 
     def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
         """Sample actions based on observations.
@@ -97,7 +96,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 self._test_env is not None
             ):
                 test_metrics = self.test()
-                self._logger.log(level=TEST, msg=test_metrics)
+                self._logger.test(msg=test_metrics)
 
             for step in range(self._num_steps):
                 # sample actions
@@ -159,9 +158,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
                     "fps": self._num_steps * self._num_envs / episode_time,
                     "total_time": total_time,
                 }
-                self._logger.log(level=TRAIN, msg=train_metrics)
+                self._logger.train(msg=train_metrics)
 
         # save model
+        self._logger.info("Training Accomplished!")
         self.save()
 
     def test(self) -> Dict:

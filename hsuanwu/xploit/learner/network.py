@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Distribution, Space, Tensor, Tuple, Dict
+from hsuanwu.common.typing import Dict, Distribution, Space, Tensor, Tuple
 from hsuanwu.xploit.learner import utils
 
 
@@ -342,16 +342,27 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         """
         return self.dist(self.actor(self.trunk(obs)))
 
+
 class DiscreteLSTMActor(nn.Module):
-    def __init__(self, 
-                 action_space,
-                 feature_dim,
-                 hidden_dim: int = 512,
-                 use_lstm: bool = False,
-                 ) -> None:
+    def __init__(
+        self,
+        action_space,
+        feature_dim,
+        hidden_dim: int = 512,
+        use_lstm: bool = False,
+    ) -> None:
         super().__init__()
         """
-        
+        Actor network for IMPALA learner that supports LSTM module.
+
+        Args:
+            action_space (Space): Action space of the environment.
+            feature_dim (int): Number of features accepted.
+            hidden_dim (int): Number of units per hidden layer.
+            use_lstm (bool): Use LSTM or not.
+
+        Returns:
+            Actor network instance.
         """
         self.num_actions = action_space.shape[0]
         self.use_lstm = use_lstm
@@ -360,7 +371,7 @@ class DiscreteLSTMActor(nn.Module):
         lstm_output_size = feature_dim + self.num_actions + 1
         if use_lstm:
             self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
-        
+
         # policy logits
         self.policy = nn.Linear(lstm_output_size, self.num_actions)
         # baseline value function
@@ -375,25 +386,24 @@ class DiscreteLSTMActor(nn.Module):
 
         Args:
             batch_size (int): The batch size for training.
-        
+
         Returns:
             Initial states.
         """
         if not self.use_lstm:
             return tuple()
         return tuple(
-            torch.zeros(self.lstm.num_layers, 
-                        batch_size, 
-                        self.lstm.hidden_size)
+            torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
             for _ in range(2)
         )
 
-    def get_action(self, 
-                   inputs: Dict, 
-                   lstm_state: Tuple = (),
-                   training: bool = True,
-                   ) -> Tensor:
-        x = inputs['obs'] # [T, B, *obs_shape], T: rollout length, B: batch size
+    def get_action(
+        self,
+        inputs: Dict,
+        lstm_state: Tuple = (),
+        training: bool = True,
+    ) -> Tensor:
+        x = inputs["obs"]  # [T, B, *obs_shape], T: rollout length, B: batch size
         T, B, *_ = x.shape
         # TODO: merge time and batch
         x = torch.flatten(x, 0, 1)
@@ -401,8 +411,7 @@ class DiscreteLSTMActor(nn.Module):
         features = F.relu(self.encoder(x))
         # TODO: get one-hot last actions
         one_hot_last_actions = F.one_hot(
-            inputs['last_action'].view(T * B), 
-            self.num_actions
+            inputs["last_action"].view(T * B), self.num_actions
         ).float()
 
         clipped_reward = torch.clamp(inputs["reward"], -1, 1).view(T * B, 1)
@@ -424,7 +433,7 @@ class DiscreteLSTMActor(nn.Module):
         else:
             lstm_output = lstm_input
             lstm_state = tuple()
-        
+
         policy_logits = self.policy(lstm_output)
         baseline = self.baseline(lstm_output)
 
@@ -432,16 +441,12 @@ class DiscreteLSTMActor(nn.Module):
             action = self.dist(policy_logits).sample()
         else:
             action = self.dist(policy_logits).mode
-        
+
         policy_logits = policy_logits.view(T, B, self.num_actions)
         baseline = baseline.view(T, B)
         action = action.view(T, B)
 
         return (
-            dict(
-            policy_logits=policy_logits,
-            baseline=baseline,
-            action=action),
-            lstm_state
-            )
-
+            dict(policy_logits=policy_logits, baseline=baseline, action=action),
+            lstm_state,
+        )

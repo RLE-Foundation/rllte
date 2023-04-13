@@ -4,7 +4,6 @@ import hydra
 import torch
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.logger import DEBUG, INFO, TEST, TRAIN, Logger
 from hsuanwu.common.typing import DictConfig, Env, Iterable, Tensor, Tuple
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
@@ -23,7 +22,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.log(INFO, f"Deploying OffPolicyTrainer...")
+        self._logger.info(f"Deploying OffPolicyTrainer...")
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
@@ -73,7 +72,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._num_init_steps = self._cfgs.num_init_steps
 
         # debug
-        self._logger.log(DEBUG, "Check Accomplished. Start Training...")
+        self._logger.debug("Check Accomplished. Start Training...")
 
     @property
     def replay_iter(self) -> Iterable:
@@ -117,7 +116,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 self._test_env is not None
             ):
                 test_metrics = self.test()
-                self._logger.log(level=TEST, msg=test_metrics)
+                self._logger.test(msg=test_metrics)
 
             # sample actions
             with torch.no_grad(), utils.eval_mode(self._learner):
@@ -161,7 +160,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                         "fps": episode_step / episode_time,
                         "total_time": total_time,
                     }
-                    self._logger.log(level=TRAIN, msg=train_metrics)
+                    self._logger.train(msg=train_metrics)
 
                 obs, info = self._train_env.reset(seed=self._seed)
                 self._global_episode += 1
@@ -171,6 +170,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             obs = next_obs
 
         # save model
+        self._logger.info("Training Accomplished!")
         self.save()
 
     def test(self) -> None:

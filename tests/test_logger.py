@@ -10,7 +10,8 @@ from pathlib import Path
 from hsuanwu.common.logger import *
 
 work_dir = Path.cwd() / "logs/"
-os.mkdir(work_dir)
+if not os.path.exists(work_dir):
+    os.mkdir(work_dir)
 logger = Logger(work_dir)
 
 msg_info = "Invoking Hsuanwu Engine..."
@@ -32,7 +33,10 @@ msg_test = {
     "episode_length": 1000.000,
     "total_time": 1000,
 }
-logger.log(level=INFO, msg=msg_info)
-logger.log(level=DEBUG, msg=msg_debug)
-logger.log(level=TRAIN, msg=msg_train)
-logger.log(level=TEST, msg=msg_test)
+
+print(logger.time_stamp)
+logger.info(msg="Invoking Hsuanwu Engine...")
+logger.debug(msg="Checking Module Compatibility...")
+logger.error(msg="Unsupported function!")
+logger.train(msg=msg_train)
+logger.test(msg=msg_test)

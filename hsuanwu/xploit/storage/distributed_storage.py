@@ -104,7 +104,8 @@ class DistributedStorage:
         }
 
         init_actor_states = (
-            torch.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices])
+            torch.cat(ts, dim=1)
+            for ts in zip(*[init_actor_state_storages[i] for i in indices])
         )
 
         for i in indices:
