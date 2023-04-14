@@ -54,6 +54,10 @@ envs = [
   "scikit-video",
   "imageio"
 ]
+docs = [
+  "mkdocs-material",
+  "mkgendocs"
+]
 
 [project.urls]
 "Code" = "https://github.com/RLE-Foundation/Hsuanwu"

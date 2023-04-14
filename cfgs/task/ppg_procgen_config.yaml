@@ -13,8 +13,5 @@ learner:
 hydra:
   run:
     dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
-  sweep:
-    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
-    subdir: ${hydra.job.num}
   job:
     chdir: true
