@@ -6,11 +6,28 @@ from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
 
+MATCH_KEYS = {
+    "trainer": "OffPolicyTrainer",
+    "storage": ["NStepReplayStorage"],
+    "distribution": [
+        "OrnsteinUhlenbeckNoise",
+        "TruncatedNormalNoise",
+        "NormalNoise",
+        ],
+    "augmentation": [],
+    "reward": [],
+}
+
 DEFAULT_CFGS = {
-    "use_aug": True,
-    "use_irs": False,
+    ## TODO: Train setup
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 500000,
     "num_init_steps": 2000,  # only for off-policy algorithms
-    # xploit part
+    ## TODO: Test setup
+    "test_every_steps": 5000,  # only for off-policy algorithms
+    "num_test_episodes": 10,
+    ## TODO: xploit part
     "encoder": {
         "name": "TassaCnnEncoder",
         "observation_space": dict(),
@@ -33,7 +50,7 @@ DEFAULT_CFGS = {
         "storage_size": 500000,
         "batch_size": 256,
     },
-    # xplore part
+    ## TODO: xplore part
     "distribution": {"name": "TruncatedNormalNoise"},
     "augmentation": {"name": "RandomShift"},
     "reward": {"name": None},

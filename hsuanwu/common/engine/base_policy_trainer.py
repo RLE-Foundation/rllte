@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-from hsuanwu.common.engine.checker import cfgs_checker
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.common.typing import (
@@ -21,7 +20,7 @@ from hsuanwu.common.typing import (
     Tuple,
     abstractmethod,
 )
-from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
+from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
@@ -29,14 +28,26 @@ _DEFAULT_CFGS = {
     "device": "cpu",
     "seed": 1,
     "num_train_steps": 100000,
+    "num_init_steps": 2000, # only for off-policy algorithms
     ## TODO: Test setup
     "test_every_steps": 5000,  # only for off-policy algorithms
     "test_every_episodes": 10,  # only for on-policy algorithms
     "num_test_episodes": 10,
+    ## TODO: xploit part
+    "encoder": {
+        "name": None,
+    },
+    "learner": {
+        "name": None,
+    },
+    "storage": {
+        "name": None,
+    },
+    ## TODO: xplore part
+    "distribution": {"name": None},
+    "augmentation": {"name": None},
+    "reward": {"name": None},
 }
-
-_COMMON_KEYS = ["device", "seed", "num_train_steps", "use_aug", "use_irs"]
-
 
 class BasePolicyTrainer(ABC):
     """Base class of policy trainer.
@@ -66,10 +77,15 @@ class BasePolicyTrainer(ABC):
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
         # debug
+        try:
+            self._logger.info(f"Experiment: {cfgs.experiment}")
+        except:
+            self._logger.info(f"Experiment: Default")
         self._logger.info("Invoking Hsuanwu Engine...")
         # preprocess the cfgs
         processed_cfgs = self._process_cfgs(cfgs)
-        cfgs_checker(logger=self._logger, cfgs=processed_cfgs)
+        # check the cfgs
+        self._check_cfgs(cfgs=processed_cfgs)
         self._cfgs = self._set_class_path(processed_cfgs)
         # training track
         self._num_train_steps = self._cfgs.num_train_steps
@@ -134,48 +150,51 @@ class BasePolicyTrainer(ABC):
         new_cfgs = OmegaConf.create(_DEFAULT_CFGS)
         # TODO: load the default configs of learner
         learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
-        new_cfgs.merge_with(learner_default_cfgs)
+
+        for key in learner_default_cfgs.keys():
+            new_cfgs[key] = learner_default_cfgs[key]
 
         # TODO: try to load self-defined configs
-        ## common configs
-        for key in _COMMON_KEYS:
-            try:
-                new_cfgs[key] = cfgs[key]
-            except:
-                pass
-
-        for part in [
-            "encoder",
-            "learner",
-            "storage",
-            "distribution",
-            "augmentation",
-            "reward",
-        ]:
-            if (
-                part == "augmentation" and not new_cfgs.use_aug
-            ):  # don't use observation augmentation
-                continue
-            if part == "reward" and not new_cfgs.use_irs:  # don't use intrinsic reward
-                continue
-
-            for key in new_cfgs[part].keys():
-                try:
+        for part in cfgs.keys():
+            if part not in ["encoder",
+                           "learner",
+                           "storage",
+                           "distribution",
+                           "augmentation",
+                           "reward"]:
+                new_cfgs[part] = cfgs[part]
+        
+        for part in cfgs.keys():
+            if part in ["encoder",
+                       "learner",
+                       "storage",
+                       "distribution",
+                       "augmentation",
+                       "reward"]:
+                for key in cfgs[part].keys():
                     new_cfgs[part][key] = cfgs[part][key]
-                except:
-                    pass
 
-        # TODO: replace 'name' with '_target_' to use 'hydra.utils.instantiate'
-        for part in [
-            "encoder",
-            "learner",
-            "storage",
-            "distribution",
-            "augmentation",
-            "reward",
-        ]:
-            new_cfgs[part]["_target_"] = new_cfgs[part]["name"]
-            new_cfgs[part].pop("name")
+        ## TODO: replace 'name' with '_target_' to use 'hydra.utils.instantiate'
+        for part in new_cfgs.keys():
+            if part in ["encoder",
+                       "learner",
+                       "storage",
+                       "distribution",
+                       "augmentation",
+                       "reward"]:
+                new_cfgs[part]["_target_"] = new_cfgs[part]["name"]
+                new_cfgs[part].pop("name")
+        
+        ## TODO: set flag for 'augmentation' and 'reward'
+        if new_cfgs.augmentation._target_ is not None:
+            new_cfgs.use_aug = True
+        else:
+            new_cfgs.use_aug = False
+        
+        if new_cfgs.reward._target_ is not None:
+            new_cfgs.use_irs = True
+        else:
+            new_cfgs.use_irs = False
 
         # TODO: remake observation and action sapce
         observation_space, action_space = self._remake_observation_and_action_space(
@@ -222,12 +241,46 @@ class BasePolicyTrainer(ABC):
             new_cfgs.storage.num_steps = new_cfgs.num_steps
 
         ## for reward
-        if new_cfgs.use_irs:
+        if new_cfgs.reward._target_ is not None:
             new_cfgs.reward.device = new_cfgs.device
             new_cfgs.reward.obs_shape = observation_space["shape"]
             new_cfgs.reward.action_shape = action_space["shape"]
 
         return new_cfgs
+    
+    def _check_cfgs(self, cfgs: DictConfig) -> None:
+        """Check the compatibility of selected modules.
+        Args:
+            cfgs (DictConfig): Dict Config.
+
+        Returns:
+            None.
+        """
+        self._logger.debug("Checking the Compatibility of Modules...")
+
+        # xploit part
+        self._logger.debug(f"Selected Encoder: {cfgs.encoder._target_}")
+        self._logger.debug(f"Selected Learner: {cfgs.learner._target_}")
+        # Check the compatibility
+        assert (
+            cfgs.storage._target_ in ALL_MATCH_KEYS[cfgs.learner._target_]["storage"]
+        ), f"{cfgs.storage._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/."
+        self._logger.debug(f"Selected Storage: {cfgs.storage._target_}")
+
+        assert (
+            cfgs.distribution._target_ in ALL_MATCH_KEYS[cfgs.learner._target_]["distribution"]
+        ), f"{cfgs.distribution._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/."
+        self._logger.debug(f"Selected Distribution: {cfgs.distribution._target_}")
+
+        if cfgs.augmentation._target_ is not None:
+            self._logger.debug(f"Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}")
+        else:
+            self._logger.debug(f"Use Augmentation: {cfgs.use_aug}")
+        if cfgs.reward._target_ is not None:
+            self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}")
+        else:
+            self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}")
+
 
     def _set_class_path(self, cfgs: DictConfig) -> DictConfig:
         """Set the class path for each module.
@@ -245,11 +298,11 @@ class BasePolicyTrainer(ABC):
         cfgs.distribution._target_ = (
             "hsuanwu.xplore." + "distribution." + cfgs.distribution._target_
         )
-        if cfgs.use_aug:
+        if cfgs.augmentation._target_ is not None:
             cfgs.augmentation._target_ = (
                 "hsuanwu.xplore." + "augmentation." + cfgs.augmentation._target_
             )
-        if cfgs.use_irs:
+        if cfgs.reward._target_ is not None:
             cfgs.reward._target_ = "hsuanwu.xplore." + "reward." + cfgs.reward._target_
 
         return cfgs

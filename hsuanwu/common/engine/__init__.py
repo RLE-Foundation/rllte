@@ -1,5 +1,5 @@
 from hsuanwu.common.typing import DictConfig, Env
-from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS
+from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 from .base_policy_trainer import BasePolicyTrainer
 from .distributed_trainer import DistributedTrainer
@@ -36,15 +36,15 @@ class Engine:
                 f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
             )
 
-        if cfgs.learner.name in _LEARNER_TO_TRAINER["OnPolicyTrainer"]:
+        if ALL_MACTH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
             self.trainer = OnPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif cfgs.learner.name in _LEARNER_TO_TRAINER["OffPolicyTrainer"]:
+        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OffPolicyTrainer":
             self.trainer = OffPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif cfgs.learner.name in _LEARNER_TO_TRAINER["DistributedTrainer"]:
+        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "DistributedTrainer":
             self.trainer = DistributedTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )

@@ -18,13 +18,26 @@ from hsuanwu.common.typing import (
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteLSTMActor
 
+MATCH_KEYS = {
+    "trainer": "DistributedTrainer",
+    "storage": ["DistributedStorage"],
+    "distribution": ["Categorical"],
+    "augmentation": [],
+    "reward": [],
+}
+
 DEFAULT_CFGS = {
-    "use_aug": False,  # True for enabling DrAC
-    "use_irs": False,
+    ## TODO: Train setup
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 30000000,
     "num_actors": 45,
     "num_learners": 4,
     "num_steps": 80,  # The sample length of per rollout.
-    # xploit part
+    ## TODO: Test setup
+    "test_every_steps": 5000,  # only for off-policy algorithms
+    "num_test_episodes": 10,
+    ## TODO: xploit part
     "encoder": {
         "name": "MnihCnnEncoder",
         "observation_space": dict(),
@@ -45,7 +58,7 @@ DEFAULT_CFGS = {
         "discount": 0.99,
     },
     "storage": {"name": "DistributedStorage", "num_storages": 60, "batch_size": 4},
-    # xplore part
+    ## TODO: xplore part
     "distribution": {"name": "Categorical"},
     "augmentation": {"name": None},
     "reward": {"name": None},

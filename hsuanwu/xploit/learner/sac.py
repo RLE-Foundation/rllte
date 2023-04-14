@@ -7,11 +7,24 @@ from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
+MATCH_KEYS = {
+    "trainer": "OffPolicyTrainer",
+    "storage": ["VanillaReplayStorage"],
+    "distribution": ["SquashedNormal"],
+    "augmentation": [],
+    "reward": [],
+}
+
 DEFAULT_CFGS = {
-    "use_aug": False,
-    "use_irs": False,
+    ## TODO: Train setup
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 1000000,
     "num_init_steps": 5000,  # only for off-policy algorithms
-    # xploit part
+    ## TODO: Test setup
+    "test_every_steps": 5000,  # only for off-policy algorithms
+    "num_test_episodes": 10,
+    ## TODO: xploit part
     "encoder": {
         "name": "IdentityEncoder",
         "observation_space": dict(),
@@ -39,7 +52,7 @@ DEFAULT_CFGS = {
         "storage_size": 1000000,
         "batch_size": 1024,
     },
-    # xplore part
+    ## TODO: xplore part
     "distribution": {"name": "SquashedNormal"},
     "augmentation": {"name": None},
     "reward": {"name": None},

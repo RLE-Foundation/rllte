@@ -5,11 +5,24 @@ from hsuanwu.common.typing import Device, Dict, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
 
+MATCH_KEYS = {
+    "trainer": "OnPolicyTrainer",
+    "storage": ["VanillaRolloutStorage"],
+    "distribution": ["Categorical"],
+    "augmentation": [],
+    "reward": [],
+}
+
 DEFAULT_CFGS = {
-    "use_aug": False,  # True for enabling DrAC
-    "use_irs": False,
+    ## TODO: Train setup
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 25000000,
     "num_steps": 256,  # The sample length of per rollout.
-    # xploit part
+    ## TODO: Test setup
+    "test_every_episodes": 10,  # only for on-policy algorithms
+    "num_test_episodes": 10,
+    ## TODO: xploit part
     "encoder": {
         "name": "EspeholtResidualEncoder",
         "observation_space": dict(),
@@ -33,7 +46,7 @@ DEFAULT_CFGS = {
         "max_grad_norm": 0.5,
     },
     "storage": {"name": "VanillaRolloutStorage"},
-    # xplore part
+    ## TODO: xplore part
     "distribution": {"name": "Categorical"},
     "augmentation": {"name": None},
     "reward": {"name": None},
