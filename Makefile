@@ -26,3 +26,12 @@ format:
 	black ${LINT_PATHS}
 
 commit-checks: format type lint
+
+build:
+	python3 -m build
+
+twine:
+	python3 -m twine upload --repository pypi dist/*
+
+gendocs:
+	gendocs --config mkgendocs.yml

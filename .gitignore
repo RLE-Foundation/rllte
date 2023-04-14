@@ -18,6 +18,7 @@
 .ipynb_checkpoints
 *.lprof
 *.prof
+*.log
 
 __pycache__/
 _build/
