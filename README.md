@@ -21,6 +21,11 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 100%">
 </div>
 
+The following figure demonstrates the evolution roadmap of Hsuanwu:
+<div align=center>
+<img src='./docs/assets/images/roadmap.svg'>
+</div>
+
 Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023hsuanwu,
@@ -31,7 +36,6 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 }
 ```
 
-- [Evolution Roadmap](#evolution-roadmap)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Build your first Hsuanwu application](#build-your-first-hsuanwu-application)
@@ -41,12 +45,6 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
-
-# Evolution Roadmap
-The following figure demonstrates the evolution roadmap of Hsuanwu:
-<div align=center>
-<img src='./docs/assets/images/roadmap.svg'>
-</div>
 
 # Quick Start
 ## Installation
