@@ -18,7 +18,7 @@
 
 See the project structure below:
 <div align=center>
-<img src='./docs/assets/images/structure.svg' style="width: 75%">
+<img src='./docs/assets/images/structure.svg' style="width: 100%">
 </div>
 
 Please cite the following paper if you use Hsuanwu in your work, thank you!
