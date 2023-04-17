@@ -38,12 +38,12 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 - [Implemented Algorithms](#implemented-algorithms)
   - [Learners](#learners)
   - [Intrinsic Reward](#intrinsic-reward)
-  - [Pre-training](#pre-training)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
 
 # Evolution Roadmap
+The following figure demonstrates the evolution roadmap of Hsuanwu:
 <div align=center>
 <img src='./docs/assets/images/roadmap.svg'>
 </div>
@@ -136,9 +136,34 @@ For more detailed tutorials, see [https://benchmark.hsuanwu.dev/api](https://ben
 
 # Implemented Algorithms
 ## Learners
-## Intrinsic Reward
+|Name|Recurrent|Box|Discrete|Multi Processing|Paper|Citations|
+|:-|:-|:-|:-|:-|:-|:-|
+|SAC|❌| ✔️ |❌|❌| [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
+|DrQ|❌| ✔️ |❌|❌| [Link](https://arxiv.org/pdf/2004.13649) |433⭐|
+|DDPG|❌| ✔️ |❌|❌| [Link](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------) |11819⭐|
+|DrQ-v2|❌| ✔️ |❌|❌| [Link](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |100⭐|
+|PPO|❌| ✔️ |✔️|✔️| [Link](https://arxiv.org/pdf/1707.06347) |11155⭐|
+|DrAC|❌| ✔️ |✔️|✔️| [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) |29⭐|
+|PPG|❌| ✔️ |✔️|✔️| [Link](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf) |82⭐|
+|IMPALA|✔️| ✔️ |✔️|✔️| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
 
-## Pre-training
+> - `Recurrent`: Support recurrent .
+> - `Box`: A N-dimensional box that containes every point in the action space.
+> - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
+
+## Intrinsic Reward
+| Algorithm | Remark | Year  | Paper | Code                                                                                    |
+|:-|:-|:-|:-|:-|
+| ICM       | Curiosity-driven exploration                 | 2017  | [Curiosity-Driven Exploration by Self-Supervised Prediction](http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf)                                                                                                                                                     | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/icm.py)  |
+| RND       | Count-based exploration            | 2019  | [Exploration by Random Network Distillation](https://arxiv.org/pdf/1810.12894.pdf)                                                                                                                                                                                         | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/rnd.py)  |
+| GIRM      | Curiosity-driven exploration            | 2020  | [Intrinsic Reward Driven Imitation Learning via Generative Model](http://proceedings.mlr.press/v119/yu20d/yu20d.pdf)                                                                                                                                                       | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/girm.py) |
+| NGU       | Memory-based exploration                | 2020  | [Never Give Up: Learning Directed Exploration Strategies](https://arxiv.org/pdf/2002.06038)                                                                                                                                                                                | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/ngu.py)  |
+| RIDE      | Procedurally-generated environment      | 2020  | [RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments](https://arxiv.org/pdf/2002.12292)                                                                                                                                                      | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/ride.py) |
+| RE3       | Shannon Entropy Maximization            | 2021  | [State Entropy Maximization with Random Encoders for Efficient Exploration](http://proceedings.mlr.press/v139/seo21a/seo21a.pdf)                                                                                                                                           | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/re3.py)  |
+| RISE      | Rényi Entropy Maximization              | 2022  | [Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning](https://ieeexplore.ieee.org/abstract/document/9802917/)                                                                                                                          | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/rise.py) |
+| REVD      | Rényi Divergence Maximization           | 2022  | [Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning](https://openreview.net/pdf?id=V2pw1VYMrDo)                                                                                                                                           | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/revd.py) |
+
+
 
 For more detiled modules, see [https://benchmark.hsuanwu.dev/tutorials](https://benchmark.hsuanwu.dev/tutorials)
 
