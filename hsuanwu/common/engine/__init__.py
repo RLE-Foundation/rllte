@@ -6,7 +6,7 @@ from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
-class Engine:
+class HsuanwuEngine:
     """Hsuanwu RL engine.
 
     Args:
