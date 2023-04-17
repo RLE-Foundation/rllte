@@ -42,6 +42,7 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 - [Implemented Algorithms](#implemented-algorithms)
   - [Learners](#learners)
   - [Intrinsic Reward](#intrinsic-reward)
+- [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
@@ -50,12 +51,12 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 ## Installation
 - with pip `recommended`
 
-Open up a terminal and install Hsuanwu with `pip`:
+Open up a terminal and install **Hsuanwu** with `pip`:
 ``` shell
 pip install hsuanwu # basic installation
 pip install hsuanwu[envs] # for pre-defined environments
 pip install hsuanwu[tests] # for project tests
-pip install hsuanwu[all] # install all dependencies
+pip install hsuanwu[all] # install all the dependencies
 ```
 
 - with git
@@ -69,7 +70,7 @@ After that, run the following command to install package and dependencies:
 pip install -e . # basic installation
 pip install -e .[envs] # for pre-defined environments
 pip install -e .[tests] # for project tests
-pip install -e .[all] # install all dependencies
+pip install -e .[all] # install all the dependencies
 ```
 
 For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
@@ -130,7 +131,7 @@ Run `train.py` and you will see the following output:
 [04/17/2023 02:03:55 PM] - [HSUANWU Train] - S: 3000        | E: 5           | L: 500         | R: 159.040     | FPS: 51.368    | T: 0:00:35 
 .....
 ``` -->
-For more detailed tutorials, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
+For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
 
 # Implemented Algorithms
 ## Learners
@@ -162,8 +163,10 @@ For more detailed tutorials, see [https://docs.hsuanwu.dev/getting_started](http
 | REVD      | Rényi Divergence Maximization           | 2022  | [Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning](https://openreview.net/pdf?id=V2pw1VYMrDo)                                                                                                                                           | [Link](https://github.com/RLE-Foundation/Hsuanwu/tree/main/hsuanwu/xplore/reward/revd.py) |
 
 
-
 For more detiled modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
+
+# Model Zoo
+Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)

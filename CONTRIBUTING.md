@@ -20,7 +20,7 @@ cd Hsuanwu/
 ```
 After that, run the following command to install package and dependencies:
 ``` sh
-pip install -e .
+pip install -e .[all]
 ```
 
 ## Codestyle
@@ -38,8 +38,8 @@ def function_with_types_in_docstring(param1: type1, param2: type2):
     included in the docstring:
 
     Args:
-        param1: The first parameter.
-        param2: The second parameter.
+        param1 (type1): The first parameter.
+        param2 (type2): The second parameter.
 
     Returns:
         bool: The return value. True for success, False otherwise.
