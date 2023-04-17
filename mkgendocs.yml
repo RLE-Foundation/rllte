@@ -22,6 +22,11 @@ pages:
     classes:
       - OffPolicyTrainer
   
+  - page: "common/distributed_trainer.md"
+    source: "hsuanwu/common/engine/distributed_trainer.py"
+    classes:
+      - DistributedTrainer
+  
   - page: "common/logger.md"
     source: "hsuanwu/common/logger.py"
     classes:
@@ -40,20 +45,25 @@ pages:
     classes:
       - BaseEncoder
   
-  - page: "xploit/encoder/vanilla_cnn_encoder.md"
-    source: "hsuanwu/xploit/encoder/vanilla_cnn_encoder.py"
+  - page: "xploit/encoder/mnih_cnn_encoder.md"
+    source: "hsuanwu/xploit/encoder/mnih_cnn_encoder.py"
     classes:
-      - VanillaCnnEncoder
+      - MnihCnnEncoder
+  
+  - page: "xploit/encoder/tassa_cnn_encoder.md"
+    source: "hsuanwu/xploit/encoder/tassa_cnn_encoder.py"
+    classes:
+      - TassaCnnEncoder
   
   - page: "xploit/encoder/vanilla_mlp_encoder.md"
     source: "hsuanwu/xploit/encoder/vanilla_mlp_encoder.py"
     classes:
       - VanillaMlpEncoder
   
-  - page: "xploit/encoder/resnet_encoder.md"
-    source: "hsuanwu/xploit/encoder/resnet_encoder.py"
+  - page: "xploit/encoder/espeholt_residual_encoder.md"
+    source: "hsuanwu/xploit/encoder/espeholt_residual_encoder.py"
     classes:
-      - ResNetEncoder
+      - EspeholtResidualEncoder
   
   - page: "xploit/encoder/identity_encoder.md"
     source: "hsuanwu/xploit/encoder/identity_encoder.py"
@@ -64,6 +74,11 @@ pages:
 
 # xploit.learner
 ##################################################################
+  - page: "xploit/learner/base.md"
+    source: "hsuanwu/xploit/learner/base.py"
+    classes:
+      - BaseLearner
+
   - page: "xploit/learner/drqv2.md"
     source: "hsuanwu/xploit/learner/drqv2.py"
     classes:
@@ -79,15 +94,15 @@ pages:
     classes:
       - PPOLearner
   
-  - page: "xploit/learner/drac.md"
-    source: "hsuanwu/xploit/learner/drac.py"
-    classes:
-      - DrACLearner
-  
   - page: "xploit/learner/sac.md"
     source: "hsuanwu/xploit/learner/sac.py"
     classes:
       - SACLearner
+  
+  - page: "xploit/learner/impala.md"
+    source: "hsuanwu/xploit/learner/impala.py"
+    classes:
+      - IMPALALearner
 ##################################################################
 
 
@@ -254,20 +269,26 @@ pages:
     classes:
       - Categorical
 
-  - page: "xplore/distribution/ornstein_uhlenbeck.md"
-    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
-    classes:
-      - OrnsteinUhlenbeck
-  
   - page: "xplore/distribution/squashed_normal.md"
     source: "hsuanwu/xplore/distribution/squashed_normal.py"
     classes:
       - SquashedNormal
 
-  - page: "xplore/distribution/truncated_normal.md"
-    source: "hsuanwu/xplore/distribution/truncated_normal.py"
+  - page: "xplore/distribution/normal_noise.md"
+    source: "hsuanwu/xplore/distribution/normal_noise.py"
     classes:
-      - TruncatedNormal
+      - NormalNoise
+
+  - page: "xplore/distribution/truncated_normal_noise.md"
+    source: "hsuanwu/xplore/distribution/truncated_normal_noise.py"
+    classes:
+      - TruncatedNormalNoise
+  
+  - page: "xplore/distribution/ornstein_uhlenbeck_noise.md"
+    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck_noise.py"
+    classes:
+      - OrnsteinUhlenbeckNoise
+  
 
 ###################################################################
 
@@ -287,5 +308,10 @@ pages:
     source: "hsuanwu/env/procgen/__init__.py"
     functions:
       - make_procgen_env
+  
+  - page: "env/minigrid.md"
+    source: "hsuanwu/env/minigrid/__init__.py"
+    functions:
+      - make_minigrid_env
 
 ###################################################################

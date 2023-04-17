@@ -2,7 +2,7 @@
 
 
 ## ICM
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L110)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L110)
 ```python 
 ICM(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of ICM.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L195)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L195)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -63,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L256)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L256)
 ```python
 .update(
    rollouts: Dict
@@ -90,7 +90,7 @@ None
 
 
 ## CnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L11)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L11)
 ```python 
 CnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -117,7 +117,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L50)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L50)
 ```python
 .forward(
    obs: Tensor, next_obs: Tensor
@@ -129,7 +129,7 @@ CNN-based encoder.
 
 
 ## InverseForwardDynamicsModel
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L64)
 ```python 
 InverseForwardDynamicsModel(
    latent_dim: int, action_dim: int
@@ -156,7 +156,7 @@ Model instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L90)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L90)
 ```python
 .forward(
    obs: Tensor, action: Tensor, next_obs: Tensor, training: bool = True

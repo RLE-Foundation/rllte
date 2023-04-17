@@ -2,7 +2,7 @@
 
 
 ## RandomCutoutColor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_cutoutcolor.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_cutoutcolor.py\#L7)
 ```python 
 RandomCutoutColor(
    min_cut: int = 10, max_cut: int = 30
@@ -28,7 +28,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_cutoutcolor.py/#L22)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_cutoutcolor.py\#L22)
 ```python
 .forward(
    x: Tensor

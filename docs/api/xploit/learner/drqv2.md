@@ -2,37 +2,36 @@
 
 
 ## DrQv2Learner
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L117)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L60)
 ```python 
 DrQv2Learner(
-   observation_space: Space, action_space: Space, action_type: str,
-   device: torch.device = 'cuda', feature_dim: int = 50, lr: float = 0.0001,
-   eps: float = 8e-05, hidden_dim: int = 1024, critic_target_tau: float = 0.01,
-   num_init_steps: int = 2000, update_every_steps: int = 2,
-   stddev_schedule: str = 'linear(1.0, 0.1, 100000)', stddev_clip: float = 0.3
+   observation_space: Dict, action_space: Dict, device: Device, feature_dim: int,
+   lr: float, eps: float, hidden_dim: int, critic_target_tau: float,
+   update_every_steps: int
 )
 ```
 
 
 ---
 Data Regularized-Q v2 (DrQ-v2).
+When 'augmentation' module is deprecated, this learner will transform into Deep Deterministic Policy Gradient (DDPG) Learner.
 
 
 **Args**
 
-* **observation_space**  : Observation space of the environment.
-* **action_space**  : Action shape of the environment.
-* **action_type**  : Continuous or discrete action. "cont" or "dis".
-* **device**  : Device (cpu, cuda, ...) on which the code should be run.
-* **feature_dim**  : Number of features extracted.
-* **lr**  : The learning rate.
-* **eps**  : Term added to the denominator to improve numerical stability.
-* **hidden_dim**  : The size of the hidden layers.
+* **observation_space** (Dict) : Observation space of the environment.
+    For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+* **action_space** (Dict) : Action shape of the environment.
+    For supporting Hydra, the original 'action_space' is transformed into a dict like
+    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **device** (Device) : Device (cpu, cuda, ...) on which the code should be run.
+* **feature_dim** (int) : Number of features extracted by the encoder.
+* **lr** (float) : The learning rate.
+* **eps** (float) : Term added to the denominator to improve numerical stability.
+* **hidden_dim** (int) : The size of the hidden layers.
 * **critic_target_tau**  : The critic Q-function soft-update rate.
-* **update_every_steps**  : The agent update frequency.
-* **num_init_steps**  : The exploration steps.
-* **stddev_schedule**  : The exploration std schedule.
-* **stddev_clip**  : The exploration std clip range.
+* **update_every_steps** (int) : The agent update frequency.
 
 
 
@@ -45,10 +44,10 @@ DrQv2 learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L185)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L119)
 ```python
 .train(
-   training = True
+   training: bool = True
 )
 ```
 
@@ -58,62 +57,18 @@ Set the train mode.
 
 **Args**
 
-* **training**  : True (training) or False (testing).
+* **training** (bool) : True (training) or False (testing).
 
 
 **Returns**
 
 None.
-
-### .set_dist
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L200)
-```python
-.set_dist(
-   dist
-)
-```
-
----
-Set the distribution for actor.
-
-
-**Args**
-
-* **dist**  : Hsuanwu distribution class.
-
-
-**Returns**
-
-None.
-
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L211)
-```python
-.act(
-   obs: ndarray, training: bool = True, step: int = 0
-)
-```
-
----
-Make actions based on observations.
-
-
-**Args**
-
-* **obs**  : Observations.
-* **training**  : training mode, True or False.
-* **step**  : Global training step.
-
-
-**Returns**
-
-Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L237)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L134)
 ```python
 .update(
-   replay_buffer: DataLoader, step: int = 0
+   replay_iter: Iterable, step: int = 0
 )
 ```
 
@@ -123,8 +78,8 @@ Update the learner.
 
 **Args**
 
-* **replay_buffer**  : Hsuanwu replay buffer.
-* **step**  : Global training step.
+* **replay_iter** (Iterable) : Hsuanwu replay storage iterable dataloader.
+* **step** (int) : Global training step.
 
 
 **Returns**
@@ -132,7 +87,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L299)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L193)
 ```python
 .update_critic(
    obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs: Tensor,
@@ -146,12 +101,12 @@ Update the critic network.
 
 **Args**
 
-* **obs**  : Observations.
-* **action**  : Actions.
-* **reward**  : Rewards.
-* **discount**  : discounts.
-* **next_obs**  : Next observations.
-* **step**  : Global training step.
+* **obs** (Tensor) : Observations.
+* **action** (Tensor) : Actions.
+* **reward** (Tensor) : Rewards.
+* **discount** (Tensor) : discounts.
+* **next_obs** (Tensor) : Next observations.
+* **step** (int) : Global training step.
 
 
 **Returns**
@@ -159,7 +114,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L349)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L242)
 ```python
 .update_actor(
    obs: Tensor, step: int
@@ -172,8 +127,8 @@ Update the actor network.
 
 **Args**
 
-* **obs**  : Observations.
-* **step**  : Global training step.
+* **obs** (Tensor) : Observations.
+* **step** (int) : Global training step.
 
 
 **Returns**

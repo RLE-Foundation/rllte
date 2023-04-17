@@ -59,6 +59,7 @@ DEFAULT_CFGS = {
 
 class DrQv2Learner(BaseLearner):
     """Data Regularized-Q v2 (DrQ-v2).
+        When 'augmentation' module is deprecated, this learner will transform into Deep Deterministic Policy Gradient (DDPG) Learner.
 
     Args:
         observation_space (Dict): Observation space of the environment.

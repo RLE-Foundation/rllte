@@ -2,10 +2,10 @@
 
 
 ## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L7)
 ```python 
 VanillaRolloutStorage(
-   device: torch.device, obs_shape: Tuple, action_shape: Tuple, action_type: str,
+   device: Device, obs_shape: Tuple, action_shape: Tuple, action_type: str,
    num_steps: int, num_envs: int, discount: float = 0.99, gae_lambda: float = 0.95
 )
 ```
@@ -17,14 +17,14 @@ Vanilla rollout storage for on-policy algorithms.
 
 **Args**
 
-* **device**  : Device (cpu, cuda, ...) on which the code should be run.
-* **obs_shape**  : The data shape of observations.
-* **action_shape**  : The data shape of actions.
-* **action_type**  : The type of actions, 'cont' or 'dis'.
-* **num_steps**  : The sample steps of per rollout.
-* **num_envs**  : The number of parallel environments.
-* **discount**  : discount factor.
-* **gae_lambda**  : Weighting coefficient for generalized advantage estimation (GAE).
+* **device** (Device) : Device (cpu, cuda, ...) on which the code should be run.
+* **obs_shape** (Tuple) : The data shape of observations.
+* **action_shape** (Tuple) : The data shape of actions.
+* **action_type** (str) : The type of actions, 'Discrete' or 'Box'.
+* **num_steps** (int) : The sample length of per rollout.
+* **num_envs** (int) : The number of parallel environments.
+* **discount** (float) : discount factor.
+* **gae_lambda** (float) : Weighting coefficient for generalized advantage estimation (GAE).
 
 
 **Returns**
@@ -36,10 +36,11 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L87)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L93)
 ```python
 .add(
-   obs: Any, actions: Any, rewards: Any, dones: Any, log_probs: Any, values: Any
+   obs: Tensor, actions: Tensor, rewards: Tensor, terminateds: Tensor,
+   truncateds: Tensor, log_probs: Tensor, values: Tensor
 )
 ```
 
@@ -49,12 +50,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs**  : Observations.
-* **actions**  : Actions.
-* **rewards**  : Rewards.
-* **dones**  : Dones.
-* **log_probs**  : Log of the probability evaluated at `actions`.
-* **values**  : Estimated values.
+* **obs** (Tensor) : Observations.
+* **actions** (Tensor) : Actions.
+* **rewards** (Tensor) : Rewards.
+* **terminateds** (Tensor) : Terminateds.
+* **truncateds** (Tensor) : Truncateds.
+* **log_probs** (Tensor) : Log of the probability evaluated at `actions`.
+* **values** (Tensor) : Estimated values.
 
 
 **Returns**
@@ -62,7 +64,7 @@ Add sampled transitions into storage.
 None.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L118)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L127)
 ```python
 .reset()
 ```
@@ -71,7 +73,7 @@ None.
 Reset the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L122)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L132)
 ```python
 .compute_returns_and_advantages(
    last_values: Tensor
@@ -84,9 +86,9 @@ Perform generalized advantage estimation (GAE).
 
 **Args**
 
-* **last_values**  : Estimated values of the last step.
-* **gamma**  : Discount factor.
-* **gae_lamdba**  : Coefficient of GAE.
+* **last_values** (Tensor) : Estimated values of the last step.
+* **gamma** (float) : Discount factor.
+* **gae_lamdba** (float) : Coefficient of GAE.
 
 
 **Returns**
@@ -94,7 +96,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .generator
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L154)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L164)
 ```python
 .generator(
    num_mini_batch: int = None
@@ -107,7 +109,7 @@ Sample data from storage.
 
 **Args**
 
-* **num_mini_batch**  : Number of mini-batches
+* **num_mini_batch** (int) : Number of mini-batches
 
 
 **Returns**

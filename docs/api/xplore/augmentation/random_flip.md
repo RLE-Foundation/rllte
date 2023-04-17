@@ -2,7 +2,7 @@
 
 
 ## RandomFlip
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_flip.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_flip.py\#L7)
 ```python 
 RandomFlip(
    p: float = 0.2
@@ -27,7 +27,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_flip.py/#L20)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_flip.py\#L20)
 ```python
 .forward(
    x: Tensor

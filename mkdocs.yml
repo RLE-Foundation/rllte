@@ -64,16 +64,17 @@ nav:
     - Contribution: contributing.md
     - License: license.md
 
-  - Getting Stared:
+  - Getting Started:
     - Installation: getting_started.md
 
   - API Documentation:
-    - Overview: overview/api_overview.md
+    - Overview: overview/api.md
     - Common: 
       - Engine: 
         - BasePolicyTrainer: api/common/base_policy_trainer.md
         - OnPolicyTrainer: api/common/on_policy_trainer.md
         - OffPolicyTrainer: api/common/off_policy_trainer.md
+        - DistributedTrainer: api/common/distributed_trainer.md
       - Logger: api/common/logger.md
       - Timer: api/common/timer.md
 
@@ -81,17 +82,22 @@ nav:
       - Xploit Overview: overview/xploit_index/index.md
       - encoder:
         - BaseEncoder: api/xploit/encoder/base.md
-        - VanillaCnnEncoder: api/xploit/encoder/vanilla_cnn_encoder.md
+        - TassaCnnEncoder: api/xploit/encoder/tassa_cnn_encoder.md
+        - MnihCnnEncoder: api/xploit/encoder/mnih_cnn_encoder.md
+        - EspeholtResidualEncoder: api/xploit/encoder/espeholt_residual_encoder.md
         - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
-        - ResNetEncoder: api/xploit/encoder/resnet_encoder.md
         - IdentityEncoder: api/xploit/encoder/identity_encoder.md
 
       - learner:
+        - BaseLearner: api/xploit/learner/base.md
+        - SACLearner: api/xploit/learner/sac.md
+        - DrQLearner: api/xploit/learner/sac.md
         - DrQv2Learner: api/xploit/learner/drqv2.md
+        - DDPGLearner: api/xploit/learner/drqv2.md
         - PPGLearner: api/xploit/learner/ppg.md
         - PPOLearner: api/xploit/learner/ppo.md
-        - DrACLearner: api/xploit/learner/drac.md
-        - SACLearner: api/xploit/learner/sac.md
+        - DrACLearner: api/xploit/learner/ppo.md
+        - IMPALALearner: api/xploit/learner/impala.md
       
       - storage:
         - VanillaRolloutStorage: api/xploit/storage/vanilla_rollout_storage.md
@@ -127,15 +133,20 @@ nav:
       - distribution:
         - BaseDistribution: api/xplore/distribution/base.md
         - Categorical: api/xplore/distribution/categorical.md
-        - OrnsteinUhlenbeck: api/xplore/distribution/ornstein_uhlenbeck.md
         - SquashedNormal: api/xplore/distribution/squashed_normal.md
-        - TruncatedNormal: api/xplore/distribution/truncated_normal.md
+        - NormalNoise: api/xplore/distribution/truncated_normal_noise.md
+        - OrnsteinUhlenbeckNoise: api/xplore/distribution/ornstein_uhlenbeck_noise.md
+        - TruncatedNormalNoise: api/xplore/distribution/truncated_normal_noise.md
     
     - Env:
       - Overview: overview/env_index/index.md
       - make_atari_env: api/env/atari.md
       - make_dmc_env: api/env/dmc.md
       - make_procgen_env: api/env/procgen.md
+      - make_minigrid_env: api/env/minigrid.md
+    
+    - Evaluation:
+      - Overview: overview/evaluation_index/index.md
 
     - Pre-training: 
       - Pre-training Overview: overview/pretraining_index/index.md

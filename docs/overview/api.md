@@ -1,6 +1,6 @@
 The structure of Hsuanwu:
 <div align=center>
-<img src='/assets/images/structure.png' style="width: 90%">
+<img src='/assets/images/structure.svg' style="width: 90%">
 </div>
 
 - **[Common](./common_index/index.md)**: Auxiliary modules like trainer and logger.
@@ -16,6 +16,8 @@ The structure of Hsuanwu:
     + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
     + **Distribution**: Distributions for sampling actions.
     + **Reward**: Intrinsic reward modules for enhancing exploration.
+
+- **[Evaluation](./evaluation_index/index.md)**: Reasonable and reliable metrics for algorithm evaluation.
 
 - **[Env](./env_index/index.md)**: Packaged environments (e.g., Atari games) for fast invocation.
 

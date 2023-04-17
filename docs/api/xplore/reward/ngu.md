@@ -2,7 +2,7 @@
 
 
 ## NGU
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L76)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L76)
 ```python 
 NGU(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of NGU.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L127)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L127)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -63,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L180)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L180)
 ```python
 .update(
    rollouts: Dict
@@ -87,7 +87,7 @@ Update the intrinsic reward module if necessary.
 None
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L214)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L214)
 ```python
 .pseudo_counts(
    encoded_obs, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -100,7 +100,7 @@ None
 
 
 ## CnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L11)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L11)
 ```python 
 CnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -127,7 +127,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L42)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L42)
 ```python
 .forward(
    obs: Tensor
@@ -139,7 +139,7 @@ CNN-based encoder.
 
 
 ## MlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L50)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L50)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -166,7 +166,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L72)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L72)
 ```python
 .forward(
    obs: Tensor

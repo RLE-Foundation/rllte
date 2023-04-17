@@ -2,7 +2,7 @@
 
 
 ## RandomTranslate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_translate.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_translate.py\#L7)
 ```python 
 RandomTranslate(
    size
@@ -27,7 +27,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_translate.py/#L20)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_translate.py\#L20)
 ```python
 .forward(
    x: Tensor

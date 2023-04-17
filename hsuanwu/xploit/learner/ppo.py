@@ -55,7 +55,7 @@ DEFAULT_CFGS = {
 
 class PPOLearner(BaseLearner):
     """Proximal Policy Optimization (PPO) Learner.
-        When 'use_aug' is True, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
+        When 'augmentation' module is invoked, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
 
     Args:
         observation_space (Dict): Observation space of the environment.

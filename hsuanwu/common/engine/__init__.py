@@ -26,7 +26,7 @@ class HsuanwuEngine:
 
         if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
             raise NotImplementedError(
-                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
+                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api/."
             )
 
         if ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
@@ -43,7 +43,7 @@ class HsuanwuEngine:
             )
         else:
             raise NotImplementedError(
-                f"Unsupported trainer {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
+                f"Unsupported trainer {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api/."
             )
 
     def invoke(self):

@@ -58,10 +58,11 @@ class BaseLearner(ABC):
         self.training = training
 
     @abstractmethod
-    def update(self, *args) -> Dict[str, float]:
+    def update(self, *kwargs) -> Dict[str, float]:
         """Update learner.
 
         Args:
+            Any possible arguments.
 
 
         Returns:

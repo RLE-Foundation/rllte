@@ -116,7 +116,7 @@ class Environment:
 
 
 class DistributedTrainer(BasePolicyTrainer):
-    """Trainer for on-policy algorithms.
+    """Trainer for distributed algorithms.
 
     Args:
         train_env (Env): A list of Gym-like environments for training.
@@ -124,7 +124,7 @@ class DistributedTrainer(BasePolicyTrainer):
         cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
-        On-policy trainer instance.
+        Distributed trainer instance.
     """
 
     def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:

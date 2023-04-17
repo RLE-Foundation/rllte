@@ -61,7 +61,7 @@ DEFAULT_CFGS = {
 
 class SACLearner(BaseLearner):
     """Soft Actor-Critic (SAC) Learner.
-        When 'use_aug' is True, this learner will transform into Data Regularized Q (DrQ) Learner.
+        When 'augmentation' module is invoked, this learner will transform into Data Regularized Q (DrQ) Learner.
 
     Args:
         observation_space (Dict): Observation space of the environment.

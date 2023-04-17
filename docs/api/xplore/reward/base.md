@@ -2,7 +2,7 @@
 
 
 ## BaseIntrinsicRewardModule
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L6)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L6)
 ```python 
 BaseIntrinsicRewardModule(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -34,7 +34,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L38)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L38)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -59,7 +59,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/base.py/#L53)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L53)
 ```python
 .update(
    rollouts: Dict

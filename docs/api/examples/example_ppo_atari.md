@@ -28,9 +28,9 @@ test_env = make_atari_env(
     device='cuda'
 )
 
-@hydra.main(version_base=None, config_path='../cfgs', config_name='discrete_task_config')
+@hydra.main(version_base=None, config_path='../cfgs/task', config_name='ppo_atari_config')
 def main(cfgs):
-    trainer = OnPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
+    trainer = OnPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
     trainer.train()
 
 if __name__ == '__main__':

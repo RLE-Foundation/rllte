@@ -2,7 +2,7 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L74)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L74)
 ```python 
 RE3(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -36,7 +36,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L118)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L118)
 ```python
 .compute_irs(
    rollouts: Dict, step: int, k: int = 3, average_entropy: bool = False
@@ -66,7 +66,7 @@ The intrinsic rewards
 
 
 ## RandomMlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L48)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L48)
 ```python 
 RandomMlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -93,7 +93,7 @@ MLP-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L70)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L70)
 ```python
 .forward(
    obs: Tensor
@@ -105,7 +105,7 @@ MLP-based random encoder.
 
 
 ## RandomCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L9)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L9)
 ```python 
 RandomCnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -132,7 +132,7 @@ CNN-based random encoder.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L40)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L40)
 ```python
 .forward(
    obs: Tensor
