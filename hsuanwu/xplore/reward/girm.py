@@ -1,10 +1,9 @@
-from torch.nn import functional as F
-from torch.autograd import Variable
-from torch import nn, optim
-from torch.utils.data import DataLoader, TensorDataset
-
 import numpy as np
 import torch
+from torch import nn, optim
+from torch.autograd import Variable
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
@@ -16,17 +15,20 @@ class MlpEncoder(nn.Module):
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
-    
+
     Returns:
         MLP-based encoder.
     """
+
     def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
         super(MlpEncoder, self).__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0], 64), nn.LeakyReLU(),
-            nn.Linear(64, 64), nn.LeakyReLU(),
-            nn.Linear(64, latent_dim)
+            nn.Linear(obs_shape[0], 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, latent_dim),
         )
 
     def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
@@ -40,17 +42,20 @@ class MlpDecoder(nn.Module):
     Args:
         obs_shape: The data shape of observations.
         latent_dim: The dimension of encoding vectors of the observations.
-    
+
     Returns:
         MLP-based decoder.
     """
+
     def __init__(self, obs_shape: Tuple, action_dim: int) -> None:
         super(MlpDecoder, self).__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0] + action_dim, 64), nn.LeakyReLU(),
-            nn.Linear(64, 64), nn.LeakyReLU(),
-            nn.Linear(64, obs_shape[0])
+            nn.Linear(obs_shape[0] + action_dim, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, obs_shape[0]),
         )
 
     def forward(self, z: Tensor, obs: Tensor) -> Tensor:
@@ -60,13 +65,14 @@ class MlpDecoder(nn.Module):
 
 class CnnEncoder(nn.Module):
     """CNN-based encoder of VAE.
-    
+
     Args:
         obs_shape: The data shape of observations.
-    
+
     Returns:
         CNN-based encoder.
     """
+
     def __init__(self, obs_shape: Tuple) -> None:
         super(CnnEncoder, self).__init__()
 
@@ -112,13 +118,14 @@ class CnnEncoder(nn.Module):
 
 class CnnDecoder(nn.Module):
     """CNN-based decoder of VAE.
-    
+
     Args:
         obs_shape: The data shape of observations.
-    
+
     Returns:
         CNN-based decoder.
     """
+
     def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super(CnnDecoder, self).__init__()
 
@@ -133,8 +140,14 @@ class CnnDecoder(nn.Module):
         self.bn7 = nn.BatchNorm2d(32)
         self.conv8 = nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2)
         self.output = nn.ConvTranspose2d(32, out_channels=obs_shape[0], kernel_size=6)
-        self.conv9 = nn.Conv2d(obs_shape[0] * 2, out_channels=obs_shape[0],
-                               kernel_size=3, stride=1, dilation=2, padding=2)
+        self.conv9 = nn.Conv2d(
+            obs_shape[0] * 2,
+            out_channels=obs_shape[0],
+            kernel_size=3,
+            stride=1,
+            dilation=2,
+            padding=2,
+        )
         self.lrelu = nn.LeakyReLU()
 
         # Initialize weights using xavier initialization
@@ -177,7 +190,7 @@ class CnnDecoder(nn.Module):
 
 class VAE(nn.Module):
     """Variational auto-encoder for reconstructing transition proces.
-    
+
     Args:
         device: Device (cpu, cuda, ...) on which the code should be run.
         obs_shape: The data shape of observations.
@@ -185,15 +198,16 @@ class VAE(nn.Module):
         action_dim: The dimension of predicted actions.
 
     """
-    def __init__(self,
-                 device: torch.device,
-                 obs_shape: Tuple,
-                 latent_dim: int,
-                 action_dim: int) -> None:
+
+    def __init__(
+        self, device: torch.device, obs_shape: Tuple, latent_dim: int, action_dim: int
+    ) -> None:
         super(VAE, self).__init__()
         if len(obs_shape) == 3:
             self.encoder = CnnEncoder(obs_shape=obs_shape)
-            self.decoder = CnnDecoder(obs_shape=obs_shape, action_dim=action_dim, latent_dim=latent_dim)
+            self.decoder = CnnDecoder(
+                obs_shape=obs_shape, action_dim=action_dim, latent_dim=latent_dim
+            )
         else:
             self.encoder = MlpEncoder(obs_shape=obs_shape, latent_dim=latent_dim)
             self.decoder = MlpDecoder(obs_shape=obs_shape, action_dim=action_dim)
@@ -205,7 +219,9 @@ class VAE(nn.Module):
         self.latent_dim = latent_dim
         self.action_dim = action_dim
 
-    def reparameterize(self, mu: Tensor, logvar: Tensor, device: torch.device, training: bool = True) -> Tensor:
+    def reparameterize(
+        self, mu: Tensor, logvar: Tensor, device: torch.device, training: bool = True
+    ) -> Tensor:
         # Reparameterization trick as shown in the auto encoding variational bayes paper
         if training:
             std = logvar.mul(0.5).exp_()
@@ -229,7 +245,7 @@ class VAE(nn.Module):
 class GIRM(BaseIntrinsicRewardModule):
     """Intrinsic Reward Driven Imitation Learning via Generative Model (GIRM).
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
-    
+
     Args:
         obs_shape: Data shape of observation.
         action_space: Data shape of action.
@@ -241,23 +257,24 @@ class GIRM(BaseIntrinsicRewardModule):
         lr: The learning rate of inverse and forward dynamics model.
         batch_size: The batch size to train the dynamic models.
         lambd: The weighting coefficient for combining actions.
-    
+
     Returns:
         Instance of GIRM.
     """
+
     def __init__(
-            self, 
-            obs_shape: Tuple,
-            action_shape: Tuple,
-            action_type: str,
-            device: torch.device, 
-            beta: float, 
-            kappa: float,
-            latent_dim: int,
-            lr: float,
-            batch_size: int,
-            lambd: float
-            ) -> None:
+        self,
+        obs_shape: Tuple,
+        action_shape: Tuple,
+        action_type: str,
+        device: torch.device,
+        beta: float,
+        kappa: float,
+        latent_dim: int,
+        lr: float,
+        batch_size: int,
+        lambd: float,
+    ) -> None:
         super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
 
         self._batch_size = batch_size
@@ -267,22 +284,24 @@ class GIRM(BaseIntrinsicRewardModule):
             device=self._device,
             action_dim=self._action_shape[0],
             obs_shape=self._obs_shape,
-            latent_dim=latent_dim)
+            latent_dim=latent_dim,
+        )
         self._vae.to(self._device)
 
-        if self._action_type == 'dis':
+        if self._action_type == "dis":
             self._action_loss = nn.CrossEntropyLoss()
         else:
             self._action_loss = nn.MSELoss()
 
         self._opt = optim.Adam(lr=lr, params=self._vae.parameters())
-    
-    def _get_vae_loss(self, recon_x: Tensor, x: Tensor, mean: Tensor, log_var: Tensor) -> Tensor:
+
+    def _get_vae_loss(
+        self, recon_x: Tensor, x: Tensor, mean: Tensor, log_var: Tensor
+    ) -> Tensor:
         RECON = F.mse_loss(recon_x, x)
         KLD = -0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp())
 
         return RECON, KLD
-
 
     def _process(self, tensor: Tensor, range: Tuple) -> Tensor:
         """Make a grid of images.
@@ -293,14 +312,15 @@ class GIRM(BaseIntrinsicRewardModule):
             range: tuple (min, max) where min and max are numbers,
                 then these numbers are used to normalize the image. By default, min and max
                 are computed from the tensor.
-        
+
         Returns:
             Processed tensors.
         """
         tensor = tensor.clone()  # avoid modifying tensor in-place
         if range is not None:
-            assert isinstance(range, tuple), \
-                "range has to be a tuple (min, max) if specified. min and max are numbers"
+            assert isinstance(
+                range, tuple
+            ), "range has to be a tuple (min, max) if specified. min and max are numbers"
 
             def norm_ip(img, min, max):
                 img.clamp_(min=min, max=max)
@@ -311,16 +331,16 @@ class GIRM(BaseIntrinsicRewardModule):
                     norm_ip(t, range[0], range[1])
                 else:
                     norm_ip(t, float(t.min()), float(t.max()))
-        
+
         norm_range(tensor, range)
-        
+
         return tensor
 
     def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
+            rollouts: The collected experiences. A python dict like
                 {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -330,16 +350,18 @@ class GIRM(BaseIntrinsicRewardModule):
             The intrinsic rewards
         """
         # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1. - self._kappa, step)
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
+        beta_t = self._beta * np.power(1.0 - self._kappa, step)
+        n_steps = rollouts["observations"].shape[0]
+        n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.from_numpy(rollouts['observations'])
-        actions_tensor = torch.from_numpy(rollouts['actions'])
-        if self.action_type == 'dis':
+        obs_tensor = torch.from_numpy(rollouts["observations"])
+        actions_tensor = torch.from_numpy(rollouts["actions"])
+        if self.action_type == "dis":
             # actions size: (n_steps, n_envs, 1)
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(
+                actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]
+            ).float()
         obs_tensor = obs_tensor.to(self._device)
         actions_tensor = actions_tensor.to(self._device)
 
@@ -353,56 +375,77 @@ class GIRM(BaseIntrinsicRewardModule):
                 mu = self._vae.mu(latent)
                 logvar = self.vae.logvar(latent)
                 z = self._vae.reparameterize(mu, logvar, self._device)
-                if self.action_type == 'dis':
+                if self.action_type == "dis":
                     pred_actions = F.softmax(z, dim=1)
                 else:
                     pred_actions = z
-                combined_actions = self.lambd * actions_tensor + (1. - self.lambd) * pred_actions
+                combined_actions = (
+                    self.lambd * actions_tensor + (1.0 - self.lambd) * pred_actions
+                )
                 pred_next_obs = self._vae.decoder(combined_actions, obs_tensor)
 
                 # normalize the observations
                 if len(self.ob_shape) == 3:
-                    processed_next_obs = self._process(next_obs_tensor, normalize=True, range=(-1, 1))
-                    processed_pred_next_obs = self._process(pred_next_obs, normalize=True, range=(-1, 1))
+                    processed_next_obs = self._process(
+                        next_obs_tensor, normalize=True, range=(-1, 1)
+                    )
+                    processed_pred_next_obs = self._process(
+                        pred_next_obs, normalize=True, range=(-1, 1)
+                    )
                 else:
                     processed_next_obs = next_obs_tensor
                     processed_pred_next_obs = pred_next_obs
 
-                intrinsic_rewards[:-1, idx] = F.mse_loss(processed_pred_next_obs, processed_next_obs,
-                                                         reduction='mean').cpu().numpy()
+                intrinsic_rewards[:-1, idx] = (
+                    F.mse_loss(
+                        processed_pred_next_obs, processed_next_obs, reduction="mean"
+                    )
+                    .cpu()
+                    .numpy()
+                )
 
         # train the vae model
         self.update(rollouts)
 
         return beta_t * intrinsic_rewards
-    
-    def update(self, 
-               rollouts: Dict, 
-               lambda_recon: float = 1.0, 
-               lambda_action: float = 1.0, 
-               kld_loss_beta: float = 1.0) -> None:
+
+    def update(
+        self,
+        rollouts: Dict,
+        lambda_recon: float = 1.0,
+        lambda_action: float = 1.0,
+        kld_loss_beta: float = 1.0,
+    ) -> None:
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
+            rollouts: The collected experiences. A python dict like
                 {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
                 actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
                 rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
             lambda_recon: Weighting coefficient of the reconstruction loss.
             lambda_action: Weighting coefficient of the action loss.
             kld_loss_beta: Weighting coefficient of the divergence loss.
-        
+
         Returns:
             None
         """
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
-        obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self._obs_shape)
-        if self.action_type == 'dis':
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, )
-            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape[0]).float()
+        n_steps = rollouts["observations"].shape[0]
+        n_envs = rollouts["observations"].shape[1]
+        obs_tensor = torch.from_numpy(rollouts["observations"]).reshape(
+            n_steps * n_envs, *self._obs_shape
+        )
+        if self.action_type == "dis":
+            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+                n_steps * n_envs,
+            )
+            actions_tensor = F.one_hot(
+                actions_tensor.to(torch.int64), self._action_shape[0]
+            ).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape[0])
+            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+                n_steps * n_envs, self._action_shape[0]
+            )
         obs_tensor = obs_tensor.to(self._device)
         actions_tensor = actions_tensor.to(self._device)
 
@@ -424,8 +467,14 @@ class GIRM(BaseIntrinsicRewardModule):
             pred_next_obs = self._vae.decoder(z, batch_obs)
             # compute the total loss
             action_loss = self._action_loss(z, batch_actions)
-            recon_loss, kld_loss = self._get_vae_loss(pred_next_obs, batch_next_obs, mu, logvar)
-            vae_loss = lambda_recon *  recon_loss + kld_loss_beta * kld_loss + lambda_action * action_loss
+            recon_loss, kld_loss = self._get_vae_loss(
+                pred_next_obs, batch_next_obs, mu, logvar
+            )
+            vae_loss = (
+                lambda_recon * recon_loss
+                + kld_loss_beta * kld_loss
+                + lambda_action * action_loss
+            )
             # update
             self._opt.zero_grad()
             vae_loss.backward(retain_graph=True)

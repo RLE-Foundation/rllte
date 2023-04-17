@@ -1,416 +1,337 @@
-from torch.nn import functional as F
-from torch import nn
 import numpy as np
 import torch
+from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
-from hsuanwu.xploit.learner import BaseLearner
-from hsuanwu.xploit import utils
+from hsuanwu.common.typing import Device, Dict, Storage, Tensor, Tuple
+from hsuanwu.xploit.learner import utils
+from hsuanwu.xploit.learner.base import BaseLearner
+from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
+MATCH_KEYS = {
+    "trainer": "OffPolicyTrainer",
+    "storage": ["VanillaReplayStorage"],
+    "distribution": ["SquashedNormal"],
+    "augmentation": [],
+    "reward": [],
+}
 
-from hsuanwu.xploit.learner.tmp import DiagGaussianActor, DoubleQCritic
-
-class Actor(nn.Module):
-    """Actor network.
-
-    Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
-    
-    Returns:
-        Actor network instance.
-    """
-    def __init__(self, 
-                 action_space: Space, 
-                 feature_dim: int = 64, 
-                 hidden_dim: int = 1024,
-                 log_std_range: Tuple = (-10, 2),
-                 ) -> None:
-        super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
-        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
-        #                            nn.LayerNorm(feature_dim), nn.Tanh())
-
-        self.policy = nn.Sequential(nn.Linear(feature_dim, hidden_dim),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(hidden_dim, hidden_dim),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(hidden_dim, 2* action_space.shape[0]))
-        # placeholder for distribution
-        self.dist = None
-        self.log_std_min, self.log_std_max = log_std_range
-    
-        self.apply(utils.network_init)
-    
-
-    def forward(self, 
-                obs: Tensor, 
-                ) -> Tensor:
-        """Get actions.
-
-        Args:
-            obs: Observations.
-        
-        Returns:
-            Hsuanwu distribution.
-        """
-        h = self.trunk(obs)
-        mu, log_std = self.policy(h).chunk(2, dim=-1)
-
-        log_std = torch.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (
-            self.log_std_max - self.log_std_min) * (log_std + 1)
-
-        std = log_std.exp()
-        
-        return self.dist(mu, std)
-        
-
-    
-class Critic(nn.Module):
-    """Critic network.
-
-    Args:
-        action_space: Action space of the environment.
-        feature_dim: Number of features accepted.
-        hidden_dim: Number of units per hidden layer.
-    
-    Returns:
-        Critic network instance.
-    """
-    def __init__(self, 
-                 action_space: Space, 
-                 feature_dim: int = 64, 
-                 hidden_dim: int = 1024) -> None:
-        super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
-        # self.trunk = nn.Sequential(nn.Linear(32 * 35 * 35, feature_dim),
-                                #    nn.LayerNorm(feature_dim), nn.Tanh())
-
-        action_shape = action_space.shape
-        self.Q1 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
-
-        self.Q2 = nn.Sequential(
-            nn.Linear(feature_dim + action_shape[0], hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True), nn.Linear(hidden_dim, 1))
-
-        self.apply(utils.network_init)
-    
-
-    def forward(self, obs: Tensor, action: Tensor):
-        """Value estimation.
-        
-        Args:
-            obs: Observations.
-            action: Actions.
-        
-        Returns:
-            Estimated values.
-        """
-        h = self.trunk(obs)
-        h_action = torch.cat([h, action], dim=-1)
-        
-        q1 = self.Q1(h_action)
-        q2 = self.Q2(h_action)
-
-        return q1, q2
+DEFAULT_CFGS = {
+    ## TODO: Train setup
+    "device": "cpu",
+    "seed": 1,
+    "num_train_steps": 1000000,
+    "num_init_steps": 5000,  # only for off-policy algorithms
+    ## TODO: Test setup
+    "test_every_steps": 5000,  # only for off-policy algorithms
+    "num_test_episodes": 10,
+    ## TODO: xploit part
+    "encoder": {
+        "name": "IdentityEncoder",
+        "observation_space": dict(),
+        "feature_dim": 5,
+    },
+    "learner": {
+        "name": "SACLearner",
+        "observation_space": dict(),
+        "action_space": dict(),
+        "device": str,
+        "feature_dim": int,
+        "lr": 1e-4,
+        "eps": 0.00008,
+        "hidden_dim": 1024,
+        "critic_target_tau": 0.005,
+        "update_every_steps": 2,
+        "log_std_range": (-5.0, 2),
+        "betas": (0.9, 0.999),
+        "temperature": 0.1,
+        "fixed_temperature": False,
+        "discount": 0.99,
+    },
+    "storage": {
+        "name": "VanillaReplayStorage",
+        "storage_size": 1000000,
+        "batch_size": 1024,
+    },
+    ## TODO: xplore part
+    "distribution": {"name": "SquashedNormal"},
+    "augmentation": {"name": None},
+    "reward": {"name": None},
+}
 
 
 class SACLearner(BaseLearner):
-    """Soft Actor-Critic (SAC) Learner
-    
-    Args:
-        observation_space: Observation space of the environment.
-        action_space: Action shape of the environment.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        feature_dim: Number of features extracted.
-        lr: The learning rate.
-        eps: Term added to the denominator to improve numerical stability.
+    """Soft Actor-Critic (SAC) Learner.
+        When 'use_aug' is True, this learner will transform into Data Regularized Q (DrQ) Learner.
 
-        hidden_dim: The size of the hidden layers.
-        critic_target_tau: The critic Q-function soft-update rate.
-        update_every_steps: The agent update frequency.
-        num_init_steps: The exploration steps.
-        log_std_range: Range of std for sampling actions.
-        betas: coefficients used for computing running averages of gradient and its square.
-        temperature: Initial temperature coefficient.
-        fixed_temperature: Fixed temperature or not.
-        discount: Discount factor.
-    
+    Args:
+        observation_space (Dict): Observation space of the environment.
+            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+        action_space (Dict): Action shape of the environment.
+            For supporting Hydra, the original 'action_space' is transformed into a dict like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        feature_dim (int): Number of features extracted by the encoder.
+        lr (float): The learning rate.
+        eps (float): Term added to the denominator to improve numerical stability.
+
+        hidden_dim (int): The size of the hidden layers.
+        critic_target_tau (float): The critic Q-function soft-update rate.
+        update_every_steps (int): The agent update frequency.
+        log_std_range (Tuple[float]): Range of std for sampling actions.
+        betas (Tuple[float]): coefficients used for computing running averages of gradient and its square.
+        temperature (float): Initial temperature coefficient.
+        fixed_temperature (bool): Fixed temperature or not.
+        discount (float): Discount factor.
+
     Returns:
         Soft Actor-Critic learner instance.
     """
-    def __init__(self, 
-                 observation_space: Space, 
-                 action_space: Space, 
-                 action_type: str, 
-                 device: torch.device = 'cuda', 
-                 feature_dim: int = 50, 
-                 lr: float = 1e-4, 
-                 eps: float = 0.00008,
-                 hidden_dim: int = 1024,
-                 critic_target_tau: float = 0.005,
-                 num_init_steps: int = 5000,
-                 update_every_steps: int = 2,
-                 log_std_range: Tuple[float] = (-5., 2),
-                 betas: Tuple[float] = (0.9, 0.999),
-                 temperature: float = 0.1,
-                 fixed_temperature: bool = False,
-                 discount: float = 0.99
-                 ) -> None:
-        super().__init__(observation_space, action_space, action_type, device, feature_dim, lr, eps)
 
-        self._critic_target_tau = critic_target_tau
-        self._update_every_steps = update_every_steps
-        self._num_init_steps = num_init_steps
-        self._fixed_temperature = fixed_temperature
-        self._discount = discount
+    def __init__(
+        self,
+        observation_space: Dict,
+        action_space: Dict,
+        device: Device,
+        feature_dim: int,
+        lr: float,
+        eps: float,
+        hidden_dim: int,
+        critic_target_tau: float,
+        update_every_steps: int,
+        log_std_range: Tuple[float],
+        betas: Tuple[float],
+        temperature: float,
+        fixed_temperature: bool,
+        discount: float,
+    ) -> None:
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+
+        self.critic_target_tau = critic_target_tau
+        self.update_every_steps = update_every_steps
+        self.fixed_temperature = fixed_temperature
+        self.discount = discount
 
         # create models
-        self._encoder = None
-        # self._actor = Actor(
-        #     action_space=action_space,
-        #     feature_dim=feature_dim,
-        #     hidden_dim=hidden_dim,
-        #     log_std_range=log_std_range).to(self._device)
-        # self._critic = Critic(
-        #     action_space=action_space,
-        #     feature_dim=feature_dim,
-        #     hidden_dim=hidden_dim).to(self._device)
-        # self._critic_target = Critic(
-        #     action_space=action_space,
-        #     feature_dim=feature_dim,
-        #     hidden_dim=hidden_dim).to(self._device)
-        # self._critic_target.load_state_dict(self._critic.state_dict())
+        self.actor = StochasticActor(
+            action_space=action_space,
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            log_std_range=log_std_range,
+        ).to(self.device)
+        self.critic = DoubleCritic(
+            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
+        self.critic_target = DoubleCritic(
+            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
+        self.critic_target.load_state_dict(self.critic.state_dict())
 
-        self._actor = DiagGaussianActor(
-            obs_dim=5,
-            action_dim=action_space.shape[0],
-            hidden_depth=2,
-            hidden_dim=1024,
-            log_std_bounds=log_std_range
-        ).to(self._device)
-        self._critic = DoubleQCritic(
-            obs_dim=5,
-            action_dim=action_space.shape[0],
-            hidden_depth=2,
-            hidden_dim=1024
-        ).to(self._device)
-        self._critic_target = DoubleQCritic(
-            obs_dim=5,
-            action_dim=action_space.shape[0],
-            hidden_depth=2,
-            hidden_dim=1024
-        ).to(self._device)
-
-
-         # target entropy
-        self._target_entropy = - np.prod(action_space.shape)
-        self._log_alpha = torch.tensor(np.log(temperature), device=self._device, requires_grad=True)
+        # target entropy
+        self.target_entropy = -np.prod(action_space.shape)
+        self.log_alpha = torch.tensor(
+            np.log(temperature), device=self.device, requires_grad=True
+        )
 
         # create optimizers
-        self._actor_opt = torch.optim.Adam(self._actor.parameters(), lr=self._lr, betas=betas)
-        self._critic_opt = torch.optim.Adam(self._critic.parameters(), lr=self._lr, betas=betas)
-        self._log_alpha_opt = torch.optim.Adam([self._log_alpha], lr=self._lr, betas=betas)
+        self.actor_opt = torch.optim.Adam(
+            self.actor.parameters(), lr=self.lr, betas=betas
+        )
+        self.critic_opt = torch.optim.Adam(
+            self.critic.parameters(), lr=self.lr, betas=betas
+        )
+        self.log_alpha_opt = torch.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
 
         self.train()
-        self._critic_target.train()
+        self.critic_target.train()
 
-
-    def train(self, training=True):
-        """ Set the train mode.
+    def train(self, training: bool = True) -> None:
+        """Set the train mode.
 
         Args:
-            training: True (training) or False (testing).
+            training (bool): True (training) or False (testing).
 
         Returns:
             None.
         """
         self.training = training
-        self._actor.train(training)
-        self._critic.train(training)
-        if self._encoder is not None:
-            self._encoder.train(training)
-    
-
-    def set_dist(self, dist):
-        """Set the distribution for actor.
-        
-        Args:
-            dist: Hsuanwu distribution class.
-        
-        Returns:
-            None.
-        """
-        self._actor.dist = dist
-    
+        self.actor.train(training)
+        self.critic.train(training)
+        if self.encoder is not None:
+            self.encoder.train(training)
 
     @property
-    def _alpha(self):
-        """Get the temperature coefficient.
-        """
-        return self._log_alpha.exp()
+    def alpha(self) -> Tensor:
+        """Get the temperature coefficient."""
+        return self.log_alpha.exp()
 
-    
-    def act(self, obs: ndarray, training: bool = True, step: int = 0) -> Tensor:
-        """Make actions based on observations.
-        
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        obs = torch.as_tensor(obs, device=self._device)
-        encoded_obs = self._encoder(obs.unsqueeze(0))
-        # sample actions
-        dist = self._actor(obs=encoded_obs)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-            if step < self._num_init_steps:
-                action.uniform_(-1.0, 1.0)
-
-        return action.cpu().numpy()[0]
-
-
-    def update(self, replay_buffer: Generator, step: int = 0) -> Dict:
+    def update(self, replay_storage: Storage, step: int = 0) -> Dict[str, float]:
         """Update the learner.
-        
+
         Args:
-            replay_buffer: Hsuanwu replay buffer.
-            step: Global training step.
+            replay_storage (Storage): Hsuanwu replay storage.
+            step (int): Global training step.
 
         Returns:
             Training metrics such as actor loss, critic_loss, etc.
         """
         metrics = {}
-        if step % self._update_every_steps != 0:
+        if step % self.update_every_steps != 0:
             return metrics
-        
-        obs, action, reward, done, next_obs = replay_buffer.sample()
 
-        if self._irs is not None:
-            intrinsic_reward = self._irs.compute_irs(
-                rollouts={'observations': obs.unsqueeze(1).numpy(), 
-                          'actions': action.unsqueeze(1).numpy()},
-                step=step)
+        obs, action, reward, terminated, next_obs = replay_storage.sample()
+
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
+                rollouts={
+                    "observations": obs.unsqueeze(1).numpy(),
+                    "actions": action.unsqueeze(1).numpy(),
+                },
+                step=step,
+            )
             reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
-        
 
         # obs augmentation
-        if self._aug is not None:
-            obs = self._aug(obs.float())
-            next_obs = self._aug(next_obs.float())
+        if self.aug is not None:
+            aug_obs = self.aug(obs.clone().float())
+            aug_next_obs = self.aug(next_obs.clone().float())
+            with torch.no_grad():
+                encoded_aug_obs = self.encoder(aug_obs)
+            encoded_aug_next_obs = self.encoder(aug_next_obs)
+        else:
+            encoded_aug_obs = None
+            encoded_aug_next_obs = None
 
         # encode
-        encoded_obs = self._encoder(obs)
+        encoded_obs = self.encoder(obs)
         with torch.no_grad():
-            encoded_next_obs = self._encoder(next_obs)
+            encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
         metrics.update(
-            self.update_critic(encoded_obs, 
-                               action, 
-                               reward, 
-                               done,
-                               encoded_next_obs, step))
+            self.update_critic(
+                encoded_obs,
+                action,
+                reward,
+                terminated,
+                encoded_next_obs,
+                encoded_aug_obs,
+                encoded_aug_next_obs,
+                step,
+            )
+        )
 
         # update actor (do not udpate encoder)
         metrics.update(self.update_actor_and_alpha(encoded_obs.detach(), step))
 
         # udpate critic target
-        utils.soft_update_params(self._critic, self._critic_target, self._critic_target_tau)
+        utils.soft_update_params(
+            self.critic, self.critic_target, self.critic_target_tau
+        )
 
         return metrics
 
-
-    def update_critic(self, 
-                      obs: Tensor, 
-                      action: Tensor, 
-                      reward: Tensor, 
-                      done: Tensor,
-                      next_obs: Tensor, 
-                      step: int) -> Dict:
+    def update_critic(
+        self,
+        obs: Tensor,
+        action: Tensor,
+        reward: Tensor,
+        terminated: Tensor,
+        next_obs: Tensor,
+        aug_obs: Tensor,
+        aug_next_obs: Tensor,
+        step: int,
+    ) -> Dict[str, float]:
         """Update the critic network.
-        
+
         Args:
-            obs: Observations.
-            action: Actions.
-            reward: Rewards.
-            done: Dones.
-            next_obs: Next observations.
-            step: Global training step.
-        
+            obs (Tensor): Observations.
+            action (Tensor): Actions.
+            reward (Tensor): Rewards.
+            terminated (Tensor): Terminateds.
+            next_obs (Tensor): Next observations.
+            aug_obs (Tensor): Augmented observations.
+            aug_next_obs (Tensor): Augmented next observations.
+            step (int): Global training step.
+
         Returns:
             Critic loss metrics.
         """
         with torch.no_grad():
-            dist = self._actor(obs)
+            dist = self.actor.get_action(next_obs, step=step)
             next_action = dist.rsample()
             log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
-            target_Q1, target_Q2 = self._critic_target(next_obs, next_action)
-            target_V = torch.min(target_Q1, target_Q2) - self._alpha.detach() * log_prob
-            target_Q = reward + (1. - done) * self._discount * target_V
-        
-        Q1, Q2 = self._critic(obs, action)
+            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+            target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
+            target_Q = reward + (1.0 - terminated) * self.discount * target_V
+
+            # enable observation augmentation
+            if self.aug is not None:
+                dist_aug = self.actor.get_action(aug_next_obs, step=step)
+                next_action_aug = dist_aug.rsample()
+                log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
+                target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
+                target_V = (
+                    torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
+                )
+                target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
+                # mixed target Q-function
+                target_Q = (target_Q + target_Q_aug) / 2
+
+        Q1, Q2 = self.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
+        if self.aug is not None:
+            Q1_aug, Q2_aug = self.critic(aug_obs, action)
+            critic_loss += F.mse_loss(Q1_aug, target_Q) + F.mse_loss(Q2_aug, target_Q)
+
         # optimize encoder and critic
-        self._encoder_opt.zero_grad(set_to_none=True)
-        self._critic_opt.zero_grad(set_to_none=True)
+        self.encoder_opt.zero_grad(set_to_none=True)
+        self.critic_opt.zero_grad(set_to_none=True)
         critic_loss.backward()
-        self._critic_opt.step()
-        self._encoder_opt.step()
+        self.critic_opt.step()
+        self.encoder_opt.step()
 
-        return {'critic_loss': critic_loss.item(), 
-                'critic_q1': Q1.mean().item(), 
-                'critic_q2': Q2.mean().item(), 
-                'critic_target': target_Q.mean().item()}
+        return {
+            "critic_loss": critic_loss.item(),
+            "critic_q1": Q1.mean().item(),
+            "critic_q2": Q2.mean().item(),
+            "critic_target": target_Q.mean().item(),
+        }
 
-
-    def update_actor_and_alpha(self, obs: Tensor, step: int) -> Dict:
+    def update_actor_and_alpha(self, obs: Tensor, step: int) -> Dict[str, float]:
         """Update the actor network and temperature.
-        
+
         Args:
-            obs: Observations.
-            step: Global training step.
+            obs (Tensor): Observations.
+            step (int): Global training step.
 
         Returns:
             Actor loss metrics.
         """
         # sample actions
-        dist = self._actor(obs)
+        dist = self.actor.get_action(obs, step=step)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
-        Q1, Q2 = self._critic(obs, action)
+        Q1, Q2 = self.critic(obs, action)
         Q = torch.min(Q1, Q2)
 
-        actor_loss = (self._alpha.detach() * log_prob - Q).mean()
+        actor_loss = (self.alpha.detach() * log_prob - Q).mean()
 
-         # optimize actor
-        self._actor_opt.zero_grad(set_to_none=True)
+        # optimize actor
+        self.actor_opt.zero_grad(set_to_none=True)
         actor_loss.backward()
-        self._actor_opt.step()
+        self.actor_opt.step()
 
-        if not self._fixed_temperature:
+        if not self.fixed_temperature:
             # update temperature
-            self._log_alpha_opt.zero_grad(set_to_none=True)
-            alpha_loss = (self._alpha * (-log_prob - self._target_entropy).detach()).mean()
+            self.log_alpha_opt.zero_grad(set_to_none=True)
+            alpha_loss = (
+                self.alpha * (-log_prob - self.target_entropy).detach()
+            ).mean()
             alpha_loss.backward()
-            self._log_alpha_opt.step()
+            self.log_alpha_opt.step()
         else:
             alpha_loss = torch.scalar_tensor(s=0.0)
 
-        return {'actor_loss': actor_loss.item(),
-                'alpha_loss': alpha_loss.item()}
+        return {"actor_loss": actor_loss.item(), "alpha_loss": alpha_loss.item()}

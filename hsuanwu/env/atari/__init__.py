@@ -1,42 +1,92 @@
-from gym.wrappers import (RecordEpisodeStatistics,
-                          ResizeObservation,
-                          GrayScaleObservation,
-                          FrameStack,
-                          TransformReward)
-from gym.vector import SyncVectorEnv
-
-import gym
+import gymnasium as gym
 import numpy as np
+import torch
+from gymnasium.vector import SyncVectorEnv
+from gymnasium.wrappers import (
+    FrameStack,
+    GrayScaleObservation,
+    RecordEpisodeStatistics,
+    ResizeObservation,
+    TransformReward,
+)
 
-from hsuanwu.common.typing import *
-from hsuanwu.env.atari.wrappers import (NoopResetEnv,
-                                        MaxAndSkipEnv,
-                                        EpisodicLifeEnv,
-                                        FireResetEnv)
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from hsuanwu.common.typing import Callable, Device, Dict, Env, Tensor, Tuple
+from hsuanwu.env.atari.wrappers import (
+    EpisodicLifeEnv,
+    FireResetEnv,
+    MaxAndSkipEnv,
+    NoopResetEnv,
+)
 
-def make_atari_env(env_id: str = 'Alien-v5',
-                   num_envs: int = 8,
-                   seed: int = 0,
-                   frame_stack: int = 4,
-                   device: torch.device = 'cuda'
-                   ) -> Env:
+
+class TorchVecEnvWrapper(gym.Wrapper):
+    """Build environments that output torch tensors.
+
+    Args:
+        env (Env): The environment.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+
+    Returns:
+        TorchVecEnv instance.
+    """
+
+    def __init__(self, env: Env, device: Device) -> None:
+        super().__init__(env)
+        self._device = torch.device(device)
+        self.observation_space = env.single_observation_space
+        self.action_space = env.single_action_space
+        self.num_envs = len(env.envs)
+
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+        obs, info = self.env.reset(**kwargs)
+        obs = torch.as_tensor(obs, device=self._device)
+        return obs, info
+
+    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+        obs, reward, terminated, truncated, info = self.env.step(
+            action.squeeze(1).cpu().numpy()
+        )
+        obs = torch.as_tensor(obs, device=self._device)
+        reward = torch.as_tensor(
+            reward, dtype=torch.float32, device=self._device
+        ).unsqueeze(dim=1)
+        terminated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in terminated],
+            dtype=torch.float32,
+            device=self._device,
+        )
+        truncated = torch.as_tensor(
+            [[1.0] if _ else [0.0] for _ in truncated],
+            dtype=torch.float32,
+            device=self._device,
+        )
+
+        return obs, reward, terminated, truncated, info
+
+
+def make_atari_env(
+    env_id: str = "Alien-v5",
+    num_envs: int = 8,
+    device: torch.device = "cuda",
+    seed: int = 0,
+    frame_stack: int = 4,
+) -> Env:
     """Build Atari environments.
 
     Args:
-        env_id: Name of environment.
-        num_envs: Number of parallel environments.
-        seed: Random seed.
-        frame_stack: Number of stacked frames.
-        device: Device (cpu, cuda, ...) on which the code should be run.
+        env_id (str): Name of environment.
+        num_envs (int): Number of parallel environments.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        seed (int): Random seed.
+        frame_stack (int): Number of stacked frames.
 
     Returns:
         Environments instance.
     """
-    def make_env(env_id: str, seed: int) -> Env:
+
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
-            env = RecordEpisodeStatistics(env)
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
             env = EpisodicLifeEnv(env)
@@ -47,7 +97,7 @@ def make_atari_env(env_id: str = 'Alien-v5',
             env = ResizeObservation(env, shape=(84, 84))
             env = GrayScaleObservation(env)
             env = FrameStack(env, frame_stack)
-            env.seed(seed)
+
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
@@ -55,8 +105,10 @@ def make_atari_env(env_id: str = 'Alien-v5',
 
         return _thunk
 
-    env_id = 'ALE/' + env_id
+    if "NoFrameskip-v4" not in env_id:
+        env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device, lambda obs: obs)
+    return TorchVecEnvWrapper(envs, device)

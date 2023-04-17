@@ -2,7 +2,7 @@
 
 
 ## GIRM
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L229)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L245)
 ```python 
 GIRM(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -40,7 +40,7 @@ Instance of GIRM.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L319)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L339)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -53,7 +53,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -65,7 +65,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L379)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L412)
 ```python
 .update(
    rollouts: Dict, lambda_recon: float = 1.0, lambda_action: float = 1.0,
@@ -79,7 +79,7 @@ Update the intrinsic reward module if necessary.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -96,7 +96,7 @@ None
 
 
 ## CnnEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L61)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L66)
 ```python 
 CnnEncoder(
    obs_shape: Tuple
@@ -122,7 +122,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L90)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L96)
 ```python
 .forward(
    obs, next_obs
@@ -134,7 +134,7 @@ CNN-based encoder.
 
 
 ## CnnDecoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L113)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L119)
 ```python 
 CnnDecoder(
    obs_shape: Tuple, action_dim: int, latent_dim: int
@@ -160,7 +160,7 @@ CNN-based decoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L150)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L163)
 ```python
 .forward(
    z, obs
@@ -172,7 +172,7 @@ CNN-based decoder.
 
 
 ## MlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L13)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L12)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -199,7 +199,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L32)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L34)
 ```python
 .forward(
    obs: Tensor, next_obs: Tensor
@@ -211,7 +211,7 @@ MLP-based encoder.
 
 
 ## MlpDecoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L37)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L39)
 ```python 
 MlpDecoder(
    obs_shape: Tuple, action_dim: int
@@ -238,7 +238,7 @@ MLP-based decoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L56)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L61)
 ```python
 .forward(
    z: Tensor, obs: Tensor
@@ -250,7 +250,7 @@ MLP-based decoder.
 
 
 ## VAE
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L178)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L191)
 ```python 
 VAE(
    device: torch.device, obs_shape: Tuple, latent_dim: int, action_dim: int
@@ -275,7 +275,7 @@ Variational auto-encoder for reconstructing transition proces.
 
 
 ### .reparameterize
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L208)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L222)
 ```python
 .reparameterize(
    mu: Tensor, logvar: Tensor, device: torch.device, training: bool = True
@@ -284,7 +284,7 @@ Variational auto-encoder for reconstructing transition proces.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L217)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L233)
 ```python
 .forward(
    obs: Tensor, next_obs: Tensor

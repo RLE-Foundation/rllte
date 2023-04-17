@@ -1,10 +1,38 @@
 # gendocs --config mkgendocs.yml
 sources_dir: docs/api
 templates_dir: 
-repo: https://github.com/BellmanProject/Hsuanwu  #link to sources on github
+repo: https://github.com/RLE-Foundation/Hsuanwu  #link to sources on github
 version: main                               #link to sources on github
 
 pages:
+# common
+###################################################################
+  - page: "common/base_policy_trainer.md"
+    source: "hsuanwu/common/engine/base_policy_trainer.py"
+    classes:
+      - BasePolicyTrainer
+  
+  - page: "common/on_policy_trainer.md"
+    source: "hsuanwu/common/engine/on_policy_trainer.py"
+    classes:
+      - OnPolicyTrainer
+  
+  - page: "common/off_policy_trainer.md"
+    source: "hsuanwu/common/engine/off_policy_trainer.py"
+    classes:
+      - OffPolicyTrainer
+  
+  - page: "common/logger.md"
+    source: "hsuanwu/common/logger.py"
+    classes:
+      - Logger
+  
+  - page: "common/timer.md"
+    source: "hsuanwu/common/timer.py"
+    classes:
+      - Timer
+###################################################################
+
 # xploit.encoder
 ###################################################################
   - page: "xploit/encoder/base.md"
@@ -21,42 +49,69 @@ pages:
     source: "hsuanwu/xploit/encoder/vanilla_mlp_encoder.py"
     classes:
       - VanillaMlpEncoder
+  
+  - page: "xploit/encoder/resnet_encoder.md"
+    source: "hsuanwu/xploit/encoder/resnet_encoder.py"
+    classes:
+      - ResNetEncoder
+  
+  - page: "xploit/encoder/identity_encoder.md"
+    source: "hsuanwu/xploit/encoder/identity_encoder.py"
+    classes:
+      - IdentityEncoder
 ###################################################################
 
 
 # xploit.learner
-###################################################################
+##################################################################
   - page: "xploit/learner/drqv2.md"
     source: "hsuanwu/xploit/learner/drqv2.py"
     classes:
-      - Actor
-      - Critic
-      - DrQv2Agent
+      - DrQv2Learner
 
   - page: "xploit/learner/ppg.md"
     source: "hsuanwu/xploit/learner/ppg.py"
     classes:
-      - PPGAgent
-###################################################################
+      - PPGLearner
+  
+  - page: "xploit/learner/ppo.md"
+    source: "hsuanwu/xploit/learner/ppo.py"
+    classes:
+      - PPOLearner
+  
+  - page: "xploit/learner/drac.md"
+    source: "hsuanwu/xploit/learner/drac.py"
+    classes:
+      - DrACLearner
+  
+  - page: "xploit/learner/sac.md"
+    source: "hsuanwu/xploit/learner/sac.py"
+    classes:
+      - SACLearner
+##################################################################
 
 
 # xploit.storage
 ###################################################################
-  - page: "xploit/storage/vanilla_replay_buffer.md"
-    source: "hsuanwu/xploit/storage/vanilla_replay_buffer.py"
+  - page: "xploit/storage/vanilla_rollout_storage.md"
+    source: "hsuanwu/xploit/storage/vanilla_rollout_storage.py"
     classes:
-      - ReplayBufferStorage
-      - VanillaReplayBuffer
+      - VanillaRolloutStorage
 
-  - page: "xploit/storage/nstep_replay_buffer.md"
-    source: "hsuanwu/xploit/storage/nstep_replay_buffer.py"
+  - page: "xploit/storage/vanilla_replay_storage.md"
+    source: "hsuanwu/xploit/storage/vanilla_replay_storage.py"
     classes:
-      - NStepReplayBuffer
+      - VanillaReplayStorage
+
+  - page: "xploit/storage/nstep_replay_storage.md"
+    source: "hsuanwu/xploit/storage/nstep_replay_storage.py"
+    classes:
+      - NStepReplayStorage
   
-  - page: "xploit/storage/prioritized_replay_buffer.md"
-    source: "hsuanwu/xploit/storage/prioritized_replay_buffer.py"
+  - page: "xploit/storage/prioritized_replay_storage.md"
+    source: "hsuanwu/xploit/storage/prioritized_replay_storage.py"
     classes:
-      - PrioritizedReplayBuffer
+      - PrioritizedReplayStorage
 ###################################################################
 
 
@@ -134,34 +189,103 @@ pages:
     source: "hsuanwu/xplore/augmentation/base.py"
     classes:
       - BaseAugmentation
+  
+  - page: "xplore/augmentation/grayscale.md"
+    source: "hsuanwu/xplore/augmentation/grayscale.py"
+    classes:
+      - GrayScale
+  
+  - page: "xplore/augmentation/random_colorjitter.md"
+    source: "hsuanwu/xplore/augmentation/random_colorjitter.py"
+    classes:
+      - RandomColorJitter
+  
+  - page: "xplore/augmentation/random_convolution.md"
+    source: "hsuanwu/xplore/augmentation/random_convolution.py"
+    classes:
+      - RandomConvolution
 
   - page: "xplore/augmentation/random_crop.md"
     source: "hsuanwu/xplore/augmentation/random_crop.py"
     classes:
       - RandomCrop
   
+  - page: "xplore/augmentation/random_cutout.md"
+    source: "hsuanwu/xplore/augmentation/random_cutout.py"
+    classes:
+      - RandomCutout
+  
+  - page: "xplore/augmentation/random_cutoutcolor.md"
+    source: "hsuanwu/xplore/augmentation/random_cutoutcolor.py"
+    classes:
+      - RandomCutoutColor
+  
+  - page: "xplore/augmentation/random_flip.md"
+    source: "hsuanwu/xplore/augmentation/random_flip.py"
+    classes:
+      - RandomFlip
+  
+  - page: "xplore/augmentation/random_rotate.md"
+    source: "hsuanwu/xplore/augmentation/random_rotate.py"
+    classes:
+      - RandomRotate
+  
   - page: "xplore/augmentation/random_shift.md"
     source: "hsuanwu/xplore/augmentation/random_shift.py"
     classes:
       - RandomShift
+  
+  - page: "xplore/augmentation/random_translate.md"
+    source: "hsuanwu/xplore/augmentation/random_translate.py"
+    classes:
+      - RandomTranslate
 
 ###################################################################
 
-# xplore.noise
+# xplore.distribution
 ###################################################################
   - page: "xplore/distribution/base.md"
     source: "hsuanwu/xplore/distribution/base.py"
     classes:
       - BaseDistribution
+  
+  - page: "xplore/distribution/categorical.md"
+    source: "hsuanwu/xplore/distribution/categorical.py"
+    classes:
+      - Categorical
+
+  - page: "xplore/distribution/ornstein_uhlenbeck.md"
+    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
+    classes:
+      - OrnsteinUhlenbeck
+  
+  - page: "xplore/distribution/squashed_normal.md"
+    source: "hsuanwu/xplore/distribution/squashed_normal.py"
+    classes:
+      - SquashedNormal
 
   - page: "xplore/distribution/truncated_normal.md"
     source: "hsuanwu/xplore/distribution/truncated_normal.py"
     classes:
       - TruncatedNormal
+
+###################################################################
+
+# env
+###################################################################
+  - page: "env/atari.md"
+    source: "hsuanwu/env/atari/__init__.py"
+    functions:
+      - make_atari_env
+
+  - page: "env/dmc.md"
+    source: "hsuanwu/env/dmc/__init__.py"
+    functions:
+      - make_dmc_env
   
-  - page: "xplore/distribution/ornstein_uhlenbeck.md"
-    source: "hsuanwu/xplore/distribution/ornstein_uhlenbeck.py"
-    classes:
-      - OrnsteinUhlenbeck
+  - page: "env/procgen.md"
+    source: "hsuanwu/env/procgen/__init__.py"
+    functions:
+      - make_procgen_env
 
 ###################################################################

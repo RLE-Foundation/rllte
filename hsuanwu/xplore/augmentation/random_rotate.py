@@ -1,11 +1,10 @@
 import torch
-import torch.nn.functional as F
 
 from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
-class RandomRotate(BaseAugmentation): 
 
+class RandomRotate(BaseAugmentation):
     """Random rotate operation for processing image-based observations.
 
     Args:
@@ -15,14 +14,14 @@ class RandomRotate(BaseAugmentation):
         Random rotate image in a batch.
     """
 
-    def __init__(self, p=0.3) -> None:
-        super().__init__()
+    def __init__(self, p: float = 0.2) -> None:
+        super(RandomRotate, self).__init__()
         self.p = p
-        
-    def forward(self, x):
+
+    def forward(self, x: Tensor) -> Tensor:
         # images: [B, C, H, W]
         device = x.device
-        bs, channels, h, w = x.shape
+        bs, channels, h, w = x.size()
         x = x.to(device)
 
         rot90_images = x.rot90(1, [2, 3])
@@ -40,11 +39,18 @@ class RandomRotate(BaseAugmentation):
         masks = [torch.zeros_like(mask) for _ in range(4)]
         for i, m in enumerate(masks):
             m[mask == i] = 1
-            m = m[:, None] * torch.ones([1, frames], device=device).type(mask.dtype).type(x.dtype)
+            m = m[:, None] * torch.ones([1, frames], device=device).type(
+                mask.dtype
+            ).type(x.dtype)
             m = m[:, :, None, None]
             masks[i] = m
 
-        out = masks[0] * x + masks[1] * rot90_images + masks[2] * rot180_images + masks[3] * rot270_images
+        out = (
+            masks[0] * x
+            + masks[1] * rot90_images
+            + masks[2] * rot180_images
+            + masks[3] * rot270_images
+        )
         out = out.view(bs, -1, h, w)
 
         return out

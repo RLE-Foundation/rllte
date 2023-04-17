@@ -1,39 +1,45 @@
-import torch
+from collections import deque
 
-from hsuanwu.common.typing import *
+import gymnasium as gym
+import numpy as np
 
-class TorchVecEnvWrapper:
-    """Build environments that output torch tensors.
-    
+from hsuanwu.common.typing import Any, Dict, Env, Ndarray, Tensor, Tuple
+
+
+class FrameStack(gym.Wrapper):
+    """Observation wrapper that stacks the observations in a rolling manner.
+
     Args:
-        env: The environment.
-        device: Device (cpu, cuda, ...) on which the code should be run.
-    
+        env (Env): Environment to wrap.
+        k: Number of stacked frames.
+
     Returns:
-        Environment instance.
+        FrameStackEnv instance.
     """
-    def __init__(self, env: Env, device: torch.device) -> None:
-        
-        self._venv = env
-        self._device = torch.device(device)
-        self.observation_space = env.single_observation_space
-        self.action_space = env.single_action_space
 
+    def __init__(self, env: Env, k: int) -> None:
+        super().__init__(env)
+        self._k = k
+        self._frames = deque([], maxlen=k)
+        shp = env.observation_space.shape
+        self.observation_space = gym.spaces.Box(
+            low=0,
+            high=255,
+            shape=((shp[0] * k,) + shp[1:]),
+            dtype=env.observation_space.dtype,
+        )
 
-    def reset(self) -> Any:
-        obs = self._venv.reset()
-        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device)
-        return obs
-    
+    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+        obs, info = self.env.reset()
+        for _ in range(self._k):
+            self._frames.append(obs)
+        return self._get_obs(), info
 
-    def step(self, actions: Tensor) -> Tuple[Any]:
-        if actions.dtype is torch.int64:
-            actions = actions.squeeze(1)
-        actions = actions.cpu().numpy()
+    def step(self, action: Tuple[float]) -> Tuple[Any, float, bool, Dict]:
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        self._frames.append(obs)
+        return self._get_obs(), reward, terminated, truncated, info
 
-        obs, reward, done, info = self._venv.step(actions)
-        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), dtype=torch.float32, device=self._device)
-        reward = torch.as_tensor(reward, dtype=torch.float32, device=self._device).unsqueeze(dim=1)
-        done = torch.as_tensor([[1.0] if _ else [0.0] for _ in done], dtype=torch.float32, device=self._device)
-
-        return obs, reward, done, info
+    def _get_obs(self) -> Ndarray:
+        assert len(self._frames) == self._k
+        return np.concatenate(list(self._frames), axis=0)

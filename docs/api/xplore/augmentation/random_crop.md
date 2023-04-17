@@ -2,7 +2,7 @@
 
 
 ## RandomCrop
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_crop.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_crop.py/#L8)
 ```python 
 RandomCrop(
    pad: int, out: int
@@ -29,7 +29,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_crop.py/#L23)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_crop.py/#L24)
 ```python
 .forward(
    x: Tensor

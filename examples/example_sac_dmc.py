@@ -9,19 +9,45 @@ sys.path.append(parent_dir_path)
 from hsuanwu.env import make_dmc_env
 from hsuanwu.common.engine import OffPolicyTrainer
 
-train_env = make_dmc_env(env_id='cartpole_swingup', 
-                         seed=1, 
-                         visualize_reward=True)
+# train_env = make_dmc_env(env_id='cartpole_swingup', 
+#                          num_envs=1,
+#                          seed=1, 
+#                          visualize_reward=True,
+#                          from_pixels=False
+#                          )
 
-test_env = make_dmc_env(env_id='cartpole_swingup',
-                       seed=1, 
-                       visualize_reward=True)
+# test_env = make_dmc_env(env_id='cartpole_swingup',
+#                         num_envs=1,
+#                         seed=1, 
+#                         visualize_reward=True,
+#                         from_pixels=False
+#                         )
+
+train_env = make_dmc_env(env_id='cartpole_balance',
+                        num_envs=1,
+                        resource_files=None, 
+                        img_source=None,
+                        total_frames=None,
+                        seed=1, 
+                        visualize_reward=False, 
+                        from_pixels=True, 
+                        frame_skip=2, frame_stack=3)
+
+test_env = make_dmc_env(env_id='cartpole_balance',
+                        num_envs=1,
+                        resource_files=None, 
+                        img_source=None,
+                        total_frames=None,
+                        seed=1, 
+                        visualize_reward=False, 
+                        from_pixels=True, 
+                        frame_skip=2, frame_stack=3)
 
 print(train_env.observation_space)
 
-@hydra.main(version_base=None, config_path='../cfgs', config_name='sac_dmc_config')
+@hydra.main(version_base=None, config_path='../cfgs/task', config_name='sac_dmc_config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(train_env=train_env, test_env=test_env, cfgs=cfgs)
+    trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
     trainer.train()
 
 if __name__ == '__main__':

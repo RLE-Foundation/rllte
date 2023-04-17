@@ -2,7 +2,7 @@
 
 
 ## TruncatedNormal
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L8)
 ```python 
 TruncatedNormal(
    mu: Tensor, sigma: Tensor, low: float = -1.0, high: float = 1.0, eps: float = 1e-06
@@ -32,7 +32,7 @@ Truncated normal distribution instance.
 
 
 ### .sample
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L28)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal.py/#L32)
 ```python
 .sample(
    clip: float = None, sample_shape = torch.Size()
