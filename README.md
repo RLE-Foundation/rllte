@@ -30,10 +30,18 @@ See the project structure below:
   - [Intrinsic Reward](#intrinsic-reward)
   - [Pre-training](#pre-training)
 - [API Documentation](#api-documentation)
-- [Citing the Project](#citing-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
 
+Please cite the following paper if you use Hsuanwu in your work, thank you!
+```bibtex
+@article{yuan2023hsuanwu,
+  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
+  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
+  journal={arXiv preprint arXiv:2311.15277},
+  year={2023}
+}
+```
 
 # Evolution Cycle (01/01/2023-31/12/2023)
 The 
@@ -134,17 +142,6 @@ For more detiled modules, see [https://benchmark.hsuanwu.dev/tutorials](https://
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)
-
-# Citing the Project
-Please cite the following paper if you use Hsuanwu in your work, thank you!
-```bibtex
-@article{yuan2023hsuanwu,
-  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
-  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
-  journal={arXiv preprint arXiv:2311.15277},
-  year={2023}
-}
-```
 
 # How To Contribute
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/CONTRIBUTING.md) for guide first.
