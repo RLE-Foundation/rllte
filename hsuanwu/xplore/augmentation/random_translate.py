@@ -1,6 +1,6 @@
 import torch
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -8,17 +8,28 @@ class RandomTranslate(BaseAugmentation):
     """Random translate operation for processing image-based observations.
     Args:
         size: The scale size in translated images
+        scale_factor: The scale factor ratio in translated images. Should have 0.0 <= scale_factor <= 1.0
 
     Returns:
         Augmented images.
     """
 
-    def __init__(self, size):
+    def __init__(self, size: int = 256, scale_factor: float = 0.75) -> None:
         super().__init__()
         self.size = size
+        self.scale_factor = scale_factor
 
     def forward(self, x: Tensor) -> Tensor:
-        n, c, h, w = x.size()
+        # update to support any channels
+        _, _, in_h, in_w = x.shape
+        x = torch.nn.functional.interpolate(
+            x,
+            size=(int(in_h * self.scale_factor), int(in_w * self.scale_factor)),
+            mode="bilinear",
+            align_corners=False,
+        )
+        n, c, h, w = x.shape
+
         device = x.device
         assert self.size >= h and self.size >= w
         outs = torch.zeros((n, c, self.size, self.size), dtype=x.dtype, device=device)

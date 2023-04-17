@@ -1,7 +1,7 @@
 import torch
 from torchvision.transforms import ColorJitter
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -32,7 +32,14 @@ class RandomColorJitter(BaseAugmentation):
 
     def forward(self, x: Tensor) -> Tensor:
         b, c, h, w = x.size()
-        x = x.view(-1, 3, h, w)
-        x = self.color_jitter(x)
-        x = x.view(b, c, h, w)
+
+        # For Channels to split. Like RGB-3 Channels.
+        x_list = torch.split(x, 3, dim=1)
+        x_aug_list = []
+        for x_part in x_list:
+            x_part_aug = self.color_jitter(x_part)
+            x_aug_list.append(x_part_aug)
+
+        x = torch.cat(x_aug_list, dim=1)
+
         return x

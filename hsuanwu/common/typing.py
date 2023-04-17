@@ -18,6 +18,7 @@ from typing import (
 import numpy as np
 import omegaconf
 import torch
+import torchvision
 from gymnasium import Env, Space
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
@@ -34,3 +35,4 @@ DictConfig = omegaconf.DictConfig
 Batch = collections.namedtuple(
     "Batch", ["observations", "actions", "rewards", "dones", "next_observations"]
 )
+AutoAugmentType = torchvision.transforms.AutoAugmentPolicy

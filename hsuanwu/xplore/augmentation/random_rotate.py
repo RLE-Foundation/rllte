@@ -1,6 +1,6 @@
 import torch
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 

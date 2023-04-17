@@ -1,7 +1,6 @@
 import torch
-import torch.nn.functional as F
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -25,7 +24,7 @@ class RandomCrop(BaseAugmentation):
         n, c, h, w = x.size()
         assert h == w
         padding = tuple([self._pad] * 4)
-        x = F.pad(x, padding, "replicate")
+        x = torch.nn.functional.pad(x, padding, "replicate")
 
         crop_max = x.size()[2] - self._out + 1
         new_w = torch.randint(0, crop_max, (n,))
