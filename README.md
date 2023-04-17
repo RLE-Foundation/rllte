@@ -81,7 +81,7 @@ pip install -e .[all] # install all the dependencies
 For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
 
 ## Build your first Hsuanwu application
-For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we need the following two steps:
+For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we only need the following two steps:
 
 1. Write a `config.yaml` file in your working directory like:
 ``` yaml
@@ -104,7 +104,7 @@ from hsuanwu.common.engine import HsuanwuEngine # Import Hsuanwu engine
 train_env = make_dmc_env(env_id='cartpole_balance') # Create train env
 test_env = make_dmc_env(env_id='cartpole_balance') # Create test env
 
-@hydra.main(version_base=None, config_path='cfgs', config_name='minimum_config')
+@hydra.main(version_base=None, config_path='./', config_name='config')
 def main(cfgs):
     engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env) # Initialize engine
     engine.invoke() # Start training
