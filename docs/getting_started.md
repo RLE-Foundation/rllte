@@ -1,6 +1,13 @@
 # Getting Started
 
 ## Installation
+
+### Prerequisites
+Currently, Hsuanwu requires `Python>=3.8`, user can create an virtual environment by
+``` sh
+conda create -n hsuanwu python=3.8
+```
+
 ### with pip <small>recommended</small>
 **Hsuanwu** has been published as a Python package in [PyPi](https://pypi.org/project/hsuanwu/) and can be installed with `pip`, ideally by using a virtual environment. Open up a terminal and install **Hsuanwu** with:
 
@@ -25,6 +32,15 @@ pip install -e .[all] # install all the dependencies
 ```
 
 ## PyTorch Installation
-!!! tip
-    For PyTorch installation, please refer to [Get Started](https://pytorch.org/get-started/locally/) and ensure that the right version is installed! 
-    We will also keep providing support for the latest PyTorch version.
+**Hsuanwu** currently supports two kinds of computing devices for acceleration, namely [NVIDIA GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/) and [HUAWEI NPU](https://www.hiascend.com/). Thus users need to install different versions PyTorch for adapting to different devices.
+### with NVIDIA GPU
+Open up a terminal and install PyTorch with:
+``` sh
+pip3 install torch torchvision
+```
+More information can be found in [Get Started](https://pytorch.org/get-started/locally/).
+
+!!! info
+    Hsuanwu now supports PyTorch 2.0.0!
+
+### with HUAWEI NPU
