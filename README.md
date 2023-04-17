@@ -21,6 +21,23 @@ See the project structure below:
 <img src='./docs/assets/images/structure.png' style="width: 70%">
 </div>
 
+- [Evolution Cycle (01/01/2023-31/12/2023)](#evolution-cycle-01012023-31122023)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Build your first Hsuanwu application](#build-your-first-hsuanwu-application)
+- [Implemented Algorithms](#implemented-algorithms)
+  - [Learners](#learners)
+  - [Intrinsic Reward](#intrinsic-reward)
+  - [Pre-training](#pre-training)
+- [API Documentation](#api-documentation)
+- [Citing the Project](#citing-the-project)
+- [How To Contribute](#how-to-contribute)
+- [Acknowledgment](#acknowledgment)
+
+
+# Evolution Cycle (01/01/2023-31/12/2023)
+The 
+
 # Quick Start
 ## Installation
 - with pip `recommended`
@@ -105,15 +122,32 @@ Run `train.py` and you will see the following output:
 [04/17/2023 02:03:55 PM] - [HSUANWU Train] - S: 3000        | E: 5           | L: 500         | R: 159.040     | FPS: 51.368    | T: 0:00:35 
 .....
 ``` -->
+For more detailed tutorials, see [https://benchmark.hsuanwu.dev/api](https://benchmark.hsuanwu.dev/api).
+
+# Implemented Algorithms
+## Learners
+## Intrinsic Reward
+
+## Pre-training
+
+For more detiled modules, see [https://benchmark.hsuanwu.dev/tutorials](https://benchmark.hsuanwu.dev/tutorials)
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)
 
 # Citing the Project
-
+Please cite the following paper if you use Hsuanwu in your work, thank you!
+```bibtex
+@article{yuan2023hsuanwu,
+  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
+  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
+  journal={arXiv preprint arXiv:2311.15277},
+  year={2023}
+}
+```
 
 # How To Contribute
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/CONTRIBUTING.md) for guide first.
 
 # Acknowledgment
-This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/Hsuanwu/blob/main/.github/FUNDING.yml). Some code for this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/ACKNOWLEDGMENT.md).
+This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/Hsuanwu/blob/main/.github/FUNDING.yml). Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/ACKNOWLEDGMENT.md).
