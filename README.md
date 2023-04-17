@@ -45,7 +45,7 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 
 # Evolution Roadmap
 <div align=center>
-<img src='./docs/assets/images/roadmap.png'>
+<img src='./docs/assets/images/roadmap.svg'>
 </div>
 
 # Quick Start
