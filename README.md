@@ -21,6 +21,16 @@ See the project structure below:
 <img src='./docs/assets/images/structure.png' style="width: 70%">
 </div>
 
+Please cite the following paper if you use Hsuanwu in your work, thank you!
+```bibtex
+@article{yuan2023hsuanwu,
+  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
+  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
+  journal={arXiv preprint arXiv:2311.15277},
+  year={2023}
+}
+```
+
 - [Evolution Cycle (01/01/2023-31/12/2023)](#evolution-cycle-01012023-31122023)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
@@ -33,16 +43,6 @@ See the project structure below:
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
 
-Please cite the following paper if you use Hsuanwu in your work, thank you!
-```bibtex
-@article{yuan2023hsuanwu,
-  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
-  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
-  journal={arXiv preprint arXiv:2311.15277},
-  year={2023}
-}
-```
-
 # Evolution Cycle (01/01/2023-31/12/2023)
 The 
 
@@ -51,7 +51,7 @@ The
 - with pip `recommended`
 
 Open up a terminal and install Hsuanwu with `pip`:
-``` sh
+``` shell
 pip install hsuanwu # basic installation
 ```
 or
