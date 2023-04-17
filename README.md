@@ -53,10 +53,9 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
 Open up a terminal and install Hsuanwu with `pip`:
 ``` shell
 pip install hsuanwu # basic installation
-```
-or
-``` sh
 pip install hsuanwu[envs] # for pre-defined environments
+pip install hsuanwu[tests] # for project tests
+pip install hsuanwu[all] # install all dependencies
 ```
 
 - with git
@@ -68,11 +67,12 @@ git clone https://github.com/RLE-Foundation/Hsuanwu.git
 After that, run the following command to install package and dependencies:
 ``` sh
 pip install -e . # basic installation
-```
-or
-``` sh
 pip install -e .[envs] # for pre-defined environments
+pip install -e .[tests] # for project tests
+pip install -e .[all] # install all dependencies
 ```
+
+For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
 
 ## Build your first Hsuanwu application
 For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we need the following two steps:
@@ -130,7 +130,7 @@ Run `train.py` and you will see the following output:
 [04/17/2023 02:03:55 PM] - [HSUANWU Train] - S: 3000        | E: 5           | L: 500         | R: 159.040     | FPS: 51.368    | T: 0:00:35 
 .....
 ``` -->
-For more detailed tutorials, see [https://benchmark.hsuanwu.dev/api](https://benchmark.hsuanwu.dev/api).
+For more detailed tutorials, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
 
 # Implemented Algorithms
 ## Learners
@@ -163,7 +163,7 @@ For more detailed tutorials, see [https://benchmark.hsuanwu.dev/api](https://ben
 
 
 
-For more detiled modules, see [https://benchmark.hsuanwu.dev/tutorials](https://benchmark.hsuanwu.dev/tutorials)
+For more detiled modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
 
 # API Documentation
 View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)
