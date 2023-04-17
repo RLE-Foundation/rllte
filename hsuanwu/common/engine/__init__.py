@@ -6,13 +6,6 @@ from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
-_LEARNER_TO_TRAINER = {
-    "OffPolicyTrainer": ["DrQv2Learner", "SACLearner"],
-    "OnPolicyTrainer": ["PPOLearner", "PPGLearner"],
-    "DistributedTrainer": ["IMPALALearner"],
-}
-
-
 class Engine:
     """Hsuanwu RL engine.
 
@@ -36,7 +29,7 @@ class Engine:
                 f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
             )
 
-        if ALL_MACTH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
+        if ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
             self.trainer = OnPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
