@@ -45,13 +45,13 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
 
-repo_url: https://github.com/BellmanProject/Hsuanwu
-repo_name: BellmanProject/Hsuanwu
+repo_url: https://github.com/RLE-Foundation/Hsuanwu
+repo_name: RLE-Foundation/Hsuanwu
 
 extra:
   social: 
     - icon: fontawesome/brands/github
-      link: https://github.com/BellmanProject/Hsuanwu
+      link: https://github.com/RLE-Foundation/Hsuanwu
     - icon: fontawesome/solid/paper-plane
       link: friedrichyuan19990827@gmail.com
     - icon: fontawesome/brands/python

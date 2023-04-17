@@ -13,7 +13,7 @@ Thank you for using and contributing to Hsuanwu project!!!👋👋👋 Before yo
 Once you implement and test your feature or bug-fix, please submit a Pull Request to [https://github.com/RLE-Foundation/Hsuanwu](https://github.com/RLE-Foundation/Hsuanwu).
 
 ## Get Hsuanwu
-Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) witg `git`:
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) with `git`:
 ``` sh
 git clone https://github.com/RLE-Foundation/Hsuanwu.git
 cd Hsuanwu/
