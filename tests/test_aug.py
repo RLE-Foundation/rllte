@@ -22,7 +22,7 @@ if __name__ == "__main__":
         visualize_reward=False,
         from_pixels=True,
         frame_skip=1,
-        frame_stack=1
+        frame_stack=1,
     )
 
     obs, info = env.reset()

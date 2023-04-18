@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
+
 import numpy as np
+import torch as th
 from torch import nn
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
@@ -151,9 +152,7 @@ class RE3(BaseIntrinsicRewardModule):
                 if average_entropy:
                     for sub_k in range(k):
                         intrinsic_rewards[:, idx, 0] += (
-                            th.log(
-                                th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0
-                            )
+                            th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
                             .cpu()
                             .numpy()
                         )

@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+
 import gymnasium as gym
 import numpy as np
 import torch as th
@@ -10,6 +11,7 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 from procgen import ProcgenEnv
+
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
@@ -39,16 +41,18 @@ class TorchVecEnvWrapper(gym.Wrapper):
         obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
         return obs, info
 
-    def step(self, action: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
+    def step(
+        self, action: th.Tensor
+    ) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
         # Procgen games currently doesn't support Gymnasium.
         obs, reward, terminated, truncated, info = self.env.step(
             action.squeeze(1).cpu().numpy()
         )
 
         obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
-        reward = th.as_tensor(
-            reward, dtype=th.float32, device=self._device
-        ).unsqueeze(dim=1)
+        reward = th.as_tensor(reward, dtype=th.float32, device=self._device).unsqueeze(
+            dim=1
+        )
         terminated = th.as_tensor(
             [[1.0] if _ else [0.0] for _ in terminated],
             dtype=th.float32,
@@ -78,11 +82,11 @@ class AdapterEnv(gym.Wrapper):
         super().__init__(env)
         self.num_envs = num_envs
 
-    def step(self, action: int) -> Tuple[np.array, float, bool, bool, Dict]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)
         return obs, reward, done, done, {}
 
-    def reset(self, **kwargs) -> Tuple[np.array, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         obs = self.env.reset()
         return obs, {}
 

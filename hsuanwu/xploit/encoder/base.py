@@ -1,6 +1,6 @@
+import gymnasium as gym
 from torch import nn
 
-import gymnasium as gym
 
 def network_init(m):
     if isinstance(m, nn.Linear):

@@ -1,6 +1,6 @@
-from typing import Tuple, Dict, List
-
 import os
+from typing import Dict, List, Tuple
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 import threading
@@ -10,15 +10,16 @@ from collections import deque
 from pathlib import Path
 
 import gymnasium as gym
-import omegaconf
 import hydra
 import numpy as np
+import omegaconf
 import torch as th
-from torch import nn
 from torch import multiprocessing as mp
+from torch import nn
 
 from hsuanwu.common.engine import BasePolicyTrainer
 from hsuanwu.common.logger import Logger
+
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.
@@ -121,10 +122,9 @@ class DistributedTrainer(BasePolicyTrainer):
         Distributed trainer instance.
     """
 
-    def __init__(self, 
-                 cfgs: omegaconf.DictConfig, 
-                 train_env: gym.Env, 
-                 test_env: gym.Env = None) -> None:
+    def __init__(
+        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
+    ) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying DistributedTrainer...")
         # xploit part

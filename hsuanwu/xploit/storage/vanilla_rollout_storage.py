@@ -1,4 +1,5 @@
-from typing import Tuple
+from typing import Tuple, Generator
+
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
@@ -160,7 +161,7 @@ class VanillaRolloutStorage:
             self.advantages.std() + 1e-5
         )
 
-    def generator(self, num_mini_batch: int = None) -> Tuple[th.Tensor]:
+    def generator(self, num_mini_batch: int = 8) -> Generator:
         """Sample data from storage.
 
         Args:

@@ -1,6 +1,6 @@
-from typing import Dict, Tuple
 import glob
 import os
+from typing import Dict, Tuple
 
 import numpy as np
 from dm_control import suite
@@ -196,7 +196,7 @@ class DMCWrapper(core.Env):
         terminated = done
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> Tuple[np.array, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
         return obs, {}

@@ -9,7 +9,7 @@ def schedule(schdl, step):
     Args:
         schdl (str): Schedule mode.
         step (int): global training step.
-    
+
     Returns:
         Standard deviation.
     """

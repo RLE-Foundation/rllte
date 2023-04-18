@@ -1,6 +1,7 @@
-from typing import Dict
-import torch as th
 from abc import ABC, abstractmethod
+from typing import Dict
+
+import torch as th
 
 
 class BaseLearner(ABC):

@@ -1,5 +1,6 @@
-import torch as th
 from abc import ABC, abstractmethod
+
+import torch as th
 
 
 class BaseDistribution(ABC):

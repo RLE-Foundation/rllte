@@ -1,4 +1,5 @@
 from typing import List, Tuple
+
 import gymnasium as gym
 import torch as th
 from torch import nn
@@ -14,7 +15,7 @@ class ResidualBlock(nn.Module):
         channels (int): Channels of inputs.
     """
 
-    def __init__(self, channels: List) -> None:
+    def __init__(self, channels: int) -> None:
         super().__init__()
         self.conv0 = nn.Conv2d(
             in_channels=channels, out_channels=channels, kernel_size=3, padding=1

@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
+
 import numpy as np
+import torch as th
 from torch import nn
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule

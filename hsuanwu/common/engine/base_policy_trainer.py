@@ -1,17 +1,17 @@
-from typing import Tuple, Dict
-from abc import ABC, abstractmethod
-import gymnasium as gym
-
 import os
+from abc import ABC, abstractmethod
+from typing import Dict, Tuple
+
+import gymnasium as gym
 
 os.environ["HYDRA_FULL_ERROR"] = "1"
 import random
 from pathlib import Path
 
 import numpy as np
+import omegaconf
 import torch as th
 from omegaconf import OmegaConf
-import omegaconf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
@@ -23,7 +23,7 @@ _DEFAULT_CFGS = {
     "device": "cpu",
     "seed": 1,
     "num_train_steps": 100000,
-    "num_init_steps": 2000, # only for off-policy algorithms
+    "num_init_steps": 2000,  # only for off-policy algorithms
     ## TODO: Test setup
     "test_every_steps": 5000,  # only for off-policy algorithms
     "test_every_episodes": 10,  # only for on-policy algorithms
@@ -44,6 +44,7 @@ _DEFAULT_CFGS = {
     "reward": {"name": None},
 }
 
+
 class BasePolicyTrainer(ABC):
     """Base class of policy trainer.
 
@@ -56,10 +57,9 @@ class BasePolicyTrainer(ABC):
         Base policy trainer instance.
     """
 
-    def __init__(self, 
-                 cfgs: omegaconf.DictConfig, 
-                 train_env: gym.Env, 
-                 test_env: gym.Env = None) -> None:
+    def __init__(
+        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
+    ) -> None:
         # basic setup
         self._train_env = train_env
         self._test_env = test_env
@@ -154,41 +154,47 @@ class BasePolicyTrainer(ABC):
 
         # TODO: try to load self-defined configs
         for part in cfgs.keys():
-            if part not in ["encoder",
-                           "learner",
-                           "storage",
-                           "distribution",
-                           "augmentation",
-                           "reward"]:
+            if part not in [
+                "encoder",
+                "learner",
+                "storage",
+                "distribution",
+                "augmentation",
+                "reward",
+            ]:
                 new_cfgs[part] = cfgs[part]
-        
+
         for part in cfgs.keys():
-            if part in ["encoder",
-                       "learner",
-                       "storage",
-                       "distribution",
-                       "augmentation",
-                       "reward"]:
+            if part in [
+                "encoder",
+                "learner",
+                "storage",
+                "distribution",
+                "augmentation",
+                "reward",
+            ]:
                 for key in cfgs[part].keys():
                     new_cfgs[part][key] = cfgs[part][key]
 
         ## TODO: replace 'name' with '_target_' to use 'hydra.utils.instantiate'
         for part in new_cfgs.keys():
-            if part in ["encoder",
-                       "learner",
-                       "storage",
-                       "distribution",
-                       "augmentation",
-                       "reward"]:
+            if part in [
+                "encoder",
+                "learner",
+                "storage",
+                "distribution",
+                "augmentation",
+                "reward",
+            ]:
                 new_cfgs[part]["_target_"] = new_cfgs[part]["name"]
                 new_cfgs[part].pop("name")
-        
+
         ## TODO: set flag for 'augmentation' and 'reward'
         if new_cfgs.augmentation._target_ is not None:
             new_cfgs.use_aug = True
         else:
             new_cfgs.use_aug = False
-        
+
         if new_cfgs.reward._target_ is not None:
             new_cfgs.use_irs = True
         else:
@@ -245,7 +251,7 @@ class BasePolicyTrainer(ABC):
             new_cfgs.reward.action_shape = action_space["shape"]
 
         return new_cfgs
-    
+
     def _check_cfgs(self, cfgs: omegaconf.DictConfig) -> None:
         """Check the compatibility of selected modules.
         Args:
@@ -266,19 +272,23 @@ class BasePolicyTrainer(ABC):
         self._logger.debug(f"Selected Storage: {cfgs.storage._target_}")
 
         assert (
-            cfgs.distribution._target_ in ALL_MATCH_KEYS[cfgs.learner._target_]["distribution"]
+            cfgs.distribution._target_
+            in ALL_MATCH_KEYS[cfgs.learner._target_]["distribution"]
         ), f"{cfgs.distribution._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Distribution: {cfgs.distribution._target_}")
 
         if cfgs.augmentation._target_ is not None:
-            self._logger.debug(f"Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}")
+            self._logger.debug(
+                f"Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}"
+            )
         else:
             self._logger.debug(f"Use Augmentation: {cfgs.use_aug}")
         if cfgs.reward._target_ is not None:
-            self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}")
+            self._logger.debug(
+                f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}"
+            )
         else:
             self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}")
-
 
     def _set_class_path(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Set the class path for each module.
@@ -306,7 +316,9 @@ class BasePolicyTrainer(ABC):
         return cfgs
 
     @abstractmethod
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:

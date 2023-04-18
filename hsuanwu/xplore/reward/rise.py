@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
+
 import numpy as np
+import torch as th
 from torch import nn
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
@@ -167,9 +168,7 @@ class RISE(BaseIntrinsicRewardModule):
                     intrinsic_rewards[:, idx, 0] /= k
                 else:
                     intrinsic_rewards[:, idx, 0] = (
-                        th.pow(
-                            th.kthvalue(dist, k + 1, dim=1).values, 1.0 - alpha
-                        )
+                        th.pow(th.kthvalue(dist, k + 1, dim=1).values, 1.0 - alpha)
                         .cpu()
                         .numpy()
                     )

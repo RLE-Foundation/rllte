@@ -1,4 +1,5 @@
 from typing import Any, Dict, Tuple
+
 import gymnasium as gym
 import numpy as np
 
@@ -54,7 +55,7 @@ class FireResetEnv(gym.Wrapper):
         assert env.unwrapped.get_action_meanings()[1] == "FIRE"
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
-    def reset(self, **kwargs) -> np.ndarray:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         self.env.reset(**kwargs)
         obs, _, terminated, truncated, _ = self.env.step(1)
         if terminated or truncated:
@@ -80,7 +81,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = 0
         self.was_real_done = True
 
-    def step(self, action: int) -> Tuple[Any, float, bool, Dict]:
+    def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.was_real_done = terminated
         # check current lives, make loss of life terminal,
@@ -94,7 +95,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = lives
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> np.ndarray:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         if self.was_real_done:
             obs, info = self.env.reset(**kwargs)
         else:
@@ -129,7 +130,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         )
         self._skip = skip
 
-    def step(self, action: int) -> Tuple[Any, float, bool, Dict]:
+    def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
         total_reward = 0.0
         terminated = truncated = False
         for i in range(self._skip):

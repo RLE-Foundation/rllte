@@ -1,6 +1,6 @@
-from typing import Tuple, List
-import threading
 import collections
+import threading
+from typing import List, Tuple
 
 import torch as th
 
@@ -52,9 +52,7 @@ class DistributedStorage:
             episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
             last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-            policy_logits=dict(
-                size=(num_steps + 1, action_shape[0]), dtype=th.float32
-            ),
+            policy_logits=dict(size=(num_steps + 1, action_shape[0]), dtype=th.float32),
             baseline=dict(size=(num_steps + 1,), dtype=th.float32),
             action=dict(size=(num_steps + 1,), dtype=th.int64),
         )

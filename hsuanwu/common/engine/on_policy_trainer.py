@@ -1,12 +1,11 @@
-from typing import Dict, Tuple
-
 from collections import deque
 from pathlib import Path
+from typing import Dict, Tuple
 
 import gymnasium as gym
-import omegaconf
 import hydra
 import numpy as np
+import omegaconf
 import torch as th
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
@@ -24,10 +23,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
         On-policy trainer instance.
     """
 
-    def __init__(self, 
-                 cfgs: omegaconf.DictConfig,
-                 train_env: gym.Env, 
-                 test_env: gym.Env = None) -> None:
+    def __init__(
+        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
+    ) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OnPolicyTrainer...")
         # xploit part
@@ -65,7 +63,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # debug
         self._logger.debug("Check Accomplished. Start Training...")
 
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:

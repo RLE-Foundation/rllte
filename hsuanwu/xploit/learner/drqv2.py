@@ -1,4 +1,5 @@
-from typing import Dict, Iterable
+from typing import Dict, Generator
+
 import torch as th
 from torch.nn import functional as F
 
@@ -13,7 +14,7 @@ MATCH_KEYS = {
         "OrnsteinUhlenbeckNoise",
         "TruncatedNormalNoise",
         "NormalNoise",
-        ],
+    ],
     "augmentation": [],
     "reward": [],
 }
@@ -131,11 +132,11 @@ class DrQv2Learner(BaseLearner):
         if self.encoder is not None:
             self.encoder.train(training)
 
-    def update(self, replay_iter: Iterable, step: int = 0) -> Dict[str, float]:
+    def update(self, replay_iter: Generator, step: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
-            replay_iter (Iterable): Hsuanwu replay storage iterable dataloader.
+            replay_iter (Generator): Hsuanwu replay storage iterable dataloader.
             step (int): Global training step.
 
         Returns:

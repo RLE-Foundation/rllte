@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
+
 import numpy as np
+import torch as th
 from torch import nn
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
@@ -123,7 +124,7 @@ class RIDE(BaseIntrinsicRewardModule):
         kernel_epsilon=0.0001,
         c=0.001,
         sm=8,
-    ):
+    ) -> np.ndarray:
         counts = np.zeros(shape=(src_feats.size()[0],))
         for step in range(src_feats.size()[0]):
             ob_dist = th.norm(src_feats[step] - src_feats, p=2, dim=1)
@@ -140,7 +141,7 @@ class RIDE(BaseIntrinsicRewardModule):
                 counts[step] = 0.0
             else:
                 counts[step] = 1 / s
-        return
+        return counts
 
     def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.

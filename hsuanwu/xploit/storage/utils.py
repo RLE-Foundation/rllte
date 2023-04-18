@@ -1,7 +1,7 @@
-from typing import Dict
-from pathlib import Path
 import io
 import random
+from pathlib import Path
+from typing import Dict
 
 import numpy as np
 

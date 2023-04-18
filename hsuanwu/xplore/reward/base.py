@@ -1,8 +1,11 @@
+from abc import ABC, abstractmethod
 from typing import Dict, Tuple
-import torch as th
-import numpy as np
 
-class BaseIntrinsicRewardModule(object):
+import numpy as np
+import torch as th
+
+
+class BaseIntrinsicRewardModule(ABC):
     """Base class of intrinsic reward module.
 
     Args:
@@ -34,6 +37,7 @@ class BaseIntrinsicRewardModule(object):
         self._beta = beta
         self._kappa = kappa
 
+    @abstractmethod
     def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
@@ -47,8 +51,8 @@ class BaseIntrinsicRewardModule(object):
         Returns:
             The intrinsic rewards.
         """
-        pass
 
+    @abstractmethod
     def update(
         self,
         rollouts: Dict,
@@ -64,4 +68,3 @@ class BaseIntrinsicRewardModule(object):
         Returns:
             None
         """
-        pass

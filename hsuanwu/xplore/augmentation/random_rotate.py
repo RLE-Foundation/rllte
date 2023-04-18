@@ -38,9 +38,9 @@ class RandomRotate(BaseAugmentation):
         masks = [th.zeros_like(mask) for _ in range(4)]
         for i, m in enumerate(masks):
             m[mask == i] = 1
-            m = m[:, None] * th.ones([1, frames], device=device).type(
-                mask.dtype
-            ).type(x.dtype)
+            m = m[:, None] * th.ones([1, frames], device=device).type(mask.dtype).type(
+                x.dtype
+            )
             m = m[:, :, None, None]
             masks[i] = m
 

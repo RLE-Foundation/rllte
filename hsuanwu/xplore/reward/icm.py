@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
+
 import numpy as np
+import torch as th
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
@@ -88,7 +89,11 @@ class InverseForwardDynamicsModel(nn.Module):
         self.softmax = nn.Softmax()
 
     def forward(
-        self, obs: th.Tensor, action: th.Tensor, next_obs: th.Tensor, training: bool = True
+        self,
+        obs: th.Tensor,
+        action: th.Tensor,
+        next_obs: th.Tensor,
+        training: bool = True,
     ) -> th.Tensor:
         if training:
             # inverse prediction
@@ -213,7 +218,7 @@ class ICM(BaseIntrinsicRewardModule):
 
         obs_tensor = th.from_numpy(rollouts["observations"])
         actions_tensor = th.from_numpy(rollouts["actions"])
-        if self.action_type == "dis":
+        if self._action_type == "Discrete":
             # actions size: (n_steps, n_envs, 1)
             actions_tensor = F.one_hot(
                 actions_tensor[:, :, 0].to(th.int64), self._action_shape[0]
@@ -273,7 +278,7 @@ class ICM(BaseIntrinsicRewardModule):
         obs_tensor = th.from_numpy(rollouts["observations"]).reshape(
             n_steps * n_envs, *self._obs_shape
         )
-        if self.action_type == "dis":
+        if self._action_type == "Discrete":
             actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
                 n_steps * n_envs,
             )

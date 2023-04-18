@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+
 import numpy as np
 import torch as th
 from torch.nn import functional as F
@@ -128,15 +129,13 @@ class SACLearner(BaseLearner):
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy
-        self.target_entropy = -np.prod(action_space.shape)
+        self.target_entropy = - np.prod(action_space.shape)
         self.log_alpha = th.tensor(
             np.log(temperature), device=self.device, requires_grad=True
         )
 
         # create optimizers
-        self.actor_opt = th.optim.Adam(
-            self.actor.parameters(), lr=self.lr, betas=betas
-        )
+        self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr, betas=betas)
         self.critic_opt = th.optim.Adam(
             self.critic.parameters(), lr=self.lr, betas=betas
         )
@@ -165,7 +164,9 @@ class SACLearner(BaseLearner):
         """Get the temperature coefficient."""
         return self.log_alpha.exp()
 
-    def update(self, replay_storage: Dict[str, Dict], step: int = 0) -> Dict[str, float]:
+    def update(
+        self, replay_storage: Dict[str, Dict], step: int = 0
+    ) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -195,7 +196,9 @@ class SACLearner(BaseLearner):
         if self.aug is not None:
             aug_obs = self.aug(obs.clone().float())
             aug_next_obs = self.aug(next_obs.clone().float())
-            assert aug_obs.size() == obs.size() and aug_obs.dtype == obs.dtype, "The data shape and data type should be consistent after augmentation!"
+            assert (
+                aug_obs.size() == obs.size() and aug_obs.dtype == obs.dtype
+            ), "The data shape and data type should be consistent after augmentation!"
             with th.no_grad():
                 encoded_aug_obs = self.encoder(aug_obs)
             encoded_aug_next_obs = self.encoder(aug_next_obs)

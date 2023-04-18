@@ -8,6 +8,7 @@ from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
+
 class HsuanwuEngine:
     """Hsuanwu RL engine.
 
@@ -20,10 +21,9 @@ class HsuanwuEngine:
         Off-policy trainer instance.
     """
 
-    def __init__(self, 
-                 cfgs: omegaconf.DictConfig, 
-                 train_env: gym.Env, 
-                 test_env: gym.Env = None) -> None:
+    def __init__(
+        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
+    ) -> None:
         try:
             cfgs.learner.name
         except:
@@ -34,15 +34,15 @@ class HsuanwuEngine:
                 f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api/."
             )
 
-        if ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
+        if ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "OnPolicyTrainer":
             self.trainer = OnPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OffPolicyTrainer":
+        elif ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "OffPolicyTrainer":
             self.trainer = OffPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "DistributedTrainer":
+        elif ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "DistributedTrainer":
             self.trainer = DistributedTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )

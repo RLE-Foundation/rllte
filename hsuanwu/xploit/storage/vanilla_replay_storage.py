@@ -1,6 +1,8 @@
 from typing import Any, Tuple
+
 import numpy as np
 import torch as th
+
 
 class VanillaReplayStorage:
     """Vanilla replay storage for off-policy algorithms.
@@ -23,7 +25,7 @@ class VanillaReplayStorage:
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        storage_size: int = 1e6,
+        storage_size: int = 1000000,
         batch_size: int = 1024,
     ):
         self._obs_shape = obs_shape
@@ -82,7 +84,7 @@ class VanillaReplayStorage:
         self._global_step = (self._global_step + 1) % self._storage_size
         self._full = self._full or self._global_step == 0
 
-    def sample(self) -> Tuple[th.Tensor]:
+    def sample(self) -> Tuple[th.Tensor, ...]:
         """Sample transitions from the storage.
 
         Args:

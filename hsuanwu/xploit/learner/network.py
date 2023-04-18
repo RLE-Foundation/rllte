@@ -1,10 +1,10 @@
 from typing import Dict, Tuple
-import gymnasium as gym
 
+import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.nn import functional as F
 from torch.distributions import Distribution
+from torch.nn import functional as F
 
 from hsuanwu.xploit.learner import utils
 
@@ -43,7 +43,7 @@ class StochasticActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: th.Tensor, step: float = None) -> Distribution:
+    def get_action(self, obs: th.Tensor, step: int) -> Distribution:
         """Get actions.
 
         Args:
@@ -95,7 +95,7 @@ class DeterministicActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: th.Tensor, step: float = None) -> Distribution:
+    def get_action(self, obs: th.Tensor, step: int) -> Distribution:
         """Get actions.
 
         Args:
@@ -151,7 +151,7 @@ class DoubleCritic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: th.Tensor, action: th.Tensor) -> Tuple[th.Tensor]:
+    def forward(self, obs: th.Tensor, action: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Value estimation.
 
         Args:
@@ -181,7 +181,9 @@ class DiscreteActorCritic(nn.Module):
         Actor-Critic instance.
     """
 
-    def __init__(self, action_space: gym.Space, feature_dim: int, hidden_dim: int) -> None:
+    def __init__(
+        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
+    ) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
@@ -222,7 +224,7 @@ class DiscreteActorCritic(nn.Module):
 
     def get_action_and_value(
         self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor]:
+    ) -> Tuple[th.Tensor, ...]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -256,7 +258,9 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         Actor-Critic instance.
     """
 
-    def __init__(self, action_space: gym.Space, feature_dim: int, hidden_dim: int) -> None:
+    def __init__(
+        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
+    ) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
@@ -298,7 +302,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
 
     def get_action_and_value(
         self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor]:
+    ) -> Tuple[th.Tensor, ...]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -319,7 +323,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
 
         return actions, self.critic(h), log_probs, entropy
 
-    def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor]:
+    def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Get probs and auxiliary estimated values for auxiliary phase update.
 
         Args:

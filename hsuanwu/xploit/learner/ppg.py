@@ -1,10 +1,12 @@
 from typing import Dict
+
 import numpy as np
 import torch as th
 from torch import nn
 
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
+from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
@@ -167,7 +169,9 @@ class PPGLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_storage: Dict[str, Dict], episode: int = 0) -> Dict[str, float]:
+    def update(
+        self, rollout_storage: Storage, episode: int = 0
+    ) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -245,8 +249,7 @@ class PPGLearner(BaseLearner):
             ratio = th.exp(log_probs - batch_old_log_probs)
             surr1 = ratio * adv_targ
             surr2 = (
-                th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
-                * adv_targ
+                th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
             )
             actor_loss = -th.min(surr1, surr2).mean()
 

@@ -39,7 +39,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
 
         self.noise_prev = None
 
-    def reset(self, noiseless_action: th.Tensor, step: int = None) -> None:
+    def reset(self, noiseless_action: th.Tensor, step: int = 0) -> None:
         """Reset the noise instance.
 
         Args:

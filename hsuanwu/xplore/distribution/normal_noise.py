@@ -78,7 +78,7 @@ class NormalNoise(BaseDistribution):
         """Returns the Shannon entropy of distribution."""
         raise NotImplementedError
 
-    def reset(self, noiseless_action: th.Tensor, step: int = None) -> None:
+    def reset(self, noiseless_action: th.Tensor, step: int = 0) -> None:
         """Reset the noise instance.
 
         Args:

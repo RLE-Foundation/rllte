@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
-import torch as th
-import numpy as np
 
+import numpy as np
+import torch as th
 from torch import nn, optim
 from torch.autograd import Variable
 from torch.nn import functional as F

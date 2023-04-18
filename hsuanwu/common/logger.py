@@ -1,8 +1,7 @@
-from typing import Any, Dict, Type
-
 import csv
 import datetime
 from pathlib import Path
+from typing import Any, Dict, Type
 
 from termcolor import colored
 
@@ -42,7 +41,7 @@ class Logger:
         self._train_file_write_header = True
         self._test_file_write_header = True
 
-    def _format(self, key: str, value: Any, ty: Type):
+    def _format(self, key: str, value: Any, ty: str):
         if ty == "int":
             value = int(value)
             return f"{key}: {value}"
@@ -54,14 +53,14 @@ class Logger:
         else:
             raise f"invalid format type: {ty}"
 
-    def parse_train_msg(self, msg: Any):
+    def parse_train_msg(self, msg: Any) -> str:
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
             value = msg.get(key, 0)
             pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
-    def parse_test_msg(self, msg: Any):
+    def parse_test_msg(self, msg: Any) -> str:
         pieces = []
         for key, disp_key, ty in TEST_MSG_FORMAT:
             value = msg.get(key, 0)

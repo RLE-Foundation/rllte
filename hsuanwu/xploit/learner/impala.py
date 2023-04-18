@@ -1,9 +1,9 @@
-from typing import Dict, Tuple
-import gymnasium as gym
-import omegaconf
 import collections
 import threading
+from typing import Dict, Tuple
 
+import gymnasium as gym
+import omegaconf
 import torch as th
 from torch import nn
 from torch.nn import functional as F
@@ -250,7 +250,7 @@ class IMPALALearner(BaseLearner):
         optimizer: th.optim.Optimizer,
         lr_scheduler: th.optim.lr_scheduler,
         lock=threading.Lock(),
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Tuple]:
         """
         Update the learner model.
 
