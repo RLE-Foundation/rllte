@@ -1,7 +1,7 @@
-import torch
+from typing import Dict, Iterable
+import torch as th
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Iterable, Tensor
 from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
@@ -85,7 +85,7 @@ class DrQv2Learner(BaseLearner):
         self,
         observation_space: Dict,
         action_space: Dict,
-        device: Device,
+        device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -111,8 +111,8 @@ class DrQv2Learner(BaseLearner):
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
-        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
-        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
+        self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.critic_opt = th.optim.Adam(self.critic.parameters(), lr=self.lr)
         self.train()
         self.critic_target.train()
 
@@ -155,7 +155,7 @@ class DrQv2Learner(BaseLearner):
                 },
                 step=step,
             )
-            reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
+            reward += th.as_tensor(intrinsic_reward, dtype=th.float32).squeeze(1)
 
         obs = obs.float().to(self.device)
         action = action.float().to(self.device)
@@ -170,7 +170,7 @@ class DrQv2Learner(BaseLearner):
 
         # encode
         encoded_obs = self.encoder(obs)
-        with torch.no_grad():
+        with th.no_grad():
             encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
@@ -192,11 +192,11 @@ class DrQv2Learner(BaseLearner):
 
     def update_critic(
         self,
-        obs: Tensor,
-        action: Tensor,
-        reward: Tensor,
-        discount: Tensor,
-        next_obs: Tensor,
+        obs: th.Tensor,
+        action: th.Tensor,
+        reward: th.Tensor,
+        discount: th.Tensor,
+        next_obs: th.Tensor,
         step: int,
     ) -> Dict[str, float]:
         """Update the critic network.
@@ -213,13 +213,13 @@ class DrQv2Learner(BaseLearner):
             Critic loss metrics.
         """
 
-        with torch.no_grad():
+        with th.no_grad():
             # sample actions
             dist = self.actor.get_action(next_obs, step=step)
 
             next_action = dist.sample(clip=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
-            target_V = torch.min(target_Q1, target_Q2)
+            target_V = th.min(target_Q1, target_Q2)
             target_Q = reward + (discount * target_V)
 
         Q1, Q2 = self.critic(obs, action)
@@ -239,7 +239,7 @@ class DrQv2Learner(BaseLearner):
             "critic_target": target_Q.mean().item(),
         }
 
-    def update_actor(self, obs: Tensor, step: int) -> Dict[str, float]:
+    def update_actor(self, obs: th.Tensor, step: int) -> Dict[str, float]:
         """Update the actor network.
 
         Args:
@@ -254,7 +254,7 @@ class DrQv2Learner(BaseLearner):
         action = dist.sample(clip=True)
 
         Q1, Q2 = self.critic(obs, action)
-        Q = torch.min(Q1, Q2)
+        Q = th.min(Q1, Q2)
 
         actor_loss = -Q.mean()
 

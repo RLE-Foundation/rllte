@@ -1,8 +1,9 @@
-import numpy as np
+from typing import List, Tuple
+import gymnasium as gym
+import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import List, Space, Tensor, Tuple
 from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
@@ -10,7 +11,7 @@ class ResidualBlock(nn.Module):
     """Residual block taken from https://github.com/AIcrowd/neurips2020-procgen-starter-kit/blob/142d09586d2272a17f44481a115c4bd817cf6a94/models/impala_cnn_torch.py
 
     Args:
-        channels: Channels of inputs.
+        channels (int): Channels of inputs.
     """
 
     def __init__(self, channels: List) -> None:
@@ -22,7 +23,7 @@ class ResidualBlock(nn.Module):
             in_channels=channels, out_channels=channels, kernel_size=3, padding=1
         )
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         inputs = x
         x = F.relu(x)
         x = self.conv0(x)
@@ -36,8 +37,8 @@ class ResidualLayer(nn.Module):
     """Single residual layer for building ResNet encoder.
 
     Args:
-        input_shape: Data shape of the inputs.
-        out_channels: Channels of outputs.
+        input_shape (Tuple): Data shape of the inputs.
+        out_channels (int): Channels of outputs.
     """
 
     def __init__(self, input_shape: Tuple, out_channels: int):
@@ -85,7 +86,7 @@ class EspeholtResidualEncoder(BaseEncoder):
 
     def __init__(
         self,
-        observation_space: Space,
+        observation_space: gym.Space,
         feature_dim: int = 0,
         net_arch: List[int] = [16, 32, 32],
     ) -> None:
@@ -110,7 +111,7 @@ class EspeholtResidualEncoder(BaseEncoder):
 
         self.apply(network_init)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0
         h = self.trunk(obs)
         return self.linear(h)

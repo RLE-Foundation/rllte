@@ -1,6 +1,6 @@
-import torch
-
-from hsuanwu.common.typing import ABC, Device, Dict, abstractmethod
+from typing import Dict
+import torch as th
+from abc import ABC, abstractmethod
 
 
 class BaseLearner(ABC):
@@ -26,14 +26,14 @@ class BaseLearner(ABC):
         self,
         observation_space: Dict,
         action_space: Dict,
-        device: Device,
+        device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
     ) -> None:
         self.obs_space = observation_space
         self.action_space = action_space
-        self.device = torch.device(device)
+        self.device = th.device(device)
         self.feature_dim = feature_dim
         self.lr = lr
         self.eps = eps

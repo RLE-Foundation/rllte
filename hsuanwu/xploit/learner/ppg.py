@@ -1,8 +1,8 @@
+from typing import Dict
 import numpy as np
-import torch
+import torch as th
 from torch import nn
 
-from hsuanwu.common.typing import Device, Dict, Space, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
 
@@ -92,7 +92,7 @@ class PPGLearner(BaseLearner):
         self,
         observation_space: Dict,
         action_space: Dict,
-        device: Device,
+        device: th.device,
         feature_dim: int = 256,
         lr: float = 5e-4,
         eps: float = 1e-5,
@@ -138,7 +138,7 @@ class PPGLearner(BaseLearner):
         else:
             raise NotImplementedError
 
-        self.ac_opt = torch.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
+        self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
         self.train()
 
     def train(self, training: bool = True) -> None:
@@ -155,7 +155,7 @@ class PPGLearner(BaseLearner):
         if self.encoder is not None:
             self.encoder.train(training)
 
-    def get_value(self, obs: Tensor) -> Tensor:
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
         Args:
@@ -167,7 +167,7 @@ class PPGLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
+    def update(self, rollout_storage: Dict[str, Dict], episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -181,28 +181,28 @@ class PPGLearner(BaseLearner):
         # TODO: Save auxiliary transitions
         if episode == 0:
             num_steps, num_envs = rollout_storage.obs.size()[:2]
-            self.aux_obs = torch.empty(
+            self.aux_obs = th.empty(
                 size=(
                     num_steps,
                     num_envs * self.policy_epochs,
                     *self.obs_space.shape,
                 ),
                 device="cpu",
-                dtype=torch.float32,
+                dtype=th.float32,
             )
-            self.aux_returns = torch.empty(
+            self.aux_returns = th.empty(
                 size=(num_steps, num_envs * self.policy_epochs, 1),
                 device="cpu",
-                dtype=torch.float32,
+                dtype=th.float32,
             )
-            self.aux_logits = torch.empty(
+            self.aux_logits = th.empty(
                 size=(
                     num_steps,
                     num_envs * self.policy_epochs,
                     self.action_space.shape[0],
                 ),
                 device="cpu",
-                dtype=torch.float32,
+                dtype=th.float32,
             )
             self.num_aux_rollouts = num_envs * self.policy_epochs
             self.num_envs = num_envs
@@ -242,13 +242,13 @@ class PPGLearner(BaseLearner):
             )
 
             # actor loss part
-            ratio = torch.exp(log_probs - batch_old_log_probs)
+            ratio = th.exp(log_probs - batch_old_log_probs)
             surr1 = ratio * adv_targ
             surr2 = (
-                torch.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
+                th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
                 * adv_targ
             )
-            actor_loss = -torch.min(surr1, surr2).mean()
+            actor_loss = -th.min(surr1, surr2).mean()
 
             # critic loss part
             values_clipped = batch_values + (values - batch_values).clamp(
@@ -256,7 +256,7 @@ class PPGLearner(BaseLearner):
             )
             values_losses = (batch_values - batch_returns).pow(2)
             values_losses_clipped = (values_clipped - batch_returns).pow(2)
-            critic_loss = 0.5 * torch.max(values_losses, values_losses_clipped).mean()
+            critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
             # update
             self.encoder_opt.zero_grad(set_to_none=True)
@@ -288,7 +288,7 @@ class PPGLearner(BaseLearner):
 
         # TODO: Auxiliary phase
         for idx in range(self.policy_epochs):
-            with torch.no_grad():
+            with th.no_grad():
                 aux_obs = (
                     self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs]
                     .to(self.device)
@@ -333,7 +333,7 @@ class PPGLearner(BaseLearner):
                 new_aux_values = new_aux_values.view(-1)
                 old_dist = self.dist(logits=batch_aux_logits)
                 # divergence loss
-                kl_loss = torch.distributions.kl_divergence(old_dist, new_dist).mean()
+                kl_loss = th.distributions.kl_divergence(old_dist, new_dist).mean()
                 # value loss
                 value_loss = 0.5 * ((new_values - batch_aux_returns)).mean()
                 aux_value_loss = 0.5 * ((new_aux_values - batch_aux_returns)).mean()

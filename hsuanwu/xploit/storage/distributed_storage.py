@@ -1,16 +1,8 @@
+from typing import Tuple, List
 import threading
+import collections
 
-import torch
-
-from hsuanwu.common.typing import (
-    Batch,
-    Device,
-    DictConfig,
-    List,
-    SimpleQueue,
-    Storage,
-    Tuple,
-)
+import torch as th
 
 
 class DistributedStorage:
@@ -30,7 +22,7 @@ class DistributedStorage:
 
     def __init__(
         self,
-        device: Device,
+        device: th.device,
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
@@ -40,7 +32,7 @@ class DistributedStorage:
     ) -> None:
         self._obs_shape = obs_shape
         self._action_shape = action_shape
-        self._device = torch.device(device)
+        self._device = th.device(device)
         self._num_steps = num_steps
         self._num_storages = num_storages
         self._batch_size = batch_size
@@ -53,35 +45,35 @@ class DistributedStorage:
             raise NotImplementedError
 
         specs = dict(
-            obs=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
-            reward=dict(size=(num_steps + 1,), dtype=torch.float32),
-            terminated=dict(size=(num_steps + 1,), dtype=torch.bool),
-            truncated=dict(size=(num_steps + 1,), dtype=torch.bool),
-            episode_return=dict(size=(num_steps + 1,), dtype=torch.float32),
-            episode_step=dict(size=(num_steps + 1,), dtype=torch.int32),
-            last_action=dict(size=(num_steps + 1,), dtype=torch.int64),
+            obs=dict(size=(num_steps + 1, *obs_shape), dtype=th.uint8),
+            reward=dict(size=(num_steps + 1,), dtype=th.float32),
+            terminated=dict(size=(num_steps + 1,), dtype=th.bool),
+            truncated=dict(size=(num_steps + 1,), dtype=th.bool),
+            episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
+            episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
+            last_action=dict(size=(num_steps + 1,), dtype=th.int64),
             policy_logits=dict(
-                size=(num_steps + 1, action_shape[0]), dtype=torch.float32
+                size=(num_steps + 1, action_shape[0]), dtype=th.float32
             ),
-            baseline=dict(size=(num_steps + 1,), dtype=torch.float32),
-            action=dict(size=(num_steps + 1,), dtype=torch.int64),
+            baseline=dict(size=(num_steps + 1,), dtype=th.float32),
+            action=dict(size=(num_steps + 1,), dtype=th.int64),
         )
 
         self.storages = {key: [] for key in specs}
         for _ in range(num_storages):
             for key in self.storages:
-                self.storages[key].append(torch.empty(**specs[key]).share_memory_())
+                self.storages[key].append(th.empty(**specs[key]).share_memory_())
 
     @staticmethod
     def sample(
-        device: Device,
+        device: th.device,
         batch_size: int,
-        free_queue: SimpleQueue,
-        full_queue: SimpleQueue,
+        free_queue: th.multiprocessing.SimpleQueue,
+        full_queue: th.multiprocessing.SimpleQueue,
         storages: List,
         init_actor_state_storages: List,
         lock=threading.Lock(),
-    ) -> Batch:
+    ) -> collections.namedtuple:
         """Sample transitions from the storage.
 
         Args:
@@ -99,12 +91,12 @@ class DistributedStorage:
         with lock:
             indices = [full_queue.get() for _ in range(batch_size)]
         batch = {
-            key: torch.stack([storages[key][i] for i in indices], dim=1)
+            key: th.stack([storages[key][i] for i in indices], dim=1)
             for key in storages
         }
 
         init_actor_states = (
-            torch.cat(ts, dim=1)
+            th.cat(ts, dim=1)
             for ts in zip(*[init_actor_state_storages[i] for i in indices])
         )
 
@@ -112,7 +104,7 @@ class DistributedStorage:
             free_queue.put(i)
 
         batch = {
-            key: tensor.to(device=torch.device(device), non_blocking=True)
+            key: tensor.to(device=th.device(device), non_blocking=True)
             for key, tensor in batch.items()
         }
         return batch, init_actor_states

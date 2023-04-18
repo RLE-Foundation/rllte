@@ -1,7 +1,6 @@
+from typing import Any, Dict, Tuple
 import gymnasium as gym
 import numpy as np
-
-from hsuanwu.common.typing import Any, Dict, Env, Ndarray, Tuple
 
 # The following wrappers are re-implemented based on https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
 
@@ -17,14 +16,14 @@ class NoopResetEnv(gym.Wrapper):
         NoopResetEnv instance.
     """
 
-    def __init__(self, env: Env, noop_max: int = 30) -> None:
+    def __init__(self, env: gym.Env, noop_max: int = 30) -> None:
         super().__init__(env)
         self.noop_max = noop_max
         self.override_num_noops = None
         self.noop_action = 0
         assert env.unwrapped.get_action_meanings()[0] == "NOOP"
 
-    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         self.env.reset(**kwargs)
         if self.override_num_noops is not None:
             noops = self.override_num_noops
@@ -50,12 +49,12 @@ class FireResetEnv(gym.Wrapper):
         FireResetEnv instance.
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: gym.Env) -> None:
         super().__init__(env)
         assert env.unwrapped.get_action_meanings()[1] == "FIRE"
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
-    def reset(self, **kwargs) -> Ndarray:
+    def reset(self, **kwargs) -> np.ndarray:
         self.env.reset(**kwargs)
         obs, _, terminated, truncated, _ = self.env.step(1)
         if terminated or truncated:
@@ -76,7 +75,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         EpisodicLifeEnv instance.
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: gym.Env) -> None:
         super().__init__(env)
         self.lives = 0
         self.was_real_done = True
@@ -95,7 +94,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = lives
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> Ndarray:
+    def reset(self, **kwargs) -> np.ndarray:
         if self.was_real_done:
             obs, info = self.env.reset(**kwargs)
         else:
@@ -122,7 +121,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         MaxAndSkipEnv instance.
     """
 
-    def __init__(self, env: Env, skip: int = 4) -> None:
+    def __init__(self, env: gym.Env, skip: int = 4) -> None:
         super().__init__(env)
         # most recent raw observations (for max pooling across time steps)
         self._obs_buffer = np.zeros(

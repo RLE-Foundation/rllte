@@ -1,4 +1,6 @@
-from hsuanwu.common.typing import DictConfig, Env
+import gymnasium as gym
+import omegaconf
+
 from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 from .base_policy_trainer import BasePolicyTrainer
@@ -18,7 +20,10 @@ class HsuanwuEngine:
         Off-policy trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, 
+                 cfgs: omegaconf.DictConfig, 
+                 train_env: gym.Env, 
+                 test_env: gym.Env = None) -> None:
         try:
             cfgs.learner.name
         except:

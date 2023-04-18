@@ -1,10 +1,10 @@
+from typing import Dict, Tuple
+import torch as th
 import numpy as np
-import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
@@ -32,14 +32,14 @@ class CnnEncoder(nn.Module):
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         h = self.trunk(obs)
         h = self.linear(h)
         h = self.layer_norm(h)
@@ -69,7 +69,7 @@ class MlpEncoder(nn.Module):
             nn.LayerNorm(latent_dim),
         )
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)
 
 
@@ -97,7 +97,7 @@ class RND(BaseIntrinsicRewardModule):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
         latent_dim: int,
@@ -124,7 +124,7 @@ class RND(BaseIntrinsicRewardModule):
         for p in self.target.parameters():
             p.requires_grad = False
 
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -144,11 +144,11 @@ class RND(BaseIntrinsicRewardModule):
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
         # observations shape ((n_steps, n_envs) + obs_shape)
-        obs_tensor = torch.as_tensor(
-            rollouts["observations"], dtype=torch.float32, device=self._device
+        obs_tensor = th.as_tensor(
+            rollouts["observations"], dtype=th.float32, device=self._device
         )
 
-        with torch.no_grad():
+        with th.no_grad():
             for idx in range(n_envs):
                 src_feats = self.predictor(obs_tensor[:, idx])
                 tgt_feats = self.target(obs_tensor[:, idx])
@@ -178,8 +178,8 @@ class RND(BaseIntrinsicRewardModule):
         """
         n_steps = rollouts["observations"].shape[0]
         n_envs = rollouts["observations"].shape[1]
-        obs_tensor = torch.as_tensor(
-            rollouts["observations"], dtype=torch.float32, device=self._device
+        obs_tensor = th.as_tensor(
+            rollouts["observations"], dtype=th.float32, device=self._device
         ).reshape(n_steps * n_envs, *self._obs_shape)
 
         dataset = TensorDataset(obs_tensor)

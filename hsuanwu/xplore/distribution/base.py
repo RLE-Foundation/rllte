@@ -1,6 +1,5 @@
-import torch
-
-from hsuanwu.common.typing import ABC, Tensor, TorchSize, abstractmethod
+import torch as th
+from abc import ABC, abstractmethod
 
 
 class BaseDistribution(ABC):
@@ -11,7 +10,7 @@ class BaseDistribution(ABC):
         self.dist = None
 
     @abstractmethod
-    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 
@@ -23,7 +22,7 @@ class BaseDistribution(ABC):
         """
 
     @abstractmethod
-    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 
@@ -35,7 +34,7 @@ class BaseDistribution(ABC):
         """
 
     @abstractmethod
-    def log_prob(self, value: Tensor) -> Tensor:
+    def log_prob(self, value: th.Tensor) -> th.Sizeth.Tensor:
         """Returns the log of the probability density/mass function evaluated at `value`.
 
         Args:
@@ -46,7 +45,7 @@ class BaseDistribution(ABC):
         """
 
     @abstractmethod
-    def entropy(self) -> Tensor:
+    def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
 
     @abstractmethod
@@ -54,9 +53,9 @@ class BaseDistribution(ABC):
         """Reset the distribution."""
 
     @abstractmethod
-    def mean(self) -> Tensor:
+    def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
 
     @abstractmethod
-    def mode(self) -> Tensor:
+    def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""

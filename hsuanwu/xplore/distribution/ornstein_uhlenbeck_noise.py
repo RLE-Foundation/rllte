@@ -1,8 +1,7 @@
 import numpy as np
-import torch
+import torch as th
 from torch.distributions.utils import _standard_normal
 
-from hsuanwu.common.typing import Optional, Tensor, TorchSize
 from hsuanwu.xplore.distribution import utils
 from hsuanwu.xplore.distribution.base import BaseDistribution
 
@@ -40,7 +39,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
 
         self.noise_prev = None
 
-    def reset(self, noiseless_action: Tensor, step: int = None) -> None:
+    def reset(self, noiseless_action: th.Tensor, step: int = None) -> None:
         """Reset the noise instance.
 
         Args:
@@ -52,14 +51,14 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         """
         self._noiseless_action = noiseless_action
         if self.noise_prev is None:
-            self.noise_prev = torch.zeros_like(self._noiseless_action)
+            self.noise_prev = th.zeros_like(self._noiseless_action)
         if self._stddev_schedule is not None:
             # TODO: reset the std of
             self._sigma = utils.schedule(self._stddev_schedule, step)
 
     def sample(
-        self, clip: float = None, sample_shape: TorchSize = torch.Size()
-    ) -> Tensor:
+        self, clip: float = None, sample_shape: th.Size = th.Size()
+    ) -> th.Tensor:
         """Generates a sample_shape shaped sample
 
         Args:
@@ -80,7 +79,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
                 device=self._noiseless_action.device,
             )
         )
-        noise = torch.as_tensor(
+        noise = th.as_tensor(
             noise,
             dtype=self._noiseless_action.dtype,
             device=self._noiseless_action.device,
@@ -90,16 +89,16 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         return noise + self._noiseless_action
 
     @property
-    def mean(self) -> Tensor:
+    def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return self._noiseless_action
 
     @property
-    def mode(self) -> Tensor:
+    def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         return self._noiseless_action
 
-    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 
@@ -111,7 +110,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         """
         raise NotImplementedError
 
-    def log_prob(self, value: Tensor) -> Tensor:
+    def log_prob(self, value: th.Tensor) -> th.Tensor:
         """Returns the log of the probability density/mass function evaluated at `value`.
 
         Args:
@@ -122,6 +121,6 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         """
         raise NotImplementedError
 
-    def entropy(self) -> Tensor:
+    def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         raise NotImplementedError

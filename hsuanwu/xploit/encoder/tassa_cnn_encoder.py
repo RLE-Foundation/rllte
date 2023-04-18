@@ -1,7 +1,7 @@
-import torch
+import gymnasium as gym
+import torch as th
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor
 from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
@@ -18,7 +18,7 @@ class TassaCnnEncoder(BaseEncoder):
         CNN-based encoder instance.
     """
 
-    def __init__(self, observation_space: Space, feature_dim: int = 50) -> None:
+    def __init__(self, observation_space: gym.Space, feature_dim: int = 50) -> None:
         super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape
@@ -35,8 +35,8 @@ class TassaCnnEncoder(BaseEncoder):
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, feature_dim)
@@ -44,7 +44,7 @@ class TassaCnnEncoder(BaseEncoder):
 
         self.apply(network_init)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0 - 0.5
         h = self.trunk(obs)
 

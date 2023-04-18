@@ -1,10 +1,9 @@
 import math
 
-import torch
+import torch as th
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
@@ -48,7 +47,7 @@ class SquashedNormal(BaseDistribution):
         Squashed normal distribution instance.
     """
 
-    def __init__(self, mu: Tensor, sigma: Tensor) -> None:
+    def __init__(self, mu: th.Tensor, sigma: th.Tensor) -> None:
         super().__init__()
 
         self._mu = mu
@@ -58,7 +57,7 @@ class SquashedNormal(BaseDistribution):
             transforms=[TanhTransform()],
         )
 
-    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
 
         Args:
@@ -69,7 +68,7 @@ class SquashedNormal(BaseDistribution):
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
 
         Args:
@@ -81,14 +80,14 @@ class SquashedNormal(BaseDistribution):
         return self.dist.rsample(sample_shape)
 
     @property
-    def mean(self) -> Tensor:
+    def mean(self) -> th.Tensor:
         """Return the transformed mean."""
         mu = self._mu
         for tr in self.dist.transforms:
             mu = tr(mu)
         return mu
 
-    def log_prob(self, actions: Tensor) -> Tensor:
+    def log_prob(self, actions: th.Tensor) -> th.Tensor:
         """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian.
         Args:
             actions (Tensor): The actions to be evaluated.
@@ -102,10 +101,10 @@ class SquashedNormal(BaseDistribution):
         """Reset the distribution."""
         raise NotImplementedError
 
-    def entropy(self) -> Tensor:
+    def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         raise NotImplementedError
 
-    def mode(self) -> Tensor:
+    def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         raise NotImplementedError

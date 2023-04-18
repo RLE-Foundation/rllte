@@ -1,8 +1,8 @@
+from typing import Dict, Tuple
+import torch as th
 import numpy as np
-import torch
 from torch import nn
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
@@ -30,14 +30,14 @@ class RandomCnnEncoder(nn.Module):
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         h = self.trunk(obs)
         h = self.linear(h)
         h = self.layer_norm(h)
@@ -67,7 +67,7 @@ class RandomMlpEncoder(nn.Module):
             nn.LayerNorm(latent_dim),
         )
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)
 
 
@@ -93,7 +93,7 @@ class REVD(BaseIntrinsicRewardModule):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
         latent_dim: int,
@@ -125,7 +125,7 @@ class REVD(BaseIntrinsicRewardModule):
         alpha: float = 0.5,
         k: int = 3,
         average_divergence: bool = False,
-    ) -> ndarray:
+    ) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -147,12 +147,12 @@ class REVD(BaseIntrinsicRewardModule):
         n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.as_tensor(
-            rollouts["observations"], dtype=torch.float32, device=self._device
+        obs_tensor = th.as_tensor(
+            rollouts["observations"], dtype=th.float32, device=self._device
         )
 
         if self.first_update:
-            with torch.no_grad():
+            with th.no_grad():
                 for idx in range(n_envs):
                     src_feats = self.encoder(obs_tensor[:, idx])
                     self.last_encoded_obs.append(src_feats)
@@ -160,28 +160,28 @@ class REVD(BaseIntrinsicRewardModule):
 
             return intrinsic_rewards
 
-        with torch.no_grad():
+        with th.no_grad():
             for idx in range(n_envs):
                 src_feats = self.encoder(obs_tensor[:, idx])
-                dist_intra = torch.linalg.vector_norm(
+                dist_intra = th.linalg.vector_norm(
                     src_feats.unsqueeze(1) - src_feats, ord=2, dim=2
                 )
-                dist_outer = torch.linalg.vector_norm(
+                dist_outer = th.linalg.vector_norm(
                     src_feats.unsqueeze(1) - self.last_encoded_obs[idx], ord=2, dim=2
                 )
 
                 if average_divergence:
                     pass
                 else:
-                    D_step_intra = torch.kthvalue(dist_intra, k + 1, dim=1).values
-                    D_step_outer = torch.kthvalue(dist_outer, k + 1, dim=1).values
+                    D_step_intra = th.kthvalue(dist_intra, k + 1, dim=1).values
+                    D_step_outer = th.kthvalue(dist_outer, k + 1, dim=1).values
                     L = (
-                        torch.kthvalue(dist_intra, 2, dim=1).values.cpu().numpy().sum()
+                        th.kthvalue(dist_intra, 2, dim=1).values.cpu().numpy().sum()
                         / n_steps
                     )
                     intrinsic_rewards[:, idx, 0] = (
                         L
-                        * torch.pow(D_step_outer / (D_step_intra + 0.0001), 1.0 - alpha)
+                        * th.pow(D_step_outer / (D_step_intra + 0.0001), 1.0 - alpha)
                         .cpu()
                         .numpy()
                     )

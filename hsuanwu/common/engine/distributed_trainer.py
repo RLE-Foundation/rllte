@@ -1,30 +1,24 @@
-import os
+from typing import Tuple, Dict, List
 
+import os
 os.environ["OMP_NUM_THREADS"] = "1"
+
 import threading
 import time
 import traceback
 from collections import deque
 from pathlib import Path
 
+import gymnasium as gym
+import omegaconf
 import hydra
 import numpy as np
-import torch
+import torch as th
+from torch import nn
 from torch import multiprocessing as mp
 
 from hsuanwu.common.engine import BasePolicyTrainer
 from hsuanwu.common.logger import Logger
-from hsuanwu.common.typing import (
-    Dict,
-    DictConfig,
-    Env,
-    List,
-    Ndarray,
-    NNModule,
-    Storage,
-    Tensor,
-)
-
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.
@@ -36,20 +30,20 @@ class Environment:
         Processed env.
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: gym.Env) -> None:
         self.env = env
         self.episode_return = None
         self.episode_step = None
 
-    def reset(self, seed) -> Dict[str, Tensor]:
+    def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
-        init_reward = torch.zeros(1, 1)
+        init_reward = th.zeros(1, 1)
         # This supports only single-tensor actions ATM.
-        init_last_action = torch.zeros(1, 1, dtype=torch.int64)
-        self.episode_return = torch.zeros(1, 1)
-        self.episode_step = torch.zeros(1, 1, dtype=torch.int32)
-        init_terminated = torch.ones(1, 1, dtype=torch.uint8)
-        init_truncated = torch.ones(1, 1, dtype=torch.uint8)
+        init_last_action = th.zeros(1, 1, dtype=th.int64)
+        self.episode_return = th.zeros(1, 1)
+        self.episode_step = th.zeros(1, 1, dtype=th.int32)
+        init_terminated = th.ones(1, 1, dtype=th.uint8)
+        init_truncated = th.ones(1, 1, dtype=th.uint8)
 
         obs, info = self.env.reset(seed=seed)
         obs = self._format_obs(obs)
@@ -64,7 +58,7 @@ class Environment:
             last_action=init_last_action,
         )
 
-    def step(self, action: Tensor) -> Dict[str, Tensor]:
+    def step(self, action: th.Tensor) -> Dict[str, th.Tensor]:
         """Step function that returns a dict consists of current and history observation and action.
 
         Args:
@@ -80,13 +74,13 @@ class Environment:
         episode_return = self.episode_return
         if terminated or truncated:
             obs, info = self.env.reset()
-            self.episode_return = torch.zeros(1, 1)
-            self.episode_step = torch.zeros(1, 1, dtype=torch.int32)
+            self.episode_return = th.zeros(1, 1)
+            self.episode_step = th.zeros(1, 1, dtype=th.int32)
 
         obs = self._format_obs(obs)
-        reward = torch.as_tensor(reward, dtype=torch.float32).view(1, 1)
-        terminated = torch.as_tensor(terminated, dtype=torch.uint8).view(1, 1)
-        truncated = torch.as_tensor(truncated, dtype=torch.uint8).view(1, 1)
+        reward = th.as_tensor(reward, dtype=th.float32).view(1, 1)
+        terminated = th.as_tensor(terminated, dtype=th.uint8).view(1, 1)
+        truncated = th.as_tensor(truncated, dtype=th.uint8).view(1, 1)
 
         return dict(
             obs=obs,
@@ -102,7 +96,7 @@ class Environment:
         """Close the environment."""
         self.env.close()
 
-    def _format_obs(self, obs: Ndarray) -> Tensor:
+    def _format_obs(self, obs: np.ndarray) -> th.Tensor:
         """Reformat the observation by adding an time dimension.
 
         Args:
@@ -111,7 +105,7 @@ class Environment:
         Returns:
             Formatted observation.
         """
-        obs = torch.from_numpy(np.array(obs))
+        obs = th.from_numpy(np.array(obs))
         return obs.view((1, 1) + obs.shape)
 
 
@@ -127,7 +121,10 @@ class DistributedTrainer(BasePolicyTrainer):
         Distributed trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, 
+                 cfgs: omegaconf.DictConfig, 
+                 train_env: gym.Env, 
+                 test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying DistributedTrainer...")
         # xploit part
@@ -137,7 +134,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
         self._learner.actor.share_memory()
         self._learner.learner.to(self._device)
-        self._learner.opt = torch.optim.RMSprop(
+        self._learner.opt = th.optim.RMSprop(
             self._learner.learner.parameters(),
             lr=self._learner.lr,
             eps=self._learner.eps,
@@ -153,7 +150,7 @@ class DistributedTrainer(BasePolicyTrainer):
                 / self._cfgs.num_train_steps
             )
 
-        self._learner.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
+        self._learner.lr_scheduler = th.optim.lr_scheduler.LambdaLR(
             self._learner.opt, lr_lambda
         )
 
@@ -173,15 +170,15 @@ class DistributedTrainer(BasePolicyTrainer):
 
     @staticmethod
     def act(
-        cfgs: DictConfig,
+        cfgs: omegaconf.DictConfig,
         logger: Logger,
-        gym_env: Env,
+        gym_env: gym.Env,
         actor_idx: int,
-        actor_model: NNModule,
+        actor_model: nn.Module,
         free_queue: mp.SimpleQueue,
         full_queue: mp.SimpleQueue,
-        storages: List[Storage],
-        init_actor_state_storages: List[Tensor],
+        storages: List[Dict[str, Dict]],
+        init_actor_state_storages: List[th.Tensor],
     ) -> None:
         """Sampling function for each actor.
 
@@ -224,7 +221,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
                 # Do new rollout.
                 for t in range(cfgs.num_steps):
-                    with torch.no_grad():
+                    with th.no_grad():
                         actor_output, actor_state = actor_model.get_action(
                             env_output, actor_state
                         )
@@ -364,5 +361,5 @@ class DistributedTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.actor, save_dir / "actor.pth")
-        torch.save(self._learner.learner, save_dir / "learner.pth")
+        th.save(self._learner.actor, save_dir / "actor.pth")
+        th.save(self._learner.learner, save_dir / "learner.pth")

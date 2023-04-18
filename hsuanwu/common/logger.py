@@ -1,10 +1,10 @@
+from typing import Any, Dict, Type
+
 import csv
 import datetime
 from pathlib import Path
 
 from termcolor import colored
-
-from hsuanwu.common.typing import Any, Dict, Type
 
 TRAIN_MSG_FORMAT = [
     ("step", "S", "int"),

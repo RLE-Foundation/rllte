@@ -1,13 +1,14 @@
+from typing import Tuple, Any, Dict
 import datetime
 import random
 import traceback
 from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
-import torch
+import torch as th
 from torch.utils.data import IterableDataset
 
-from hsuanwu.common.typing import Any, Dict, Path, Tuple
 from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode
 
 
@@ -187,7 +188,7 @@ class NStepReplayStorage(IterableDataset):
             return
         self._fetched_samples = 0
         try:
-            worker_id = torch.utils.data.get_worker_info().id
+            worker_id = th.utils.data.get_worker_info().id
         except:
             worker_id = 0
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)

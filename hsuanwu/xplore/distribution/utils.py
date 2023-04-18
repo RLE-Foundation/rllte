@@ -4,6 +4,15 @@ import numpy as np
 
 
 def schedule(schdl, step):
+    """Exploration noise schedule.
+
+    Args:
+        schdl (str): Schedule mode.
+        step (int): global training step.
+    
+    Returns:
+        Standard deviation.
+    """
     try:
         return float(schdl)
     except ValueError:

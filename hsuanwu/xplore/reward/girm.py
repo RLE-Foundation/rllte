@@ -1,11 +1,12 @@
+from typing import Dict, Tuple
+import torch as th
 import numpy as np
-import torch
+
 from torch import nn, optim
 from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
@@ -31,8 +32,8 @@ class MlpEncoder(nn.Module):
             nn.Linear(64, latent_dim),
         )
 
-    def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
-        x = torch.cat((obs, next_obs), dim=1)
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
+        x = th.cat((obs, next_obs), dim=1)
         return self.trunk(x)
 
 
@@ -58,8 +59,8 @@ class MlpDecoder(nn.Module):
             nn.Linear(64, obs_shape[0]),
         )
 
-    def forward(self, z: Tensor, obs: Tensor) -> Tensor:
-        x = torch.cat((z, obs), dim=1)
+    def forward(self, z: th.Tensor, obs: th.Tensor) -> th.Tensor:
+        x = th.cat((z, obs), dim=1)
         return self.trunk(x)
 
 
@@ -94,7 +95,7 @@ class CnnEncoder(nn.Module):
         nn.init.xavier_uniform_(self.conv4.weight)
 
     def forward(self, obs, next_obs):
-        x = torch.cat((obs, next_obs), dim=1)
+        x = th.cat((obs, next_obs), dim=1)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.lrelu(x)
@@ -182,7 +183,7 @@ class CnnDecoder(nn.Module):
 
         z = self.output(z)
 
-        z = torch.cat((z, obs), dim=1)
+        z = th.cat((z, obs), dim=1)
         output = self.conv9(z)
 
         return output
@@ -200,7 +201,7 @@ class VAE(nn.Module):
     """
 
     def __init__(
-        self, device: torch.device, obs_shape: Tuple, latent_dim: int, action_dim: int
+        self, device: th.device, obs_shape: Tuple, latent_dim: int, action_dim: int
     ) -> None:
         super(VAE, self).__init__()
         if len(obs_shape) == 3:
@@ -220,8 +221,8 @@ class VAE(nn.Module):
         self.action_dim = action_dim
 
     def reparameterize(
-        self, mu: Tensor, logvar: Tensor, device: torch.device, training: bool = True
-    ) -> Tensor:
+        self, mu: th.Tensor, logvar: th.Tensor, device: th.device, training: bool = True
+    ) -> th.Tensor:
         # Reparameterization trick as shown in the auto encoding variational bayes paper
         if training:
             std = logvar.mul(0.5).exp_()
@@ -230,7 +231,7 @@ class VAE(nn.Module):
         else:
             return mu
 
-    def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         latent = self.encoder(obs, next_obs)
         mu = self.mu(latent)
         logvar = self.logvar(latent)
@@ -267,7 +268,7 @@ class GIRM(BaseIntrinsicRewardModule):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
         latent_dim: int,
@@ -296,14 +297,14 @@ class GIRM(BaseIntrinsicRewardModule):
         self._opt = optim.Adam(lr=lr, params=self._vae.parameters())
 
     def _get_vae_loss(
-        self, recon_x: Tensor, x: Tensor, mean: Tensor, log_var: Tensor
-    ) -> Tensor:
+        self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, log_var: th.Tensor
+    ) -> th.Tensor:
         RECON = F.mse_loss(recon_x, x)
-        KLD = -0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp())
+        KLD = -0.5 * th.sum(1 + log_var - mean.pow(2) - log_var.exp())
 
         return RECON, KLD
 
-    def _process(self, tensor: Tensor, range: Tuple) -> Tensor:
+    def _process(self, tensor: th.Tensor, range: Tuple) -> th.Tensor:
         """Make a grid of images.
 
          Args:
@@ -355,17 +356,17 @@ class GIRM(BaseIntrinsicRewardModule):
         n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.from_numpy(rollouts["observations"])
-        actions_tensor = torch.from_numpy(rollouts["actions"])
+        obs_tensor = th.from_numpy(rollouts["observations"])
+        actions_tensor = th.from_numpy(rollouts["actions"])
         if self.action_type == "dis":
             # actions size: (n_steps, n_envs, 1)
             actions_tensor = F.one_hot(
-                actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]
+                actions_tensor[:, :, 0].to(th.int64), self._action_shape[0]
             ).float()
         obs_tensor = obs_tensor.to(self._device)
         actions_tensor = actions_tensor.to(self._device)
 
-        with torch.no_grad():
+        with th.no_grad():
             for idx in range(n_envs):
                 obs_tensor = obs_tensor[:-1, idx]
                 actions_tensor = actions_tensor[:-1, idx]
@@ -432,18 +433,18 @@ class GIRM(BaseIntrinsicRewardModule):
         """
         n_steps = rollouts["observations"].shape[0]
         n_envs = rollouts["observations"].shape[1]
-        obs_tensor = torch.from_numpy(rollouts["observations"]).reshape(
+        obs_tensor = th.from_numpy(rollouts["observations"]).reshape(
             n_steps * n_envs, *self._obs_shape
         )
         if self.action_type == "dis":
-            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
                 n_steps * n_envs,
             )
             actions_tensor = F.one_hot(
-                actions_tensor.to(torch.int64), self._action_shape[0]
+                actions_tensor.to(th.int64), self._action_shape[0]
             ).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
                 n_steps * n_envs, self._action_shape[0]
             )
         obs_tensor = obs_tensor.to(self._device)

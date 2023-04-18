@@ -1,7 +1,6 @@
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor
-
+import gymnasium as gym
 
 def network_init(m):
     if isinstance(m, nn.Linear):
@@ -26,7 +25,7 @@ class BaseEncoder(nn.Module):
         The base encoder class
     """
 
-    def __init__(self, observation_space: Space, feature_dim: int = 0) -> None:
+    def __init__(self, observation_space: gym.Space, feature_dim: int = 0) -> None:
         super().__init__()
         assert feature_dim > 0
         self._observation_space = observation_space

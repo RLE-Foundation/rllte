@@ -1,4 +1,6 @@
 class eval_mode:
+    """Set the evaluation mode.
+    """
     def __init__(self, *models):
         self.models = models
 

@@ -1,8 +1,8 @@
+from typing import Dict, Tuple
 import numpy as np
-import torch
+import torch as th
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Device, Dict, Storage, Tensor, Tuple
 from hsuanwu.xploit.learner import utils
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
@@ -92,7 +92,7 @@ class SACLearner(BaseLearner):
         self,
         observation_space: Dict,
         action_space: Dict,
-        device: Device,
+        device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -129,18 +129,18 @@ class SACLearner(BaseLearner):
 
         # target entropy
         self.target_entropy = -np.prod(action_space.shape)
-        self.log_alpha = torch.tensor(
+        self.log_alpha = th.tensor(
             np.log(temperature), device=self.device, requires_grad=True
         )
 
         # create optimizers
-        self.actor_opt = torch.optim.Adam(
+        self.actor_opt = th.optim.Adam(
             self.actor.parameters(), lr=self.lr, betas=betas
         )
-        self.critic_opt = torch.optim.Adam(
+        self.critic_opt = th.optim.Adam(
             self.critic.parameters(), lr=self.lr, betas=betas
         )
-        self.log_alpha_opt = torch.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
+        self.log_alpha_opt = th.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
 
         self.train()
         self.critic_target.train()
@@ -161,11 +161,11 @@ class SACLearner(BaseLearner):
             self.encoder.train(training)
 
     @property
-    def alpha(self) -> Tensor:
+    def alpha(self) -> th.Tensor:
         """Get the temperature coefficient."""
         return self.log_alpha.exp()
 
-    def update(self, replay_storage: Storage, step: int = 0) -> Dict[str, float]:
+    def update(self, replay_storage: Dict[str, Dict], step: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -189,13 +189,14 @@ class SACLearner(BaseLearner):
                 },
                 step=step,
             )
-            reward += torch.as_tensor(intrinsic_reward, dtype=torch.float32).squeeze(1)
+            reward += th.as_tensor(intrinsic_reward, dtype=th.float32).squeeze(1)
 
         # obs augmentation
         if self.aug is not None:
             aug_obs = self.aug(obs.clone().float())
             aug_next_obs = self.aug(next_obs.clone().float())
-            with torch.no_grad():
+            assert aug_obs.size() == obs.size() and aug_obs.dtype == obs.dtype, "The data shape and data type should be consistent after augmentation!"
+            with th.no_grad():
                 encoded_aug_obs = self.encoder(aug_obs)
             encoded_aug_next_obs = self.encoder(aug_next_obs)
         else:
@@ -204,7 +205,7 @@ class SACLearner(BaseLearner):
 
         # encode
         encoded_obs = self.encoder(obs)
-        with torch.no_grad():
+        with th.no_grad():
             encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
@@ -233,13 +234,13 @@ class SACLearner(BaseLearner):
 
     def update_critic(
         self,
-        obs: Tensor,
-        action: Tensor,
-        reward: Tensor,
-        terminated: Tensor,
-        next_obs: Tensor,
-        aug_obs: Tensor,
-        aug_next_obs: Tensor,
+        obs: th.Tensor,
+        action: th.Tensor,
+        reward: th.Tensor,
+        terminated: th.Tensor,
+        next_obs: th.Tensor,
+        aug_obs: th.Tensor,
+        aug_next_obs: th.Tensor,
         step: int,
     ) -> Dict[str, float]:
         """Update the critic network.
@@ -257,12 +258,12 @@ class SACLearner(BaseLearner):
         Returns:
             Critic loss metrics.
         """
-        with torch.no_grad():
+        with th.no_grad():
             dist = self.actor.get_action(next_obs, step=step)
             next_action = dist.rsample()
             log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
-            target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
+            target_V = th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
             target_Q = reward + (1.0 - terminated) * self.discount * target_V
 
             # enable observation augmentation
@@ -272,7 +273,7 @@ class SACLearner(BaseLearner):
                 log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
                 target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
                 target_V = (
-                    torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
+                    th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
                 )
                 target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
                 # mixed target Q-function
@@ -299,7 +300,7 @@ class SACLearner(BaseLearner):
             "critic_target": target_Q.mean().item(),
         }
 
-    def update_actor_and_alpha(self, obs: Tensor, step: int) -> Dict[str, float]:
+    def update_actor_and_alpha(self, obs: th.Tensor, step: int) -> Dict[str, float]:
         """Update the actor network and temperature.
 
         Args:
@@ -314,7 +315,7 @@ class SACLearner(BaseLearner):
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
         Q1, Q2 = self.critic(obs, action)
-        Q = torch.min(Q1, Q2)
+        Q = th.min(Q1, Q2)
 
         actor_loss = (self.alpha.detach() * log_prob - Q).mean()
 
@@ -332,6 +333,6 @@ class SACLearner(BaseLearner):
             alpha_loss.backward()
             self.log_alpha_opt.step()
         else:
-            alpha_loss = torch.scalar_tensor(s=0.0)
+            alpha_loss = th.scalar_tensor(s=0.0)
 
         return {"actor_loss": actor_loss.item(), "alpha_loss": alpha_loss.item()}

@@ -1,20 +1,13 @@
+from typing import Dict, Tuple
+import gymnasium as gym
+import omegaconf
 import collections
 import threading
 
-import torch
+import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import (
-    Batch,
-    Device,
-    Dict,
-    DictConfig,
-    NNModule,
-    Space,
-    Tensor,
-    Tuple,
-)
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteLSTMActor
 
@@ -87,8 +80,8 @@ class VTrace(object):
 
     def action_log_probs(self, policy_logits, actions):
         return -F.nll_loss(
-            F.log_softmax(torch.flatten(policy_logits, 0, -2), dim=-1),
-            torch.flatten(actions),
+            F.log_softmax(th.flatten(policy_logits, 0, -2), dim=-1),
+            th.flatten(actions),
             reduction="none",
         ).view_as(actions)
 
@@ -127,7 +120,7 @@ class VTrace(object):
             **vtrace_returns._asdict(),
         )
 
-    @torch.no_grad()
+    @th.no_grad()
     def from_importance_weights(
         self,
         log_rhos,
@@ -139,38 +132,38 @@ class VTrace(object):
         clip_pg_rho_threshold=1.0,
     ):
         """V-trace from log importance weights."""
-        with torch.no_grad():
-            rhos = torch.exp(log_rhos)
+        with th.no_grad():
+            rhos = th.exp(log_rhos)
             if clip_rho_threshold is not None:
-                clipped_rhos = torch.clamp(rhos, max=clip_rho_threshold)
+                clipped_rhos = th.clamp(rhos, max=clip_rho_threshold)
             else:
                 clipped_rhos = rhos
 
-            cs = torch.clamp(rhos, max=1.0)
+            cs = th.clamp(rhos, max=1.0)
             # Append bootstrapped value to get [v1, ..., v_t+1]
-            values_t_plus_1 = torch.cat(
-                [values[1:], torch.unsqueeze(bootstrap_value, 0)], dim=0
+            values_t_plus_1 = th.cat(
+                [values[1:], th.unsqueeze(bootstrap_value, 0)], dim=0
             )
             deltas = clipped_rhos * (rewards + discounts * values_t_plus_1 - values)
 
-            acc = torch.zeros_like(bootstrap_value)
+            acc = th.zeros_like(bootstrap_value)
             result = []
             for t in range(discounts.shape[0] - 1, -1, -1):
                 acc = deltas[t] + discounts[t] * cs[t] * acc
                 result.append(acc)
             result.reverse()
-            vs_minus_v_xs = torch.stack(result)
+            vs_minus_v_xs = th.stack(result)
 
             # Add V(x_s) to get v_s.
-            vs = torch.add(vs_minus_v_xs, values)
+            vs = th.add(vs_minus_v_xs, values)
 
             # Advantage for policy gradient.
-            broadcasted_bootstrap_values = torch.ones_like(vs[0]) * bootstrap_value
-            vs_t_plus_1 = torch.cat(
+            broadcasted_bootstrap_values = th.ones_like(vs[0]) * bootstrap_value
+            vs_t_plus_1 = th.cat(
                 [vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0
             )
             if clip_pg_rho_threshold is not None:
-                clipped_pg_rhos = torch.clamp(rhos, max=clip_pg_rho_threshold)
+                clipped_pg_rhos = th.clamp(rhos, max=clip_pg_rho_threshold)
             else:
                 clipped_pg_rhos = rhos
             pg_advantages = clipped_pg_rhos * (
@@ -207,9 +200,9 @@ class IMPALALearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Space,
-        action_space: Space,
-        device: Device,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -249,13 +242,13 @@ class IMPALALearner(BaseLearner):
 
     @staticmethod
     def update(
-        cfgs: DictConfig,
-        actor_model: NNModule,
-        learner_model: NNModule,
-        batch: Batch,
-        init_actor_states: Tuple[Tensor, ...],
-        optimizer: torch.optim.Optimizer,
-        lr_scheduler: torch.optim.lr_scheduler,
+        cfgs: omegaconf.DictConfig,
+        actor_model: nn.Module,
+        learner_model: nn.Module,
+        batch: collections.namedtuple,
+        init_actor_states: Tuple[th.Tensor, ...],
+        optimizer: th.optim.Optimizer,
+        lr_scheduler: th.optim.lr_scheduler,
         lock=threading.Lock(),
     ) -> Dict[str, float]:
         """
@@ -267,8 +260,8 @@ class IMPALALearner(BaseLearner):
             learner_model (NNMoudle): Learner network.
             batch (Batch): Batch samples.
             init_actor_states (List[Tensor]): Initial states for LSTM.
-            optimizer (torch.optim.Optimizer): Optimizer.
-            lr_scheduler (torch.optim.lr_scheduler): Learning rate scheduler.
+            optimizer (th.optim.Optimizer): Optimizer.
+            lr_scheduler (th.optim.lr_scheduler): Learning rate scheduler.
             lock (Lock): Thread lock.
 
         Returns:
@@ -278,21 +271,21 @@ class IMPALALearner(BaseLearner):
         ###########################################################################
         def compute_policy_gradient_loss(logits, actions, advantages):
             cross_entropy = F.nll_loss(
-                F.log_softmax(torch.flatten(logits, 0, 1), dim=-1),
-                target=torch.flatten(actions, 0, 1),
+                F.log_softmax(th.flatten(logits, 0, 1), dim=-1),
+                target=th.flatten(actions, 0, 1),
                 reduction="none",
             )
             cross_entropy = cross_entropy.view_as(advantages)
-            return torch.sum(cross_entropy * advantages.detach())
+            return th.sum(cross_entropy * advantages.detach())
 
         def compute_baseline_loss(advantages):
-            return 0.5 * torch.sum(advantages**2)
+            return 0.5 * th.sum(advantages**2)
 
         def compute_entropy_loss(logits):
             """Return the entropy loss, i.e., the negative entropy of the policy."""
             policy = F.softmax(logits, dim=-1)
             log_policy = F.log_softmax(logits, dim=-1)
-            return torch.sum(policy * log_policy)
+            return th.sum(policy * log_policy)
 
         ###########################################################################
         """Performs a learning (optimization) step."""
@@ -309,7 +302,7 @@ class IMPALALearner(BaseLearner):
             }
 
             rewards = batch["reward"]
-            clipped_rewards = torch.clamp(rewards, -1, 1)
+            clipped_rewards = th.clamp(rewards, -1, 1)
 
             discounts = (~batch["terminated"]).float() * cfgs.learner.discount
 

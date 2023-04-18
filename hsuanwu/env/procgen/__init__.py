@@ -1,6 +1,7 @@
+from typing import Dict, Tuple
 import gymnasium as gym
 import numpy as np
-import torch
+import torch as th
 from gymnasium.spaces.box import Box
 from gymnasium.wrappers import (
     NormalizeReward,
@@ -9,9 +10,6 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 from procgen import ProcgenEnv
-
-from hsuanwu.common.typing import Any, Device, Dict, Env, Ndarray, Tensor, Tuple
-
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Build environments that output torch tensors.
@@ -24,9 +22,9 @@ class TorchVecEnvWrapper(gym.Wrapper):
         Environment instance.
     """
 
-    def __init__(self, env: Env, device: Device) -> None:
+    def __init__(self, env: gym.Env, device: th.device) -> None:
         super().__init__(env)
-        self._device = torch.device(device)
+        self._device = th.device(device)
         self.observation_space = Box(
             low=env.single_observation_space.low[0, 0, 0],
             high=env.single_observation_space.high[0, 0, 0],
@@ -36,29 +34,29 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self.action_space = env.single_action_space
         self.num_envs = env.num_envs
 
-    def reset(self, **kwargs) -> Tuple[Tensor, Dict]:
+    def reset(self, **kwargs) -> Tuple[th.Tensor, Dict]:
         obs, info = self.env.reset(**kwargs)
-        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
+        obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
         return obs, info
 
-    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, bool, Dict]:
+    def step(self, action: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
         # Procgen games currently doesn't support Gymnasium.
         obs, reward, terminated, truncated, info = self.env.step(
             action.squeeze(1).cpu().numpy()
         )
 
-        obs = torch.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
-        reward = torch.as_tensor(
-            reward, dtype=torch.float32, device=self._device
+        obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
+        reward = th.as_tensor(
+            reward, dtype=th.float32, device=self._device
         ).unsqueeze(dim=1)
-        terminated = torch.as_tensor(
+        terminated = th.as_tensor(
             [[1.0] if _ else [0.0] for _ in terminated],
-            dtype=torch.float32,
+            dtype=th.float32,
             device=self._device,
         )
-        truncated = torch.as_tensor(
+        truncated = th.as_tensor(
             [[1.0] if _ else [0.0] for _ in truncated],
-            dtype=torch.float32,
+            dtype=th.float32,
             device=self._device,
         )
 
@@ -76,15 +74,15 @@ class AdapterEnv(gym.Wrapper):
         AdapterEnv instance.
     """
 
-    def __init__(self, env: Env, num_envs: int) -> None:
+    def __init__(self, env: gym.Env, num_envs: int) -> None:
         super().__init__(env)
         self.num_envs = num_envs
 
-    def step(self, action: int) -> Tuple[Ndarray, float, bool, bool, Dict]:
+    def step(self, action: int) -> Tuple[np.array, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)
         return obs, reward, done, done, {}
 
-    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.array, Dict]:
         obs = self.env.reset()
         return obs, {}
 
@@ -96,8 +94,8 @@ def make_procgen_env(
     num_levels: int = 0,
     start_level: int = 0,
     distribution_mode: str = "easy",
-    device: torch.device = "cuda",
-) -> Env:
+    device: th.device = "cpu",
+) -> gym.Env:
     """Build Prcogen environments.
 
     Args:

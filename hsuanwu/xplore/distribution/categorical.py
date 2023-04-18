@@ -1,7 +1,6 @@
-import torch
+import torch as th
 import torch.distributions as pyd
 
-from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution import BaseDistribution
 
 
@@ -16,18 +15,18 @@ class Categorical(BaseDistribution):
 
     def __init__(
         self,
-        logits: Tensor,
+        logits: th.Tensor,
     ) -> None:
         super().__init__()
         self._logits = logits
         self.dist = pyd.Categorical(logits=logits)
 
     @property
-    def logits(self) -> Tensor:
+    def logits(self) -> th.Tensor:
         """Returns the unnormalized log probabilities."""
         return self._logits
 
-    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 
@@ -39,7 +38,7 @@ class Categorical(BaseDistribution):
         """
         return self.dist.sample().unsqueeze(-1)
 
-    def log_prob(self, actions: Tensor) -> Tensor:
+    def log_prob(self, actions: th.Tensor) -> th.Tensor:
         """Returns the log of the probability density/mass function evaluated at `value`.
 
         Args:
@@ -55,17 +54,17 @@ class Categorical(BaseDistribution):
             .unsqueeze(-1)
         )
 
-    def entropy(self) -> Tensor:
+    def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         return self.dist.entropy()
 
     @property
-    def mode(self) -> Tensor:
+    def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         return self.dist.probs.argmax(dim=-1, keepdim=True)
 
     @property
-    def mean(self) -> Tensor:
+    def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return self.dist.probs.argmax(dim=-1, keepdim=True)
 
@@ -73,5 +72,5 @@ class Categorical(BaseDistribution):
         """Reset the distribution."""
         raise NotImplementedError
 
-    def rsample(self, sample_shape: TorchSize = ...) -> Tensor:
+    def rsample(self, sample_shape: th.Size = ...) -> th.Tensor:
         raise NotImplementedError

@@ -1,7 +1,7 @@
-import torch
+from typing import Dict
+import torch as th
 from torch import nn
 
-from hsuanwu.common.typing import Device, Dict, Storage, Tensor
 from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
 
@@ -86,7 +86,7 @@ class PPOLearner(BaseLearner):
         self,
         observation_space: Dict,
         action_space: Dict,
-        device: Device,
+        device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -120,7 +120,7 @@ class PPOLearner(BaseLearner):
             raise NotImplementedError
 
         # create optimizers
-        self.ac_opt = torch.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
+        self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
         self.train()
 
     def train(self, training: bool = True) -> None:
@@ -137,7 +137,7 @@ class PPOLearner(BaseLearner):
         if self.encoder is not None:
             self.encoder.train(training)
 
-    def get_value(self, obs: Tensor) -> Tensor:
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
         Args:
@@ -149,7 +149,7 @@ class PPOLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
+    def update(self, rollout_storage: Dict[str, Dict], episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -185,13 +185,13 @@ class PPOLearner(BaseLearner):
                 )
 
                 # actor loss part
-                ratio = torch.exp(log_probs - batch_old_log_probs)
+                ratio = th.exp(log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = (
-                    torch.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
+                    th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range)
                     * adv_targ
                 )
-                actor_loss = -torch.min(surr1, surr2).mean()
+                actor_loss = -th.min(surr1, surr2).mean()
 
                 # critic loss part
                 values_clipped = batch_values + (values - batch_values).clamp(
@@ -200,7 +200,7 @@ class PPOLearner(BaseLearner):
                 values_losses = (batch_values - batch_returns).pow(2)
                 values_losses_clipped = (values_clipped - batch_returns).pow(2)
                 critic_loss = (
-                    0.5 * torch.max(values_losses, values_losses_clipped).mean()
+                    0.5 * th.max(values_losses, values_losses_clipped).mean()
                 )
 
                 if self.aug is not None:
@@ -215,11 +215,11 @@ class PPOLearner(BaseLearner):
                     )
                     action_loss_aug = -log_probs_aug.mean()
                     value_loss_aug = (
-                        0.5 * (torch.detach(values) - values_aug).pow(2).mean()
+                        0.5 * (th.detach(values) - values_aug).pow(2).mean()
                     )
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
                 else:
-                    aug_loss = torch.scalar_tensor(
+                    aug_loss = th.scalar_tensor(
                         s=0.0, requires_grad=False, device=critic_loss.device
                     )
 

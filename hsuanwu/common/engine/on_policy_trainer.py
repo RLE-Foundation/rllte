@@ -1,12 +1,15 @@
+from typing import Dict, Tuple
+
 from collections import deque
 from pathlib import Path
 
+import gymnasium as gym
+import omegaconf
 import hydra
 import numpy as np
-import torch
+import torch as th
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.typing import Dict, DictConfig, Env, Tensor, Tuple
 
 
 class OnPolicyTrainer(BasePolicyTrainer):
@@ -21,7 +24,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
         On-policy trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, 
+                 cfgs: omegaconf.DictConfig,
+                 train_env: gym.Env, 
+                 test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OnPolicyTrainer...")
         # xploit part
@@ -31,7 +37,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._device
         )
         self._learner.encoder.train()
-        self._learner.encoder_opt = torch.optim.Adam(
+        self._learner.encoder_opt = th.optim.Adam(
             self._learner.encoder.parameters(),
             lr=self._learner.lr,
             eps=self._learner.eps,
@@ -59,7 +65,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # debug
         self._logger.debug("Check Accomplished. Start Training...")
 
-    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -100,7 +106,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
             for step in range(self._num_steps):
                 # sample actions
-                with torch.no_grad(), utils.eval_mode(self._learner):
+                with th.no_grad(), utils.eval_mode(self._learner):
                     actions, values, log_probs, entropy = self.act(
                         obs, training=True, step=self._global_step
                     )
@@ -131,7 +137,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 obs = next_obs
 
             # get the value estimation of the last step
-            with torch.no_grad():
+            with th.no_grad():
                 last_values = self._learner.get_value(next_obs).detach()
 
             # perform return and advantage estimation
@@ -171,7 +177,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         episode_steps = list()
 
         while len(episode_rewards) < self._num_test_episodes:
-            with torch.no_grad(), utils.eval_mode(self._learner):
+            with th.no_grad(), utils.eval_mode(self._learner):
                 actions = self.act(obs, training=False, step=self._global_step)
             obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions)
 
@@ -192,5 +198,5 @@ class OnPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.encoder, save_dir / "encoder.pth")
-        torch.save(self._learner.ac, save_dir / "actor_critic.pth")
+        th.save(self._learner.encoder, save_dir / "encoder.pth")
+        th.save(self._learner.ac, save_dir / "actor_critic.pth")

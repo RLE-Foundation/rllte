@@ -1,8 +1,8 @@
+from typing import Dict, Tuple
+import torch as th
 import numpy as np
-import torch
 from torch import nn
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
@@ -30,14 +30,14 @@ class RandomCnnEncoder(nn.Module):
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         h = self.trunk(obs)
         h = self.linear(h)
         h = self.layer_norm(h)
@@ -67,7 +67,7 @@ class RandomMlpEncoder(nn.Module):
             nn.LayerNorm(latent_dim),
         )
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)
 
 
@@ -93,7 +93,7 @@ class RIDE(BaseIntrinsicRewardModule):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
         latent_dim: int,
@@ -126,8 +126,8 @@ class RIDE(BaseIntrinsicRewardModule):
     ):
         counts = np.zeros(shape=(src_feats.size()[0],))
         for step in range(src_feats.size()[0]):
-            ob_dist = torch.norm(src_feats[step] - src_feats, p=2, dim=1)
-            ob_dist = torch.sort(ob_dist).values
+            ob_dist = th.norm(src_feats[step] - src_feats, p=2, dim=1)
+            ob_dist = th.sort(ob_dist).values
             ob_dist = ob_dist[:k]
             dist = ob_dist.cpu().numpy()
             # moving average
@@ -142,7 +142,7 @@ class RIDE(BaseIntrinsicRewardModule):
                 counts[step] = 1 / s
         return
 
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -161,14 +161,14 @@ class RIDE(BaseIntrinsicRewardModule):
         n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.as_tensor(
-            rollouts["observations"], dtype=torch.float32, device=self._device
+        obs_tensor = th.as_tensor(
+            rollouts["observations"], dtype=th.float32, device=self._device
         )
 
-        with torch.no_grad():
+        with th.no_grad():
             for idx in range(n_envs):
                 src_feats = self.encoder(obs_tensor[:, idx])
-                dist = torch.linalg.vector_norm(
+                dist = th.linalg.vector_norm(
                     src_feats[:-1] - src_feats[1:], ord=2, dim=1
                 )
                 n_eps = self.pseudo_counts(src_feats)

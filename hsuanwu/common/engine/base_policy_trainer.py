@@ -1,3 +1,7 @@
+from typing import Tuple, Dict
+from abc import ABC, abstractmethod
+import gymnasium as gym
+
 import os
 
 os.environ["HYDRA_FULL_ERROR"] = "1"
@@ -5,21 +9,12 @@ import random
 from pathlib import Path
 
 import numpy as np
-import torch
+import torch as th
 from omegaconf import OmegaConf
+import omegaconf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
-from hsuanwu.common.typing import (
-    ABC,
-    Dict,
-    DictConfig,
-    Env,
-    Space,
-    Tensor,
-    Tuple,
-    abstractmethod,
-)
 from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 _DEFAULT_CFGS = {
@@ -61,19 +56,22 @@ class BasePolicyTrainer(ABC):
         Base policy trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, 
+                 cfgs: omegaconf.DictConfig, 
+                 train_env: gym.Env, 
+                 test_env: gym.Env = None) -> None:
         # basic setup
         self._train_env = train_env
         self._test_env = test_env
         self._work_dir = Path.cwd()
         self._logger = Logger(log_dir=self._work_dir)
         self._timer = Timer()
-        self._device = torch.device(cfgs.device)
+        self._device = th.device(cfgs.device)
         # set seed
         self._seed = cfgs.seed
-        torch.manual_seed(seed=cfgs.seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(cfgs.seed)
+        th.manual_seed(seed=cfgs.seed)
+        if th.cuda.is_available():
+            th.cuda.manual_seed_all(cfgs.seed)
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
         # debug
@@ -110,7 +108,7 @@ class BasePolicyTrainer(ABC):
         return self._global_episode
 
     def _remake_observation_and_action_space(
-        self, observation_space: Space, action_space: Space
+        self, observation_space: gym.Space, action_space: gym.Space
     ) -> Tuple[Dict]:
         """Transform the original 'Box' space into Hydra supported type.
 
@@ -138,7 +136,7 @@ class BasePolicyTrainer(ABC):
 
         return new_observation_space, new_action_space
 
-    def _process_cfgs(self, cfgs: DictConfig) -> DictConfig:
+    def _process_cfgs(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Preprocess the configs.
 
         Args:
@@ -248,7 +246,7 @@ class BasePolicyTrainer(ABC):
 
         return new_cfgs
     
-    def _check_cfgs(self, cfgs: DictConfig) -> None:
+    def _check_cfgs(self, cfgs: omegaconf.DictConfig) -> None:
         """Check the compatibility of selected modules.
         Args:
             cfgs (DictConfig): Dict Config.
@@ -282,7 +280,7 @@ class BasePolicyTrainer(ABC):
             self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}")
 
 
-    def _set_class_path(self, cfgs: DictConfig) -> DictConfig:
+    def _set_class_path(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Set the class path for each module.
 
         Args:
@@ -308,7 +306,7 @@ class BasePolicyTrainer(ABC):
         return cfgs
 
     @abstractmethod
-    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:

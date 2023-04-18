@@ -1,3 +1,4 @@
+from typing import Dict, Tuple
 import glob
 import os
 
@@ -6,7 +7,6 @@ from dm_control import suite
 from dm_env import specs
 from gymnasium import core, spaces
 
-from hsuanwu.common.typing import Dict, Ndarray, Tuple
 from hsuanwu.env.dmc import natural_imgsource
 
 # The following DMCWrapper is re-implemented based on: https://github.com/facebookresearch/deep_bisim4control/blob/main/dmc2gym/wrappers.py
@@ -196,7 +196,7 @@ class DMCWrapper(core.Env):
         terminated = done
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.array, Dict]:
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
         return obs, {}

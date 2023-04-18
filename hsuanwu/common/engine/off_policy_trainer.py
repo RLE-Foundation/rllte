@@ -1,10 +1,12 @@
+from typing import Iterable, Tuple
 from pathlib import Path
 
+import gymnasium as gym
+import omegaconf
 import hydra
-import torch
+import torch as th
 
 from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.typing import DictConfig, Env, Iterable, Tensor, Tuple
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
 
@@ -20,7 +22,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
         Off-policy trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, 
+                 cfgs: omegaconf.DictConfig,
+                 train_env: gym.Env, 
+                 test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OffPolicyTrainer...")
         # xploit part
@@ -30,7 +35,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._device
         )
         self._learner.encoder.train()
-        self._learner.encoder_opt = torch.optim.Adam(
+        self._learner.encoder_opt = th.optim.Adam(
             self._learner.encoder.parameters(),
             lr=self._learner.lr,
             eps=self._learner.eps,
@@ -57,7 +62,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         # make data loader
         if "NStepReplayStorage" in self._cfgs.storage._target_:
-            self._replay_loader = torch.utils.data.DataLoader(
+            self._replay_loader = th.utils.data.DataLoader(
                 self._replay_storage,
                 batch_size=self._replay_storage.get_batch_size,
                 num_workers=self._replay_storage.get_num_workers,
@@ -81,7 +86,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._replay_iter = iter(self._replay_loader)
         return self._replay_iter
 
-    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -119,7 +124,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 self._logger.test(msg=test_metrics)
 
             # sample actions
-            with torch.no_grad(), utils.eval_mode(self._learner):
+            with th.no_grad(), utils.eval_mode(self._learner):
                 action = self.act(obs, training=True, step=self._global_step)
             next_obs, reward, terminated, truncated, info = self._train_env.step(action)
             episode_reward += reward[0].cpu().numpy()
@@ -179,7 +184,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         obs, info = self._test_env.reset(seed=self._seed)
 
         while episode <= self._num_test_episodes:
-            with torch.no_grad(), utils.eval_mode(self._learner):
+            with th.no_grad(), utils.eval_mode(self._learner):
                 action = self.act(obs, training=False, step=self._global_step)
 
             next_obs, reward, terminated, truncated, info = self._test_env.step(action)
@@ -205,6 +210,6 @@ class OffPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.encoder, save_dir / "encoder.pth")
-        torch.save(self._learner.actor, save_dir / "actor.pth")
-        torch.save(self._learner.critic, save_dir / "critic.pth")
+        th.save(self._learner.encoder, save_dir / "encoder.pth")
+        th.save(self._learner.actor, save_dir / "actor.pth")
+        th.save(self._learner.critic, save_dir / "critic.pth")

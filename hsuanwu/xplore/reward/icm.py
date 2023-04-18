@@ -1,10 +1,10 @@
+from typing import Dict, Tuple
+import torch as th
 import numpy as np
-import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
@@ -40,16 +40,16 @@ class CnnEncoder(nn.Module):
             nn.LeakyReLU(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.linear = nn.Linear(n_flatten, latent_dim)
         self.layer_norm = nn.LayerNorm(latent_dim)
 
-    def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         if next_obs is not None:
-            input_tensor = torch.cat([obs, next_obs], dim=1)
+            input_tensor = th.cat([obs, next_obs], dim=1)
             h = self.trunk(input_tensor)
             h = self.linear(h)
             h = self.layer_norm(h)
@@ -88,20 +88,20 @@ class InverseForwardDynamicsModel(nn.Module):
         self.softmax = nn.Softmax()
 
     def forward(
-        self, obs: Tensor, action: Tensor, next_obs: Tensor, training: bool = True
-    ) -> Tensor:
+        self, obs: th.Tensor, action: th.Tensor, next_obs: th.Tensor, training: bool = True
+    ) -> th.Tensor:
         if training:
             # inverse prediction
-            im_input_tensor = torch.cat([obs, next_obs], dim=1)
+            im_input_tensor = th.cat([obs, next_obs], dim=1)
             pred_action = self.inverse_model(im_input_tensor)
             # forward prediction
-            fm_input_tensor = torch.cat([obs, action], dim=-1)
+            fm_input_tensor = th.cat([obs, action], dim=-1)
             pred_next_obs = self.forward_model(fm_input_tensor)
 
             return pred_action, pred_next_obs
         else:
             # forward prediction
-            fm_input_tensor = torch.cat([obs, action], dim=-1)
+            fm_input_tensor = th.cat([obs, action], dim=-1)
             pred_next_obs = self.forward_model(fm_input_tensor)
 
             return pred_next_obs
@@ -131,7 +131,7 @@ class ICM(BaseIntrinsicRewardModule):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
         latent_dim: int,
@@ -159,7 +159,7 @@ class ICM(BaseIntrinsicRewardModule):
         self._opt = optim.Adam(lr=lr, params=self.inverse_forward_model.parameters())
         self.inverse_forward_model.to(self._device)
 
-    def _process(self, tensor: Tensor, range: Tuple) -> Tensor:
+    def _process(self, tensor: th.Tensor, range: Tuple) -> th.Tensor:
         """Make a grid of images.
 
          Args:
@@ -192,7 +192,7 @@ class ICM(BaseIntrinsicRewardModule):
 
         return tensor
 
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:
@@ -211,17 +211,17 @@ class ICM(BaseIntrinsicRewardModule):
         n_envs = rollouts["observations"].shape[1]
         intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
 
-        obs_tensor = torch.from_numpy(rollouts["observations"])
-        actions_tensor = torch.from_numpy(rollouts["actions"])
+        obs_tensor = th.from_numpy(rollouts["observations"])
+        actions_tensor = th.from_numpy(rollouts["actions"])
         if self.action_type == "dis":
             # actions size: (n_steps, n_envs, 1)
             actions_tensor = F.one_hot(
-                actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]
+                actions_tensor[:, :, 0].to(th.int64), self._action_shape[0]
             ).float()
         obs_tensor = obs_tensor.to(self._device)
         actions_tensor = actions_tensor.to(self._device)
 
-        with torch.no_grad():
+        with th.no_grad():
             for idx in range(n_envs):
                 if len(self._obs_shape) == 3:
                     encoded_obs = self.cnn_encoder(obs_tensor[:, idx, :, :, :])
@@ -270,18 +270,18 @@ class ICM(BaseIntrinsicRewardModule):
         """
         n_steps = rollouts["observations"].shape[0]
         n_envs = rollouts["observations"].shape[1]
-        obs_tensor = torch.from_numpy(rollouts["observations"]).reshape(
+        obs_tensor = th.from_numpy(rollouts["observations"]).reshape(
             n_steps * n_envs, *self._obs_shape
         )
         if self.action_type == "dis":
-            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
                 n_steps * n_envs,
             )
             actions_tensor = F.one_hot(
-                actions_tensor.to(torch.int64), self._action_shape[0]
+                actions_tensor.to(th.int64), self._action_shape[0]
             ).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts["actions"]).reshape(
+            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
                 n_steps * n_envs, self._action_shape[0]
             )
         obs_tensor = obs_tensor.to(self._device)

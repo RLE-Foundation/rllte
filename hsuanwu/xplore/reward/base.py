@@ -1,7 +1,6 @@
-import torch
-
-from hsuanwu.common.typing import Dict, Ndarray, Tuple
-
+from typing import Dict, Tuple
+import torch as th
+import numpy as np
 
 class BaseIntrinsicRewardModule(object):
     """Base class of intrinsic reward module.
@@ -23,7 +22,7 @@ class BaseIntrinsicRewardModule(object):
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
-        device: torch.device,
+        device: th.device,
         beta: float,
         kappa: float,
     ) -> None:
@@ -31,11 +30,11 @@ class BaseIntrinsicRewardModule(object):
         self._action_shape = action_shape
         self._action_type = action_type
 
-        self._device = torch.device(device)
+        self._device = th.device(device)
         self._beta = beta
         self._kappa = kappa
 
-    def compute_irs(self, rollouts: Dict, step: int) -> Ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:

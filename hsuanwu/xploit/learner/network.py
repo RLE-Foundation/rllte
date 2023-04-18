@@ -1,8 +1,11 @@
-import torch
+from typing import Dict, Tuple
+import gymnasium as gym
+
+import torch as th
 from torch import nn
 from torch.nn import functional as F
+from torch.distributions import Distribution
 
-from hsuanwu.common.typing import Dict, Distribution, Space, Tensor, Tuple
 from hsuanwu.xploit.learner import utils
 
 
@@ -20,7 +23,7 @@ class StochasticActor(nn.Module):
 
     def __init__(
         self,
-        action_space: Space,
+        action_space: gym.Space,
         feature_dim: int = 64,
         hidden_dim: int = 1024,
         log_std_range: Tuple = (-10, 2),
@@ -40,7 +43,7 @@ class StochasticActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: Tensor, step: float = None) -> Distribution:
+    def get_action(self, obs: th.Tensor, step: float = None) -> Distribution:
         """Get actions.
 
         Args:
@@ -52,7 +55,7 @@ class StochasticActor(nn.Module):
         """
         mu, log_std = self.policy(obs).chunk(2, dim=-1)
 
-        log_std = torch.tanh(log_std)
+        log_std = th.tanh(log_std)
         log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (
             log_std + 1
         )
@@ -75,7 +78,7 @@ class DeterministicActor(nn.Module):
     """
 
     def __init__(
-        self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
+        self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024
     ) -> None:
         super().__init__()
         self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
@@ -92,7 +95,7 @@ class DeterministicActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: Tensor, step: float = None) -> Distribution:
+    def get_action(self, obs: th.Tensor, step: float = None) -> Distribution:
         """Get actions.
 
         Args:
@@ -104,7 +107,7 @@ class DeterministicActor(nn.Module):
         """
         h = self.trunk(obs)
         mu = self.policy(h)
-        mu = torch.tanh(mu)
+        mu = th.tanh(mu)
 
         # for Scheduled Exploration Noise
         self.dist.reset(mu, step)
@@ -125,7 +128,7 @@ class DoubleCritic(nn.Module):
     """
 
     def __init__(
-        self, action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
+        self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024
     ) -> None:
         super().__init__()
 
@@ -148,7 +151,7 @@ class DoubleCritic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def forward(self, obs: Tensor, action: Tensor) -> Tuple[Tensor]:
+    def forward(self, obs: th.Tensor, action: th.Tensor) -> Tuple[th.Tensor]:
         """Value estimation.
 
         Args:
@@ -158,7 +161,7 @@ class DoubleCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        h_action = torch.cat([obs, action], dim=-1)
+        h_action = th.cat([obs, action], dim=-1)
 
         q1 = self.Q1(h_action)
         q2 = self.Q2(h_action)
@@ -178,7 +181,7 @@ class DiscreteActorCritic(nn.Module):
         Actor-Critic instance.
     """
 
-    def __init__(self, action_space: Space, feature_dim: int, hidden_dim: int) -> None:
+    def __init__(self, action_space: gym.Space, feature_dim: int, hidden_dim: int) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
@@ -194,7 +197,7 @@ class DiscreteActorCritic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_value(self, obs: Tensor) -> Tensor:
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
         Args:
@@ -205,7 +208,7 @@ class DiscreteActorCritic(nn.Module):
         """
         return self.critic(self.trunk(obs))
 
-    def get_action(self, obs: Tensor) -> Tensor:
+    def get_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
 
         Args:
@@ -218,8 +221,8 @@ class DiscreteActorCritic(nn.Module):
         return self.dist(mu).mode
 
     def get_action_and_value(
-        self, obs: Tensor, actions: Tensor = None
-    ) -> Tuple[Tensor]:
+        self, obs: th.Tensor, actions: th.Tensor = None
+    ) -> Tuple[th.Tensor]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -253,7 +256,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         Actor-Critic instance.
     """
 
-    def __init__(self, action_space: Space, feature_dim: int, hidden_dim: int) -> None:
+    def __init__(self, action_space: gym.Space, feature_dim: int, hidden_dim: int) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
@@ -270,7 +273,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_value(self, obs: Tensor) -> Tensor:
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
         Args:
@@ -281,7 +284,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         """
         return self.critic(self.trunk(obs))
 
-    def get_action(self, obs: Tensor) -> Tensor:
+    def get_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
 
         Args:
@@ -294,8 +297,8 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         return self.dist(logits).mode
 
     def get_action_and_value(
-        self, obs: Tensor, actions: Tensor = None
-    ) -> Tuple[Tensor]:
+        self, obs: th.Tensor, actions: th.Tensor = None
+    ) -> Tuple[th.Tensor]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -316,7 +319,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
 
         return actions, self.critic(h), log_probs, entropy
 
-    def get_probs_and_aux_value(self, obs: Tensor) -> Tuple[Tensor]:
+    def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor]:
         """Get probs and auxiliary estimated values for auxiliary phase update.
 
         Args:
@@ -331,7 +334,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
-    def get_logits(self, obs: Tensor) -> Distribution:
+    def get_logits(self, obs: th.Tensor) -> Distribution:
         """Get the log-odds of sampling.
 
         Args:
@@ -381,7 +384,7 @@ class DiscreteLSTMActor(nn.Module):
         self.encoder = None
         self.dist = None
 
-    def init_state(self, batch_size: int) -> Tuple[Tensor, ...]:
+    def init_state(self, batch_size: int) -> Tuple[th.Tensor, ...]:
         """Generate the initial states for LSTM.
 
         Args:
@@ -393,7 +396,7 @@ class DiscreteLSTMActor(nn.Module):
         if not self.use_lstm:
             return tuple()
         return tuple(
-            torch.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
+            th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
             for _ in range(2)
         )
 
@@ -402,11 +405,11 @@ class DiscreteLSTMActor(nn.Module):
         inputs: Dict,
         lstm_state: Tuple = (),
         training: bool = True,
-    ) -> Tensor:
+    ) -> th.Tensor:
         x = inputs["obs"]  # [T, B, *obs_shape], T: rollout length, B: batch size
         T, B, *_ = x.shape
         # TODO: merge time and batch
-        x = torch.flatten(x, 0, 1)
+        x = th.flatten(x, 0, 1)
         # TODO: extract features from observations
         features = F.relu(self.encoder(x))
         # TODO: get one-hot last actions
@@ -414,8 +417,8 @@ class DiscreteLSTMActor(nn.Module):
             inputs["last_action"].view(T * B), self.num_actions
         ).float()
 
-        clipped_reward = torch.clamp(inputs["reward"], -1, 1).view(T * B, 1)
-        lstm_input = torch.cat([features, clipped_reward, one_hot_last_actions], dim=-1)
+        clipped_reward = th.clamp(inputs["reward"], -1, 1).view(T * B, 1)
+        lstm_input = th.cat([features, clipped_reward, one_hot_last_actions], dim=-1)
 
         if self.use_lstm:
             lstm_input = lstm_input.view(T, B, -1)
@@ -429,7 +432,7 @@ class DiscreteLSTMActor(nn.Module):
                 lstm_state = tuple(nd * s for s in lstm_state)
                 output, lstm_state = self.lstm(input.unsqueeze(0), lstm_state)
                 lstm_output_list.append(output)
-            lstm_output = torch.flatten(torch.cat(lstm_output_list), 0, 1)
+            lstm_output = th.flatten(th.cat(lstm_output_list), 0, 1)
         else:
             lstm_output = lstm_input
             lstm_state = tuple()

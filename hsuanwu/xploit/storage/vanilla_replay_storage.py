@@ -1,8 +1,6 @@
+from typing import Any, Tuple
 import numpy as np
-import torch
-
-from hsuanwu.common.typing import Any, Batch, Device, Tuple
-
+import torch as th
 
 class VanillaReplayStorage:
     """Vanilla replay storage for off-policy algorithms.
@@ -21,7 +19,7 @@ class VanillaReplayStorage:
 
     def __init__(
         self,
-        device: Device,
+        device: th.device,
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
@@ -30,7 +28,7 @@ class VanillaReplayStorage:
     ):
         self._obs_shape = obs_shape
         self._action_shape = action_shape
-        self._device = torch.device(device)
+        self._device = th.device(device)
         self._storage_size = storage_size
         self._batch_size = batch_size
 
@@ -84,7 +82,7 @@ class VanillaReplayStorage:
         self._global_step = (self._global_step + 1) % self._storage_size
         self._full = self._full or self._global_step == 0
 
-    def sample(self) -> Batch:
+    def sample(self) -> Tuple[th.Tensor]:
         """Sample transitions from the storage.
 
         Args:
@@ -99,13 +97,13 @@ class VanillaReplayStorage:
             size=self._batch_size,
         )
 
-        obs = torch.as_tensor(self.obs[indices], device=self._device).float()
-        actions = torch.as_tensor(self.actions[indices], device=self._device).float()
-        rewards = torch.as_tensor(self.rewards[indices], device=self._device).float()
-        next_obs = torch.as_tensor(
+        obs = th.as_tensor(self.obs[indices], device=self._device).float()
+        actions = th.as_tensor(self.actions[indices], device=self._device).float()
+        rewards = th.as_tensor(self.rewards[indices], device=self._device).float()
+        next_obs = th.as_tensor(
             self.obs[(indices + 1) % self._storage_size], device=self._device
         ).float()
-        terminateds = torch.as_tensor(
+        terminateds = th.as_tensor(
             self.terminateds[indices], device=self._device
         ).float()
 

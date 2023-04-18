@@ -1,7 +1,6 @@
-import torch
+from typing import Tuple
+import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-
-from hsuanwu.common.typing import Batch, Device, Tensor, Tuple
 
 
 class VanillaRolloutStorage:
@@ -23,7 +22,7 @@ class VanillaRolloutStorage:
 
     def __init__(
         self,
-        device: Device,
+        device: th.device,
         obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
@@ -34,71 +33,71 @@ class VanillaRolloutStorage:
     ) -> None:
         self._obs_shape = obs_shape
         self._action_shape = action_shape
-        self._device = torch.device(device)
+        self._device = th.device(device)
         self._num_steps = num_steps
         self._num_envs = num_envs
         self._discount = discount
         self._gae_lambda = gae_lambda
 
         # transition part
-        self.obs = torch.empty(
+        self.obs = th.empty(
             size=(num_steps, num_envs, *obs_shape),
-            dtype=torch.float32,
+            dtype=th.float32,
             device=self._device,
         )
         if action_type == "Discrete":
             self._action_dim = 1
-            self.actions = torch.empty(
+            self.actions = th.empty(
                 size=(num_steps, num_envs, self._action_dim),
-                dtype=torch.float32,
+                dtype=th.float32,
                 device=self._device,
             )
         elif action_type == "Box":
             self._action_dim = action_shape[0]
-            self.actions = torch.empty(
+            self.actions = th.empty(
                 size=(num_steps, num_envs, self._action_dim),
-                dtype=torch.float32,
+                dtype=th.float32,
                 device=self._device,
             )
         else:
             raise NotImplementedError
-        self.rewards = torch.empty(
-            size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
+        self.rewards = th.empty(
+            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
         )
-        self.terminateds = torch.empty(
-            size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device
+        self.terminateds = th.empty(
+            size=(num_steps + 1, num_envs, 1), dtype=th.float32, device=self._device
         )
-        self.truncateds = torch.empty(
-            size=(num_steps + 1, num_envs, 1), dtype=torch.float32, device=self._device
+        self.truncateds = th.empty(
+            size=(num_steps + 1, num_envs, 1), dtype=th.float32, device=self._device
         )
         # first next_terminated
-        self.terminateds[0].copy_(torch.zeros(num_envs, 1).to(self._device))
-        self.truncateds[0].copy_(torch.zeros(num_envs, 1).to(self._device))
+        self.terminateds[0].copy_(th.zeros(num_envs, 1).to(self._device))
+        self.truncateds[0].copy_(th.zeros(num_envs, 1).to(self._device))
         # extra part
-        self.log_probs = torch.empty(
-            size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
+        self.log_probs = th.empty(
+            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
         )
-        self.values = torch.empty(
-            size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
+        self.values = th.empty(
+            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
         )
-        self.returns = torch.empty(
-            size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
+        self.returns = th.empty(
+            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
         )
-        self.advantages = torch.empty(
-            size=(num_steps, num_envs, 1), dtype=torch.float32, device=self._device
+        self.advantages = th.empty(
+            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
         )
 
         self._global_step = 0
 
     def add(
         self,
-        obs: Tensor,
-        actions: Tensor,
-        rewards: Tensor,
-        terminateds: Tensor,
-        truncateds: Tensor,
-        log_probs: Tensor,
-        values: Tensor,
+        obs: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        log_probs: th.Tensor,
+        values: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -129,7 +128,7 @@ class VanillaRolloutStorage:
         self.terminateds[0].copy_(self.terminateds[-1])
         self.truncateds[0].copy_(self.truncateds[-1])
 
-    def compute_returns_and_advantages(self, last_values: Tensor) -> None:
+    def compute_returns_and_advantages(self, last_values: th.Tensor) -> None:
         """Perform generalized advantage estimation (GAE).
 
         Args:
@@ -161,7 +160,7 @@ class VanillaRolloutStorage:
             self.advantages.std() + 1e-5
         )
 
-    def generator(self, num_mini_batch: int = None) -> Batch:
+    def generator(self, num_mini_batch: int = None) -> Tuple[th.Tensor]:
         """Sample data from storage.
 
         Args:
