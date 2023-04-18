@@ -1,6 +1,5 @@
-import torch
+import torch as th
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -17,7 +16,7 @@ class GrayScale(BaseAugmentation):
     def __init__(self) -> None:
         super(GrayScale, self).__init__()
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         b, c, h, w = x.size()
         frames = c // 3
         x = x.view([b, frames, 3, h, w])

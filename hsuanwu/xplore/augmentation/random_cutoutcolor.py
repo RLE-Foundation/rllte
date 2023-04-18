@@ -1,14 +1,14 @@
-import torch
+import torch as th
 
-from hsuanwu.common.typing import *
+from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
 class RandomCutoutColor(BaseAugmentation):
     """Random Cutout operation for image augmentation.
     Args: the size of the cut area
-        min_cut: min size of the cut shape.
-        max_cut: max size of the cut shape.
+        min_cut (int): min size of the cut shape.
+        max_cut (int): max size of the cut shape.
 
     Returns:
         Augmented images.
@@ -22,11 +22,11 @@ class RandomCutoutColor(BaseAugmentation):
     def forward(self, x: Tensor) -> Tensor:
         n, c, h, w = x.size()
 
-        w1 = torch.randint(self.min_cut, self.max_cut, (n,))
-        h1 = torch.randint(self.min_cut, self.max_cut, (n,))
+        w1 = th.randint(self.min_cut, self.max_cut, (n,))
+        h1 = th.randint(self.min_cut, self.max_cut, (n,))
 
-        cutouts = torch.empty((n, c, h, w), dtype=x.dtype, device=x.device)
-        rand_box = torch.rand((n, c), device=x.device)
+        cutouts = th.empty((n, c, h, w), dtype=x.dtype, device=x.device)
+        rand_box = th.rand((n, c), device=x.device)
 
         for i, (img, w11, h11) in enumerate(zip(x, w1, h1)):
             cut_img = img.clone()

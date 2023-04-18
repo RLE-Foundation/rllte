@@ -9,3 +9,5 @@ from .random_flip import RandomFlip
 from .random_rotate import RandomRotate
 from .random_shift import RandomShift
 from .random_translate import RandomTranslate
+from .auto_augment import AutoAugment
+from .random_augment import RandomAugment

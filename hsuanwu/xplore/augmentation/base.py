@@ -1,7 +1,4 @@
-import torch.nn as nn
-
-from hsuanwu.common.typing import *
-
+from torch import nn
 
 class BaseAugmentation(nn.Module):
     """Base class of augmentation."""
