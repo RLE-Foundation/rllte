@@ -28,3 +28,4 @@ class MP:
 
 if __name__ == "__main__":
     test = MP()
+    test.act(5, 6)
