@@ -24,6 +24,7 @@ from hsuanwu.common.engine import OffPolicyTrainer
 #                         )
 
 train_env = make_dmc_env(env_id='cartpole_balance',
+                        device='cuda:0',
                         num_envs=1,
                         resource_files=None, 
                         img_source=None,
@@ -34,6 +35,7 @@ train_env = make_dmc_env(env_id='cartpole_balance',
                         frame_skip=2, frame_stack=3)
 
 test_env = make_dmc_env(env_id='cartpole_balance',
+                        device='cuda:0',
                         num_envs=1,
                         resource_files=None, 
                         img_source=None,

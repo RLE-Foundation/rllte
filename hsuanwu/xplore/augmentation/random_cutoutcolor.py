@@ -1,6 +1,5 @@
 import torch as th
 
-from hsuanwu.common.typing import Tensor
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -19,7 +18,7 @@ class RandomCutoutColor(BaseAugmentation):
         self.min_cut = min_cut
         self.max_cut = max_cut
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         n, c, h, w = x.size()
 
         w1 = th.randint(self.min_cut, self.max_cut, (n,))

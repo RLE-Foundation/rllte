@@ -135,7 +135,7 @@ class Logger:
         """
         prefix = (
             "["
-            + colored("HSUANWU Train".ljust(13, " "), "red", attrs=["bold"])
+            + colored("HSUANWU TRAIN".ljust(13, " "), "red", attrs=["bold"])
             + "] - "
         )
         print(self.time_stamp + prefix + self.parse_train_msg(msg))
@@ -154,7 +154,7 @@ class Logger:
         """
         prefix = (
             "["
-            + colored("HSUANWU Test".ljust(13, " "), "green", attrs=["bold"])
+            + colored("HSUANWU TEST".ljust(13, " "), "green", attrs=["bold"])
             + "] - "
         )
         print(self.time_stamp + prefix + self.parse_test_msg(msg))
