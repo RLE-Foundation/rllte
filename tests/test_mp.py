@@ -8,7 +8,7 @@ sys.path.append(parent_dir_path)
 import torch.multiprocessing as mp
 
 
-class Test:
+class MP:
     def __init__(self) -> None:
         ctx = mp.get_context("fork")
         self.args1 = 1
@@ -27,4 +27,4 @@ class Test:
 
 
 if __name__ == "__main__":
-    test = Test()
+    test = MP()

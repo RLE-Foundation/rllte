@@ -31,7 +31,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         TorchVecEnv instance.
     """
 
-    def __init__(self, env: gym.Env, device: th.Device) -> None:
+    def __init__(self, env: gym.Env, device: th.device) -> None:
         super().__init__(env)
         self._device = th.device(device)
         self.observation_space = env.single_observation_space

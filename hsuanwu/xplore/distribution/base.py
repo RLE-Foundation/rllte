@@ -34,7 +34,7 @@ class BaseDistribution(ABC):
         """
 
     @abstractmethod
-    def log_prob(self, value: th.Tensor) -> th.Sizeth.Tensor:
+    def log_prob(self, value: th.Tensor) -> th.Tensor:
         """Returns the log of the probability density/mass function evaluated at `value`.
 
         Args:

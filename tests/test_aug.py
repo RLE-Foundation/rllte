@@ -14,8 +14,7 @@ from hsuanwu.xplore.augmentation import RandomCrop
 
 if __name__ == "__main__":
     env = make_dmc_env(
-        domain_name="hopper",
-        task_name="hop",
+        env_id="hopper_hop",
         resource_files=None,
         img_source=None,
         total_frames=None,
@@ -23,22 +22,21 @@ if __name__ == "__main__":
         visualize_reward=False,
         from_pixels=True,
         frame_skip=1,
+        frame_stack=1
     )
 
-    obs = env.reset()
-    print(obs.shape)
+    obs, info = env.reset()
 
-    obs_tensor = torch.from_numpy(obs).unsqueeze(0) / 255.0
-    cv2.imwrite(
-        "./tests/origin.png", np.transpose(obs_tensor.numpy()[0], [1, 2, 0]) * 255.0
-    )
+    obs_tensor = obs / 255.0
     print(obs_tensor.size())
+    cv2.imwrite(
+        "./tests/origin.jpg", np.transpose(obs_tensor.numpy()[0], [1, 2, 0]) * 255.0
+    )
 
     aug = RandomCrop(pad=20, out=84)
 
-    # auged_obs = Crop(1).do_augmentation(obs_tensor)
     auged_obs = aug(obs_tensor)
     print(auged_obs.size())
     cv2.imwrite(
-        "./tests/after.png", np.transpose(auged_obs.numpy()[0], [1, 2, 0]) * 255.0
+        "./tests/after.jpg", np.transpose(auged_obs.numpy()[0], [1, 2, 0]) * 255.0
     )
