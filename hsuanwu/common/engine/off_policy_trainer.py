@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Iterable, Tuple
 
+import numpy as np
 import gymnasium as gym
 import hydra
 import omegaconf
@@ -27,9 +28,12 @@ class OffPolicyTrainer(BasePolicyTrainer):
     ) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OffPolicyTrainer...")
+        # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
+        if self._cfgs.pretraining:
+            self._logger.info(f"Pre-training Mode On...")
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
-        # TODO: build encoder
+        ## TODO: build encoder
         self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
             self._device
         )
@@ -39,27 +43,27 @@ class OffPolicyTrainer(BasePolicyTrainer):
             lr=self._learner.lr,
             eps=self._learner.eps,
         )
-        # TODO: build storage
+        ## TODO: build storage
         self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
 
         # xplore part
-        # TODO: get distribution
+        ## TODO: get distribution
         if "Noise" in self._cfgs.distribution._target_:
             dist = hydra.utils.instantiate(self._cfgs.distribution)
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
         self._learner.dist = dist
         self._learner.actor.dist = dist
-        # TODO: get augmentation
+        ## TODO: get augmentation
         if self._cfgs.use_aug:
             self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
                 self._device
             )
-        # TODO: get intrinsic reward
+        ## TODO: get intrinsic reward
         if self._cfgs.use_irs:
             self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
 
-        # make data loader
+        # TODO: make data loader
         if "NStepReplayStorage" in self._cfgs.storage._target_:
             self._replay_loader = th.utils.data.DataLoader(
                 self._replay_storage,
@@ -136,7 +140,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._replay_storage.add(
                 obs[0].cpu().numpy(),
                 action[0].cpu().numpy(),
-                reward[0].cpu().numpy(),
+                np.zeros_like(reward[0].cpu().numpy()) if self._cfgs.pretraining else reward[0].cpu().numpy(), # pre-training mode
                 terminated[0].cpu().numpy(),
                 info,
                 next_obs[0].cpu().numpy(),
@@ -211,6 +215,14 @@ class OffPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        th.save(self._learner.encoder, save_dir / "encoder.pth")
-        th.save(self._learner.actor, save_dir / "actor.pth")
-        th.save(self._learner.critic, save_dir / "critic.pth")
+
+        if self._cfgs.pretraining:
+            th.save(self._learner.encoder, save_dir / "pretrained_encoder.pth")
+            th.save(self._learner.actor, save_dir / "pretrained_actor.pth")
+            th.save(self._learner.critic, save_dir / "pretrained_critic.pth")
+        else:
+            th.save(self._learner.encoder, save_dir / "encoder.pth")
+            th.save(self._learner.actor, save_dir / "actor.pth")
+            th.save(self._learner.critic, save_dir / "critic.pth")
+        
+        self._logger.info(f"Model saved at: {save_dir}")

@@ -337,7 +337,7 @@ class GIRM(BaseIntrinsicRewardModule):
 
         return tensor
 
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
+    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
         """Compute the intrinsic rewards using the collected observations.
 
         Args:

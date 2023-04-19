@@ -24,6 +24,7 @@ _DEFAULT_CFGS = {
     "seed": 1,
     "num_train_steps": 100000,
     "num_init_steps": 2000,  # only for off-policy algorithms
+    "pretraining": False,
     ## TODO: Test setup
     "test_every_steps": 5000,  # only for off-policy algorithms
     "test_every_episodes": 10,  # only for on-policy algorithms
@@ -248,6 +249,7 @@ class BasePolicyTrainer(ABC):
         if new_cfgs.reward._target_ is not None:
             new_cfgs.reward.device = new_cfgs.device
             new_cfgs.reward.obs_shape = observation_space["shape"]
+            new_cfgs.reward.action_type = action_space["type"]
             new_cfgs.reward.action_shape = action_space["shape"]
 
         return new_cfgs
@@ -283,6 +285,10 @@ class BasePolicyTrainer(ABC):
             )
         else:
             self._logger.debug(f"Use Augmentation: {cfgs.use_aug}")
+        
+        if cfgs.pretraining:
+            assert cfgs.reward._target_ is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
+
         if cfgs.reward._target_ is not None:
             self._logger.debug(
                 f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}"

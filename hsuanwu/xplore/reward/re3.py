@@ -165,3 +165,6 @@ class RE3(BaseIntrinsicRewardModule):
                     )
 
         return beta_t * intrinsic_rewards
+    
+    def update(self, rollouts: Dict) -> None:
+        return super().update(rollouts)

@@ -28,6 +28,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
     ) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OnPolicyTrainer...")
+        # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
+        if self._cfgs.pretraining:
+            self._logger.info(f"Pre-training Mode On...")
         # xploit part
         self._learner = hydra.utils.instantiate(self._cfgs.learner)
         # TODO: build encoder
@@ -127,7 +130,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 self._rollout_storage.add(
                     obs=obs,
                     actions=actions,
-                    rewards=rewards,
+                    rewards=np.zeros_like(rewards) if self._cfgs.pretraining else rewards, # pre-training mode
                     terminateds=terminateds,
                     truncateds=truncateds,
                     log_probs=log_probs,
@@ -198,5 +201,12 @@ class OnPolicyTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        th.save(self._learner.encoder, save_dir / "encoder.pth")
-        th.save(self._learner.ac, save_dir / "actor_critic.pth")
+
+        if self._cfgs.pretraining:
+            th.save(self._learner.encoder, save_dir / "pretrained_encoder.pth")
+            th.save(self._learner.ac, save_dir / "pretrained_actor_critic.pth")
+        else:
+            th.save(self._learner.encoder, save_dir / "encoder.pth")
+            th.save(self._learner.ac, save_dir / "actor_critic.pth")
+
+        self._logger.info(f"Model saved at: {save_dir}")
