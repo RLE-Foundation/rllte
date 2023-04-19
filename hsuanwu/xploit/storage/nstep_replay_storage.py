@@ -9,7 +9,8 @@ import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
-from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode
+from hsuanwu.xploit.storage.utils import (dump_episode, episode_len,
+                                          load_episode)
 
 
 class ReplayStorage:

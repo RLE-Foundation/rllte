@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Iterable, Tuple
 
-import numpy as np
 import gymnasium as gym
 import hydra
+import numpy as np
 import omegaconf
 import torch as th
 

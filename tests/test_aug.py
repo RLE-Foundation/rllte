@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from hsuanwu.env.dmc import make_dmc_env
-from hsuanwu.xplore.augmentation import RandomCrop
+from hsuanwu.xplore.augmentation import RandomCrop, RandomAmplitudeScaling, GaussianNoise
 
 if __name__ == "__main__":
     env = make_dmc_env(
@@ -40,3 +40,24 @@ if __name__ == "__main__":
     cv2.imwrite(
         "./tests/after.jpg", np.transpose(auged_obs.numpy()[0], [1, 2, 0]) * 255.0
     )
+
+    # TODO: state-based inputs
+    env = make_dmc_env(
+        env_id="hopper_hop",
+        resource_files=None,
+        img_source=None,
+        total_frames=None,
+        seed=1,
+        visualize_reward=True,
+        from_pixels=False,
+        frame_skip=1,
+        frame_stack=1,
+    )
+
+    obs, info = env.reset()
+
+    aug_obs = RandomAmplitudeScaling()(obs)
+    print(obs, aug_obs)
+    aug_obs = GaussianNoise()(obs)
+    print(obs, aug_obs)
+    

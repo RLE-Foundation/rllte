@@ -8,6 +8,7 @@ from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
+
 class HsuanwuEngine:
     """Hsuanwu RL engine.
 

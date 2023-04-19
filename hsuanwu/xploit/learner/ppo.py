@@ -7,7 +7,6 @@ from hsuanwu.xploit.learner.base import BaseLearner
 from hsuanwu.xploit.learner.network import DiscreteActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
-
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
     "storage": ["VanillaRolloutStorage"],

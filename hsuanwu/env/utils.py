@@ -1,12 +1,12 @@
 from collections import deque
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from omegaconf import OmegaConf
 import gymnasium as gym
 import numpy as np
 import torch as th
-from typing import Any, Dict, Tuple, List, Optional, Union
-
 from gymnasium.vector.vector_env import VectorEnv
+from omegaconf import OmegaConf
+
 
 class HsuanwuEnvWrapper(gym.Wrapper):
     """Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Tuple, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 import gymnasium as gym
 import torch as th
@@ -6,7 +6,8 @@ from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import HsuanwuEnvWrapper, FrameStack
+from hsuanwu.env.utils import FrameStack, HsuanwuEnvWrapper
+
 
 def make_dmc_env(
     env_id: str = "cartpole_balance",

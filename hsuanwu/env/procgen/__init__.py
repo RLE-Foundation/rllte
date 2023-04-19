@@ -4,13 +4,10 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.spaces.box import Box
-from gymnasium.wrappers import (
-    NormalizeReward,
-    RecordEpisodeStatistics,
-    TransformObservation,
-    TransformReward,
-)
+from gymnasium.wrappers import (NormalizeReward, RecordEpisodeStatistics,
+                                TransformObservation, TransformReward)
 from procgen import ProcgenEnv
+
 from hsuanwu.env.utils import HsuanwuEnvWrapper
 
 

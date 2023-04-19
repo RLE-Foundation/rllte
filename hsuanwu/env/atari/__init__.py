@@ -4,22 +4,14 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.vector import SyncVectorEnv
-from gymnasium.wrappers import (
-    FrameStack,
-    GrayScaleObservation,
-    RecordEpisodeStatistics,
-    ResizeObservation,
-    TransformReward,
-)
+from gymnasium.wrappers import (FrameStack, GrayScaleObservation,
+                                RecordEpisodeStatistics, ResizeObservation,
+                                TransformReward)
 
-from hsuanwu.env.atari.wrappers import (
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-
+from hsuanwu.env.atari.wrappers import (EpisodicLifeEnv, FireResetEnv,
+                                        MaxAndSkipEnv, NoopResetEnv)
 from hsuanwu.env.utils import HsuanwuEnvWrapper
+
 
 def make_atari_env(
     env_id: str = "Alien-v5",

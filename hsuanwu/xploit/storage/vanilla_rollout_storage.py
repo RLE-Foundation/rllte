@@ -1,4 +1,4 @@
-from typing import Tuple, Generator
+from typing import Generator, Tuple
 
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
