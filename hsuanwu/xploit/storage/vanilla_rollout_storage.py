@@ -63,29 +63,29 @@ class VanillaRolloutStorage:
         else:
             raise NotImplementedError
         self.rewards = th.empty(
-            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps, num_envs), dtype=th.float32, device=self._device
         )
         self.terminateds = th.empty(
-            size=(num_steps + 1, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device
         )
         self.truncateds = th.empty(
-            size=(num_steps + 1, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device
         )
         # first next_terminated
-        self.terminateds[0].copy_(th.zeros(num_envs, 1).to(self._device))
-        self.truncateds[0].copy_(th.zeros(num_envs, 1).to(self._device))
+        self.terminateds[0].copy_(th.zeros(num_envs).to(self._device))
+        self.truncateds[0].copy_(th.zeros(num_envs).to(self._device))
         # extra part
         self.log_probs = th.empty(
-            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps, num_envs), dtype=th.float32, device=self._device
         )
         self.values = th.empty(
-            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps, num_envs), dtype=th.float32, device=self._device
         )
         self.returns = th.empty(
-            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps, num_envs), dtype=th.float32, device=self._device
         )
         self.advantages = th.empty(
-            size=(num_steps, num_envs, 1), dtype=th.float32, device=self._device
+            size=(num_steps, num_envs), dtype=th.float32, device=self._device
         )
 
         self._global_step = 0
@@ -119,8 +119,8 @@ class VanillaRolloutStorage:
         self.rewards[self._global_step].copy_(rewards)
         self.terminateds[self._global_step + 1].copy_(terminateds)
         self.truncateds[self._global_step + 1].copy_(truncateds)
-        self.log_probs[self._global_step].copy_(log_probs)
-        self.values[self._global_step].copy_(values)
+        self.log_probs[self._global_step].copy_(log_probs[:, 0])
+        self.values[self._global_step].copy_(values[:, 0])
 
         self._global_step = (self._global_step + 1) % self._num_steps
 
@@ -144,7 +144,7 @@ class VanillaRolloutStorage:
         for step in reversed(range(self._num_steps)):
             if step == self._num_steps - 1:
                 next_non_terminal = 1.0 - self.terminateds[-1]
-                next_values = last_values
+                next_values = last_values[:, 0]
             else:
                 next_non_terminal = 1.0 - self.terminateds[step + 1]
                 next_values = self.values[step + 1]

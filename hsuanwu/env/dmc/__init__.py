@@ -6,51 +6,7 @@ from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import FrameStack
-
-
-class TorchVecEnvWrapper(gym.Wrapper):
-    """Build environments that output torch tensors.
-
-    Args:
-        env (Env): The environment.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
-
-    Returns:
-        TorchVecEnv instance.
-    """
-
-    def __init__(self, env: gym.Env, device: th.device) -> None:
-        super().__init__(env)
-        self._device = th.device(device)
-        self.observation_space = env.single_observation_space
-        self.action_space = env.single_action_space
-        self.num_envs = len(env.envs)
-
-    def reset(self, **kwargs) -> Tuple[th.Tensor, Dict]:
-        obs, info = self.env.reset(**kwargs)
-        obs = th.as_tensor(obs, device=self._device)
-        return obs, info
-
-    def step(
-        self, action: th.Tensor
-    ) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
-        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy())
-        obs = th.as_tensor(obs, device=self._device)
-        reward = th.as_tensor(reward, dtype=th.float32, device=self._device)
-        terminated = th.as_tensor(
-            [[1.0] if _ else [0.0] for _ in terminated],
-            dtype=th.float32,
-            device=self._device,
-        )
-        truncated = th.as_tensor(
-            [[1.0] if _ else [0.0] for _ in truncated],
-            dtype=th.float32,
-            device=self._device,
-        )
-
-        return obs, reward, terminated, truncated, info
-
+from hsuanwu.env.utils import HsuanwuEnvWrapper, FrameStack
 
 def make_dmc_env(
     env_id: str = "cartpole_balance",
@@ -140,4 +96,4 @@ def make_dmc_env(
     envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device)
+    return HsuanwuEnvWrapper(envs, device)

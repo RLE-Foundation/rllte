@@ -11,60 +11,7 @@ from gymnasium.wrappers import (
     TransformReward,
 )
 from procgen import ProcgenEnv
-
-
-class TorchVecEnvWrapper(gym.Wrapper):
-    """Build environments that output torch tensors.
-
-    Args:
-        env (Env): The environment.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
-
-    Returns:
-        Environment instance.
-    """
-
-    def __init__(self, env: gym.Env, device: th.device) -> None:
-        super().__init__(env)
-        self._device = th.device(device)
-        self.observation_space = Box(
-            low=env.single_observation_space.low[0, 0, 0],
-            high=env.single_observation_space.high[0, 0, 0],
-            shape=[3, 64, 64],
-            dtype=env.single_observation_space.dtype,
-        )
-        self.action_space = env.single_action_space
-        self.num_envs = env.num_envs
-
-    def reset(self, **kwargs) -> Tuple[th.Tensor, Dict]:
-        obs, info = self.env.reset(**kwargs)
-        obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
-        return obs, info
-
-    def step(
-        self, action: th.Tensor
-    ) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
-        # Procgen games currently doesn't support Gymnasium.
-        obs, reward, terminated, truncated, info = self.env.step(
-            action.squeeze(1).cpu().numpy()
-        )
-
-        obs = th.as_tensor(obs.transpose(0, 3, 1, 2), device=self._device)
-        reward = th.as_tensor(reward, dtype=th.float32, device=self._device).unsqueeze(
-            dim=1
-        )
-        terminated = th.as_tensor(
-            [[1.0] if _ else [0.0] for _ in terminated],
-            dtype=th.float32,
-            device=self._device,
-        )
-        truncated = th.as_tensor(
-            [[1.0] if _ else [0.0] for _ in truncated],
-            dtype=th.float32,
-            device=self._device,
-        )
-
-        return obs, reward, terminated, truncated, info
+from hsuanwu.env.utils import HsuanwuEnvWrapper
 
 
 class AdapterEnv(gym.Wrapper):
@@ -80,7 +27,15 @@ class AdapterEnv(gym.Wrapper):
 
     def __init__(self, env: gym.Env, num_envs: int) -> None:
         super().__init__(env)
-        self.num_envs = num_envs
+        self.single_observation_space = Box(
+            low=env.observation_space["rgb"].low[0, 0, 0],
+            high=env.observation_space["rgb"].high[0, 0, 0],
+            shape=[3, 64, 64],
+            dtype=env.observation_space["rgb"].dtype,
+        )
+        self.single_action_space = env.action_space
+        self.is_vector_env = True
+        self.envs = [0] * num_envs
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)
@@ -122,12 +77,14 @@ def make_procgen_env(
         distribution_mode=distribution_mode,
     )
     envs = AdapterEnv(envs, num_envs)
-    envs = TransformObservation(envs, lambda obs: obs["rgb"])
-    envs.single_action_space = envs.action_space
-    envs.single_observation_space = envs.observation_space["rgb"]
-    envs.is_vector_env = True
+    envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))
+    # envs.single_action_space = envs.action_space
+    # envs.single_observation_space = envs.observation_space["rgb"]
+    # envs.is_vector_env = True
+    # print(envs.single_observation_space, envs.single_action_space)
+    # quit(0)
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return TorchVecEnvWrapper(envs, device)
+    return HsuanwuEnvWrapper(envs, device)

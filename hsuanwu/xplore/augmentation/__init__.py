@@ -1,13 +1,19 @@
-from .auto_augment import AutoAugment
-from .base import BaseAugmentation
-from .grayscale import GrayScale
-from .random_augment import RandomAugment
-from .random_colorjitter import RandomColorJitter
-from .random_convolution import RandomConvolution
-from .random_crop import RandomCrop
-from .random_cutout import RandomCutout
-from .random_cutoutcolor import RandomCutoutColor
-from .random_flip import RandomFlip
-from .random_rotate import RandomRotate
-from .random_shift import RandomShift
-from .random_translate import RandomTranslate
+from .auto_augment import AutoAugment as AutoAugment
+from .base import BaseAugmentation as BaseAugmentation
+from .grayscale import GrayScale as GrayScale
+from .random_augment import RandomAugment as RandomAugment
+from .random_colorjitter import RandomColorJitter as RandomColorJitter
+from .random_convolution import RandomConvolution as RandomConvolution
+from .random_crop import RandomCrop as RandomCrop
+from .random_cutout import RandomCutout as RandomCutout
+from .random_cutoutcolor import RandomCutoutColor as RandomCutoutColor
+from .random_flip import RandomFlip as RandomFlip
+from .random_rotate import RandomRotate as RandomRotate
+from .random_shift import RandomShift as RandomShift
+from .random_translate import RandomTranslate as RandomTranslate
+from .elastic_transform import ElasticTransform as ElasticTransform
+from .random_adjustsharpness import RandomAdjustSharpness as RandomAdjustSharpness
+from .random_autocontrast import RandomAutocontrast as RandomAutocontrast
+from .random_equalize import RandomEqualize as RandomEqualize
+from .random_invert import RandomInvert as RandomInvert
+from .random_perspective import RandomPerspective as RandomPerspective

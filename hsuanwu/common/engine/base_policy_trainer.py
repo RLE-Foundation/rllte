@@ -108,35 +108,6 @@ class BasePolicyTrainer(ABC):
         """Get global training episodes."""
         return self._global_episode
 
-    def _remake_observation_and_action_space(
-        self, observation_space: gym.Space, action_space: gym.Space
-    ) -> Tuple[Dict]:
-        """Transform the original 'Box' space into Hydra supported type.
-
-        Args:
-            observation_space (Space): The observation space.
-            action_space (Space): The action space.
-
-        Returns:
-            Processed spaces.
-        """
-        new_observation_space = {"shape": observation_space.shape}
-
-        if action_space.__class__.__name__ == "Discrete":
-            n = int(action_space.n)
-            new_action_space = {"shape": (n,), "type": "Discrete", "range": [0, n - 1]}
-        elif action_space.__class__.__name__ == "Box":
-            low, high = float(action_space.low[0]), float(action_space.high[0])
-            new_action_space = {
-                "shape": action_space.shape,
-                "type": "Box",
-                "range": [low, high],
-            }
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
-        return new_observation_space, new_action_space
-
     def _process_cfgs(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:
         """Preprocess the configs.
 
@@ -201,10 +172,8 @@ class BasePolicyTrainer(ABC):
         else:
             new_cfgs.use_irs = False
 
-        # TODO: remake observation and action sapce
-        observation_space, action_space = self._remake_observation_and_action_space(
-            self._train_env.observation_space, self._train_env.action_space
-        )
+        observation_space, action_space = self._train_env.observation_space, self._train_env.action_space
+
         new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space
         new_cfgs.action_space = action_space
