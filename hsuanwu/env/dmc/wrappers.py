@@ -31,7 +31,7 @@ def _spec_to_box(spec):
     low = np.concatenate(mins, axis=0)
     high = np.concatenate(maxs, axis=0)
     assert low.shape == high.shape
-    return spaces.Box(low, high, dtype=np.float32)
+    return spaces.Box(np.float32(low), np.float32(high), dtype=np.float32)
 
 
 def _flatten_obs(obs):
@@ -194,12 +194,12 @@ class DMCWrapper(core.Env):
             truncated = False
 
         terminated = done
-        return obs, reward, terminated, truncated, info
+        return obs.astype("float32"), reward, terminated, truncated, info
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
-        return obs, {}
+        return obs.astype("float32"), {}
 
     def render(self, mode="rgb_array", height=None, width=None, camera_id=0):
         assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode
