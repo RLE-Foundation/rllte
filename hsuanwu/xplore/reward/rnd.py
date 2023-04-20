@@ -146,7 +146,7 @@ class RND(BaseIntrinsicRewardModule):
         # udpate the module
         self.update(samples)
 
-        return intrinsic_rewards * beta_t
+        return intrinsic_rewards# * beta_t
     
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
