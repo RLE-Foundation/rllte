@@ -1,55 +1,62 @@
-from torch import distributions as pyd
+from abc import ABC, abstractmethod
+
+import torch as th
 
 
-from hsuanwu.common.typing import *
+class BaseDistribution(ABC):
+    """Abstract base class of distributions."""
 
-class BaseDistribution(pyd.Normal):
-    """Base class of distribution.
-    
-    Args:
-        mu: Mean of the distribution.
-        sigma: Standard deviation of the distribution.
-        low: Lower bound for action range.
-        high: Upper bound for action range.
-        eps: A constant for clamping.
+    def __init__(self) -> None:
+        super().__init__()
+        self.dist = None
 
-    Returns:
-        Base distribution instance.
-    """
-    def __init__(self, 
-                 mu: Tensor, 
-                 sigma: Tensor, 
-                 low: float = -1.0,
-                 high: float = 1.0,
-                 eps: float = 1e-6) -> None:
-        super().__init__(loc=mu, scale=sigma, validate_args=False)
-        self._mu = mu
-        self._sigma = sigma
-        self._low = low
-        self._high = high
-        self._eps = eps
+    @abstractmethod
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
+        samples if the distribution parameters are batched.
 
-    def _clamp(self, x: Tensor) -> Tensor:
-        """ Clamping operation.
         Args:
-            x: Tensor to be clamped.
-        
-        Returns:
-            Clamped tensor.
-        """
-        clamped_x = torch.clamp(
-            x, self._low + self._eps, self._high - self._eps)
-        x = x - x.detach() + clamped_x.detach()
-        return x
+            sample_shape (TorchSize): The size of the sample to be drawn.
 
-    def sample(self, clip: float = None, sample_shape = torch.Size()):
-        """Generates a sample_shape shaped sample
-        
-        Args:
-            clip: Range for noise truncation operation.
-            sample_shape: The size of the sample to be drawn.
-        
         Returns:
             A sample_shape shaped sample.
         """
-        pass
+
+    @abstractmethod
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
+        samples if the distribution parameters are batched.
+
+        Args:
+            sample_shape (TorchSize): The size of the sample to be drawn.
+
+        Returns:
+            A sample_shape shaped sample.
+        """
+
+    @abstractmethod
+    def log_prob(self, value: th.Tensor) -> th.Tensor:
+        """Returns the log of the probability density/mass function evaluated at `value`.
+
+        Args:
+            value (Tensor): The value to be evaluated.
+
+        Returns:
+            The log_prob value.
+        """
+
+    @abstractmethod
+    def entropy(self) -> th.Tensor:
+        """Returns the Shannon entropy of distribution."""
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the distribution."""
+
+    @abstractmethod
+    def mean(self) -> th.Tensor:
+        """Returns the mean of the distribution."""
+
+    @abstractmethod
+    def mode(self) -> th.Tensor:
+        """Returns the mode of the distribution."""

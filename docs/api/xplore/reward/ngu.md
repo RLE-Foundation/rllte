@@ -2,7 +2,7 @@
 
 
 ## NGU
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L66)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L76)
 ```python 
 NGU(
    obs_shape: Tuple, action_shape: Tuple, action_type: str, device: torch.device,
@@ -38,7 +38,7 @@ Instance of NGU.
 
 
 ### .compute_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L116)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L127)
 ```python
 .compute_irs(
    rollouts: Dict, step: int
@@ -51,7 +51,7 @@ Compute the intrinsic rewards using the collected observations.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -63,7 +63,7 @@ Compute the intrinsic rewards using the collected observations.
 The intrinsic rewards
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L164)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L180)
 ```python
 .update(
    rollouts: Dict
@@ -76,7 +76,7 @@ Update the intrinsic reward module if necessary.
 
 **Args**
 
-* **rollouts**  : The collected experiences. A python dict like 
+* **rollouts**  : The collected experiences. A python dict like
     {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
     actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
     rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
@@ -87,7 +87,7 @@ Update the intrinsic reward module if necessary.
 None
 
 ### .pseudo_counts
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L195)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L214)
 ```python
 .pseudo_counts(
    encoded_obs, k = 10, kernel_cluster_distance = 0.008, kernel_epsilon = 0.0001,
@@ -100,7 +100,7 @@ None
 
 
 ## CnnEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L12)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L11)
 ```python 
 CnnEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -127,7 +127,7 @@ CNN-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L36)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L42)
 ```python
 .forward(
    obs: Tensor
@@ -139,7 +139,7 @@ CNN-based encoder.
 
 
 ## MlpEncoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L44)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L50)
 ```python 
 MlpEncoder(
    obs_shape: Tuple, latent_dim: int
@@ -166,7 +166,7 @@ MLP-based encoder.
 
 
 ### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L61)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L72)
 ```python
 .forward(
    obs: Tensor

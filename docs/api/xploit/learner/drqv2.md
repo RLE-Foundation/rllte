@@ -1,206 +1,136 @@
 #
 
 
-## Actor
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L8)
+## DrQv2Learner
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L60)
 ```python 
-Actor(
-   action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
+DrQv2Learner(
+   observation_space: Dict, action_space: Dict, device: Device, feature_dim: int,
+   lr: float, eps: float, hidden_dim: int, critic_target_tau: float,
+   update_every_steps: int
 )
 ```
 
 
 ---
-Actor network
+Data Regularized-Q v2 (DrQ-v2).
+When 'augmentation' module is deprecated, this learner will transform into Deep Deterministic Policy Gradient (DDPG) Learner.
 
 
 **Args**
 
-* **action_space**  : Action space of the environment.
-* **features_dim**  : Number of features accepted.
-* **hidden_dim**  : Number of units per hidden layer.
-
-
-**Returns**
-
-Actor network.
-
-
-**Methods:**
-
-
-### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L33)
-```python
-.forward(
-   obs: Tensor
-)
-```
-
-
-----
-
-
-## Critic
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L42)
-```python 
-Critic(
-   action_space: Space, feature_dim: int = 64, hidden_dim: int = 1024
-)
-```
-
-
----
-Critic network
-
-
-**Args**
-
-* **action_space**  : Action space of the environment.
-* **features_dim**  : Number of features accepted.
-* **hidden_dim**  : Number of units per hidden layer.
-
-
-**Returns**
-
-Critic network.
-
-
-**Methods:**
-
-
-### .forward
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L72)
-```python
-.forward(
-   obs: Tensor, action: Tensor
-)
-```
-
-
-----
-
-
-## DrQv2Agent
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L82)
-```python 
-DrQv2Agent(
-   observation_space: Space, action_space: Space, device: torch.device = 'cuda',
-   feature_dim: int = 50, hidden_dim: int = 1024, lr: float = 0.0001,
-   critic_target_tau: float = 0.01, num_expl_steps: int = 2000,
-   update_every_steps: int = 2, stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
-   stddev_clip: float = 0.3
-)
-```
-
-
----
-Learner for continuous control tasks.
-Current learner: DrQ-v2
-Paper: Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning
-Link: https://openreview.net/pdf?id=_SJ-_yyes8
-
-
-**Args**
-
-* **obs_space**  : The observation shape of the environment.
-* **action_shape**  : The action shape of the environment.
-* **feature_dim**  : Number of features extracted.
-* **hidden_dim**  : The size of the hidden layers.
-* **lr**  : The learning rate.
+* **observation_space** (Dict) : Observation space of the environment.
+    For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
+* **action_space** (Dict) : Action shape of the environment.
+    For supporting Hydra, the original 'action_space' is transformed into a dict like
+    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **device** (Device) : Device (cpu, cuda, ...) on which the code should be run.
+* **feature_dim** (int) : Number of features extracted by the encoder.
+* **lr** (float) : The learning rate.
+* **eps** (float) : Term added to the denominator to improve numerical stability.
+* **hidden_dim** (int) : The size of the hidden layers.
 * **critic_target_tau**  : The critic Q-function soft-update rate.
-* **update_every_steps**  : The agent update frequency.
-* **num_expl_steps**  : The exploration steps.
-* **stddev_schedule**  : The exploration std schedule.
-* **stddev_clip**  : The exploration std clip range.
+* **update_every_steps** (int) : The agent update frequency.
+
 
 
 **Returns**
 
-Agent instance.
+DrQv2 learner instance.
 
 
 **Methods:**
 
 
 ### .train
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L149)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L119)
 ```python
 .train(
-   training = True
+   training: bool = True
 )
 ```
 
-
-### .set_encoder
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L156)
-```python
-.set_encoder(
-   encoder
-)
-```
+---
+Set the train mode.
 
 
-### .set_dist
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L161)
-```python
-.set_dist(
-   dist
-)
-```
+**Args**
+
+* **training** (bool) : True (training) or False (testing).
 
 
-### .set_aug
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L165)
-```python
-.set_aug(
-   aug
-)
-```
+**Returns**
 
-
-### .set_irs
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L169)
-```python
-.set_irs(
-   irs
-)
-```
-
-
-### .act
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L173)
-```python
-.act(
-   obs: ndarray, training: bool = True, step: int = 0
-)
-```
-
+None.
 
 ### .update
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L192)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L134)
 ```python
 .update(
-   replay_iter: DataLoader, step: int = 0
+   replay_iter: Iterable, step: int = 0
 )
 ```
 
+---
+Update the learner.
+
+
+**Args**
+
+* **replay_iter** (Iterable) : Hsuanwu replay storage iterable dataloader.
+* **step** (int) : Global training step.
+
+
+**Returns**
+
+Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L225)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L193)
 ```python
 .update_critic(
-   obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs,
+   obs: Tensor, action: Tensor, reward: Tensor, discount: Tensor, next_obs: Tensor,
    step: int
 )
 ```
 
+---
+Update the critic network.
+
+
+**Args**
+
+* **obs** (Tensor) : Observations.
+* **action** (Tensor) : Actions.
+* **reward** (Tensor) : Rewards.
+* **discount** (Tensor) : discounts.
+* **next_obs** (Tensor) : Next observations.
+* **step** (int) : Global training step.
+
+
+**Returns**
+
+Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/BellmanProject/Hsuanwu/blob/main/hsuanwu/xploit/learner/drqv2.py/#L252)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/learner/drqv2.py\#L242)
 ```python
 .update_actor(
    obs: Tensor, step: int
 )
 ```
 
+---
+Update the actor network.
+
+
+**Args**
+
+* **obs** (Tensor) : Observations.
+* **step** (int) : Global training step.
+
+
+**Returns**
+
+Actor loss metrics.

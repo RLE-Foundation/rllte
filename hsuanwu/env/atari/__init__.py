@@ -1,42 +1,41 @@
-from gym.wrappers import (RecordEpisodeStatistics,
-                          ResizeObservation,
-                          GrayScaleObservation,
-                          FrameStack,
-                          TransformReward)
-from gym.vector import SyncVectorEnv
+from typing import Callable, Dict, Tuple
 
-import gym
+import gymnasium as gym
 import numpy as np
+import torch as th
+from gymnasium.vector import SyncVectorEnv
+from gymnasium.wrappers import (FrameStack, GrayScaleObservation,
+                                RecordEpisodeStatistics, ResizeObservation,
+                                TransformReward)
 
-from hsuanwu.common.typing import *
-from hsuanwu.env.atari.wrappers import (NoopResetEnv,
-                                        MaxAndSkipEnv,
-                                        EpisodicLifeEnv,
-                                        FireResetEnv)
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from hsuanwu.env.atari.wrappers import (EpisodicLifeEnv, FireResetEnv,
+                                        MaxAndSkipEnv, NoopResetEnv)
+from hsuanwu.env.utils import HsuanwuEnvWrapper
 
-def make_atari_env(env_id: str = 'Alien-v5',
-                   num_envs: int = 8,
-                   seed: int = 0,
-                   frame_stack: int = 4,
-                   device: torch.device = 'cuda'
-                   ) -> Env:
+
+def make_atari_env(
+    env_id: str = "Alien-v5",
+    num_envs: int = 8,
+    device: th.device = "cpu",
+    seed: int = 0,
+    frame_stack: int = 4,
+) -> gym.Env:
     """Build Atari environments.
 
     Args:
-        env_id: Name of environment.
-        num_envs: Number of parallel environments.
-        seed: Random seed.
-        frame_stack: Number of stacked frames.
-        device: Device (cpu, cuda, ...) on which the code should be run.
+        env_id (str): Name of environment.
+        num_envs (int): Number of parallel environments.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        seed (int): Random seed.
+        frame_stack (int): Number of stacked frames.
 
     Returns:
         Environments instance.
     """
-    def make_env(env_id: str, seed: int) -> Env:
+
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
-            env = RecordEpisodeStatistics(env)
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
             env = EpisodicLifeEnv(env)
@@ -47,7 +46,7 @@ def make_atari_env(env_id: str = 'Alien-v5',
             env = ResizeObservation(env, shape=(84, 84))
             env = GrayScaleObservation(env)
             env = FrameStack(env, frame_stack)
-            env.seed(seed)
+
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
@@ -55,8 +54,10 @@ def make_atari_env(env_id: str = 'Alien-v5',
 
         return _thunk
 
-    env_id = 'ALE/' + env_id
+    if "NoFrameskip-v4" not in env_id:
+        env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device, lambda obs: obs)
+    return HsuanwuEnvWrapper(envs, device)

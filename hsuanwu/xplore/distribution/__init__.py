@@ -1,4 +1,6 @@
-from .base import BaseDistribution
-from .truncated_normal import TruncatedNormal
-from .ornstein_uhlenbeck import OrnsteinUhlenbeck
-from .categorical import Categorical
+from .base import BaseDistribution as BaseDistribution
+from .categorical import Categorical as Categorical
+from .normal_noise import NormalNoise as NormalNoise
+from .ornstein_uhlenbeck_noise import OrnsteinUhlenbeckNoise as OrnsteinUhlenbeckNoise
+from .squashed_normal import SquashedNormal as SquashedNormal
+from .truncated_normal_noise import TruncatedNormalNoise as TruncatedNormalNoise

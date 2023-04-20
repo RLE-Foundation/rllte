@@ -1,14 +1,14 @@
 site_name: "Hsuanwu"
 site_url: https://docs.hsuanwu.dev/
-copyright: Copyright &copy; 2023 Bellman Project
+copyright: Copyright &copy; 2023 Reinforcement Learning Evolution Foundation
 theme:
   name: material
   logo: assets/images/icon.svg
   favicon: assets/images/icon.svg
   palette:
     - scheme: hsuanwu
-      primary: teal
-      accent: teal
+      primary: hsuanwu
+      accent: hsuanwu
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -45,13 +45,13 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
 
-repo_url: https://github.com/BellmanProject/Hsuanwu
-repo_name: BellmanProject/Hsuanwu
+repo_url: https://github.com/RLE-Foundation/Hsuanwu
+repo_name: RLE-Foundation/Hsuanwu
 
 extra:
   social: 
     - icon: fontawesome/brands/github
-      link: https://github.com/BellmanProject/Hsuanwu
+      link: https://github.com/RLE-Foundation/Hsuanwu
     - icon: fontawesome/solid/paper-plane
       link: friedrichyuan19990827@gmail.com
     - icon: fontawesome/brands/python
@@ -61,31 +61,57 @@ nav:
   - Overview: 
     - Overview: index.md
     - Changelog: changelog.md
+    - Contribution: contributing.md
     - License: license.md
 
-  - Getting Stared:
+  - Getting Started:
     - Installation: getting_started.md
+    - Verification: verification.md
+  
+  - Tutorials: tutorials.md
 
   - API Documentation:
-    - Overview: overview/api_overview.md
-    - xploit:
-      - encoder: 
-        - Base: api/xploit/encoder/base.md
-        - VanillaCnnEncoder: api/xploit/encoder/vanilla_cnn_encoder.md
+    - Overview: overview/api.md
+    - Common: 
+      - Engine: 
+        - BasePolicyTrainer: api/common/base_policy_trainer.md
+        - OnPolicyTrainer: api/common/on_policy_trainer.md
+        - OffPolicyTrainer: api/common/off_policy_trainer.md
+        - DistributedTrainer: api/common/distributed_trainer.md
+      - Logger: api/common/logger.md
+      - Timer: api/common/timer.md
+
+    - Xploit:
+      - Xploit Overview: overview/xploit_index/index.md
+      - encoder:
+        - BaseEncoder: api/xploit/encoder/base.md
+        - TassaCnnEncoder: api/xploit/encoder/tassa_cnn_encoder.md
+        - MnihCnnEncoder: api/xploit/encoder/mnih_cnn_encoder.md
+        - EspeholtResidualEncoder: api/xploit/encoder/espeholt_residual_encoder.md
         - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
+        - IdentityEncoder: api/xploit/encoder/identity_encoder.md
 
       - learner:
-        - DrQv2Agent: api/xploit/learner/drqv2.md
-        - PPGAgent: api/xploit/learner/ppg.md
+        - BaseLearner: api/xploit/learner/base.md
+        - SACLearner: api/xploit/learner/sac.md
+        - DrQLearner: api/xploit/learner/sac.md
+        - DrQv2Learner: api/xploit/learner/drqv2.md
+        - DDPGLearner: api/xploit/learner/drqv2.md
+        - PPGLearner: api/xploit/learner/ppg.md
+        - PPOLearner: api/xploit/learner/ppo.md
+        - DrACLearner: api/xploit/learner/ppo.md
+        - IMPALALearner: api/xploit/learner/impala.md
       
       - storage:
-        - VanillaReplayBuffer: api/xploit/storage/vanilla_replay_buffer.md
-        - NStepReplayBuffer: api/xploit/storage/nstep_replay_buffer.md
-        - PrioritizedReplayBuffer: api/xploit/storage/prioritized_replay_buffer.md
+        - VanillaRolloutStorage: api/xploit/storage/vanilla_rollout_storage.md
+        - VanillaReplayStorage: api/xploit/storage/vanilla_replay_storage.md
+        - NStepReplayStorage: api/xploit/storage/nstep_replay_storage.md
+        - PrioritizedReplayStorage: api/xploit/storage/prioritized_replay_storage.md
 
-    - xplore:
+    - Xplore:
+      - Xplore Overview: overview/xplore_index/index.md
       - reward:
-        - Base: api/xplore/reward/base.md
+        - BaseIntrinsicRewardModule: api/xplore/reward/base.md
         - ICM: api/xplore/reward/icm.md
         - RND: api/xplore/reward/rnd.md
         - GIRM: api/xplore/reward/girm.md
@@ -96,12 +122,38 @@ nav:
         - REVD: api/xplore/reward/revd.md
 
       - augmentation:
-        - Base: api/xplore/augmentation/base.md
+        - BaseAugmentation: api/xplore/augmentation/base.md
+        - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
+        - RandomConvolution: api/xplore/augmentation/random_convolution.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
+        - RandomCutout: api/xplore/augmentation/random_cutout.md
+        - RandomCutoutColor: api/xplore/augmentation/random_cutoutcolor.md
+        - RandomFlip: api/xplore/augmentation/random_flip.md
+        - RandomRotate: api/xplore/augmentation/random_rotate.md
         - RandomShift: api/xplore/augmentation/random_shift.md
+        - RandomTranslate: api/xplore/augmentation/random_translate.md
 
       - distribution:
-        - Base: api/xplore/distribution/base.md
-        - TruncatedNormal: api/xplore/distribution/truncated_normal.md
-        - OrnsteinUhlenbeck: api/xplore/distribution/ornstein_uhlenbeck.md
+        - BaseDistribution: api/xplore/distribution/base.md
+        - Categorical: api/xplore/distribution/categorical.md
+        - SquashedNormal: api/xplore/distribution/squashed_normal.md
+        - NormalNoise: api/xplore/distribution/truncated_normal_noise.md
+        - OrnsteinUhlenbeckNoise: api/xplore/distribution/ornstein_uhlenbeck_noise.md
+        - TruncatedNormalNoise: api/xplore/distribution/truncated_normal_noise.md
+    
+    - Env:
+      - Overview: overview/env_index/index.md
+      - make_atari_env: api/env/atari.md
+      - make_dmc_env: api/env/dmc.md
+      - make_procgen_env: api/env/procgen.md
+      - make_minigrid_env: api/env/minigrid.md
+    
+    - Evaluation:
+      - Overview: overview/evaluation_index/index.md
+
+    - Pre-training: 
+      - Pre-training Overview: overview/pretraining_index/index.md
+    
+    - Deployment: 
+      - Deployment Overview: overview/deployment_index/index.md
   - Benchmarks: benchmarks.md

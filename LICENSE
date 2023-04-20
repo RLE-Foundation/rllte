@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2023 Bellman Project
+Copyright (c) 2023 Reinforcement Learning Evolution Foundation
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

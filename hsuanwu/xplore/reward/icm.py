@@ -1,277 +1,264 @@
-from torch.nn import functional as F
-from torch import nn, optim
-from torch.utils.data import DataLoader, TensorDataset
+from typing import Union, Dict, Tuple
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import numpy as np
-import torch
+import torch as th
+from torch import nn
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
+class Encoder(nn.Module):
+    """Encoder for encoding observations.
 
-class CnnEncoder(nn.Module):
-    """
-    Encoder for encoding image-based observations.
-    
     Args:
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
-    
+        obs_shape (Tuple): The data shape of observations.
+        action_shape (Tuple): The data shape of actions.
+        latent_dim (int): The dimension of encoding vectors.
+
     Returns:
-        CNN-based encoder.
+        Encoder instance.
     """
-    def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self,
+                 obs_shape: Tuple,
+                 action_shape: Tuple,
+                 latent_dim: int
+                 ) -> None:
         super().__init__()
-        assert len(obs_shape) >= 3, "CnnEncoder does not support state-based observations! Try image-based observations instead."
-        self.trunk = nn.Sequential(
-            nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2),
-            nn.BatchNorm2d(32), nn.LeakyReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2),
-            nn.BatchNorm2d(32), nn.LeakyReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2),
-            nn.BatchNorm2d(64), nn.LeakyReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=2),
-            nn.BatchNorm2d(64), nn.LeakyReLU()
-        )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
-            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-        
-        self.linear = nn.Linear(n_flatten, latent_dim)
-        self.layer_norm = nn.LayerNorm(latent_dim)
+        # visual
+        if len(obs_shape) == 3:
+            self.trunk = nn.Sequential(
+                nn.Conv2d(obs_shape[0], 32, 8, 4),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, 4, 2),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, 3, 1),
+                nn.ReLU(),
+                nn.Flatten()
+            )
+            with th.no_grad():
+                sample = th.ones(size=tuple(obs_shape))
+                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-    def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
-        if next_obs is not None:
-            input_tensor = torch.cat([obs, next_obs], dim=1)
-            h = self.trunk(input_tensor)
-            h = self.linear(h)
-            h = self.layer_norm(h)
+            self.linear = nn.Linear(n_flatten, latent_dim)
         else:
-            h = self.trunk(obs)
-            h = self.linear(h)
-            h = self.layer_norm(h)
-
-        return h
+            self.trunk = nn.Sequential(
+                nn.Linear(obs_shape[0], 256),
+                nn.ReLU()
+            )
+            self.linear = nn.Linear(256, latent_dim)
     
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Encode the input tensors.
 
+        Args:
+            obs (Tensor): Observations.
 
-class InverseForwardDynamicsModel(nn.Module):
-    """Inverse-Forward model for reconstructing transition process.
+        Returns:
+            Encoding tensors.
+        """
+        return self.linear(self.trunk(obs))
+
+class InverseDynamicsModel(nn.Module):
+    """Inverse model for reconstructing transition process.
 
     Args:
-        latent_dim: The dimension of encoding vectors of the observations.
-        action_dim: The dimension of predicted actions.
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
 
     Returns:
         Model instance.
     """
-    def __init__(self, latent_dim: int, action_dim: int) -> None:
-        super(InverseForwardDynamicsModel, self).__init__()
+    def __init__(self, latent_dim, action_dim) -> None:
+        super().__init__()
 
-        self.inverse_model = nn.Sequential(
-            nn.Linear(latent_dim * 2, 64), nn.LeakyReLU(),
-            nn.Linear(64, action_dim)
+        self.trunk = nn.Sequential(
+            nn.Linear(2 * latent_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, action_dim)
         )
 
-        self.forward_model = nn.Sequential(
-            nn.Linear(latent_dim + action_dim, 64), nn.LeakyReLU(),
-            nn.Linear(64, latent_dim)
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted actions.
+
+        Args:
+            obs (Tensor): Current observations.
+            next_obs (Tensor): Next observations.
+
+        Returns:
+            Predicted actions.
+        """
+        return self.trunk(th.cat([obs, next_obs], dim=1))
+
+class ForwardDynamicsModel(nn.Module):
+    """Forward model for reconstructing transition process.
+
+    Args:
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
+
+    Returns:
+        Model instance.
+    """
+    def __init__(self, latent_dim, action_dim) -> None:
+        super().__init__()
+
+        self.trunk = nn.Sequential(
+            nn.Linear(latent_dim + action_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, latent_dim)
         )
 
-        self.softmax = nn.Softmax()
+    def forward(self, obs: th.Tensor, pred_actions: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted next-obs.
 
-    def forward(self, obs: Tensor, action: Tensor, next_obs: Tensor, training: bool = True) -> Tensor:
-        if training:
-            # inverse prediction
-            im_input_tensor = torch.cat([obs, next_obs], dim=1)
-            pred_action = self.inverse_model(im_input_tensor)
-            # forward prediction
-            fm_input_tensor = torch.cat([obs, action], dim=-1)
-            pred_next_obs = self.forward_model(fm_input_tensor)
+        Args:
+            obs (Tensor): Current observations.
+            pred_actions (Tensor): Predicted observations.
 
-            return pred_action, pred_next_obs
-        else:
-            # forward prediction
-            fm_input_tensor = torch.cat([obs, action], dim=-1)
-            pred_next_obs = self.forward_model(fm_input_tensor)
-
-            return pred_next_obs
-
-
+        Returns:
+            Predicted next-obs.
+        """
+        return self.trunk(th.cat([obs, pred_actions], dim=1))
 
 class ICM(BaseIntrinsicRewardModule):
     """Curiosity-Driven Exploration by Self-Supervised Prediction.
         See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
-    
+
     Args:
-        obs_shape: Data shape of observation.
-        action_space: Data shape of action.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        beta: The initial weighting coefficient of the intrinsic rewards.
-        kappa: The decay rate.
-        latent_dim: The dimension of encoding vectors of the observations.
-        lr: The learning rate of inverse and forward dynamics model.
-        batch_size: The batch size to train the dynamic models.
-    
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        beta (float): The initial weighting coefficient of the intrinsic rewards.
+        kappa (float): The decay rate.
+        latent_dim (int): The dimension of encoding vectors.
+        lr (float): The learning rate.
+        batch_size (int): The batch size for update.
+
     Returns:
-        Instance of ICM.
+        Instance of RND.
     """
-    def __init__(
-            self, 
-            obs_shape: Tuple,
-            action_shape: Tuple,
-            action_type: str,
-            device: torch.device, 
-            beta: float, 
-            kappa: float,
-            latent_dim: int,
-            lr: float,
-            batch_size: int
-            ) -> None:
-        super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
+    def __init__(self, 
+                 obs_space: Union[gym.Space, DictConfig],
+                 action_space: Union[gym.Space, DictConfig],
+                 device: th.device = 'cpu',
+                 beta: float = 0.05,
+                 kappa: float = 0.000025,
+                 latent_dim: int = 128,
+                 lr: int = 0.001,
+                 batch_size: int = 64
+    ) -> None:
+        super().__init__(obs_space, action_space, device, beta, kappa)
+        self.encoder = Encoder(
+            obs_shape=obs_space.shape,
+            action_shape=action_space.shape,
+            latent_dim=latent_dim
+        ).to(self._device)
 
-        self._batch_size = batch_size
-
-        if len(self._obs_shape) == 3:
-            self.cnn_encoder = CnnEncoder(
-                obs_shape=self._obs_shape,
-                latent_dim=latent_dim).to(self._device)
-            
-            self.inverse_forward_model = InverseForwardDynamicsModel(
-                latent_dim=latent_dim, 
-                action_dim=self._action_shape[0])
+        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
+        if self._action_shape == "Discrete":
+            self.im_loss = nn.CrossEntropyLoss()
         else:
-            # for state-based observations
-            self.inverse_forward_model = InverseForwardDynamicsModel(
-                latent_dim=self._obs_shape[0], 
-                action_dim=self._action_shape[0])
-        
-        self._opt = optim.Adam(lr=lr, params=self.inverse_forward_model.parameters())
-        self.inverse_forward_model.to(self._device)
+            self.im_loss = nn.MSELoss()
 
-    def _process(self, tensor: Tensor, range: Tuple) -> Tensor:
-        """Make a grid of images.
+        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
 
-         Args:
-            tensor: 4D mini-batch Tensor of shape (B x C x H x W)
-                or a list of images all of the same size.
-            range: tuple (min, max) where min and max are numbers,
-                then these numbers are used to normalize the image. By default, min and max
-                are computed from the tensor.
-        
-        Returns:
-            Processed tensors.
-        """
-        tensor = tensor.clone()  # avoid modifying tensor in-place
-        if range is not None:
-            assert isinstance(range, tuple), \
-                "range has to be a tuple (min, max) if specified. min and max are numbers"
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
+        self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
+        self.batch_size = batch_size
 
-            def norm_ip(img, min, max):
-                img.clamp_(min=min, max=max)
-                img.add_(-min).div_(max - min + 1e-5)
-
-            def norm_range(t, range):
-                if range is not None:
-                    norm_ip(t, range[0], range[1])
-                else:
-                    norm_ip(t, float(t.min()), float(t.max()))
-        
-        norm_range(tensor, range)
-        
-        return tensor
-
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
-        """Compute the intrinsic rewards using the collected observations.
+    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
+        """Compute the intrinsic rewards for current samples.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
-                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-            step: The current time step.
+            samples (Dict): The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            step (int): The global training step.
 
         Returns:
-            The intrinsic rewards
+            The intrinsic rewards.
         """
         # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1. - self._kappa, step)
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
-        intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
+        beta_t = self._beta * np.power(1.0 - self._kappa, step)
+        num_steps = samples['obs'].size()[0]
+        num_envs = samples['obs'].size()[1]
+        obs_tensor = samples['obs'].to(self._device)
+        actions_tensor = samples['actions']
+        if self._action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.to(th.int64), self._action_shape[0]).float()
+            actions_tensor = actions_tensor.to(self._device)
+        next_obs_tensor = samples['next_obs'].to(self._device)
 
-        obs_tensor = torch.from_numpy(rollouts['observations'])
-        actions_tensor = torch.from_numpy(rollouts['actions'])
-        if self.action_type == 'dis':
-            # actions size: (n_steps, n_envs, 1)
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].to(torch.int64), self._action_shape[0]).float()
-        obs_tensor = obs_tensor.to(self._device)
-        actions_tensor = actions_tensor.to(self._device)
+        intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
 
-        with torch.no_grad():
-            for idx in range(n_envs):
-                if len(self._obs_shape) == 3:
-                    encoded_obs = self.cnn_encoder(obs_tensor[:, idx, :, :, :])
-                else:
-                    encoded_obs = obs_tensor[:, idx]
-                pred_next_obs = self.inverse_forward_model(
-                    encoded_obs[:-1], actions_tensor[:-1, idx], next_obs=None, training=False)
-                processed_next_obs = self._process(encoded_obs[1:], normalize=True, range=(-1, 1))
-                processed_pred_next_obs = self._process(pred_next_obs, normalize=True, range=(-1, 1))
-
-                intrinsic_rewards[:-1, idx] = F.mse_loss(processed_pred_next_obs, processed_next_obs, reduction='mean').cpu().numpy()
+        with th.no_grad():
+            for i in range(num_envs):
+                encoded_obs = self.encoder(obs_tensor[:, i])
+                encoded_next_obs = self.encoder(next_obs_tensor[:, i])
+                pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
+                dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction='none').mean(dim=1)
+                intrinsic_rewards[:, i] = dist.cpu()
         
-        # update model
-        self.update(rollouts)
-        
-        return beta_t * intrinsic_rewards
+        self.update(samples)
+
+        return intrinsic_rewards * beta_t
     
-    def update(self, rollouts: Dict,) -> None:
+    def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: The collected experiences. A python dict like 
-                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-        
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
         Returns:
             None
         """
-        n_steps = rollouts['observations'].shape[0]
-        n_envs = rollouts['observations'].shape[1]
-        obs_tensor = torch.from_numpy(rollouts['observations']).reshape(n_steps * n_envs, *self._obs_shape)
-        if self.action_type == 'dis':
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, )
-            actions_tensor = F.one_hot(actions_tensor.to(torch.int64), self._action_shape[0]).float()
+        num_steps = samples['obs'].size()[0]
+        num_envs = samples['obs'].size()[1]
+        obs_tensor = samples['obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples['next_obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+
+        if self._action_type == "Discrete":
+            actions_tensor = samples['actions'].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor, self._action_shape[0]).float()
         else:
-            actions_tensor = torch.from_numpy(rollouts['actions']).reshape(n_steps * n_envs, self._action_shape[0])
-        obs_tensor = obs_tensor.to(self._device)
-        actions_tensor = actions_tensor.to(self._device)
+            actions_tensor = samples['actions'].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
 
-        if len(self._obs_shape) == 3:
-            encoded_obs = self.cnn_encoder(obs_tensor)
-        else:
-            encoded_obs = obs_tensor
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        loader = DataLoader(
+            dataset=dataset, batch_size=self.batch_size, drop_last=True
+        )
 
-        dataset = TensorDataset(encoded_obs[:-1], actions_tensor[:-1], encoded_obs[1:])
-        loader = DataLoader(dataset=dataset, batch_size=self._batch_size, drop_last=True)
+        for idx, batch in enumerate(loader):
+            obs, actions, next_obs = batch
 
-        for idx, batch_data in enumerate(loader):
-            batch_obs = batch_data[0]
-            batch_actions = batch_data[1]
-            batch_next_obs = batch_data[2]
+            self.encoder_opt.zero_grad()
+            self.im_opt.zero_grad()
+            self.fm_opt.zero_grad()
 
-            pred_actions, pred_next_obs = self.inverse_forward_model(
-                batch_obs, batch_actions, batch_next_obs
-            )
+            encoded_obs = self.encoder(obs)
+            encoded_next_obs = self.encoder(next_obs)
 
-            loss = self.im_loss(pred_actions, batch_actions) + \
-                   self.fm_loss(pred_next_obs, batch_next_obs)
+            pred_actions = self.im(encoded_obs, encoded_next_obs)
+            im_loss = self.im_loss(pred_actions, actions)
+            pred_next_obs = self.fm(encoded_obs, actions)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            (im_loss + fm_loss).backward()
 
-            self._opt.zero_grad()
-            loss.backward(retain_graph=True)
-            self._opt.step()
-        
+            self.encoder_opt.step()
+            self.im_opt.step()
+            self.fm_opt.step()

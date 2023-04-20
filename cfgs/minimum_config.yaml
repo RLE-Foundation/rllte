@@ -1,0 +1,7 @@
+experiment: drqv2_dmc     # Experiment ID.
+device: cuda:0            # Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                   # Random seed for reproduction.
+num_train_steps: 250000   # Number of training steps.
+
+learner:
+  name: DrQv2Learner      # The learner name.
