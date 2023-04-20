@@ -1,15 +1,16 @@
-from typing import Dict, Tuple, Union
-
-import numpy as np
-import torch as th
-from torch import nn, optim
-from torch.nn import functional as F
-from torch.utils.data import DataLoader, TensorDataset
-from omegaconf import DictConfig
+from typing import Union, Dict, Tuple
 import gymnasium as gym
+from omegaconf import DictConfig
 from collections import deque
 
-from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
+from torch import nn
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+import torch as th
+
+from hsuanwu.xplore.reward import BaseIntrinsicRewardModule
+
 
 class Encoder(nn.Module):
     """Encoder for encoding observations.
@@ -83,8 +84,9 @@ class Encoder(nn.Module):
         """
         return F.relu(self.linear(self.trunk(obs)))
 
-class NGU(BaseIntrinsicRewardModule):
-    """Never Give Up: Learning Directed Exploration Strategies (NGU).
+
+class PseudoCounts(BaseIntrinsicRewardModule):
+    """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
         See paper: https://arxiv.org/pdf/2002.06038
     
     Args:
@@ -106,7 +108,6 @@ class NGU(BaseIntrinsicRewardModule):
         kernel_epsilon (float): The kernel constant.
         c (float): The pseudo-counts constant.
         sm (float): The kernel maximum similarity.
-        mrs (float): The maximum reward scaling.
 
     Returns:
         Instance of the base intrinsic reward module.
@@ -117,7 +118,7 @@ class NGU(BaseIntrinsicRewardModule):
                  device: th.device = 'cpu', 
                  beta: float = 0.05, 
                  kappa: float = 0.000025,
-                 latent_dim: int = 128,
+                 latent_dim: int = 32,
                  lr: int = 0.001,
                  batch_size: int = 64,
                  capacity: int = 1000,
@@ -126,7 +127,6 @@ class NGU(BaseIntrinsicRewardModule):
                  kernel_epsilon: float = 0.0001,
                  c: float = 0.001,
                  sm: float = 8.,
-                 mrs: float = 5.,
                  ) -> None:
         super().__init__(obs_space, action_space, device, beta, kappa)
         
@@ -141,35 +141,12 @@ class NGU(BaseIntrinsicRewardModule):
         self.kernel_epsilon = kernel_epsilon
         self.c = c
         self.sm = sm
-        self.mrs = mrs
 
-        self.episodic_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         if self._action_type == 'Discrete':
-            self.episodic_loss = nn.CrossEntropyLoss()
+            self.loss = nn.CrossEntropyLoss()
         else:
-            self.episodic_loss = nn.MSELoss()
-        
-        # life-long part
-        # life-long part
-        self.predictor = Encoder(
-            obs_shape=obs_space.shape,
-            action_shape=action_space.shape,
-            latent_dim=latent_dim
-        ).to(self._device)
-
-        self.target = Encoder(
-            obs_shape=obs_space.shape,
-            action_shape=action_space.shape,
-            latent_dim=latent_dim
-        ).to(self._device)
-
-        self.life_long_opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
-        self.batch_size = batch_size
-
-        # freeze the network parameters
-        for p in self.target.parameters():
-            p.requires_grad = False
-
+            self.loss = nn.MSELoss()
         self.batch_size = batch_size
     
     def pseudo_counts(self, e: th.Tensor) -> th.Tensor:
@@ -198,7 +175,7 @@ class NGU(BaseIntrinsicRewardModule):
                 counts[step] = 1. / s
         
         return counts
-    
+            
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
         """Compute the intrinsic rewards for current samples.
 
@@ -227,17 +204,7 @@ class NGU(BaseIntrinsicRewardModule):
                     # TODO: add encodings into memory
                     self.episodic_memory.extend(e.split(1))
                     n_eps = self.pseudo_counts(e=e)
-
-                    
-                    src_feats = self.predictor.encode(obs_tensor[:, i])
-                    tgt_feats = self.target.encode(obs_tensor[:, i])
-                    dist = F.mse_loss(src_feats, tgt_feats, reduction='none').mean(dim=1)
-                    dist = (dist - dist.mean()) / (dist.std() + 1e-11)
-                    # min{max{alpha_t, 1}, L}
-                    alpha = 1. + dist
-                    alpha = th.maximum(alpha, th.ones_like(alpha))
-                    alpha = th.minimum(alpha, th.ones_like(alpha) * self.mrs)
-                    intrinsic_rewards[:, i] = n_eps * alpha.cpu()
+                    intrinsic_rewards[:, i] = n_eps
             
             # udpate the module
             self.update(samples)
@@ -278,19 +245,9 @@ class NGU(BaseIntrinsicRewardModule):
 
         for idx, batch in enumerate(loader):
             obs, actions, next_obs = batch
-            # episodic part
             pred_actions = self.encoder(obs, next_obs)
-            self.episodic_opt.zero_grad()
-            episodic_loss = self.episodic_loss(pred_actions, actions)
-            episodic_loss.backward()
-            self.episodic_opt.step()
+            self.opt.zero_grad()
+            loss = self.loss(pred_actions, actions)
+            loss.backward()
+            self.opt.step()
 
-            # life-long part
-            src_feats = self.predictor.encode(obs)
-            with th.no_grad():
-                tgt_feats = self.target.encode(obs)
-
-            self.life_long_opt.zero_grad()
-            life_long_loss = F.mse_loss(src_feats, tgt_feats)
-            life_long_loss.backward()
-            self.life_long_opt.step()

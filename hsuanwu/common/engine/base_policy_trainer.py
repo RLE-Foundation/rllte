@@ -217,9 +217,8 @@ class BasePolicyTrainer(ABC):
         ## for reward
         if new_cfgs.reward._target_ is not None:
             new_cfgs.reward.device = new_cfgs.device
-            new_cfgs.reward.obs_shape = observation_space["shape"]
-            new_cfgs.reward.action_type = action_space["type"]
-            new_cfgs.reward.action_shape = action_space["shape"]
+            new_cfgs.reward.obs_space = observation_space
+            new_cfgs.reward.action_space = action_space
 
         return new_cfgs
 
