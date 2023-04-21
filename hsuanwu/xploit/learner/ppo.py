@@ -1,4 +1,6 @@
-from typing import Dict
+from typing import Dict, Union
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import torch as th
 from torch import nn
@@ -10,7 +12,7 @@ from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
     "storage": ["VanillaRolloutStorage"],
-    "distribution": ["Categorical"],
+    "distribution": ["Categorical", "DiagonalGaussian"],
     "augmentation": [],
     "reward": [],
 }
@@ -27,12 +29,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "EspeholtResidualEncoder",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "feature_dim": 256,
     },
     "learner": {
         "name": "PPOLearner",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -60,10 +62,10 @@ class PPOLearner(BaseLearner):
         When 'augmentation' module is invoked, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -86,8 +88,8 @@ class PPOLearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Dict,
-        action_space: Dict,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
@@ -101,7 +103,7 @@ class PPOLearner(BaseLearner):
         aug_coef: float,
         max_grad_norm: float,
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
 
         self.n_epochs = n_epochs
         self.clip_range = clip_range
@@ -173,6 +175,18 @@ class PPOLearner(BaseLearner):
         total_critic_loss = 0.0
         total_entropy_loss = 0.0
         total_aug_loss = 0.0
+        num_steps, num_envs = rollout_storage.obs.size()[:2]
+
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
+                samples={
+                    "obs": rollout_storage.obs[:-1],
+                    "actions": rollout_storage.actions[:-1],
+                    "next_obs": rollout_storage.obs[1:]
+                },
+                step=episode * num_envs * num_steps,
+            )
+            rollout_storage.rewards[:-1] += intrinsic_reward.to(self.device)
 
         for e in range(self.n_epochs):
             generator = rollout_storage.generator(self.num_mini_batch)

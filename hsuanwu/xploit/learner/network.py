@@ -246,7 +246,7 @@ class DiscreteActorCritic(nn.Module):
         return actions, self.critic(h), log_probs, entropy
 
 class BoxActorCritic(nn.Module):
-    """Actor-Critic network for discrete control tasks. For PPOLearner, DrACLearner.
+    """Actor-Critic network for 'Box' tasks. For PPOLearner, DrACLearner.
 
     Args:
         action_space (Space): Action space of the environment.
@@ -268,7 +268,9 @@ class BoxActorCritic(nn.Module):
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(),
         )
-        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
+        self.actor_mu = nn.Linear(hidden_dim, action_space.shape[0])
+        self.actor_logstd = nn.Parameter(th.zeros(1, action_space.shape[0]))
+
         self.critic = nn.Linear(hidden_dim, 1)
         # placeholder for distribution
         self.dist = None
@@ -295,8 +297,10 @@ class BoxActorCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        mu = self.actor(self.trunk(obs))
-        return self.dist(mu).mode
+        mu = self.actor_mu(self.trunk(obs))
+        logstd = self.actor_logstd.expand_as(mu)
+
+        return self.dist(mu, logstd.exp()).mean
 
     def get_action_and_value(
         self, obs: th.Tensor, actions: th.Tensor = None
@@ -311,8 +315,10 @@ class BoxActorCritic(nn.Module):
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
         h = self.trunk(obs)
-        mu = self.actor(h)
-        dist = self.dist(mu)
+        mu = self.actor_mu(h)
+        logstd = self.actor_logstd.expand_as(mu)
+
+        dist = self.dist(mu, logstd.exp())
         if actions is None:
             actions = dist.sample()
 

@@ -1,0 +1,24 @@
+########################### Train setup
+experiment: ppo_dmc_state
+device: cpu            # Device (cpu, cuda, ...) on which the code should be run.
+seed: 1                   # Random seed for reproduction.
+num_train_steps: 1000000   # Number of training steps.
+
+encoder:
+  name: IdentityEncoder
+  feature_dim: 5
+
+learner:
+  name: PPOLearner
+
+distribution:
+  name: DiagonalGaussian
+
+reward:
+  name: ICM
+
+hydra:
+  run:
+    dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  job:
+    chdir: true

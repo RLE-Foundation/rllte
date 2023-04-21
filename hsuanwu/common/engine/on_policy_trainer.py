@@ -85,10 +85,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
             actions, values, log_probs, entropy = self._learner.ac.get_action_and_value(
                 obs=encoded_obs
             )
-            return actions, values, log_probs, entropy
+            return actions.clamp(*self._cfgs.action_space["range"]), values, log_probs, entropy
         else:
             actions = self._learner.ac.get_action(obs=encoded_obs)
-            return actions
+            return actions.clamp(*self._cfgs.action_space["range"])
 
     def train(self) -> None:
         """Training function."""

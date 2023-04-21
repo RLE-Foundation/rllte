@@ -267,7 +267,7 @@ class NGU(BaseIntrinsicRewardModule):
 
         if self._action_type == "Discrete":
             actions_tensor = samples['actions'].view((num_envs * num_steps)).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor, self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
             actions_tensor = samples['actions'].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
 
