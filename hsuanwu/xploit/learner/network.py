@@ -431,6 +431,115 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         """
         return self.dist(self.actor(self.trunk(obs)))
 
+class BoxActorAuxiliaryCritic(nn.Module):
+    """Actor-Critic network for 'Box' tasks. For PPGLearner.
+
+    Args:
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Actor-Critic instance.
+    """
+
+    def __init__(
+        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
+    ) -> None:
+        super().__init__()
+
+        self.trunk = nn.Sequential(
+            nn.LayerNorm(feature_dim),
+            nn.Tanh(),
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(),
+        )
+
+        self.actor_mu = nn.Linear(hidden_dim, action_space.shape[0])
+        self.actor_logstd = nn.Parameter(th.zeros(1, action_space.shape[0]))
+        self.critic = nn.Linear(hidden_dim, 1)
+        self.aux_critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
+        self.dist = None
+
+        self.apply(utils.network_init)
+
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.trunk(obs))
+
+    def get_action(self, obs: th.Tensor) -> th.Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs: Observations.
+
+        Returns:
+            Estimated values.
+        """
+        mu = self.actor_mu(self.trunk(obs))
+        logstd = self.actor_logstd.expand_as(mu)
+
+        return self.dist(mu, logstd.exp()).mean
+
+    def get_action_and_value(
+        self, obs: th.Tensor, actions: th.Tensor = None
+    ) -> Tuple[th.Tensor, ...]:
+        """Get actions and estimated values for observations.
+
+        Args:
+            obs: Sampled observations.
+            actions: Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.trunk(obs)
+        mu = self.actor_mu(h)
+        logstd = self.actor_logstd.expand_as(mu)
+
+        dist = self.dist(mu, logstd.exp())
+        if actions is None:
+            actions = dist.sample()
+
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, self.critic(h), log_probs, entropy
+
+    def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
+        """Get probs and auxiliary estimated values for auxiliary phase update.
+
+        Args:
+            obs: Sampled observations.
+
+        Returns:
+            Distribution, estimated values, auxiliary estimated values.
+        """
+        h = self.trunk(obs)
+        logits = self.actor(h)
+        dist = self.dist(logits)
+
+        return dist, self.critic(h.detach()), self.aux_critic(h)
+
+    def get_logits(self, obs: th.Tensor) -> Distribution:
+        """Get the log-odds of sampling.
+
+        Args:
+            obs: Sampled observations.
+
+        Returns:
+            Distribution
+        """
+        return self.dist(self.actor(self.trunk(obs)))
+
 
 class DiscreteLSTMActor(nn.Module):
     def __init__(

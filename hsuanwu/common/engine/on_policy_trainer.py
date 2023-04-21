@@ -134,6 +134,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                     terminateds=terminateds,
                     truncateds=truncateds,
                     log_probs=log_probs,
+                    next_obs=next_obs,
                     values=values,
                 )
 

@@ -1,17 +1,19 @@
-from typing import Dict
+from typing import Dict, Union
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import numpy as np
 import torch as th
 from torch import nn
 
 from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic
+from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic, BoxActorAuxiliaryCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
     "storage": ["VanillaRolloutStorage"],
-    "distribution": ["Categorical"],
+    "distribution": ["Categorical", "DiagonalGaussian"],
     "augmentation": [],
     "reward": [],
 }
@@ -28,12 +30,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "EspeholtResidualEncoder",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "feature_dim": 256,
     },
     "learner": {
         "name": "PPGLearner",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -63,10 +65,10 @@ class PPGLearner(BaseLearner):
     """Phasic Policy Gradient (PPG) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -80,6 +82,7 @@ class PPGLearner(BaseLearner):
         num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
+        aug_coef (float): Weighting coefficient of augmentation loss.
         max_grad_norm (float): Maximum norm of gradients.
         policy_epochs (int): Number of iterations in the policy phase.
         aux_epochs (int): Number of iterations in the auxiliary phase.
@@ -92,8 +95,8 @@ class PPGLearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Dict,
-        action_space: Dict,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int = 256,
         lr: float = 5e-4,
@@ -104,19 +107,21 @@ class PPGLearner(BaseLearner):
         num_aux_mini_batch: int = 4,
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
+        aug_coef: float = 0.1,
         max_grad_norm: float = 0.5,
         policy_epochs: int = 32,
         aux_epochs: int = 6,
         kl_coef: float = 1.0,
         num_aux_grad_accum: int = 1,
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
 
         self.clip_range = clip_range
         self.num_policy_mini_batch = num_policy_mini_batch
         self.num_aux_mini_batch = num_aux_mini_batch
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
+        self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
         self.policy_epochs = policy_epochs
         self.aux_epochs = aux_epochs
@@ -131,8 +136,14 @@ class PPGLearner(BaseLearner):
         # create models
         self.encoder = None
         # create models
-        if action_space["type"] == "Discrete":
+        if self.action_type == "Discrete":
             self.ac = DiscreteActorAuxiliaryCritic(
+                action_space=action_space,
+                feature_dim=feature_dim,
+                hidden_dim=hidden_dim,
+            ).to(self.device)
+        elif self.action_type == "Box":
+            self.ac = BoxActorAuxiliaryCritic(
                 action_space=action_space,
                 feature_dim=feature_dim,
                 hidden_dim=hidden_dim,
@@ -184,18 +195,18 @@ class PPGLearner(BaseLearner):
 
         # TODO: Save auxiliary transitions
         if episode == 0:
-            num_steps, num_envs = rollout_storage.obs.size()[:2]
+            num_steps, num_envs = rollout_storage.actions.size()[:2]
             self.aux_obs = th.empty(
                 size=(
                     num_steps,
                     num_envs * self.policy_epochs,
-                    *self.obs_space.shape,
+                    *self.obs_shape,
                 ),
                 device="cpu",
                 dtype=th.float32,
             )
             self.aux_returns = th.empty(
-                size=(num_steps, num_envs * self.policy_epochs, 1),
+                size=(num_steps, num_envs * self.policy_epochs),
                 device="cpu",
                 dtype=th.float32,
             )
@@ -203,7 +214,7 @@ class PPGLearner(BaseLearner):
                 size=(
                     num_steps,
                     num_envs * self.policy_epochs,
-                    self.action_space.shape[0],
+                    self.action_shape[0],
                 ),
                 device="cpu",
                 dtype=th.float32,
@@ -214,7 +225,7 @@ class PPGLearner(BaseLearner):
 
         idx = int(episode % self.policy_epochs)
         self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
-            rollout_storage.obs.clone()
+            rollout_storage.obs[:-1].clone()
         )
         self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
             rollout_storage.returns.clone()
@@ -226,7 +237,18 @@ class PPGLearner(BaseLearner):
         total_entropy_loss = 0.0
         num_updates = 0
 
-        generator = rollout_storage.generator(self.num_policy_mini_batch)
+        generator = rollout_storage.sample(self.num_policy_mini_batch)
+
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
+                samples={
+                    "obs": rollout_storage.obs[:-1],
+                    "actions": rollout_storage.actions,
+                    "next_obs": rollout_storage.obs[1:]
+                },
+                step=episode * self.num_envs * self.num_steps,
+            )
+            rollout_storage.rewards += intrinsic_reward.to(self.device)
 
         for batch in generator:
             (
@@ -261,16 +283,36 @@ class PPGLearner(BaseLearner):
             values_losses_clipped = (values_clipped - batch_returns).pow(2)
             critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
+            if self.aug is not None:
+                # augmentation loss part
+                batch_obs_aug = self.aug(batch_obs)
+                new_batch_actions, _, _, _ = self.ac.get_action_and_value(
+                    obs=self.encoder(batch_obs)
+                )
+
+                _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
+                    obs=self.encoder(batch_obs_aug), actions=new_batch_actions
+                )
+                action_loss_aug = -log_probs_aug.mean()
+                value_loss_aug = (
+                    0.5 * (th.detach(values) - values_aug).pow(2).mean()
+                )
+                aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
+            else:
+                aug_loss = th.scalar_tensor(
+                    s=0.0, requires_grad=False, device=critic_loss.device
+                )
+                
             # update
             self.encoder_opt.zero_grad(set_to_none=True)
             self.ac_opt.zero_grad(set_to_none=True)
             (
-                critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
+                critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss
             ).backward()
             nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
             nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
-            self.encoder_opt.step()
             self.ac_opt.step()
+            self.encoder_opt.step()
 
             total_actor_loss += actor_loss.item()
             total_critic_loss += critic_loss.item()

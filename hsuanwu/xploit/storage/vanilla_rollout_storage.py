@@ -43,7 +43,7 @@ class VanillaRolloutStorage(BaseStorage):
 
         # transition part
         self.obs = th.empty(
-            size=(num_steps, num_envs, *self._obs_shape),
+            size=(num_steps + 1, num_envs, *self._obs_shape),
             dtype=th.float32,
             device=self._device,
         )
@@ -98,6 +98,7 @@ class VanillaRolloutStorage(BaseStorage):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
+        next_obs: th.Tensor,
         log_probs: th.Tensor,
         values: th.Tensor,
     ) -> None:
@@ -109,6 +110,7 @@ class VanillaRolloutStorage(BaseStorage):
             rewards (Tensor): Rewards.
             terminateds (Tensor): Terminateds.
             truncateds (Tensor): Truncateds.
+            next_obs (Tensor): Next observations.
             log_probs (Tensor): Log of the probability evaluated at `actions`.
             values (Tensor): Estimated values.
 
@@ -120,6 +122,7 @@ class VanillaRolloutStorage(BaseStorage):
         self.rewards[self._global_step].copy_(rewards)
         self.terminateds[self._global_step + 1].copy_(terminateds)
         self.truncateds[self._global_step + 1].copy_(truncateds)
+        self.obs[self._global_step + 1].copy_(next_obs)
         self.log_probs[self._global_step].copy_(log_probs[:, 0])
         self.values[self._global_step].copy_(values[:, 0])
 
@@ -162,7 +165,7 @@ class VanillaRolloutStorage(BaseStorage):
             self.advantages.std() + 1e-5
         )
 
-    def generator(self, num_mini_batch: int = 8) -> Generator:
+    def sample(self, num_mini_batch: int = 8) -> Generator:
         """Sample data from storage.
 
         Args:
@@ -186,7 +189,7 @@ class VanillaRolloutStorage(BaseStorage):
         )
 
         for indices in sampler:
-            batch_obs = self.obs.view(-1, *self._obs_shape)[indices]
+            batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]
             batch_actions = self.actions.view(-1, self._action_dim)[indices]
             batch_values = self.values.view(-1, 1)[indices]
             batch_returns = self.returns.view(-1, 1)[indices]
@@ -196,7 +199,3 @@ class VanillaRolloutStorage(BaseStorage):
             adv_targ = self.advantages.view(-1, 1)[indices]
 
             yield batch_obs, batch_actions, batch_values, batch_returns, batch_terminateds, batch_truncateds, batch_old_log_probs, adv_targ
-
-    def sample(self, *args) -> Any:
-        """Sample from the storage.
-        """

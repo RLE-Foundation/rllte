@@ -175,21 +175,21 @@ class PPOLearner(BaseLearner):
         total_critic_loss = 0.0
         total_entropy_loss = 0.0
         total_aug_loss = 0.0
-        num_steps, num_envs = rollout_storage.obs.size()[:2]
+        num_steps, num_envs = rollout_storage.actions.size()[:2]
 
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
                 samples={
                     "obs": rollout_storage.obs[:-1],
-                    "actions": rollout_storage.actions[:-1],
+                    "actions": rollout_storage.actions,
                     "next_obs": rollout_storage.obs[1:]
                 },
                 step=episode * num_envs * num_steps,
             )
-            rollout_storage.rewards[:-1] += intrinsic_reward.to(self.device)
+            rollout_storage.rewards += intrinsic_reward.to(self.device)
 
         for e in range(self.n_epochs):
-            generator = rollout_storage.generator(self.num_mini_batch)
+            generator = rollout_storage.sample(self.num_mini_batch)
 
             for batch in generator:
                 (
