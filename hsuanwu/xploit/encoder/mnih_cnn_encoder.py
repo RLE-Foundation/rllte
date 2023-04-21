@@ -1,4 +1,6 @@
+from typing import Union, Dict, List
 import gymnasium as gym
+from omegaconf import DictConfig
 import torch as th
 from torch import nn
 
@@ -7,21 +9,23 @@ from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 class MnihCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.
-    Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
+    Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with 
+    deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
     Target task: Atari games.
 
     Args:
-        observation_space (Space): Observation space of the environment.
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
 
     Returns:
         CNN-based encoder instance.
     """
 
-    def __init__(self, observation_space: gym.Space, feature_dim: int = 0) -> None:
-        super().__init__(observation_space, feature_dim)
+    def __init__(self, obs_space: Union[gym.Space, DictConfig], feature_dim: int = 0) -> None:
+        super().__init__(obs_space, feature_dim)
 
-        obs_shape = observation_space.shape
+        obs_shape = obs_space.shape
         assert len(obs_shape) == 3
 
         self.trunk = nn.Sequential(

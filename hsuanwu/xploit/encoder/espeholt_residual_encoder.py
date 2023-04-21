@@ -1,6 +1,6 @@
-from typing import List, Tuple
-
+from typing import Union, Dict, List
 import gymnasium as gym
+from omegaconf import DictConfig
 import torch as th
 from torch import nn
 from torch.nn import functional as F
@@ -69,13 +69,14 @@ class ResidualLayer(nn.Module):
 
 
 class EspeholtResidualEncoder(BaseEncoder):
-    """
-    ResNet-like encoder for processing image-based observations.
-    Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
-    Target task: Atari games and Procgen games.
+    """ResNet-like encoder for processing image-based observations.
+        Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance 
+        weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
+        Target task: Atari games and Procgen games.
 
     Args:
-        observation_space (Space): Observation space of the environment.
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
         net_arch (List): Architecture of the network.
             It represents the out channels of each residual layer.
@@ -87,14 +88,14 @@ class EspeholtResidualEncoder(BaseEncoder):
 
     def __init__(
         self,
-        observation_space: gym.Space,
+        obs_space: Union[gym.Space, DictConfig],
         feature_dim: int = 0,
         net_arch: List[int] = [16, 32, 32],
     ) -> None:
-        super().__init__(observation_space, feature_dim)
+        super().__init__(obs_space, feature_dim)
         assert len(net_arch) >= 1, "At least one Residual layer!"
         modules = list()
-        shape = observation_space.shape
+        shape = obs_space.shape
         if len(shape) == 4:
             # vectorized envs
             shape = shape[1:]

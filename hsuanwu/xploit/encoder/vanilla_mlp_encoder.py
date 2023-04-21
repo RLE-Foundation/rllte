@@ -1,4 +1,6 @@
+from typing import Union, Dict, List
 import gymnasium as gym
+from omegaconf import DictConfig
 import torch as th
 from torch import nn
 
@@ -9,7 +11,8 @@ class VanillaMlpEncoder(BaseEncoder):
     """Multi layer perceptron (MLP) for processing state-based inputs.
 
     Args:
-        observation_space (Space): Observation space of the environment.
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
         hidden_dim (int): Number of units per hidden layer.
 
@@ -18,11 +21,11 @@ class VanillaMlpEncoder(BaseEncoder):
     """
 
     def __init__(
-        self, observation_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 256
+        self, obs_space: Union[gym.Space, DictConfig], feature_dim: int = 64, hidden_dim: int = 256
     ) -> None:
-        super().__init__(observation_space, feature_dim)
+        super().__init__(obs_space, feature_dim)
 
-        input_dim = observation_space.shape[0]
+        input_dim = obs_space.shape[0]
         self.trunk = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
