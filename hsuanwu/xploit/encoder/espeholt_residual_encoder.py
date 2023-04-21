@@ -1,4 +1,4 @@
-from typing import Union, Dict, List
+from typing import Union, Tuple, List
 import gymnasium as gym
 from omegaconf import DictConfig
 import torch as th

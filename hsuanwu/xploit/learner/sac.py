@@ -1,4 +1,6 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import numpy as np
 import torch as th
@@ -10,7 +12,7 @@ from hsuanwu.xploit.learner.network import DoubleCritic, StochasticActor
 
 MATCH_KEYS = {
     "trainer": "OffPolicyTrainer",
-    "storage": ["VanillaReplayStorage"],
+    "storage": ["VanillaReplayStorage", "PrioritizedReplayStorage"],
     "distribution": ["SquashedNormal"],
     "augmentation": [],
     "reward": [],
@@ -28,12 +30,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "IdentityEncoder",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "feature_dim": 5,
     },
     "learner": {
         "name": "SACLearner",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -65,10 +67,10 @@ class SACLearner(BaseLearner):
         When 'augmentation' module is invoked, this learner will transform into Data Regularized Q (DrQ) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -91,8 +93,8 @@ class SACLearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Dict,
-        action_space: Dict,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
@@ -106,7 +108,7 @@ class SACLearner(BaseLearner):
         fixed_temperature: bool,
         discount: float,
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -180,17 +182,19 @@ class SACLearner(BaseLearner):
         if step % self.update_every_steps != 0:
             return metrics
 
-        obs, action, reward, terminated, next_obs = replay_storage.sample()
+        # weights for PrioritizedReplayStorage
+        obs, action, reward, terminated, next_obs, weights = replay_storage.sample(step)
 
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
-                rollouts={
-                    "observations": obs.unsqueeze(1).numpy(),
-                    "actions": action.unsqueeze(1).numpy(),
+                samples={
+                    "obs": obs.unsqueeze(1),
+                    "actions": action.unsqueeze(1),
+                    "next_obs": next_obs.unsqueeze(1)
                 },
                 step=step,
             )
-            reward += th.as_tensor(intrinsic_reward, dtype=th.float32).squeeze(1)
+            reward += intrinsic_reward
 
         # obs augmentation
         if self.aug is not None:
@@ -214,14 +218,15 @@ class SACLearner(BaseLearner):
         # update criitc
         metrics.update(
             self.update_critic(
-                encoded_obs,
-                action,
-                reward,
-                terminated,
-                encoded_next_obs,
-                encoded_aug_obs,
-                encoded_aug_next_obs,
-                step,
+                obs=encoded_obs,
+                action=action,
+                reward=reward,
+                terminated=terminated,
+                next_obs=encoded_next_obs,
+                weights=weights,
+                aug_obs=encoded_aug_obs,
+                aug_next_obs=encoded_aug_next_obs,
+                step=step,
             )
         )
 
@@ -242,6 +247,7 @@ class SACLearner(BaseLearner):
         reward: th.Tensor,
         terminated: th.Tensor,
         next_obs: th.Tensor,
+        weights: th.Tensor,
         aug_obs: th.Tensor,
         aug_next_obs: th.Tensor,
         step: int,
@@ -254,6 +260,7 @@ class SACLearner(BaseLearner):
             reward (Tensor): Rewards.
             terminated (Tensor): Terminateds.
             next_obs (Tensor): Next observations.
+            weights (Tensor): Batch sample weights.
             aug_obs (Tensor): Augmented observations.
             aug_next_obs (Tensor): Augmented next observations.
             step (int): Global training step.
@@ -283,7 +290,12 @@ class SACLearner(BaseLearner):
                 target_Q = (target_Q + target_Q_aug) / 2
 
         Q1, Q2 = self.critic(obs, action)
-        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+        TDE1 = target_Q - Q1
+        TDE2 = target_Q - Q2
+        critic_loss = (0.5 * weights * (TDE1.pow(2) + TDE2.pow(2))).mean()
+        # TODO: for PrioritizedReplayStorage
+        priorities = abs(((TDE1 + TDE2) / 2.0 + 1e-5).squeeze())
+        # critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         if self.aug is not None:
             Q1_aug, Q2_aug = self.critic(aug_obs, action)
@@ -301,6 +313,7 @@ class SACLearner(BaseLearner):
             "critic_q1": Q1.mean().item(),
             "critic_q2": Q2.mean().item(),
             "critic_target": target_Q.mean().item(),
+            'priorities': priorities
         }
 
     def update_actor_and_alpha(self, obs: th.Tensor, step: int) -> Dict[str, float]:

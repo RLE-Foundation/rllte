@@ -1,17 +1,22 @@
-from typing import Any, Tuple
-
+from typing import Tuple, Union, Any
+import gymnasium as gym
+from omegaconf import DictConfig
 import numpy as np
 import torch as th
 
+from hsuanwu.xploit.storage.base import BaseStorage
 
-class VanillaReplayStorage:
+class VanillaReplayStorage(BaseStorage):
     """Vanilla replay storage for off-policy algorithms.
 
     Args:
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
-        action_type (str): The type of actions, 'Discrete' or 'Box'.
         storage_size (int): Max number of element in the buffer.
         batch_size (int): Batch size of samples.
 
@@ -21,28 +26,25 @@ class VanillaReplayStorage:
 
     def __init__(
         self,
-        device: th.device,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = 'cpu',
         storage_size: int = 1000000,
         batch_size: int = 1024,
     ):
-        self._obs_shape = obs_shape
-        self._action_shape = action_shape
-        self._device = th.device(device)
+        super().__init__(obs_space, action_space, device)
         self._storage_size = storage_size
         self._batch_size = batch_size
 
         # the proprioceptive obs is stored as float32, pixels obs as uint8
-        obs_dtype = np.float32 if len(obs_shape) == 1 else np.uint8
+        obs_dtype = np.float32 if len(self._obs_shape) == 1 else np.uint8
 
-        self.obs = np.empty((storage_size, *obs_shape), dtype=obs_dtype)
+        self.obs = np.empty((storage_size, *self._obs_shape), dtype=obs_dtype)
 
-        if action_type == "Discrete":
+        if self._action_type == "Discrete":
             self.actions = self.actions = np.empty((storage_size, 1), dtype=np.float32)
-        if action_type == "Box":
-            self.actions = np.empty((storage_size, action_shape[0]), dtype=np.float32)
+        if self._action_type == "Box":
+            self.actions = np.empty((storage_size, self._action_shape[0]), dtype=np.float32)
 
         self.rewards = np.empty((storage_size, 1), dtype=np.float32)
         self.terminateds = np.empty((storage_size, 1), dtype=np.float32)
@@ -84,11 +86,11 @@ class VanillaReplayStorage:
         self._global_step = (self._global_step + 1) % self._storage_size
         self._full = self._full or self._global_step == 0
 
-    def sample(self) -> Tuple[th.Tensor, ...]:
-        """Sample transitions from the storage.
+    def sample(self, step: int) -> Tuple[th.Tensor, ...]:
+        """Sample from the storage.
 
         Args:
-            None.
+            step (int): Global training step.
 
         Returns:
             Batched samples.
@@ -108,5 +110,6 @@ class VanillaReplayStorage:
         terminateds = th.as_tensor(
             self.terminateds[indices], device=self._device
         ).float()
+        weights = th.ones_like(terminateds, device=self._device)
 
-        return obs, actions, rewards, terminateds, next_obs
+        return obs, actions, rewards, terminateds, next_obs, weights

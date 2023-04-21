@@ -31,7 +31,7 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "TassaCnnEncoder",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "feature_dim": 50,
     },
     "learner": {

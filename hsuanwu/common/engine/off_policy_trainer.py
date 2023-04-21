@@ -157,6 +157,11 @@ class OffPolicyTrainer(BasePolicyTrainer):
                     metrics = self._learner.update(
                         self._replay_storage, step=self._global_step
                     )
+                    # TODO: for PrioritizedReplayStorage
+                    try:
+                        self._replay_storage.update_priorities(metrics['priorities'])
+                    except:
+                        continue
 
             # done
             if terminated or truncated:

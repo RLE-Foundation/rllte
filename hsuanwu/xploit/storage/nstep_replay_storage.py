@@ -3,12 +3,15 @@ import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
 
+import gymnasium as gym
+from omegaconf import DictConfig
 import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
+from hsuanwu.xploit.storage.base import BaseStorage
 from hsuanwu.xploit.storage.utils import (dump_episode, episode_len,
                                           load_episode)
 
@@ -72,6 +75,13 @@ class NStepReplayStorage(IterableDataset):
     """Replay storage for off-policy algorithms (N-step returns supported).
 
     Args:
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the storage.
         batch_size (int): Number of samples per batch to load.
         num_workers (int): Subprocesses to use for data loading.
@@ -87,6 +97,9 @@ class NStepReplayStorage(IterableDataset):
 
     def __init__(
         self,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = 'cpu',
         storage_size: int = 500000,
         batch_size: int = 256,
         num_workers: int = 4,

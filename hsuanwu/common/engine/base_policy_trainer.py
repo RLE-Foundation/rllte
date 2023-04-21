@@ -175,7 +175,7 @@ class BasePolicyTrainer(ABC):
         observation_space, action_space = self._train_env.observation_space, self._train_env.action_space
 
         new_cfgs.num_envs = self._train_env.num_envs
-        new_cfgs.observation_space = observation_space
+        new_cfgs.obs_space = observation_space
         new_cfgs.action_space = action_space
 
         # TODO: fill parameters for encoder, learner, and storage
@@ -183,35 +183,22 @@ class BasePolicyTrainer(ABC):
         if new_cfgs.encoder._target_ == "IdentityEncoder":
             new_cfgs.encoder.feature_dim = observation_space["shape"][0]
 
-        new_cfgs.encoder.observation_space = observation_space
-        new_cfgs.learner.observation_space = observation_space
+        new_cfgs.encoder.obs_space = observation_space
+        new_cfgs.learner.obs_space = observation_space
         new_cfgs.learner.action_space = action_space
         new_cfgs.learner.device = new_cfgs.device
         new_cfgs.learner.feature_dim = new_cfgs.encoder.feature_dim
 
         ## for storage
+        new_cfgs.storage.obs_space = observation_space
+        new_cfgs.storage.action_space = action_space
+        new_cfgs.storage.device = new_cfgs.device
+
         if "Rollout" in new_cfgs.storage._target_:
-            new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space["shape"]
-            new_cfgs.storage.action_shape = action_space["shape"]
-            new_cfgs.storage.action_type = action_space["type"]
             new_cfgs.storage.num_steps = new_cfgs.num_steps
             new_cfgs.storage.num_envs = new_cfgs.num_envs
 
-        if (
-            "Replay" in new_cfgs.storage._target_
-            and "NStep" not in new_cfgs.storage._target_
-        ):
-            new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space["shape"]
-            new_cfgs.storage.action_shape = action_space["shape"]
-            new_cfgs.storage.action_type = action_space["type"]
-
         if "Distributed" in new_cfgs.storage._target_:
-            new_cfgs.storage.device = new_cfgs.device
-            new_cfgs.storage.obs_shape = observation_space["shape"]
-            new_cfgs.storage.action_shape = action_space["shape"]
-            new_cfgs.storage.action_type = action_space["type"]
             new_cfgs.storage.num_steps = new_cfgs.num_steps
 
         ## for reward

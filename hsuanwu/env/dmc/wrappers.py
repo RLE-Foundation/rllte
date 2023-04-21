@@ -194,12 +194,12 @@ class DMCWrapper(core.Env):
             truncated = False
 
         terminated = done
-        return obs.astype("float32"), reward, terminated, truncated, info
+        return obs, reward, terminated, truncated, info
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
-        return obs.astype("float32"), {}
+        return obs, {}
 
     def render(self, mode="rgb_array", height=None, width=None, camera_id=0):
         assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode

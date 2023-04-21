@@ -1,18 +1,22 @@
 import collections
 import threading
-from typing import List, Tuple
-
+from typing import Tuple, Union, List
+import gymnasium as gym
+from omegaconf import DictConfig
 import torch as th
 
+from hsuanwu.xploit.storage.base import BaseStorage
 
-class DistributedStorage:
+class DistributedStorage(BaseStorage):
     """Distributed storage for distributed algorithms like IMPALA.
 
     Args:
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
-        action_type (str): The type of actions, 'cont' or 'dis'.
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         num_steps (int): The sample steps of per rollout.
         num_storages (int): The number of shared-memory storages.
 
@@ -22,37 +26,34 @@ class DistributedStorage:
 
     def __init__(
         self,
-        device: th.device,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = 'cpu',
         num_steps: int = 100,
         num_storages: int = 80,
         batch_size: int = 32,
     ) -> None:
-        self._obs_shape = obs_shape
-        self._action_shape = action_shape
-        self._device = th.device(device)
+        super().__init__(obs_space, action_space, device)
         self._num_steps = num_steps
         self._num_storages = num_storages
         self._batch_size = batch_size
 
-        if action_type == "Discrete":
+        if self._action_type == "Discrete":
             self._action_dim = 1
-        elif action_type == "Box":
-            self._action_dim = action_shape[0]
+        elif self._action_type == "Box":
+            self._action_dim = self._action_shape[0]
         else:
             raise NotImplementedError
 
         specs = dict(
-            obs=dict(size=(num_steps + 1, *obs_shape), dtype=th.uint8),
+            obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
             reward=dict(size=(num_steps + 1,), dtype=th.float32),
             terminated=dict(size=(num_steps + 1,), dtype=th.bool),
             truncated=dict(size=(num_steps + 1,), dtype=th.bool),
             episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
             last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-            policy_logits=dict(size=(num_steps + 1, action_shape[0]), dtype=th.float32),
+            policy_logits=dict(size=(num_steps + 1, self._action_shape[0]), dtype=th.float32),
             baseline=dict(size=(num_steps + 1,), dtype=th.float32),
             action=dict(size=(num_steps + 1,), dtype=th.int64),
         )
@@ -61,6 +62,10 @@ class DistributedStorage:
         for _ in range(num_storages):
             for key in self.storages:
                 self.storages[key].append(th.empty(**specs[key]).share_memory_())
+    
+    def add(self, *args) -> None:
+        """Add sampled transitions into storage.
+        """
 
     @staticmethod
     def sample(

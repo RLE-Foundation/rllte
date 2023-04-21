@@ -1,5 +1,7 @@
+from typing import Union, Dict
 from abc import ABC, abstractmethod
-from typing import Dict
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import torch as th
 
@@ -8,10 +10,10 @@ class BaseLearner(ABC):
     """Base class of learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -25,15 +27,32 @@ class BaseLearner(ABC):
 
     def __init__(
         self,
-        observation_space: Dict,
-        action_space: Dict,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
     ) -> None:
-        self.obs_space = observation_space
-        self.action_space = action_space
+        if isinstance(obs_space, gym.Space) and isinstance(action_space, gym.Space):
+            self.obs_shape = obs_space.shape
+            if action_space.__class__.__name__ == "Discrete":
+                self.action_shape = (int(action_space.n), )
+                self.action_type = "Discrete"
+
+            elif action_space.__class__.__name__ == "Box":
+                self.action_shape = action_space.shape
+                self.action_type = "Box"
+            else:
+                raise NotImplementedError("Unsupported action type!")
+        elif isinstance(obs_space, DictConfig) and isinstance(action_space, DictConfig):
+            # by DictConfig
+            self.obs_shape = obs_space.shape
+            self.action_shape = action_space.shape
+            self.action_type = action_space.type
+        else:
+            raise NotImplementedError("Unsupported observation and action spaces!")
+        
         self.device = th.device(device)
         self.feature_dim = feature_dim
         self.lr = lr

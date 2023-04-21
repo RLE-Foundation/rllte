@@ -1,17 +1,22 @@
-from typing import Generator, Tuple
-
+from typing import Generator, Union, Any
+import gymnasium as gym
+from omegaconf import DictConfig
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
+from hsuanwu.xploit.storage.base import BaseStorage
 
-class VanillaRolloutStorage:
+class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
 
     Args:
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
-        action_type (str): The type of actions, 'Discrete' or 'Box'.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
         discount (float): discount factor.
@@ -20,21 +25,17 @@ class VanillaRolloutStorage:
     Returns:
         Vanilla rollout storage.
     """
-
     def __init__(
         self,
-        device: th.device,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
-        num_steps: int,
-        num_envs: int,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = 'cpu',
+        num_steps: int = 256,
+        num_envs: int = 8,
         discount: float = 0.99,
         gae_lambda: float = 0.95,
     ) -> None:
-        self._obs_shape = obs_shape
-        self._action_shape = action_shape
-        self._device = th.device(device)
+        super().__init__(obs_space, action_space, device)
         self._num_steps = num_steps
         self._num_envs = num_envs
         self._discount = discount
@@ -42,19 +43,19 @@ class VanillaRolloutStorage:
 
         # transition part
         self.obs = th.empty(
-            size=(num_steps, num_envs, *obs_shape),
+            size=(num_steps, num_envs, *self._obs_shape),
             dtype=th.float32,
             device=self._device,
         )
-        if action_type == "Discrete":
+        if self._action_type == "Discrete":
             self._action_dim = 1
             self.actions = th.empty(
                 size=(num_steps, num_envs, self._action_dim),
                 dtype=th.float32,
                 device=self._device,
             )
-        elif action_type == "Box":
-            self._action_dim = action_shape[0]
+        elif self._action_type == "Box":
+            self._action_dim = self._action_shape[0]
             self.actions = th.empty(
                 size=(num_steps, num_envs, self._action_dim),
                 dtype=th.float32,
@@ -195,3 +196,7 @@ class VanillaRolloutStorage:
             adv_targ = self.advantages.view(-1, 1)[indices]
 
             yield batch_obs, batch_actions, batch_values, batch_returns, batch_terminateds, batch_truncateds, batch_old_log_probs, adv_targ
+
+    def sample(self, *args) -> Any:
+        """Sample from the storage.
+        """
