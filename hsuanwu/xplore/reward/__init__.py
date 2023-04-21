@@ -1,6 +1,6 @@
 from .base import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
 from .pseudo_counts import PseudoCounts as PseudoCounts
-# from .girm import GIRM as GIRM
+from .girm import GIRM as GIRM
 from .icm import ICM as ICM
 from .ngu import NGU as NGU
 from .re3 import RE3 as RE3

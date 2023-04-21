@@ -146,7 +146,7 @@ class RND(BaseIntrinsicRewardModule):
         # udpate the module
         self.update(samples)
 
-        return intrinsic_rewards# * beta_t
+        return intrinsic_rewards * beta_t
     
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
@@ -167,7 +167,7 @@ class RND(BaseIntrinsicRewardModule):
 
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size, drop_last=True
+            dataset=dataset, batch_size=self.batch_size
         )
 
         for idx, batch_data in enumerate(loader):

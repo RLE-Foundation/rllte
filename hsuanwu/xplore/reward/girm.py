@@ -1,5 +1,7 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
+from omegaconf import DictConfig
+import gymnasium as gym
 import numpy as np
 import torch as th
 from torch import nn, optim
@@ -10,220 +12,140 @@ from torch.utils.data import DataLoader, TensorDataset
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
-class MlpEncoder(nn.Module):
-    """MLP-based encoder of VAE.
+class Encoder(nn.Module):
+    """Encoder of VAE.
 
     Args:
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
+        obs_shape (Tuple): The data shape of observations.
+        action_shape (Tuple): The data shape of actions.
+        latent_dim (int): The dimension of encoding vectors.
 
     Returns:
-        MLP-based encoder.
+        Encoder instance.
     """
+    def __init__(self,
+                 obs_shape: Tuple,
+                 action_shape: Tuple,
+                 latent_dim: int
+                 ) -> None:
+        super().__init__()
 
-    def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
-        super(MlpEncoder, self).__init__()
+        # visual
+        if len(obs_shape) == 3:
+            self.trunk = nn.Sequential(
+                nn.Conv2d(obs_shape[0], 32, 8, 4),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, 4, 2),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, 3, 1),
+                nn.ReLU(),
+                nn.Flatten()
+            )
+            with th.no_grad():
+                sample = th.ones(size=tuple(obs_shape))
+                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-        self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0], 64),
-            nn.LeakyReLU(),
-            nn.Linear(64, 64),
-            nn.LeakyReLU(),
-            nn.Linear(64, latent_dim),
-        )
+            self.linear = nn.Linear(n_flatten, latent_dim)
+        else:
+            self.trunk = nn.Sequential(
+                nn.Linear(obs_shape[0], 256),
+                nn.ReLU()
+            )
+            self.linear = nn.Linear(256, latent_dim)
+
+        self.head = nn.Linear(latent_dim * 2, latent_dim)
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
-        x = th.cat((obs, next_obs), dim=1)
-        return self.trunk(x)
+        """Forward function for encoding observations and next-observations.
 
+        Args:
+            obs (Tensor): Current observations.
+            next_obs (Tensor): Next observations.
 
-class MlpDecoder(nn.Module):
-    """MLP-based decoder of VAE.
+        Returns:
+            Encoding vectors.
+        """
+        h = F.relu(self.linear(self.trunk(obs)))
+        next_h = F.relu(self.linear(self.trunk(next_obs)))
+
+        x = self.head(th.cat([h, next_h], dim=1))
+        return x
+    
+    def encode(self, obs: th.Tensor) -> th.Tensor:
+        """Encode the input tensors.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Encoding tensors.
+        """
+        return F.relu(self.linear(self.trunk(obs)))
+
+class Decoder(nn.Module):
+    """Decoder of VAE.
 
     Args:
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
+        action_shape (Tuple): The data shape of actions.
+        latent_dim (int): The dimension of encoding vectors.
 
     Returns:
-        MLP-based decoder.
+        Predicted next-observations.
     """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int) -> None:
-        super(MlpDecoder, self).__init__()
+    def __init__(self, action_shape: Tuple, latent_dim: int) -> None:
+        super().__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0] + action_dim, 64),
-            nn.LeakyReLU(),
-            nn.Linear(64, 64),
-            nn.LeakyReLU(),
-            nn.Linear(64, obs_shape[0]),
+            nn.Linear(action_shape[0]+latent_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, latent_dim)
         )
-
-    def forward(self, z: th.Tensor, obs: th.Tensor) -> th.Tensor:
-        x = th.cat((z, obs), dim=1)
-        return self.trunk(x)
-
-
-class CnnEncoder(nn.Module):
-    """CNN-based encoder of VAE.
-
-    Args:
-        obs_shape: The data shape of observations.
-
-    Returns:
-        CNN-based encoder.
-    """
-
-    def __init__(self, obs_shape: Tuple) -> None:
-        super(CnnEncoder, self).__init__()
-
-        self.conv1 = nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, stride=2)
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
-        self.bn3 = nn.BatchNorm2d(64)
-        self.conv4 = nn.Conv2d(64, 64, kernel_size=3, stride=2)
-        self.bn4 = nn.BatchNorm2d(64)
-
-        self.lrelu = nn.LeakyReLU()
-
-        # Initialize the weights using xavier initialization
-        nn.init.xavier_uniform_(self.conv1.weight)
-        nn.init.xavier_uniform_(self.conv2.weight)
-        nn.init.xavier_uniform_(self.conv3.weight)
-        nn.init.xavier_uniform_(self.conv4.weight)
-
-    def forward(self, obs, next_obs):
-        x = th.cat((obs, next_obs), dim=1)
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.lrelu(x)
-
-        x = self.conv2(x)
-        x = self.bn2(x)
-        x = self.lrelu(x)
-
-        x = self.conv3(x)
-        x = self.bn3(x)
-        x = self.lrelu(x)
-
-        x = self.conv4(x)
-        x = self.bn4(x)
-        x = self.lrelu(x)
-
-        x = x.view(x.size(0), -1)
-
-        return x
-
-
-class CnnDecoder(nn.Module):
-    """CNN-based decoder of VAE.
-
-    Args:
-        obs_shape: The data shape of observations.
-
-    Returns:
-        CNN-based decoder.
-    """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
-        super(CnnDecoder, self).__init__()
-
-        self.linear1 = nn.Linear(action_dim, 64)
-        self.linear2 = nn.Linear(64, latent_dim)
-
-        self.conv5 = nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2)
-        self.bn5 = nn.BatchNorm2d(64)
-        self.conv6 = nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2)
-        self.bn6 = nn.BatchNorm2d(64)
-        self.conv7 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2)
-        self.bn7 = nn.BatchNorm2d(32)
-        self.conv8 = nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2)
-        self.output = nn.ConvTranspose2d(32, out_channels=obs_shape[0], kernel_size=6)
-        self.conv9 = nn.Conv2d(
-            obs_shape[0] * 2,
-            out_channels=obs_shape[0],
-            kernel_size=3,
-            stride=1,
-            dilation=2,
-            padding=2,
-        )
-        self.lrelu = nn.LeakyReLU()
-
-        # Initialize weights using xavier initialization
-        nn.init.xavier_uniform_(self.conv5.weight)
-        nn.init.xavier_uniform_(self.conv6.weight)
-        nn.init.xavier_uniform_(self.conv7.weight)
-        nn.init.xavier_uniform_(self.conv8.weight)
-        nn.init.xavier_uniform_(self.linear1.weight)
-        nn.init.xavier_uniform_(self.linear2.weight)
-        nn.init.xavier_uniform_(self.output.weight)
-        nn.init.xavier_uniform_(self.conv9.weight)
-
-    def forward(self, z, obs):
-        batch_size, _ = z.size()
-        z = self.linear1(z)
-        z = self.lrelu(z)
-        z = self.linear2(z)
-        z = self.lrelu(z)
-        z = z.view((batch_size, 64, 4, 4))
-
-        z = self.conv5(z)
-        z = self.lrelu(z)
-
-        z = self.conv6(z)
-        z = self.lrelu(z)
-
-        z = self.conv7(z)
-        z = self.lrelu(z)
-
-        z = self.conv8(z)
-        z = self.lrelu(z)
-
-        z = self.output(z)
-
-        z = th.cat((z, obs), dim=1)
-        output = self.conv9(z)
-
-        return output
+    
+    def forward(self, obs: th.Tensor, z: th.Tensor) -> th.Tensor:
+        return self.trunk(th.cat([obs, z], dim=1))
 
 
 class VAE(nn.Module):
     """Variational auto-encoder for reconstructing transition proces.
 
     Args:
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
-        action_dim: The dimension of predicted actions.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        obs_shape (Tuple): The data shape of observations.
+        action_shape (Tuple): The data shape of actions.
+        latent_dim (int): The dimension of encoding vectors.
 
+    Returns:
+        VAE instance.
     """
-
     def __init__(
-        self, device: th.device, obs_shape: Tuple, latent_dim: int, action_dim: int
+        self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int
     ) -> None:
         super(VAE, self).__init__()
-        if len(obs_shape) == 3:
-            self.encoder = CnnEncoder(obs_shape=obs_shape)
-            self.decoder = CnnDecoder(
-                obs_shape=obs_shape, action_dim=action_dim, latent_dim=latent_dim
-            )
-        else:
-            self.encoder = MlpEncoder(obs_shape=obs_shape, latent_dim=latent_dim)
-            self.decoder = MlpDecoder(obs_shape=obs_shape, action_dim=action_dim)
+        self.encoder = Encoder(obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim)
+        self.decoder = Decoder(action_shape=action_shape, latent_dim=latent_dim)
 
-        self.mu = nn.Linear(latent_dim, action_dim)
-        self.logvar = nn.Linear(latent_dim, action_dim)
+        self.mu = nn.Linear(latent_dim, action_shape[0])
+        self.logvar = nn.Linear(latent_dim, action_shape[0])
 
         self._device = device
         self.latent_dim = latent_dim
-        self.action_dim = action_dim
 
     def reparameterize(
         self, mu: th.Tensor, logvar: th.Tensor, device: th.device, training: bool = True
     ) -> th.Tensor:
-        # Reparameterization trick as shown in the auto encoding variational bayes paper
+        """Reparameterization trick.
+
+        Args:
+            mu (Tensor): Mean of the distribution.
+            logvar (Tensor): Log of the variance of the distribution.
+            device (Device): Running device.
+            training (bool): True or False.
+
+        Returns:
+            Sampled latent vectors.
+        """
         if training:
             std = logvar.mul(0.5).exp_()
             eps = Variable(std.data.new(std.size()).normal_()).to(device)
@@ -231,7 +153,15 @@ class VAE(nn.Module):
         else:
             return mu
 
-    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> Tuple[th.Tensor]:
+        """VAE single forward.
+        Args:
+            obs (Tensor): Observations tensor.
+            next_obs (Tensor): Next-observations tensor.
+        
+        Returns:
+            Latent vectors, mean, log of variance, and reconstructed next-observations.
+        """
         latent = self.encoder(obs, next_obs)
         mu = self.mu(latent)
         logvar = self.logvar(latent)
@@ -248,235 +178,184 @@ class GIRM(BaseIntrinsicRewardModule):
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
 
     Args:
-        obs_shape: Data shape of observation.
-        action_space: Data shape of action.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        beta: The initial weighting coefficient of the intrinsic rewards.
-        kappa: The decay rate.
-        latent_dim: The dimension of encoding vectors of the observations.
-        lr: The learning rate of inverse and forward dynamics model.
-        batch_size: The batch size to train the dynamic models.
-        lambd: The weighting coefficient for combining actions.
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        beta (float): The initial weighting coefficient of the intrinsic rewards.
+        kappa (float): The decay rate.
+        latent_dim (int): The dimension of encoding vectors.
+        lr (float): The learning rate.
+        batch_size (int): The batch size for update.
+        lambd (float): The weighting coefficient for combining actions.
+        lambd_recon (float): Weighting coefficient of the reconstruction loss.
+        lambd_action (float): Weighting coefficient of the action loss.
+        kld_loss_beta (float): Weighting coefficient of the divergence loss.
 
     Returns:
         Instance of GIRM.
     """
 
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
-        device: th.device,
-        beta: float,
-        kappa: float,
-        latent_dim: int,
-        lr: float,
-        batch_size: int,
-        lambd: float,
-    ) -> None:
-        super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
+    def __init__(self,
+                 obs_space: Union[gym.Space, DictConfig], 
+                 action_space: Union[gym.Space, DictConfig], 
+                 device: th.device = 'cpu', 
+                 beta: float = 0.05, 
+                 kappa: float = 0.000025,
+                 latent_dim: int = 128,
+                 lr: int = 0.001,
+                 batch_size: int = 64,
+                 lambd: float = 0.5,
+                 lambd_recon: float = 1.0,
+                 lambd_action: float = 1.0,
+                 kld_loss_beta: float = 1.0,
+                 ) -> None:
+        super().__init__(obs_space, action_space, device, beta, kappa)
 
-        self._batch_size = batch_size
-        self._lambd = lambd
+        self.batch_size = batch_size
+        self.lambd = lambd
+        self.lambd_action = lambd_action
+        self.lambd_recon = lambd_recon
+        self.kld_loss_beta = kld_loss_beta
 
-        self._vae = VAE(
+        self.vae = VAE(
             device=self._device,
-            action_dim=self._action_shape[0],
+            action_shape=self._action_shape,
             obs_shape=self._obs_shape,
             latent_dim=latent_dim,
         )
-        self._vae.to(self._device)
+        self.vae.to(self._device)
 
-        if self._action_type == "dis":
-            self._action_loss = nn.CrossEntropyLoss()
+        if self._action_type == "Discrete":
+            self.action_loss = nn.CrossEntropyLoss()
         else:
-            self._action_loss = nn.MSELoss()
+            self.action_loss = nn.MSELoss()
 
-        self._opt = optim.Adam(lr=lr, params=self._vae.parameters())
+        self.opt = optim.Adam(lr=lr, params=self.vae.parameters())
 
-    def _get_vae_loss(
-        self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, log_var: th.Tensor
+    def get_vae_loss(
+        self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor
     ) -> th.Tensor:
+        """Compute the vae loss.
+
+        Args:
+            recon_x (Tensor): Reconstructed x.
+            x (Tensor): Input x.
+            mean (Tensor): Sample mean.
+            logvar (Tensor): Log of the sample variance.
+        
+        Returns:
+            Loss values.
+        """
         RECON = F.mse_loss(recon_x, x)
-        KLD = -0.5 * th.sum(1 + log_var - mean.pow(2) - log_var.exp())
+        KLD = -0.5 * th.sum(1 + logvar - mean.pow(2) - logvar.exp())
 
         return RECON, KLD
 
-    def _process(self, tensor: th.Tensor, range: Tuple) -> th.Tensor:
-        """Make a grid of images.
-
-         Args:
-            tensor: 4D mini-batch Tensor of shape (B x C x H x W)
-                or a list of images all of the same size.
-            range: tuple (min, max) where min and max are numbers,
-                then these numbers are used to normalize the image. By default, min and max
-                are computed from the tensor.
-
-        Returns:
-            Processed tensors.
-        """
-        tensor = tensor.clone()  # avoid modifying tensor in-place
-        if range is not None:
-            assert isinstance(
-                range, tuple
-            ), "range has to be a tuple (min, max) if specified. min and max are numbers"
-
-            def norm_ip(img, min, max):
-                img.clamp_(min=min, max=max)
-                img.add_(-min).div_(max - min + 1e-5)
-
-            def norm_range(t, range):
-                if range is not None:
-                    norm_ip(t, range[0], range[1])
-                else:
-                    norm_ip(t, float(t.min()), float(t.max()))
-
-        norm_range(tensor, range)
-
-        return tensor
-
-    def compute_irs(self, rollouts: Dict, step: int) -> np.ndarray:
-        """Compute the intrinsic rewards using the collected observations.
+    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
+        """Compute the intrinsic rewards for current samples.
 
         Args:
-            rollouts: The collected experiences. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-            step: The current time step.
+            samples (Dict): The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            step (int): The global training step.
 
         Returns:
-            The intrinsic rewards
+            The intrinsic rewards.
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        n_steps = rollouts["observations"].shape[0]
-        n_envs = rollouts["observations"].shape[1]
-        intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
-
-        obs_tensor = th.from_numpy(rollouts["observations"])
-        actions_tensor = th.from_numpy(rollouts["actions"])
-        if self.action_type == "dis":
-            # actions size: (n_steps, n_envs, 1)
-            actions_tensor = F.one_hot(
-                actions_tensor[:, :, 0].to(th.int64), self._action_shape[0]
-            ).float()
-        obs_tensor = obs_tensor.to(self._device)
-        actions_tensor = actions_tensor.to(self._device)
+        num_steps = samples['obs'].size()[0]
+        num_envs = samples['obs'].size()[1]
+        obs_tensor = samples['obs'].to(self._device)
+        actions_tensor = samples['actions'].to(self._device)
+        if self._action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.to(th.int64), self._action_shape[0]).float()
+            actions_tensor = actions_tensor.to(self._device)
+        next_obs_tensor = samples['next_obs'].to(self._device)
+        intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
 
         with th.no_grad():
-            for idx in range(n_envs):
-                obs_tensor = obs_tensor[:-1, idx]
-                actions_tensor = actions_tensor[:-1, idx]
-                next_obs_tensor = obs_tensor[1:, idx]
-                # forward prediction
-                latent = self._vae.encoder(obs_tensor, next_obs_tensor)
-                mu = self._vae.mu(latent)
+            for i in range(num_envs):
+                latent = self.vae.encoder(obs_tensor[:, i], next_obs_tensor[:, i])
+                mu = self.vae.mu(latent)
                 logvar = self.vae.logvar(latent)
-                z = self._vae.reparameterize(mu, logvar, self._device)
-                if self.action_type == "dis":
+                z = self.vae.reparameterize(mu, logvar, self._device)
+                if self._action_type == "Discrete":
                     pred_actions = F.softmax(z, dim=1)
                 else:
                     pred_actions = z
-                combined_actions = (
-                    self.lambd * actions_tensor + (1.0 - self.lambd) * pred_actions
+                combined_actions = self.lambd * actions_tensor[:, i] + (1.0 - self.lambd) * pred_actions
+                pred_next_obs = self.vae.decoder(
+                    self.vae.encoder.encode(obs_tensor[:, i]), combined_actions
                 )
-                pred_next_obs = self._vae.decoder(combined_actions, obs_tensor)
-
-                # normalize the observations
-                if len(self.ob_shape) == 3:
-                    processed_next_obs = self._process(
-                        next_obs_tensor, normalize=True, range=(-1, 1)
-                    )
-                    processed_pred_next_obs = self._process(
-                        pred_next_obs, normalize=True, range=(-1, 1)
-                    )
-                else:
-                    processed_next_obs = next_obs_tensor
-                    processed_pred_next_obs = pred_next_obs
-
-                intrinsic_rewards[:-1, idx] = (
-                    F.mse_loss(
-                        processed_pred_next_obs, processed_next_obs, reduction="mean"
-                    )
-                    .cpu()
-                    .numpy()
+                intrinsic_rewards[:, i] = F.mse_loss(
+                    pred_next_obs,
+                    self.vae.encoder.encode(next_obs_tensor[:, i]),
+                    reduction="mean"
                 )
 
         # train the vae model
-        self.update(rollouts)
+        self.update(samples)
 
-        return beta_t * intrinsic_rewards
+        return intrinsic_rewards * beta_t
 
-    def update(
-        self,
-        rollouts: Dict,
-        lambda_recon: float = 1.0,
-        lambda_action: float = 1.0,
-        kld_loss_beta: float = 1.0,
-    ) -> None:
+    def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 
         Args:
-            rollouts: The collected experiences. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-            lambda_recon: Weighting coefficient of the reconstruction loss.
-            lambda_action: Weighting coefficient of the action loss.
-            kld_loss_beta: Weighting coefficient of the divergence loss.
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
 
         Returns:
             None
         """
-        n_steps = rollouts["observations"].shape[0]
-        n_envs = rollouts["observations"].shape[1]
-        obs_tensor = th.from_numpy(rollouts["observations"]).reshape(
-            n_steps * n_envs, *self._obs_shape
-        )
-        if self.action_type == "dis":
-            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
-                n_steps * n_envs,
-            )
-            actions_tensor = F.one_hot(
-                actions_tensor.to(th.int64), self._action_shape[0]
-            ).float()
+        num_steps = samples['obs'].size()[0]
+        num_envs = samples['obs'].size()[1]
+        obs_tensor = samples['obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples['next_obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+
+        if self._action_type == "Discrete":
+            actions_tensor = samples['actions'].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor, self._action_shape[0]).float()
         else:
-            actions_tensor = th.from_numpy(rollouts["actions"]).reshape(
-                n_steps * n_envs, self._action_shape[0]
-            )
-        obs_tensor = obs_tensor.to(self._device)
-        actions_tensor = actions_tensor.to(self._device)
+            actions_tensor = samples['actions'].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        loader = DataLoader(
+            dataset=dataset, batch_size=self.batch_size
+        )
 
-        obs_tensor = obs_tensor.to(self._device)
-        actions_tensor = actions_tensor.to(self._device)
-        # create data loader
-        dataset = TensorDataset(obs_tensor[:-1], actions_tensor[:-1], obs_tensor[1:])
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)
-
-        for idx, batch_data in enumerate(loader):
-            batch_obs = batch_data[0]
-            batch_actions = batch_data[1]
-            batch_next_obs = batch_data[2]
+        for idx, batch in enumerate(loader):
+            obs, actions, next_obs = batch
             # forward prediction
-            latent = self._vae.encoder(batch_obs, batch_next_obs)
-            mu = self._vae.mu(latent)
-            logvar = self._vae.logvar(latent)
-            z = self._vae.reparameterize(mu, logvar, self._device)
-            pred_next_obs = self._vae.decoder(z, batch_obs)
+            latent = self.vae.encoder(obs, next_obs)
+            mu = self.vae.mu(latent)
+            logvar = self.vae.logvar(latent)
+            z = self.vae.reparameterize(mu, logvar, self._device)
+            pred_next_obs = self.vae.decoder(self.vae.encoder.encode(obs), z)
             # compute the total loss
-            action_loss = self._action_loss(z, batch_actions)
-            recon_loss, kld_loss = self._get_vae_loss(
-                pred_next_obs, batch_next_obs, mu, logvar
+            action_loss = self.action_loss(z, actions)
+            recon_loss, kld_loss = self.get_vae_loss(
+                pred_next_obs, 
+                self.vae.encoder.encode(next_obs), 
+                mu, 
+                logvar
             )
             vae_loss = (
-                lambda_recon * recon_loss
-                + kld_loss_beta * kld_loss
-                + lambda_action * action_loss
+                self.lambd_recon * recon_loss
+                + self.kld_loss_beta * kld_loss
+                + self.lambd_action * action_loss
             )
             # update
-            self._opt.zero_grad()
+            self.opt.zero_grad()
             vae_loss.backward(retain_graph=True)
-            self._opt.step()
+            self.opt.step()

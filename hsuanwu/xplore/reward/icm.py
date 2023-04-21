@@ -194,10 +194,9 @@ class ICM(BaseIntrinsicRewardModule):
         num_steps = samples['obs'].size()[0]
         num_envs = samples['obs'].size()[1]
         obs_tensor = samples['obs'].to(self._device)
-        actions_tensor = samples['actions']
+        actions_tensor = samples['actions'].to(self._device)
         if self._action_type == "Discrete":
             actions_tensor = F.one_hot(actions_tensor.to(th.int64), self._action_shape[0]).float()
-            actions_tensor = actions_tensor.to(self._device)
         next_obs_tensor = samples['next_obs'].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
@@ -240,7 +239,7 @@ class ICM(BaseIntrinsicRewardModule):
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size, drop_last=True
+            dataset=dataset, batch_size=self.batch_size
         )
 
         for idx, batch in enumerate(loader):

@@ -273,7 +273,7 @@ class NGU(BaseIntrinsicRewardModule):
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size, drop_last=True
+            dataset=dataset, batch_size=self.batch_size
         )
 
         for idx, batch in enumerate(loader):
