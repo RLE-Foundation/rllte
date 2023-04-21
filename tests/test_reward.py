@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     samples = {
         'obs': obs[:-1],
-        'actions': th.randint(low=0, high=3, size=(3, 1)),
+        'actions': th.randint(low=0, high=3, size=(3, 1, 1)),
         'next_obs': obs[1:],
     }
 
