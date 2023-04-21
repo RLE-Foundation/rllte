@@ -245,6 +245,82 @@ class DiscreteActorCritic(nn.Module):
 
         return actions, self.critic(h), log_probs, entropy
 
+class BoxActorCritic(nn.Module):
+    """Actor-Critic network for discrete control tasks. For PPOLearner, DrACLearner.
+
+    Args:
+        action_space (Space): Action space of the environment.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Actor-Critic instance.
+    """
+
+    def __init__(
+        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
+    ) -> None:
+        super().__init__()
+
+        self.trunk = nn.Sequential(
+            nn.LayerNorm(feature_dim),
+            nn.Tanh(),
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
+        self.critic = nn.Linear(hidden_dim, 1)
+        # placeholder for distribution
+        self.dist = None
+
+        self.apply(utils.network_init)
+
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.trunk(obs))
+
+    def get_action(self, obs: th.Tensor) -> th.Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        mu = self.actor(self.trunk(obs))
+        return self.dist(mu).mode
+
+    def get_action_and_value(
+        self, obs: th.Tensor, actions: th.Tensor = None
+    ) -> Tuple[th.Tensor, ...]:
+        """Get actions and estimated values for observations.
+
+        Args:
+            obs (Tensor): Sampled observations.
+            actions (Tensor): Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.trunk(obs)
+        mu = self.actor(h)
+        dist = self.dist(mu)
+        if actions is None:
+            actions = dist.sample()
+
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, self.critic(h), log_probs, entropy
+
 
 class DiscreteActorAuxiliaryCritic(nn.Module):
     """Actor-Critic network for discrete control tasks. For PPGLearner.

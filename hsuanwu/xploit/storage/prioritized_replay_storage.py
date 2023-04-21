@@ -107,7 +107,6 @@ class PrioritizedReplayStorage(BaseStorage):
         probs /= probs.sum()
         indices = np.random.choice(len(self._storage), self._batch_size, p=probs)
 
-
         samples = [self._storage[i] for i in indices]
         weights = (len(self._storage) * probs[indices]) ** (-self.annealing_beta(step))
         weights /= weights.max()
@@ -127,9 +126,9 @@ class PrioritizedReplayStorage(BaseStorage):
         terminateds = th.as_tensor(terminateds, device=self._device).float()
         weights = th.as_tensor(weights, device=self._device).float()
 
-        return obs, actions, rewards, terminateds, next_obs, weights
+        return indices, obs, actions, rewards, terminateds, next_obs, weights
 
-    def update_priorities(self, indices, priorities) -> None:
+    def update_priorities(self, indices: np.ndarray, priorities: np.ndarray) -> None:
         """Update the priorities.
 
         Args:

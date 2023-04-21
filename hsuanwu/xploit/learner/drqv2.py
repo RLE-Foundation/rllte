@@ -1,4 +1,6 @@
-from typing import Dict, Generator
+from typing import Dict, Generator, Union
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import torch as th
 from torch.nn import functional as F
@@ -36,7 +38,7 @@ DEFAULT_CFGS = {
     },
     "learner": {
         "name": "DrQv2Learner",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -63,10 +65,10 @@ class DrQv2Learner(BaseLearner):
         When 'augmentation' module is deprecated, this learner will transform into Deep Deterministic Policy Gradient (DDPG) Learner.
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -84,8 +86,8 @@ class DrQv2Learner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: Dict,
-        action_space: Dict,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
@@ -94,7 +96,7 @@ class DrQv2Learner(BaseLearner):
         critic_target_tau: float,
         update_every_steps: int,
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -148,21 +150,22 @@ class DrQv2Learner(BaseLearner):
             return metrics
 
         obs, action, reward, discount, next_obs = next(replay_iter)
-        if self.irs is not None:
-            intrinsic_reward = self.irs.compute_irs(
-                rollouts={
-                    "observations": obs.unsqueeze(1).numpy(),
-                    "actions": action.unsqueeze(1).numpy(),
-                },
-                step=step,
-            )
-            reward += th.as_tensor(intrinsic_reward, dtype=th.float32).squeeze(1)
-
         obs = obs.float().to(self.device)
         action = action.float().to(self.device)
         reward = reward.float().to(self.device)
         discount = discount.float().to(self.device)
         next_obs = next_obs.float().to(self.device)
+
+        if self.irs is not None:
+            intrinsic_reward = self.irs.compute_irs(
+                samples={
+                    "obs": obs.unsqueeze(1),
+                    "actions": action.unsqueeze(1),
+                    "next_obs": next_obs.unsqueeze(1)
+                },
+                step=step,
+            )
+            reward += intrinsic_reward.to(self.device)
 
         # obs augmentation
         if self.aug is not None:

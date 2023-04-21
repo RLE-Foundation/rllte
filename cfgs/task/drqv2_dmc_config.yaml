@@ -9,7 +9,7 @@ learner:
   name: DrQv2Learner
 
 reward:
-  name: RE3
+  name: ICM
 
 hydra:
   run:

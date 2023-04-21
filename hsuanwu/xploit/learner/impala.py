@@ -1,6 +1,8 @@
 import collections
 import threading
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
+import gymnasium as gym
+from omegaconf import DictConfig
 
 import gymnasium as gym
 import omegaconf
@@ -33,12 +35,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "MnihCnnEncoder",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "feature_dim": 512,
     },
     "learner": {
         "name": "IMPALALearner",
-        "observation_space": dict(),
+        "obs_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -178,10 +180,10 @@ class IMPALALearner(BaseLearner):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
 
     Args:
-        observation_space (Dict): Observation space of the environment.
-            For supporting Hydra, the original 'observation_space' is transformed into a dict like {"shape": observation_space.shape, }.
-        action_space (Dict): Action shape of the environment.
-            For supporting Hydra, the original 'action_space' is transformed into a dict like
+        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -200,8 +202,8 @@ class IMPALALearner(BaseLearner):
 
     def __init__(
         self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
+        obs_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
@@ -212,7 +214,7 @@ class IMPALALearner(BaseLearner):
         max_grad_norm: float,
         discount: float,
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
 
         self.ent_coef = ent_coef
         self.baseline_coef = baseline_coef

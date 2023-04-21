@@ -183,7 +183,7 @@ class SACLearner(BaseLearner):
             return metrics
 
         # weights for PrioritizedReplayStorage
-        obs, action, reward, terminated, next_obs, weights = replay_storage.sample(step)
+        indices, obs, action, reward, terminated, next_obs, weights = replay_storage.sample(step)
 
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
@@ -194,7 +194,7 @@ class SACLearner(BaseLearner):
                 },
                 step=step,
             )
-            reward += intrinsic_reward
+            reward += intrinsic_reward.to(self.device)
 
         # obs augmentation
         if self.aug is not None:
@@ -231,11 +231,15 @@ class SACLearner(BaseLearner):
         )
 
         # update actor (do not udpate encoder)
-        metrics.update(self.update_actor_and_alpha(encoded_obs.detach(), step))
+        metrics.update(self.update_actor_and_alpha(encoded_obs.detach(), weights, step))
 
         # udpate critic target
         utils.soft_update_params(
             self.critic, self.critic_target, self.critic_target_tau
+        )
+
+        metrics.update(
+            {'indices': indices}
         )
 
         return metrics
@@ -313,14 +317,15 @@ class SACLearner(BaseLearner):
             "critic_q1": Q1.mean().item(),
             "critic_q2": Q2.mean().item(),
             "critic_target": target_Q.mean().item(),
-            'priorities': priorities
+            'priorities': priorities.data.cpu().numpy()
         }
 
-    def update_actor_and_alpha(self, obs: th.Tensor, step: int) -> Dict[str, float]:
+    def update_actor_and_alpha(self, obs: th.Tensor, weights: th.Tensor, step: int) -> Dict[str, float]:
         """Update the actor network and temperature.
 
         Args:
             obs (Tensor): Observations.
+            weights (Tensor): Batch sample weights.
             step (int): Global training step.
 
         Returns:
@@ -333,7 +338,7 @@ class SACLearner(BaseLearner):
         Q1, Q2 = self.critic(obs, action)
         Q = th.min(Q1, Q2)
 
-        actor_loss = (self.alpha.detach() * log_prob - Q).mean()
+        actor_loss = ((self.alpha.detach() * log_prob - Q) * weights).mean()
 
         # optimize actor
         self.actor_opt.zero_grad(set_to_none=True)
@@ -344,7 +349,7 @@ class SACLearner(BaseLearner):
             # update temperature
             self.log_alpha_opt.zero_grad(set_to_none=True)
             alpha_loss = (
-                self.alpha * (-log_prob - self.target_entropy).detach()
+                self.alpha * (-log_prob - self.target_entropy).detach() * weights
             ).mean()
             alpha_loss.backward()
             self.log_alpha_opt.step()

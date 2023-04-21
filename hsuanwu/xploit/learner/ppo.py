@@ -4,7 +4,7 @@ import torch as th
 from torch import nn
 
 from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DiscreteActorCritic
+from hsuanwu.xploit.learner.network import DiscreteActorCritic, BoxActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -112,8 +112,14 @@ class PPOLearner(BaseLearner):
         self.max_grad_norm = max_grad_norm
 
         # create models
-        if action_space["type"] == "Discrete":
+        if self.action_type == "Discrete":
             self.ac = DiscreteActorCritic(
+                action_space=action_space,
+                feature_dim=feature_dim,
+                hidden_dim=hidden_dim,
+            ).to(self.device)
+        elif self.action_type == "Box":
+            self.ac = BoxActorCritic(
                 action_space=action_space,
                 feature_dim=feature_dim,
                 hidden_dim=hidden_dim,

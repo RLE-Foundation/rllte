@@ -112,4 +112,4 @@ class VanillaReplayStorage(BaseStorage):
         ).float()
         weights = th.ones_like(terminateds, device=self._device)
 
-        return obs, actions, rewards, terminateds, next_obs, weights
+        return indices, obs, actions, rewards, terminateds, next_obs, weights
