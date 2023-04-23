@@ -1,7 +1,7 @@
 from .auto_augment import AutoAugment as AutoAugment
 from .base import BaseAugmentation as BaseAugmentation
 from .elastic_transform import ElasticTransform as ElasticTransform
-from .gaussian_noise import GaussianNoise
+from .gaussian_noise import GaussianNoise as GaussianNoise
 from .grayscale import GrayScale as GrayScale
 from .random_adjustsharpness import \
     RandomAdjustSharpness as RandomAdjustSharpness
