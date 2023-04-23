@@ -3,7 +3,7 @@ import numpy as np
 from scipy import stats as sts
 
 class Performance(object):
-    """Evaluate the performance of single agent. Based on: 
+    """Evaluate the performance of an algorithm. Based on: 
         https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 
     Args:
@@ -49,7 +49,7 @@ class Performance(object):
         """
         return sts.trim_mean(self.scores, proportiontocut=0.25, axis=None)
 
-    def describe(self) -> Dict[np.ndarray]:
+    def describe(self) -> Dict[str, np.ndarray]:
         """Compute all the evaluation metrics.
         """
         print(f'Evaluated with {self.num_runs} runs and {self.num_tasks} tasks')
