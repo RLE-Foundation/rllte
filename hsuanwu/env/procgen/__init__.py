@@ -75,11 +75,6 @@ def make_procgen_env(
     )
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))
-    # envs.single_action_space = envs.action_space
-    # envs.single_observation_space = envs.observation_space["rgb"]
-    # envs.is_vector_env = True
-    # print(envs.single_observation_space, envs.single_action_space)
-    # quit(0)
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
