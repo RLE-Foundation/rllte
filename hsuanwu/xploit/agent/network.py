@@ -56,9 +56,7 @@ class StochasticActor(nn.Module):
         mu, log_std = self.policy(obs).chunk(2, dim=-1)
 
         log_std = th.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (
-            log_std + 1
-        )
+        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1)
 
         std = log_std.exp()
 
@@ -77,9 +75,7 @@ class DeterministicActor(nn.Module):
         Actor network instance.
     """
 
-    def __init__(
-        self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024
-    ) -> None:
+    def __init__(self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
         self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
 
@@ -127,9 +123,7 @@ class DoubleCritic(nn.Module):
         Critic network instance.
     """
 
-    def __init__(
-        self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024
-    ) -> None:
+    def __init__(self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
 
         action_shape = action_space.shape
@@ -224,9 +218,7 @@ class ActorCritic(nn.Module):
             nn.ReLU(),
         )
         if action_type == "Discrete":
-            self.base = self.DiscreteActor(
-                action_shape=action_shape, hidden_dim=hidden_dim
-            )
+            self.base = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
         elif action_type == "Box":
             self.base = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
         else:
@@ -266,9 +258,7 @@ class ActorCritic(nn.Module):
 
         return dist.mean
 
-    def get_action_and_value(
-        self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor, ...]:
+    def get_action_and_value(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -365,10 +355,7 @@ class DiscreteLSTMActor(nn.Module):
         """
         if not self.use_lstm:
             return tuple()
-        return tuple(
-            th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size)
-            for _ in range(2)
-        )
+        return tuple(th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size) for _ in range(2))
 
     def get_action(
         self,
@@ -383,9 +370,7 @@ class DiscreteLSTMActor(nn.Module):
         # TODO: extract features from observations
         features = F.relu(self.encoder(x))
         # TODO: get one-hot last actions
-        one_hot_last_actions = F.one_hot(
-            inputs["last_action"].view(T * B), self.num_actions
-        ).float()
+        one_hot_last_actions = F.one_hot(inputs["last_action"].view(T * B), self.num_actions).float()
 
         clipped_reward = th.clamp(inputs["reward"], -1, 1).view(T * B, 1)
         lstm_input = th.cat([features, clipped_reward, one_hot_last_actions], dim=-1)

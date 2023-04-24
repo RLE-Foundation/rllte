@@ -30,11 +30,7 @@ class RandomCutoutColor(BaseAugmentation):
         for i, (img, w11, h11) in enumerate(zip(x, w1, h1)):
             cut_img = img.clone()
 
-            rand_color = (
-                rand_box[i]
-                .reshape(-1, 1, 1)
-                .expand_as(cut_img[:, h11 : h11 + h11, w11 : w11 + w11])
-            )
+            rand_color = rand_box[i].reshape(-1, 1, 1).expand_as(cut_img[:, h11 : h11 + h11, w11 : w11 + w11])
             cut_img[:, h11 : h11 + h11, w11 : w11 + w11] = rand_color
 
             cutouts[i] = cut_img

@@ -1,4 +1,5 @@
 from typing import Optional
+
 import numpy as np
 import torch as th
 from torch.distributions.utils import _standard_normal
@@ -57,9 +58,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
             # TODO: reset the std of
             self._sigma = utils.schedule(self._stddev_schedule, step)
 
-    def sample(
-        self, clip: bool = False, sample_shape: th.Size = th.Size()
-    ) -> th.Tensor:
+    def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample
 
         Args:

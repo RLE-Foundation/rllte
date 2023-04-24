@@ -72,7 +72,7 @@ class PPG(BaseAgent):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
@@ -98,7 +98,7 @@ class PPG(BaseAgent):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device,
+        device: str,
         feature_dim: int = 256,
         lr: float = 5e-4,
         eps: float = 1e-5,
@@ -174,9 +174,7 @@ class PPG(BaseAgent):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor, ...]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor, ...]:
         """Sample actions based on observations.
 
         Args:
@@ -189,9 +187,7 @@ class PPG(BaseAgent):
         """
         encoded_obs = self.encoder(obs)
         if training:
-            actions, values, log_probs, entropy = self.ac.get_action_and_value(
-                obs=encoded_obs
-            )
+            actions, values, log_probs, entropy = self.ac.get_action_and_value(obs=encoded_obs)
             return actions.clamp(*self.action_range), values, log_probs, entropy
         else:
             actions = self.ac.get_action(obs=encoded_obs)
@@ -239,12 +235,8 @@ class PPG(BaseAgent):
             self.num_steps = num_steps
 
         idx = int(episode % self.policy_epochs)
-        self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
-            rollout_storage.obs[:-1].clone()
-        )
-        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
-            rollout_storage.returns.clone()
-        )
+        self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(rollout_storage.obs[:-1].clone())
+        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(rollout_storage.returns.clone())
 
         # TODO: Policy phase
         total_actor_loss = 0.0
@@ -278,22 +270,16 @@ class PPG(BaseAgent):
             ) = batch
 
             # evaluate sampled actions
-            _, values, log_probs, entropy = self.ac.get_action_and_value(
-                obs=self.encoder(batch_obs), actions=batch_actions
-            )
+            _, values, log_probs, entropy = self.ac.get_action_and_value(obs=self.encoder(batch_obs), actions=batch_actions)
 
             # actor loss part
             ratio = th.exp(log_probs - batch_old_log_probs)
             surr1 = ratio * adv_targ
-            surr2 = (
-                th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-            )
+            surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
             actor_loss = -th.min(surr1, surr2).mean()
 
             # critic loss part
-            values_clipped = batch_values + (values - batch_values).clamp(
-                -self.clip_range, self.clip_range
-            )
+            values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range, self.clip_range)
             values_losses = (batch_values - batch_returns).pow(2)
             values_losses_clipped = (values_clipped - batch_returns).pow(2)
             critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
@@ -301,9 +287,7 @@ class PPG(BaseAgent):
             if self.aug is not None:
                 # augmentation loss part
                 batch_obs_aug = self.aug(batch_obs)
-                new_batch_actions, _, _, _ = self.ac.get_action_and_value(
-                    obs=self.encoder(batch_obs)
-                )
+                new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=self.encoder(batch_obs))
 
                 _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
                     obs=self.encoder(batch_obs_aug), actions=new_batch_actions
@@ -312,19 +296,12 @@ class PPG(BaseAgent):
                 value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
                 aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
             else:
-                aug_loss = th.scalar_tensor(
-                    s=0.0, requires_grad=False, device=critic_loss.device
-                )
+                aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
             # update
             self.encoder_opt.zero_grad(set_to_none=True)
             self.ac_opt.zero_grad(set_to_none=True)
-            (
-                critic_loss * self.vf_coef
-                + actor_loss
-                - entropy * self.ent_coef
-                + aug_loss
-            ).backward()
+            (critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss).backward()
             nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
             nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
             self.ac_opt.step()
@@ -357,14 +334,12 @@ class PPG(BaseAgent):
                 )
                 # get logits
                 logits = self.ac.get_logits(self.encoder(aux_obs)).logits.cpu().clone()
-                self.aux_logits[
-                    :, idx * self.num_envs : (idx + 1) * self.num_envs
-                ] = logits.reshape(
+                self.aux_logits[:, idx * self.num_envs : (idx + 1) * self.num_envs] = logits.reshape(
                     self.num_steps, self.num_envs, self.aux_logits.size()[2]
                 )
-        
-        total_aux_value_loss = 0.
-        total_kl_loss = 0.
+
+        total_aux_value_loss = 0.0
+        total_kl_loss = 0.0
 
         for e in range(self.aux_epochs):
             print("Auxiliary Phase", e)
@@ -373,25 +348,11 @@ class PPG(BaseAgent):
 
             for idx in range(0, self.num_aux_rollouts, self.num_aux_mini_batch):
                 batch_inds = aux_inds[idx : idx + self.num_aux_mini_batch]
-                batch_aux_obs = (
-                    self.aux_obs[:, batch_inds]
-                    .reshape(-1, *self.aux_obs.size()[2:])
-                    .to(self.device)
-                )
-                batch_aux_returns = (
-                    self.aux_returns[:, batch_inds]
-                    .reshape(-1, *self.aux_returns.size()[2:])
-                    .to(self.device)
-                )
-                batch_aux_logits = (
-                    self.aux_logits[:, batch_inds]
-                    .reshape(-1, *self.aux_logits.size()[2:])
-                    .to(self.device)
-                )
+                batch_aux_obs = self.aux_obs[:, batch_inds].reshape(-1, *self.aux_obs.size()[2:]).to(self.device)
+                batch_aux_returns = self.aux_returns[:, batch_inds].reshape(-1, *self.aux_returns.size()[2:]).to(self.device)
+                batch_aux_logits = self.aux_logits[:, batch_inds].reshape(-1, *self.aux_logits.size()[2:]).to(self.device)
 
-                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(
-                    self.encoder(batch_aux_obs)
-                )
+                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(self.encoder(batch_aux_obs))
 
                 new_values = new_values.view(-1)
                 new_aux_values = new_aux_values.view(-1)
@@ -407,18 +368,13 @@ class PPG(BaseAgent):
                 if (idx + 1) % self.num_aux_grad_accum == 0:
                     self.encoder_opt.zero_grad(set_to_none=True)
                     self.ac_opt.zero_grad(set_to_none=True)
-                    nn.utils.clip_grad_norm_(
-                        self.encoder.parameters(), self.max_grad_norm
-                    )
+                    nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
                     nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                     self.encoder_opt.step()
                     self.ac_opt.step()
-                
+
                 total_aux_value_loss += value_loss.item()
                 total_aux_value_loss += aux_value_loss.item()
                 total_kl_loss += kl_loss.item()
-            
-        return {
-            'aux_value_loss': total_aux_value_loss / self.aux_epochs,
-            'kl_loss': total_kl_loss / self.aux_epochs
-        }
+
+        return {"aux_value_loss": total_aux_value_loss / self.aux_epochs, "kl_loss": total_kl_loss / self.aux_epochs}

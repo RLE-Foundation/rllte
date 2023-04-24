@@ -20,9 +20,7 @@ class IdentityEncoder(BaseEncoder):
         Identity encoder instance.
     """
 
-    def __init__(
-        self, observation_space: Union[gym.Space, DictConfig], feature_dim: int = 64
-    ) -> None:
+    def __init__(self, observation_space: Union[gym.Space, DictConfig], feature_dim: int = 64) -> None:
         super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape

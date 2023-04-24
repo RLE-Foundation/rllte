@@ -18,12 +18,8 @@ class ResidualBlock(nn.Module):
 
     def __init__(self, channels: int) -> None:
         super().__init__()
-        self.conv0 = nn.Conv2d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
-        self.conv1 = nn.Conv2d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
+        self.conv0 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         inputs = x
@@ -108,9 +104,7 @@ class EspeholtResidualEncoder(BaseEncoder):
         modules.append(nn.Flatten())
 
         self.trunk = nn.Sequential(*modules)
-        self.linear = nn.Linear(
-            in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim
-        )
+        self.linear = nn.Linear(in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim)
 
         self.apply(network_init)
 

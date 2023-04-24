@@ -25,9 +25,7 @@ class RandomColorJitter(BaseAugmentation):
         hue: float = 0.5,
     ) -> None:
         super(RandomColorJitter, self).__init__()
-        self.color_jitter = ColorJitter(
-            brightness=brightness, contrast=contrast, saturation=saturation, hue=hue
-        )
+        self.color_jitter = ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         b, c, h, w = x.size()

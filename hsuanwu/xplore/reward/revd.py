@@ -67,7 +67,7 @@ class REVD(BaseIntrinsicRewardModule):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
@@ -83,7 +83,7 @@ class REVD(BaseIntrinsicRewardModule):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
@@ -143,30 +143,22 @@ class REVD(BaseIntrinsicRewardModule):
         with th.no_grad():
             for i in range(num_envs):
                 src_feats = self.random_encoder(obs_tensor[:, i])
-                dist_intra = th.linalg.vector_norm(
-                    src_feats.unsqueeze(1) - src_feats, ord=2, dim=2
-                )
-                dist_outer = th.linalg.vector_norm(
-                    src_feats.unsqueeze(1) - self.last_encoded_obs[i], ord=2, dim=2
-                )
+                dist_intra = th.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
+                dist_outer = th.linalg.vector_norm(src_feats.unsqueeze(1) - self.last_encoded_obs[i], ord=2, dim=2)
 
                 if self.average_divergence:
                     L = th.kthvalue(dist_intra, 2, dim=1).values.sum() / num_steps
                     for sub_k in range(self.k):
                         D_step_intra = th.kthvalue(dist_intra, sub_k + 1, dim=1).values
                         D_step_outer = th.kthvalue(dist_outer, sub_k + 1, dim=1).values
-                        intrinsic_rewards[:, i] += L * th.pow(
-                            D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha
-                        )
+                        intrinsic_rewards[:, i] += L * th.pow(D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha)
 
                     intrinsic_rewards /= self.k
                 else:
                     D_step_intra = th.kthvalue(dist_intra, self.k + 1, dim=1).values
                     D_step_outer = th.kthvalue(dist_outer, self.k + 1, dim=1).values
                     L = th.kthvalue(dist_intra, 2, dim=1).values.sum() / num_steps
-                    intrinsic_rewards[:, i] = L * th.pow(
-                        D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha
-                    )
+                    intrinsic_rewards[:, i] = L * th.pow(D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha)
 
                 self.last_encoded_obs[i] = src_feats
 

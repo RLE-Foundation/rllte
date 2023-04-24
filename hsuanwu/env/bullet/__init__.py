@@ -48,7 +48,7 @@ class AdapterEnv(gym.Wrapper):
 def make_bullet_env(
     env_id: str = "AntBulletEnv-v0",
     num_envs: int = 1,
-    device: th.device = "cpu",
+    device: str = "cpu",
     seed: int = 0,
 ) -> gym.Env:
     """Build PyBullet robotics environments.
@@ -56,7 +56,7 @@ def make_bullet_env(
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
 
     Returns:

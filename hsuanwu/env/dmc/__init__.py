@@ -2,8 +2,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import gymnasium as gym
 import torch as th
-from gymnasium.envs.registration import register
 from gymnasium.envs import registry
+from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
@@ -13,7 +13,7 @@ from hsuanwu.env.utils import FrameStack, HsuanwuEnvWrapper
 def make_dmc_env(
     env_id: str = "cartpole_balance",
     num_envs: int = 1,
-    device: th.device = "cpu",
+    device: str = "cpu",
     resource_files: Optional[List] = None,
     img_source: Optional[str] = None,
     total_frames: Optional[int] = None,
@@ -33,7 +33,7 @@ def make_dmc_env(
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         resource_files (Optional[List]): File path of the resource files.
         img_source (Optional[str]): Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
         total_frames (Optional[int]): for 'images' or 'video' distractor.
@@ -58,9 +58,7 @@ def make_dmc_env(
             _env_id = "dmc_%s_%s_%s-v1" % (domain_name, task_name, seed)
 
             if from_pixels:
-                assert (
-                    not visualize_reward
-                ), "Cannot use visualize reward when learning from pixels!"
+                assert not visualize_reward, "Cannot use visualize reward when learning from pixels!"
 
             # shorten episode length
             max_episode_steps = (episode_length + frame_skip - 1) // frame_skip

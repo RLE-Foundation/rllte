@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Dict
+from typing import Dict, Iterable
 
 import gymnasium as gym
 import hydra
@@ -24,9 +24,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         Off-policy trainer instance.
     """
 
-    def __init__(
-        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
-    ) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OffPolicyTrainer...")
         # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
@@ -35,9 +33,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         ## TODO: build encoder
-        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
-            self._device
-        )
+        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         self._agent.encoder.train()
         self._agent.encoder_opt = th.optim.Adam(
             self._agent.encoder.parameters(),
@@ -57,9 +53,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._agent.actor.dist = dist
         ## TODO: get augmentation
         if self._cfgs.use_aug:
-            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
-                self._device
-            )
+            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
         ## TODO: get intrinsic reward
         if self._cfgs.use_irs:
             self._agent.irs = hydra.utils.instantiate(self._cfgs.reward)
@@ -98,9 +92,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         while self._global_step <= self._num_train_steps:
             # try to test
-            if (self._global_step % self._test_every_steps) == 0 and (
-                self._test_env is not None
-            ):
+            if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
                 test_metrics = self.test()
                 self._logger.test(msg=test_metrics)
 
@@ -131,18 +123,12 @@ class OffPolicyTrainer(BasePolicyTrainer):
             if self._global_step >= self._num_init_steps:
                 if self._use_nstep_replay_storage:
                     # TODO: for NStepReplayStorage
-                    metrics = self._agent.update(
-                        self.replay_iter, step=self._global_step
-                    )
+                    metrics = self._agent.update(self.replay_iter, step=self._global_step)
                 else:
-                    metrics = self._agent.update(
-                        self._replay_storage, step=self._global_step
-                    )
+                    metrics = self._agent.update(self._replay_storage, step=self._global_step)
                     # TODO: for PrioritizedReplayStorage
                     try:
-                        self._replay_storage.update_priorities(
-                            metrics["indices"], metrics["priorities"]
-                        )
+                        self._replay_storage.update_priorities(metrics["indices"], metrics["priorities"])
                     except:
                         pass
 

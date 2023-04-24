@@ -89,7 +89,7 @@ class NGU(BaseIntrinsicRewardModule):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
@@ -111,7 +111,7 @@ class NGU(BaseIntrinsicRewardModule):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
@@ -227,9 +227,7 @@ class NGU(BaseIntrinsicRewardModule):
 
                     src_feats = self.predictor.encode(obs_tensor[:, i])
                     tgt_feats = self.target.encode(obs_tensor[:, i])
-                    dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(
-                        dim=1
-                    )
+                    dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
                     dist = (dist - dist.mean()) / (dist.std() + 1e-11)
                     # min{max{alpha_t, 1}, L}
                     alpha = 1.0 + dist
@@ -259,30 +257,14 @@ class NGU(BaseIntrinsicRewardModule):
         """
         num_steps = samples["obs"].size()[0]
         num_envs = samples["obs"].size()[1]
-        obs_tensor = (
-            samples["obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
-        next_obs_tensor = (
-            samples["next_obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
+        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         if self._action_type == "Discrete":
-            actions_tensor = (
-                samples["actions"].view((num_envs * num_steps)).to(self._device)
-            )
-            actions_tensor = F.one_hot(
-                actions_tensor.long(), self._action_shape[0]
-            ).float()
+            actions_tensor = samples["actions"].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
-            actions_tensor = (
-                samples["actions"]
-                .view((num_envs * num_steps, self._action_shape[0]))
-                .to(self._device)
-            )
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)

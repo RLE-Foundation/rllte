@@ -22,9 +22,7 @@ class RandomAdjustSharpness(BaseAugmentation):
         self.sharpness_factor = sharpness_factor
         self.p = p
 
-        self.augment_function = T.RandomAdjustSharpness(
-            sharpness_factor=self.sharpness_factor, p=self.p
-        )
+        self.augment_function = T.RandomAdjustSharpness(sharpness_factor=self.sharpness_factor, p=self.p)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         b, c, h, w = x.size()

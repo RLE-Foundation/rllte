@@ -19,7 +19,7 @@ class PrioritizedReplayStorage(BaseStorage):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the buffer.
         batch_size (int): Batch size of samples.
         alpha (float): The alpha coefficient.
@@ -33,7 +33,7 @@ class PrioritizedReplayStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         storage_size: int = 1000000,
         batch_size: int = 1024,
         alpha: float = 0.6,

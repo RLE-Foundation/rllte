@@ -23,9 +23,7 @@ class MnihCnnEncoder(BaseEncoder):
         CNN-based encoder instance.
     """
 
-    def __init__(
-        self, observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0
-    ) -> None:
+    def __init__(self, observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0) -> None:
         super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape

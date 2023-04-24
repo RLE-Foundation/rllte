@@ -18,7 +18,7 @@ class VanillaReplayStorage(BaseStorage):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the buffer.
         batch_size (int): Batch size of samples.
 
@@ -30,7 +30,7 @@ class VanillaReplayStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         storage_size: int = 1000000,
         batch_size: int = 1024,
     ):
@@ -46,9 +46,7 @@ class VanillaReplayStorage(BaseStorage):
         if self._action_type == "Discrete":
             self.actions = self.actions = np.empty((storage_size, 1), dtype=np.float32)
         if self._action_type == "Box":
-            self.actions = np.empty(
-                (storage_size, self._action_shape[0]), dtype=np.float32
-            )
+            self.actions = np.empty((storage_size, self._action_shape[0]), dtype=np.float32)
 
         self.rewards = np.empty((storage_size, 1), dtype=np.float32)
         self.terminateds = np.empty((storage_size, 1), dtype=np.float32)
@@ -108,12 +106,8 @@ class VanillaReplayStorage(BaseStorage):
         obs = th.as_tensor(self.obs[indices], device=self._device).float()
         actions = th.as_tensor(self.actions[indices], device=self._device).float()
         rewards = th.as_tensor(self.rewards[indices], device=self._device).float()
-        next_obs = th.as_tensor(
-            self.obs[(indices + 1) % self._storage_size], device=self._device
-        ).float()
-        terminateds = th.as_tensor(
-            self.terminateds[indices], device=self._device
-        ).float()
+        next_obs = th.as_tensor(self.obs[(indices + 1) % self._storage_size], device=self._device).float()
+        terminateds = th.as_tensor(self.terminateds[indices], device=self._device).float()
         weights = th.ones_like(terminateds, device=self._device)
 
         return indices, obs, actions, rewards, terminateds, next_obs, weights

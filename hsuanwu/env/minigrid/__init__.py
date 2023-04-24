@@ -32,7 +32,7 @@ def make_minigrid_env(
     fully_observable: bool = True,
     seed: int = 0,
     frame_stack: int = 1,
-    device: th.device = "cpu",
+    device: str = "cpu",
 ) -> gym.Env:
     """Build MiniGrid environments.
 
@@ -42,7 +42,7 @@ def make_minigrid_env(
         fully_observable (bool): 'True' for using fully observable RGB image as observation.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.

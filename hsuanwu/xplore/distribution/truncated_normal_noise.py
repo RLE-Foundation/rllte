@@ -35,9 +35,7 @@ class TruncatedNormalNoise(BaseDistribution):
         self._stddev_schedule = stddev_schedule
         self._stddev_clip = stddev_clip
 
-    def sample(
-        self, clip: bool = False, sample_shape: th.Size = th.Size()
-    ) -> th.Tensor:
+    def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
@@ -98,9 +96,7 @@ class TruncatedNormalNoise(BaseDistribution):
         self._noiseless_action = noiseless_action
         if self._stddev_schedule is not None:
             # TODO: reset the std of normal distribution.
-            self.dist.scale = th.ones_like(self.dist.scale) * utils.schedule(
-                self._stddev_schedule, step
-            )
+            self.dist.scale = th.ones_like(self.dist.scale) * utils.schedule(self._stddev_schedule, step)
 
     @property
     def mean(self) -> th.Tensor:

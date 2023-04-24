@@ -72,7 +72,7 @@ class DrQv2(BaseAgent):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
@@ -89,7 +89,7 @@ class DrQv2(BaseAgent):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device,
+        device: str,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -103,15 +103,13 @@ class DrQv2(BaseAgent):
         self.update_every_steps = update_every_steps
 
         # create models
-        self.actor = DeterministicActor(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self.device)
-        self.critic = DoubleCritic(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self.device)
-        self.critic_target = DoubleCritic(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self.device)
+        self.actor = DeterministicActor(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+            self.device
+        )
+        self.critic = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
+        self.critic_target = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+            self.device
+        )
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers
@@ -135,9 +133,7 @@ class DrQv2(BaseAgent):
         if self.encoder is not None:
             self.encoder.train(training)
 
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -202,19 +198,13 @@ class DrQv2(BaseAgent):
             encoded_next_obs = self.encoder(next_obs)
 
         # update criitc
-        metrics.update(
-            self.update_critic(
-                encoded_obs, action, reward, discount, encoded_next_obs, step
-            )
-        )
+        metrics.update(self.update_critic(encoded_obs, action, reward, discount, encoded_next_obs, step))
 
         # update actor (do not udpate encoder)
         metrics.update(self.update_actor(encoded_obs.detach(), step))
 
         # udpate critic target
-        utils.soft_update_params(
-            self.critic, self.critic_target, self.critic_target_tau
-        )
+        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
 
         return metrics
 

@@ -116,13 +116,9 @@ class VAE(nn.Module):
         VAE instance.
     """
 
-    def __init__(
-        self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int
-    ) -> None:
+    def __init__(self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super(VAE, self).__init__()
-        self.encoder = Encoder(
-            obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim
-        )
+        self.encoder = Encoder(obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim)
         self.decoder = Decoder(action_shape=action_shape, latent_dim=latent_dim)
 
         self.mu = nn.Linear(latent_dim, action_shape[0])
@@ -131,9 +127,7 @@ class VAE(nn.Module):
         self._device = device
         self.latent_dim = latent_dim
 
-    def reparameterize(
-        self, mu: th.Tensor, logvar: th.Tensor, device: th.device, training: bool = True
-    ) -> th.Tensor:
+    def reparameterize(self, mu: th.Tensor, logvar: th.Tensor, device: th.device, training: bool = True) -> th.Tensor:
         """Reparameterization trick.
 
         Args:
@@ -183,7 +177,7 @@ class GIRM(BaseIntrinsicRewardModule):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
@@ -202,7 +196,7 @@ class GIRM(BaseIntrinsicRewardModule):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
@@ -236,9 +230,7 @@ class GIRM(BaseIntrinsicRewardModule):
 
         self.opt = optim.Adam(lr=lr, params=self.vae.parameters())
 
-    def get_vae_loss(
-        self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor
-    ) -> th.Tensor:
+    def get_vae_loss(self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor) -> th.Tensor:
         """Compute the vae loss.
 
         Args:
@@ -276,9 +268,7 @@ class GIRM(BaseIntrinsicRewardModule):
         obs_tensor = samples["obs"].to(self._device)
         actions_tensor = samples["actions"].to(self._device)
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(
-                actions_tensor[:, :, 0].long(), self._action_shape[0]
-            ).float()
+            actions_tensor = F.one_hot(actions_tensor[:, :, 0].long(), self._action_shape[0]).float()
             actions_tensor = actions_tensor.to(self._device)
         next_obs_tensor = samples["next_obs"].to(self._device)
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
@@ -293,13 +283,8 @@ class GIRM(BaseIntrinsicRewardModule):
                     pred_actions = F.softmax(z, dim=1)
                 else:
                     pred_actions = z
-                combined_actions = (
-                    self.lambd * actions_tensor[:, i]
-                    + (1.0 - self.lambd) * pred_actions
-                )
-                pred_next_obs = self.vae.decoder(
-                    self.vae.encoder.encode(obs_tensor[:, i]), combined_actions
-                )
+                combined_actions = self.lambd * actions_tensor[:, i] + (1.0 - self.lambd) * pred_actions
+                pred_next_obs = self.vae.decoder(self.vae.encoder.encode(obs_tensor[:, i]), combined_actions)
                 intrinsic_rewards[:, i] = F.mse_loss(
                     pred_next_obs,
                     self.vae.encoder.encode(next_obs_tensor[:, i]),
@@ -326,30 +311,14 @@ class GIRM(BaseIntrinsicRewardModule):
         """
         num_steps = samples["obs"].size()[0]
         num_envs = samples["obs"].size()[1]
-        obs_tensor = (
-            samples["obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
-        next_obs_tensor = (
-            samples["next_obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
+        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         if self._action_type == "Discrete":
-            actions_tensor = (
-                samples["actions"].view((num_envs * num_steps)).to(self._device)
-            )
-            actions_tensor = F.one_hot(
-                actions_tensor.long(), self._action_shape[0]
-            ).float()
+            actions_tensor = samples["actions"].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
-            actions_tensor = (
-                samples["actions"]
-                .view((num_envs * num_steps, self._action_shape[0]))
-                .to(self._device)
-            )
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
@@ -363,14 +332,8 @@ class GIRM(BaseIntrinsicRewardModule):
             pred_next_obs = self.vae.decoder(self.vae.encoder.encode(obs), z)
             # compute the total loss
             action_loss = self.action_loss(z, actions)
-            recon_loss, kld_loss = self.get_vae_loss(
-                pred_next_obs, self.vae.encoder.encode(next_obs), mu, logvar
-            )
-            vae_loss = (
-                self.lambd_recon * recon_loss
-                + self.kld_loss_beta * kld_loss
-                + self.lambd_action * action_loss
-            )
+            recon_loss, kld_loss = self.get_vae_loss(pred_next_obs, self.vae.encoder.encode(next_obs), mu, logvar)
+            vae_loss = self.lambd_recon * recon_loss + self.kld_loss_beta * kld_loss + self.lambd_action * action_loss
             # update
             self.opt.zero_grad()
             vae_loss.backward(retain_graph=True)

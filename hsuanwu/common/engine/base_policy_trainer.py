@@ -1,22 +1,18 @@
 import os
-from abc import ABC, abstractmethod
-from typing import Dict, Optional
-
-import gymnasium as gym
-
 os.environ["HYDRA_FULL_ERROR"] = "1"
-import random
-from pathlib import Path
-
 import numpy as np
 import omegaconf
 import torch as th
+import gymnasium as gym
+import random
+from abc import ABC, abstractmethod
+from typing import Dict, Optional
+from pathlib import Path
 from omegaconf import OmegaConf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
-from hsuanwu.xplore.reward import ALL_IRS_MODULES
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
@@ -59,9 +55,7 @@ class BasePolicyTrainer(ABC):
         Base policy trainer instance.
     """
 
-    def __init__(
-        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
-    ) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         # basic setup
         self._train_env = train_env
         self._test_env = test_env
@@ -90,12 +84,8 @@ class BasePolicyTrainer(ABC):
         # training track
         self._num_train_steps = self._cfgs.num_train_steps
         self._num_test_episodes = self._cfgs.num_test_episodes
-        self._test_every_steps = (
-            self._cfgs.test_every_steps
-        )  # only for off-policy algorithms
-        self._test_every_episodes = (
-            self._cfgs.test_every_episodes
-        )  # only for on-policy algorithms
+        self._test_every_steps = self._cfgs.test_every_steps  # only for off-policy algorithms
+        self._test_every_episodes = self._cfgs.test_every_episodes  # only for on-policy algorithms
         self._global_step = 0
         self._global_episode = 0
 
@@ -233,15 +223,12 @@ class BasePolicyTrainer(ABC):
         self._logger.debug(f"Selected Storage: {cfgs.storage._target_}")
 
         assert (
-            cfgs.distribution._target_
-            in ALL_MATCH_KEYS[cfgs.agent._target_]["distribution"]
+            cfgs.distribution._target_ in ALL_MATCH_KEYS[cfgs.agent._target_]["distribution"]
         ), f"{cfgs.distribution._target_} is incompatible with {cfgs.agent._target_}! See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Distribution: {cfgs.distribution._target_}")
 
         if cfgs.augmentation._target_ is not None:
-            self._logger.debug(
-                f"Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}"
-            )
+            self._logger.debug(f"Use Augmentation: {cfgs.use_aug}, {cfgs.augmentation._target_}")
         else:
             self._logger.debug(f"Use Augmentation: {cfgs.use_aug}")
 
@@ -251,9 +238,7 @@ class BasePolicyTrainer(ABC):
             ), "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if cfgs.reward._target_ is not None:
-            self._logger.debug(
-                f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}"
-            )
+            self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}, {cfgs.reward._target_}")
         else:
             self._logger.debug(f"Use Intrinsic Reward: {cfgs.use_irs}")
 
@@ -270,13 +255,9 @@ class BasePolicyTrainer(ABC):
         cfgs.encoder._target_ = "hsuanwu.xploit." + "encoder." + cfgs.encoder._target_
         cfgs.storage._target_ = "hsuanwu.xploit." + "storage." + cfgs.storage._target_
 
-        cfgs.distribution._target_ = (
-            "hsuanwu.xplore." + "distribution." + cfgs.distribution._target_
-        )
+        cfgs.distribution._target_ = "hsuanwu.xplore." + "distribution." + cfgs.distribution._target_
         if cfgs.augmentation._target_ is not None:
-            cfgs.augmentation._target_ = (
-                "hsuanwu.xplore." + "augmentation." + cfgs.augmentation._target_
-            )
+            cfgs.augmentation._target_ = "hsuanwu.xplore." + "augmentation." + cfgs.augmentation._target_
         if cfgs.reward._target_ is not None:
             cfgs.reward._target_ = "hsuanwu.xplore." + "reward." + cfgs.reward._target_
 

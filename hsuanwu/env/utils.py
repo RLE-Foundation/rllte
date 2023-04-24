@@ -13,30 +13,24 @@ class HsuanwuEnvWrapper(gym.Wrapper):
 
     Args:
         env (VectorEnv): The vectorized environments.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         HsuanwuEnvWrapper instance.
     """
 
-    def __init__(self, env: VectorEnv, device: th.device) -> None:
+    def __init__(self, env: VectorEnv, device: str) -> None:
         super().__init__(env)
         self._device = th.device(device)
 
         # TODO: Transform the original 'Box' space into Hydra supported type.
-        self.observation_space = OmegaConf.create(
-            {"shape": env.single_observation_space.shape}
-        )
+        self.observation_space = OmegaConf.create({"shape": env.single_observation_space.shape})
 
         if env.single_action_space.__class__.__name__ == "Discrete":
             n = int(env.single_action_space.n)
-            self.action_space = OmegaConf.create(
-                {"shape": (n,), "type": "Discrete", "range": [0, n - 1]}
-            )
+            self.action_space = OmegaConf.create({"shape": (n,), "type": "Discrete", "range": [0, n - 1]})
         elif env.single_action_space.__class__.__name__ == "Box":
-            low, high = float(env.single_action_space.low[0]), float(
-                env.single_action_space.high[0]
-            )
+            low, high = float(env.single_action_space.low[0]), float(env.single_action_space.high[0])
             self.action_space = OmegaConf.create(
                 {
                     "shape": env.single_action_space.shape,
@@ -66,9 +60,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         obs = th.as_tensor(obs, device=self._device)
         return obs, info
 
-    def step(
-        self, actions: th.Tensor
-    ) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
+    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
         """Take an action for each parallel environment.
 
         Args:

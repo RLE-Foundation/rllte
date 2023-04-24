@@ -7,6 +7,3 @@ class BaseAugmentation(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-
-    def forward(*args) -> th.Tensor:
-        """Augmentation function."""

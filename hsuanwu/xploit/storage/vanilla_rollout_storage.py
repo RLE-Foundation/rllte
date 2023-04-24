@@ -18,7 +18,7 @@ class VanillaRolloutStorage(BaseStorage):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
         discount (float): discount factor.
@@ -32,7 +32,7 @@ class VanillaRolloutStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         num_steps: int = 256,
         num_envs: int = 8,
         discount: float = 0.99,
@@ -66,31 +66,17 @@ class VanillaRolloutStorage(BaseStorage):
             )
         else:
             raise NotImplementedError
-        self.rewards = th.empty(
-            size=(num_steps, num_envs), dtype=th.float32, device=self._device
-        )
-        self.terminateds = th.empty(
-            size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device
-        )
-        self.truncateds = th.empty(
-            size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device
-        )
+        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
+        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device)
+        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device)
         # first next_terminated
         self.terminateds[0].copy_(th.zeros(num_envs).to(self._device))
         self.truncateds[0].copy_(th.zeros(num_envs).to(self._device))
         # extra part
-        self.log_probs = th.empty(
-            size=(num_steps, num_envs), dtype=th.float32, device=self._device
-        )
-        self.values = th.empty(
-            size=(num_steps, num_envs), dtype=th.float32, device=self._device
-        )
-        self.returns = th.empty(
-            size=(num_steps, num_envs), dtype=th.float32, device=self._device
-        )
-        self.advantages = th.empty(
-            size=(num_steps, num_envs), dtype=th.float32, device=self._device
-        )
+        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
+        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
+        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
+        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
 
         self._global_step = 0
 
@@ -155,18 +141,12 @@ class VanillaRolloutStorage(BaseStorage):
             else:
                 next_non_terminal = 1.0 - self.terminateds[step + 1]
                 next_values = self.values[step + 1]
-            delta = (
-                self.rewards[step]
-                + self._discount * next_values * next_non_terminal
-                - self.values[step]
-            )
+            delta = self.rewards[step] + self._discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self._discount * self._gae_lambda * next_non_terminal * gae
             self.advantages[step] = gae
 
         self.returns = self.advantages + self.values
-        self.advantages = (self.advantages - self.advantages.mean()) / (
-            self.advantages.std() + 1e-5
-        )
+        self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self, num_mini_batch: int = 8) -> Generator:
         """Sample data from storage.
@@ -187,9 +167,7 @@ class VanillaRolloutStorage(BaseStorage):
         )
         mini_batch_size = batch_size // num_mini_batch
 
-        sampler = BatchSampler(
-            SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=True
-        )
+        sampler = BatchSampler(SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=True)
 
         for indices in sampler:
             batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]

@@ -26,9 +26,7 @@ class RandomCutout(BaseAugmentation):
         cutouts = th.empty((n, c, h, w), dtype=x.dtype, device=x.device)
         for i, (img, w11, h11) in enumerate(zip(x, w1, h1)):
             cut_img = img.clone()
-            cut_img[:, h11 : h11 + h11, w11 : w11 + w11] = th.tensor(
-                0, dtype=cut_img.dtype, device=cut_img.device
-            )
+            cut_img[:, h11 : h11 + h11, w11 : w11 + w11] = th.tensor(0, dtype=cut_img.dtype, device=cut_img.device)
             cutouts[i] = cut_img
 
         return cutouts

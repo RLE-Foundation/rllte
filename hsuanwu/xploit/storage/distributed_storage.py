@@ -1,6 +1,6 @@
 import collections
 import threading
-from typing import List, Tuple, Union, Dict, Generator, Any
+from typing import Any, Dict, Generator, List, Tuple, Union
 
 import gymnasium as gym
 import torch as th
@@ -19,8 +19,10 @@ class DistributedStorage(BaseStorage):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample steps of per rollout.
         num_storages (int): The number of shared-memory storages.
+        batch_size (int): The batch size.
 
     Returns:
         Vanilla rollout storage.
@@ -30,7 +32,7 @@ class DistributedStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         num_steps: int = 100,
         num_storages: int = 80,
         batch_size: int = 32,
@@ -55,9 +57,7 @@ class DistributedStorage(BaseStorage):
             episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
             last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-            policy_logits=dict(
-                size=(num_steps + 1, self._action_shape[0]), dtype=th.float32
-            ),
+            policy_logits=dict(size=(num_steps + 1, self._action_shape[0]), dtype=th.float32),
             baseline=dict(size=(num_steps + 1,), dtype=th.float32),
             action=dict(size=(num_steps + 1,), dtype=th.int64),
         )
@@ -96,21 +96,12 @@ class DistributedStorage(BaseStorage):
         """
         with lock:
             indices = [full_queue.get() for _ in range(batch_size)]
-        batch = {
-            key: th.stack([storages[key][i] for i in indices], dim=1)
-            for key in storages
-        }
+        batch = {key: th.stack([storages[key][i] for i in indices], dim=1) for key in storages}
 
-        init_actor_states = (
-            th.cat(ts, dim=1)
-            for ts in zip(*[init_actor_state_storages[i] for i in indices])
-        )
+        init_actor_states = (th.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices]))
 
         for i in indices:
             free_queue.put(i)
 
-        batch = {
-            key: tensor.to(device=th.device(device), non_blocking=True)
-            for key, tensor in batch.items()
-        }
+        batch = {key: tensor.to(device=th.device(device), non_blocking=True) for key, tensor in batch.items()}
         return batch, init_actor_states

@@ -49,15 +49,11 @@ class ReplayStorage:
     def num_transitions(self) -> int:
         return self._num_transitions
 
-    def add(
-        self, obs: Any, action: Any, reward: float, terminated: bool, discount: float
-    ) -> None:
+    def add(self, obs: Any, action: Any, reward: float, terminated: bool, discount: float) -> None:
         self._current_episode["observation"].append(obs)
         self._current_episode["action"].append(action)
         self._current_episode["reward"].append(np.full((1,), reward, np.float32))
-        self._current_episode["terminated"].append(
-            np.full((1,), terminated, np.float32)
-        )
+        self._current_episode["terminated"].append(np.full((1,), terminated, np.float32))
         self._current_episode["discount"].append(np.full((1,), discount, np.float32))
 
         if terminated:
@@ -80,7 +76,7 @@ class NStepReplayStorage(IterableDataset):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the storage.
         batch_size (int): Number of samples per batch to load.
         num_workers (int): Subprocesses to use for data loading.
@@ -98,7 +94,7 @@ class NStepReplayStorage(IterableDataset):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         storage_size: int = 500000,
         batch_size: int = 256,
         num_workers: int = 4,
@@ -170,9 +166,7 @@ class NStepReplayStorage(IterableDataset):
         elif "discount" in info["final_info"][0].keys():
             discount = info["final_info"][0]["discount"]
         else:
-            raise ValueError(
-                "When using NStepReplayStorage, please put the discount factor in 'info'!"
-            )
+            raise ValueError("When using NStepReplayStorage, please put the discount factor in 'info'!")
 
         self._replay_storage.add(obs, action, reward, terminated, discount)
 

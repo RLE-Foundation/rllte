@@ -101,9 +101,7 @@ class VTrace(object):
         """V-trace for softmax policies."""
 
         target_action_log_probs = self.action_log_probs(target_policy_logits, actions)
-        behavior_action_log_probs = self.action_log_probs(
-            behavior_policy_logits, actions
-        )
+        behavior_action_log_probs = self.action_log_probs(behavior_policy_logits, actions)
         log_rhos = target_action_log_probs - behavior_action_log_probs
         vtrace_returns = self.from_importance_weights(
             log_rhos=log_rhos,
@@ -142,9 +140,7 @@ class VTrace(object):
 
             cs = th.clamp(rhos, max=1.0)
             # Append bootstrapped value to get [v1, ..., v_t+1]
-            values_t_plus_1 = th.cat(
-                [values[1:], th.unsqueeze(bootstrap_value, 0)], dim=0
-            )
+            values_t_plus_1 = th.cat([values[1:], th.unsqueeze(bootstrap_value, 0)], dim=0)
             deltas = clipped_rhos * (rewards + discounts * values_t_plus_1 - values)
 
             acc = th.zeros_like(bootstrap_value)
@@ -160,16 +156,12 @@ class VTrace(object):
 
             # Advantage for policy gradient.
             broadcasted_bootstrap_values = th.ones_like(vs[0]) * bootstrap_value
-            vs_t_plus_1 = th.cat(
-                [vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0
-            )
+            vs_t_plus_1 = th.cat([vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0)
             if clip_pg_rho_threshold is not None:
                 clipped_pg_rhos = th.clamp(rhos, max=clip_pg_rho_threshold)
             else:
                 clipped_pg_rhos = rhos
-            pg_advantages = clipped_pg_rhos * (
-                rewards + discounts * vs_t_plus_1 - values
-            )
+            pg_advantages = clipped_pg_rhos * (rewards + discounts * vs_t_plus_1 - values)
 
             # Make sure no gradients backpropagated through the returned values.
             return VTraceReturns(vs=vs, pg_advantages=pg_advantages)
@@ -185,7 +177,7 @@ class IMPALA(BaseAgent):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
@@ -203,7 +195,7 @@ class IMPALA(BaseAgent):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device,
+        device: str,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -220,13 +212,9 @@ class IMPALA(BaseAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
 
-        self.actor = DiscreteLSTMActor(
-            action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm
-        )
+        self.actor = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
 
-        self.learner = DiscreteLSTMActor(
-            action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm
-        )
+        self.learner = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
@@ -302,9 +290,7 @@ class IMPALA(BaseAgent):
 
             # Move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
-            learner_outputs = {
-                key: tensor[:-1] for key, tensor in learner_outputs.items()
-            }
+            learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
             rewards = batch["reward"]
             clipped_rewards = th.clamp(rewards, -1, 1)
@@ -326,12 +312,8 @@ class IMPALA(BaseAgent):
                 batch["action"],
                 vtrace_returns.pg_advantages,
             )
-            baseline_loss = cfgs.agent.baseline_coef * compute_baseline_loss(
-                vtrace_returns.vs - learner_outputs["baseline"]
-            )
-            entropy_loss = cfgs.agent.ent_coef * compute_entropy_loss(
-                learner_outputs["policy_logits"]
-            )
+            baseline_loss = cfgs.agent.baseline_coef * compute_baseline_loss(vtrace_returns.vs - learner_outputs["baseline"])
+            entropy_loss = cfgs.agent.ent_coef * compute_entropy_loss(learner_outputs["policy_logits"])
 
             total_loss = pg_loss + baseline_loss + entropy_loss
 
@@ -340,9 +322,7 @@ class IMPALA(BaseAgent):
 
             optimizer.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(
-                learner_model.parameters(), cfgs.agent.max_grad_norm
-            )
+            nn.utils.clip_grad_norm_(learner_model.parameters(), cfgs.agent.max_grad_norm)
             optimizer.step()
             lr_scheduler.step()
 

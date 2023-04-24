@@ -69,7 +69,7 @@ class RND(BaseIntrinsicRewardModule):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
@@ -84,7 +84,7 @@ class RND(BaseIntrinsicRewardModule):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
@@ -161,11 +161,7 @@ class RND(BaseIntrinsicRewardModule):
         """
         num_steps = samples["obs"].size()[0]
         num_envs = samples["obs"].size()[1]
-        obs_tensor = (
-            samples["obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
+        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)

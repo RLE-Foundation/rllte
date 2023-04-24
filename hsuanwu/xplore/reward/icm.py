@@ -72,9 +72,7 @@ class InverseDynamicsModel(nn.Module):
     def __init__(self, latent_dim, action_dim) -> None:
         super().__init__()
 
-        self.trunk = nn.Sequential(
-            nn.Linear(2 * latent_dim, 256), nn.ReLU(), nn.Linear(256, action_dim)
-        )
+        self.trunk = nn.Sequential(nn.Linear(2 * latent_dim, 256), nn.ReLU(), nn.Linear(256, action_dim))
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         """Forward function for outputing predicted actions.
@@ -133,7 +131,7 @@ class ICM(BaseIntrinsicRewardModule):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
@@ -148,7 +146,7 @@ class ICM(BaseIntrinsicRewardModule):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = "cpu",
+        device: str = "cpu",
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
@@ -162,17 +160,13 @@ class ICM(BaseIntrinsicRewardModule):
             latent_dim=latent_dim,
         ).to(self._device)
 
-        self.im = InverseDynamicsModel(
-            latent_dim=latent_dim, action_dim=self._action_shape[0]
-        ).to(self._device)
+        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
         if self._action_shape == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
             self.im_loss = nn.MSELoss()
 
-        self.fm = ForwardDynamicsModel(
-            latent_dim=latent_dim, action_dim=self._action_shape[0]
-        ).to(self._device)
+        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
@@ -200,9 +194,7 @@ class ICM(BaseIntrinsicRewardModule):
         obs_tensor = samples["obs"].to(self._device)
         actions_tensor = samples["actions"].to(self._device)
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(
-                actions_tensor[:, :, 0].long(), self._action_shape[0]
-            ).float()
+            actions_tensor = F.one_hot(actions_tensor[:, :, 0].long(), self._action_shape[0]).float()
         next_obs_tensor = samples["next_obs"].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
@@ -212,9 +204,7 @@ class ICM(BaseIntrinsicRewardModule):
                 encoded_obs = self.encoder(obs_tensor[:, i])
                 encoded_next_obs = self.encoder(next_obs_tensor[:, i])
                 pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
-                dist = F.mse_loss(
-                    encoded_next_obs, pred_next_obs, reduction="none"
-                ).mean(dim=1)
+                dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
 
         self.update(samples)
@@ -236,30 +226,14 @@ class ICM(BaseIntrinsicRewardModule):
         """
         num_steps = samples["obs"].size()[0]
         num_envs = samples["obs"].size()[1]
-        obs_tensor = (
-            samples["obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
-        next_obs_tensor = (
-            samples["next_obs"]
-            .view((num_envs * num_steps, *self._obs_shape))
-            .to(self._device)
-        )
+        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         if self._action_type == "Discrete":
-            actions_tensor = (
-                samples["actions"].view((num_envs * num_steps)).to(self._device)
-            )
-            actions_tensor = F.one_hot(
-                actions_tensor.long(), self._action_shape[0]
-            ).float()
+            actions_tensor = samples["actions"].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
-            actions_tensor = (
-                samples["actions"]
-                .view((num_envs * num_steps, self._action_shape[0]))
-                .to(self._device)
-            )
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)

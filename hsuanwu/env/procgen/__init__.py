@@ -4,12 +4,7 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.spaces.box import Box
-from gymnasium.wrappers import (
-    NormalizeReward,
-    RecordEpisodeStatistics,
-    TransformObservation,
-    TransformReward,
-)
+from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
 from hsuanwu.env.utils import HsuanwuEnvWrapper
@@ -54,7 +49,7 @@ def make_procgen_env(
     num_levels: int = 0,
     start_level: int = 0,
     distribution_mode: str = "easy",
-    device: th.device = "cpu",
+    device: str = "cpu",
 ) -> gym.Env:
     """Build Prcogen environments.
 
@@ -65,7 +60,7 @@ def make_procgen_env(
         num_levels (int): The number of unique levels that can be generated. Set to 0 to use unlimited levels.
         start_level (int): The lowest seed that will be used to generated levels. 'start_level' and 'num_levels' fully specify the set of possible levels.
         distribution_mode (str): What variant of the levels to use, the options are "easy", "hard", "extreme", "memory", "exploration".
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.

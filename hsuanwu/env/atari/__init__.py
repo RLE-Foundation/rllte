@@ -4,27 +4,16 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.vector import SyncVectorEnv
-from gymnasium.wrappers import (
-    FrameStack,
-    GrayScaleObservation,
-    RecordEpisodeStatistics,
-    ResizeObservation,
-    TransformReward,
-)
+from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
 
-from hsuanwu.env.atari.wrappers import (
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
+from hsuanwu.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
 from hsuanwu.env.utils import HsuanwuEnvWrapper
 
 
 def make_atari_env(
     env_id: str = "Alien-v5",
     num_envs: int = 8,
-    device: th.device = "cpu",
+    device: str = "cpu",
     seed: int = 0,
     frame_stack: int = 4,
 ) -> gym.Env:
@@ -33,7 +22,7 @@ def make_atari_env(
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
 

@@ -52,12 +52,7 @@ class Categorical(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return (
-            self.dist.log_prob(actions.squeeze(-1))
-            .view(actions.size(0), -1)
-            .sum(-1)
-            .unsqueeze(-1)
-        )
+        return self.dist.log_prob(actions.squeeze(-1)).view(actions.size(0), -1).sum(-1).unsqueeze(-1)
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""

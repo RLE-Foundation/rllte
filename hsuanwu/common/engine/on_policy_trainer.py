@@ -11,6 +11,7 @@ import torch as th
 from hsuanwu.common.engine import BasePolicyTrainer
 from hsuanwu.common.engine.utils import eval_mode
 
+
 class OnPolicyTrainer(BasePolicyTrainer):
     """Trainer for on-policy algorithms.
 
@@ -23,9 +24,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         On-policy trainer instance.
     """
 
-    def __init__(
-        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
-    ) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying OnPolicyTrainer...")
         # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
@@ -34,9 +33,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         # TODO: build encoder
-        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
-            self._device
-        )
+        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         self._agent.encoder.train()
         self._agent.encoder_opt = th.optim.Adam(
             self._agent.encoder.parameters(),
@@ -53,9 +50,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._agent.ac.dist = dist
         # TODO: get augmentation
         if self._cfgs.use_aug:
-            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
-                self._device
-            )
+            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
         # TODO: get intrinsic reward
         if self._cfgs.use_irs:
             self._agent.irs = hydra.utils.instantiate(self._cfgs.reward)
@@ -77,18 +72,14 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         for update in range(num_updates):
             # try to test
-            if (update % self._test_every_episodes) == 0 and (
-                self._test_env is not None
-            ):
+            if (update % self._test_every_episodes) == 0 and (self._test_env is not None):
                 test_metrics = self.test()
                 self._logger.test(msg=test_metrics)
 
             for step in range(self._num_steps):
                 # sample actions
                 with th.no_grad(), eval_mode(self._agent):
-                    actions, values, log_probs, entropy = self._agent.act(
-                        obs, training=True, step=self._global_step
-                    )
+                    actions, values, log_probs, entropy = self._agent.act(obs, training=True, step=self._global_step)
                 (
                     next_obs,
                     rewards,
@@ -106,9 +97,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 self._rollout_storage.add(
                     obs=obs,
                     actions=actions,
-                    rewards=np.zeros_like(rewards)
-                    if self._cfgs.pretraining
-                    else rewards,  # pre-training mode
+                    rewards=np.zeros_like(rewards) if self._cfgs.pretraining else rewards,  # pre-training mode
                     terminateds=terminateds,
                     truncateds=truncateds,
                     log_probs=log_probs,
@@ -126,9 +115,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._agent.update(
-                self._rollout_storage, episode=self._global_episode
-            )
+            metrics = self._agent.update(self._rollout_storage, episode=self._global_episode)
 
             # reset buffer
             self._rollout_storage.reset()

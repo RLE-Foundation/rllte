@@ -20,9 +20,5 @@ class GrayScale(BaseAugmentation):
         b, c, h, w = x.size()
         frames = c // 3
         x = x.view([b, frames, 3, h, w])
-        x = (
-            0.2989 * x[:, :, 0, ...]
-            + 0.5870 * x[:, :, 1, ...]
-            + 0.1140 * x[:, :, 2, ...]
-        )
+        x = 0.2989 * x[:, :, 0, ...] + 0.5870 * x[:, :, 1, ...] + 0.1140 * x[:, :, 2, ...]
         return x

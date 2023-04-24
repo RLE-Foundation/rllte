@@ -20,9 +20,7 @@ class GaussianNoise(BaseAugmentation):
         self.dist = Normal(loc=mu, scale=sigma)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
-        assert (
-            len(x.size()) == 2
-        ), "GaussianNoise only supports state-based observations!"
+        assert len(x.size()) == 2, "GaussianNoise only supports state-based observations!"
         z = self.dist.sample(x.size())
 
         return z + x

@@ -20,9 +20,7 @@ class RandomAmplitudeScaling(BaseAugmentation):
         self.dist = Uniform(low=low, high=high)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
-        assert (
-            len(x.size()) == 2
-        ), "RandomAmplitudeScaling only supports state-based observations!"
+        assert len(x.size()) == 2, "RandomAmplitudeScaling only supports state-based observations!"
         z = self.dist.sample(x.size())
 
         return z * x

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 from scipy import stats as sts
@@ -25,14 +25,12 @@ class Comparison(object):
     ) -> None:
         self.scores_x = scores_x
         self.scores_y = scores_y
-        assert (
-            self.scores_x.shape[1] == self.scores_y.shape[1]
-        ), "The two scores matrix must have same number of tasks!"
+        assert self.scores_x.shape[1] == self.scores_y.shape[1], "The two scores matrix must have same number of tasks!"
         self.num_runs_x = scores_x.shape[0]
         self.num_runs_y = scores_y.shape[0]
         self.num_tasks = scores_y.shape[1]
 
-    def compute_poi(self) -> np.ndarray:
+    def compute_poi(self) -> np.floating[Any]:
         """Compute the overall Probability of imporvement of algorithm `X` over `Y`."""
         all_ips = list()  # all the imporvement probabilities
         for task in range(self.num_tasks):

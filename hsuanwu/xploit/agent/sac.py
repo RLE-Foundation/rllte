@@ -74,7 +74,7 @@ class SAC(BaseAgent):
             'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
@@ -96,7 +96,7 @@ class SAC(BaseAgent):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device,
+        device: str,
         feature_dim: int,
         lr: float,
         eps: float,
@@ -123,25 +123,19 @@ class SAC(BaseAgent):
             hidden_dim=hidden_dim,
             log_std_range=log_std_range,
         ).to(self.device)
-        self.critic = DoubleCritic(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self.device)
-        self.critic_target = DoubleCritic(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
-        ).to(self.device)
+        self.critic = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
+        self.critic_target = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+            self.device
+        )
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy
         self.target_entropy = -np.prod(action_space.shape)
-        self.log_alpha = th.tensor(
-            np.log(temperature), device=self.device, requires_grad=True
-        )
+        self.log_alpha = th.tensor(np.log(temperature), device=self.device, requires_grad=True)
 
         # create optimizers
         self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr, betas=betas)
-        self.critic_opt = th.optim.Adam(
-            self.critic.parameters(), lr=self.lr, betas=betas
-        )
+        self.critic_opt = th.optim.Adam(self.critic.parameters(), lr=self.lr, betas=betas)
         self.log_alpha_opt = th.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
 
         self.train()
@@ -167,9 +161,7 @@ class SAC(BaseAgent):
         """Get the temperature coefficient."""
         return self.log_alpha.exp()
 
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -190,9 +182,7 @@ class SAC(BaseAgent):
 
         return action.clamp(*self.action_range)
 
-    def update(
-        self, replay_storage, step: int = 0
-    ) -> Dict[str, float]:
+    def update(self, replay_storage, step: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -266,9 +256,7 @@ class SAC(BaseAgent):
         metrics.update(self.update_actor_and_alpha(encoded_obs.detach(), weights, step))
 
         # udpate critic target
-        utils.soft_update_params(
-            self.critic, self.critic_target, self.critic_target_tau
-        )
+        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
 
         metrics.update({"indices": indices})
 
@@ -316,9 +304,7 @@ class SAC(BaseAgent):
                 next_action_aug = dist_aug.rsample()
                 log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
                 target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
-                target_V = (
-                    th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
-                )
+                target_V = th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug
                 target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
                 # mixed target Q-function
                 target_Q = (target_Q + target_Q_aug) / 2
@@ -350,9 +336,7 @@ class SAC(BaseAgent):
             "priorities": priorities.data.cpu().numpy(),
         }
 
-    def update_actor_and_alpha(
-        self, obs: th.Tensor, weights: th.Tensor, step: int
-    ) -> Dict[str, float]:
+    def update_actor_and_alpha(self, obs: th.Tensor, weights: th.Tensor, step: int) -> Dict[str, float]:
         """Update the actor network and temperature.
 
         Args:
@@ -380,9 +364,7 @@ class SAC(BaseAgent):
         if not self.fixed_temperature:
             # update temperature
             self.log_alpha_opt.zero_grad(set_to_none=True)
-            alpha_loss = (
-                self.alpha * (-log_prob - self.target_entropy).detach() * weights
-            ).mean()
+            alpha_loss = (self.alpha * (-log_prob - self.target_entropy).detach() * weights).mean()
             alpha_loss.backward()
             self.log_alpha_opt.step()
         else:

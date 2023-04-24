@@ -122,9 +122,7 @@ class DistributedTrainer(BasePolicyTrainer):
         Distributed trainer instance.
     """
 
-    def __init__(
-        self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
-    ) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying DistributedTrainer...")
         # xploit part
@@ -150,9 +148,7 @@ class DistributedTrainer(BasePolicyTrainer):
                 / self._cfgs.num_train_steps
             )
 
-        self._agent.lr_scheduler = th.optim.lr_scheduler.LambdaLR(
-            self._agent.opt, lr_lambda
-        )
+        self._agent.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self._agent.opt, lr_lambda)
 
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
@@ -222,9 +218,7 @@ class DistributedTrainer(BasePolicyTrainer):
                 # Do new rollout.
                 for t in range(cfgs.num_steps):
                     with th.no_grad():
-                        actor_output, actor_state = actor_model.get_action(
-                            env_output, actor_state
-                        )
+                        actor_output, actor_state = actor_model.get_action(env_output, actor_state)
                     env_output = env.step(actor_output["action"])
 
                     for key in env_output:
@@ -310,9 +304,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
         threads = []
         for i in range(self._cfgs.num_learners):
-            thread = threading.Thread(
-                target=sample_and_update, name="sample-and-update-%d" % i, args=(i,)
-            )
+            thread = threading.Thread(target=sample_and_update, name="sample-and-update-%d" % i, args=(i,))
             thread.start()
             self._logger.info(f"Learner {i} started!")
             threads.append(thread)
@@ -340,7 +332,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
-            return 
+            return
         else:
             for thread in threads:
                 thread.join()
@@ -355,9 +347,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
     def test(self) -> Dict[str, float]:
         """Testing function."""
-        return {
-            'step': 0
-        }
+        return {"step": 0}
 
     def save(self) -> None:
         """Save the trained model."""

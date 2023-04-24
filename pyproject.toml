@@ -38,7 +38,6 @@ tests = [
   "pytest-env",
   "pytest-xdist",
   "pytype",
-  "mypy",
   "ruff",
   "isort>=5.0",
   "black"
@@ -64,3 +63,25 @@ docs = [
 "Documentation" = "https://docs.hsuanwu.dev/"
 "Benchmark" = "https://hub.hsuanwu.dev/"
 "Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
+
+[tool.ruff]
+# Same as Black.
+line-length = 127
+# Assume Python 3.7
+target-version = "py37"
+# See https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "B", "UP", "C90", "RUF"]
+# Ignore explicit stacklevel`
+ignore = ["B028"]
+
+[tool.black]
+line-length = 127
+
+[tool.isort]
+profile = "black"
+line_length = 127
+src_paths = ["hsuanwu"]
+
+[tool.pytype]
+inputs = ["hsuanwu"]
+disable = ["pyi-error"]
