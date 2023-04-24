@@ -65,6 +65,7 @@ DEFAULT_CFGS = {
 class SAC(BaseAgent):
     """Soft Actor-Critic (SAC) agent.
         When 'augmentation' module is invoked, this learner will transform into Data Regularized Q (DrQ) agent.
+        Based on: https://github.com/denisyarats/pytorch_sac
 
     Args:
         observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 

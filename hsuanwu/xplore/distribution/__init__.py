@@ -5,3 +5,4 @@ from .normal_noise import NormalNoise as NormalNoise
 from .ornstein_uhlenbeck_noise import OrnsteinUhlenbeckNoise as OrnsteinUhlenbeckNoise
 from .squashed_normal import SquashedNormal as SquashedNormal
 from .truncated_normal_noise import TruncatedNormalNoise as TruncatedNormalNoise
+from .kl import kl_categorical_categorical as kl_categorical_categorical

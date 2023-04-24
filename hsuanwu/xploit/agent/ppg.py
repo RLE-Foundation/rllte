@@ -7,7 +7,7 @@ import torch as th
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import DiscreteActorAuxiliaryCritic, BoxActorAuxiliaryCritic
+from hsuanwu.xploit.agent.network import ActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -63,6 +63,7 @@ DEFAULT_CFGS = {
 
 class PPG(BaseAgent):
     """Phasic Policy Gradient (PPG) agent.
+        Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 
     Args:
         observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
@@ -136,20 +137,13 @@ class PPG(BaseAgent):
         # create models
         self.encoder = None
         # create models
-        if self.action_type == "Discrete":
-            self.ac = DiscreteActorAuxiliaryCritic(
-                action_space=action_space,
-                feature_dim=feature_dim,
-                hidden_dim=hidden_dim,
-            ).to(self.device)
-        elif self.action_type == "Box":
-            self.ac = BoxActorAuxiliaryCritic(
-                action_space=action_space,
-                feature_dim=feature_dim,
-                hidden_dim=hidden_dim,
-            ).to(self.device)
-        else:
-            raise NotImplementedError
+        self.ac = ActorCritic(
+            action_shape=self.action_shape,
+            action_type=self.action_type,
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            aux_critic=True
+        ).to(self.device)
 
         self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
         self.train()

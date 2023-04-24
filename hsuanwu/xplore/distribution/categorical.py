@@ -22,9 +22,15 @@ class Categorical(BaseDistribution):
         self.dist = pyd.Categorical(logits=logits)
 
     @property
+    def probs(self) -> th.Tensor:
+        """Return probabilities.
+        """
+        return self.dist.probs
+
+    @property
     def logits(self) -> th.Tensor:
         """Returns the unnormalized log probabilities."""
-        return self._logits
+        return self.dist.logits
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of

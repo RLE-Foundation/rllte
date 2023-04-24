@@ -34,11 +34,11 @@ class NormalNoise(BaseDistribution):
         self, clip: bool = False, sample_shape: th.Size = th.Size()
     ) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
-        samples if the distribution parameters are batched.
+            samples if the distribution parameters are batched.
 
         Args:
             clip (bool): Whether to perform noise truncation.
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -53,10 +53,10 @@ class NormalNoise(BaseDistribution):
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
-        samples if the distribution parameters are batched.
+            samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.

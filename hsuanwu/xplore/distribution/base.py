@@ -16,7 +16,7 @@ class BaseDistribution(ABC):
         samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -28,7 +28,7 @@ class BaseDistribution(ABC):
         samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.

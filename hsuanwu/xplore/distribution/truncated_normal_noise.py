@@ -6,7 +6,8 @@ from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
 class TruncatedNormalNoise(BaseDistribution):
-    """Truncated normal action noise. See Section 3.1 of "Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning".
+    """Truncated normal action noise. See Section 3.1 of 
+        "Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning".
 
     Args:
         mu (float): mean of the noise (often referred to as mu).
@@ -38,11 +39,11 @@ class TruncatedNormalNoise(BaseDistribution):
         self, clip: bool = False, sample_shape: th.Size = th.Size()
     ) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
-        samples if the distribution parameters are batched.
+            samples if the distribution parameters are batched.
 
         Args:
             clip (bool): Whether to perform noise truncation.
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -59,10 +60,10 @@ class TruncatedNormalNoise(BaseDistribution):
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
-        samples if the distribution parameters are batched.
+            samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.

@@ -10,7 +10,7 @@ from hsuanwu.xploit.agent import utils
 
 
 class StochasticActor(nn.Module):
-    """Stochastic actor network for SACLearner. Here the 'self.dist' refers to an sampling distribution instance.
+    """Stochastic actor network for SAC. Here the 'self.dist' refers to an sampling distribution instance.
 
     Args:
         action_space (Space): Action space of the environment.
@@ -66,7 +66,7 @@ class StochasticActor(nn.Module):
 
 
 class DeterministicActor(nn.Module):
-    """Deterministic actor network for DrQv2Learner. Here the 'self.dist' refers to an action noise instance.
+    """Deterministic actor network for DrQv2. Here the 'self.dist' refers to an action noise instance.
 
     Args:
         action_space (Space): Action space of the environment.
@@ -116,7 +116,7 @@ class DeterministicActor(nn.Module):
 
 
 class DoubleCritic(nn.Module):
-    """Double critic network for DrQv2Learner and SACLearner.
+    """Double critic network for DrQv2 and SAC.
 
     Args:
         action_space (Space): Action space of the environment.
@@ -168,21 +168,45 @@ class DoubleCritic(nn.Module):
 
         return q1, q2
 
-
-class DiscreteActorCritic(nn.Module):
-    """Actor-Critic network for discrete control tasks. For PPOLearner, DrACLearner.
+class ActorCritic(nn.Module):
+    """Actor-Critic network for on-policy algorithms.
 
     Args:
-        action_space (Space): Action space of the environment.
+        action_shape (Tuple): The data shape of actions.
+        action_type (str): The action type like 'Discrete' or 'Box', etc.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
+        aux_critic (bool): Use auxiliary critic or not.
 
     Returns:
         Actor-Critic instance.
     """
+    class DiscreteActor(nn.Module):
+        """Actor for 'Discrete' tasks.
+        """
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor = nn.Linear(hidden_dim, action_shape[0])
+        
+        def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
+            mu = self.actor(obs)
+            return dist(mu)
+    
+    class BoxActor(nn.Module):
+        """Actor for 'Box' tasks.
+        """
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
+            self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
+        
+        def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
+            mu = self.actor_mu(obs)
+            logstd = self.actor_logstd.expand_as(mu)
+            return dist(mu, logstd.exp())
 
     def __init__(
-        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
+        self, action_shape: int, action_type: str, feature_dim: int, hidden_dim: int, aux_critic: bool = False
     ) -> None:
         super().__init__()
 
@@ -192,13 +216,22 @@ class DiscreteActorCritic(nn.Module):
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(),
         )
-        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
+        if action_type == 'Discrete':
+            self.base = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
+        elif action_type == 'Box':
+            self.base = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
+        else:
+            raise NotImplementedError("Unsupported action type!")
+        
         self.critic = nn.Linear(hidden_dim, 1)
+        if aux_critic:
+            self.aux_critic = nn.Linear(hidden_dim, 1)
+
         # placeholder for distribution
         self.dist = None
 
         self.apply(utils.network_init)
-
+    
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
@@ -219,9 +252,11 @@ class DiscreteActorCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        mu = self.actor(self.trunk(obs))
-        return self.dist(mu).mode
+        h = self.trunk(obs)
+        dist = self.base(h, self.dist)
 
+        return dist.mean
+        
     def get_action_and_value(
         self, obs: th.Tensor, actions: th.Tensor = None
     ) -> Tuple[th.Tensor, ...]:
@@ -235,168 +270,7 @@ class DiscreteActorCritic(nn.Module):
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
         h = self.trunk(obs)
-        mu = self.actor(h)
-        dist = self.dist(mu)
-        if actions is None:
-            actions = dist.sample()
-
-        log_probs = dist.log_prob(actions)
-        entropy = dist.entropy().mean()
-
-        return actions, self.critic(h), log_probs, entropy
-
-class BoxActorCritic(nn.Module):
-    """Actor-Critic network for 'Box' tasks. For PPOLearner, DrACLearner.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor-Critic instance.
-    """
-
-    def __init__(
-        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
-    ) -> None:
-        super().__init__()
-
-        self.trunk = nn.Sequential(
-            nn.LayerNorm(feature_dim),
-            nn.Tanh(),
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(),
-        )
-        self.actor_mu = nn.Linear(hidden_dim, action_space.shape[0])
-        self.actor_logstd = nn.Parameter(th.zeros(1, action_space.shape[0]))
-
-        self.critic = nn.Linear(hidden_dim, 1)
-        # placeholder for distribution
-        self.dist = None
-
-        self.apply(utils.network_init)
-
-    def get_value(self, obs: th.Tensor) -> th.Tensor:
-        """Get estimated values for observations.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Estimated values.
-        """
-        return self.critic(self.trunk(obs))
-
-    def get_action(self, obs: th.Tensor) -> th.Tensor:
-        """Get deterministic actions for observations.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Estimated values.
-        """
-        mu = self.actor_mu(self.trunk(obs))
-        logstd = self.actor_logstd.expand_as(mu)
-
-        return self.dist(mu, logstd.exp()).mean
-
-    def get_action_and_value(
-        self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor, ...]:
-        """Get actions and estimated values for observations.
-
-        Args:
-            obs (Tensor): Sampled observations.
-            actions (Tensor): Sampled actions.
-
-        Returns:
-            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
-        h = self.trunk(obs)
-        mu = self.actor_mu(h)
-        logstd = self.actor_logstd.expand_as(mu)
-
-        dist = self.dist(mu, logstd.exp())
-        if actions is None:
-            actions = dist.sample()
-
-        log_probs = dist.log_prob(actions)
-        entropy = dist.entropy().mean()
-
-        return actions, self.critic(h), log_probs, entropy
-
-
-class DiscreteActorAuxiliaryCritic(nn.Module):
-    """Actor-Critic network for discrete control tasks. For PPGLearner.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor-Critic instance.
-    """
-
-    def __init__(
-        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
-    ) -> None:
-        super().__init__()
-
-        self.trunk = nn.Sequential(
-            nn.LayerNorm(feature_dim),
-            nn.Tanh(),
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(),
-        )
-        self.actor = nn.Linear(hidden_dim, action_space.shape[0])
-        self.critic = nn.Linear(hidden_dim, 1)
-        self.aux_critic = nn.Linear(hidden_dim, 1)
-        # placeholder for distribution
-        self.dist = None
-
-        self.apply(utils.network_init)
-
-    def get_value(self, obs: th.Tensor) -> th.Tensor:
-        """Get estimated values for observations.
-
-        Args:
-            obs: Observations.
-
-        Returns:
-            Estimated values.
-        """
-        return self.critic(self.trunk(obs))
-
-    def get_action(self, obs: th.Tensor) -> th.Tensor:
-        """Get deterministic actions for observations.
-
-        Args:
-            obs: Observations.
-
-        Returns:
-            Estimated values.
-        """
-        logits = self.actor(self.trunk(obs))
-        return self.dist(logits).mode
-
-    def get_action_and_value(
-        self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor, ...]:
-        """Get actions and estimated values for observations.
-
-        Args:
-            obs: Sampled observations.
-            actions: Sampled actions.
-
-        Returns:
-            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
-        h = self.trunk(obs)
-        logits = self.actor(h)
-        dist = self.dist(logits)
+        dist = self.base(h, self.dist)
         if actions is None:
             actions = dist.sample()
 
@@ -415,8 +289,7 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
             Distribution, estimated values, auxiliary estimated values.
         """
         h = self.trunk(obs)
-        logits = self.actor(h)
-        dist = self.dist(logits)
+        dist = self.base(h, self.dist)
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
@@ -429,117 +302,9 @@ class DiscreteActorAuxiliaryCritic(nn.Module):
         Returns:
             Distribution
         """
-        return self.dist(self.actor(self.trunk(obs)))
-
-class BoxActorAuxiliaryCritic(nn.Module):
-    """Actor-Critic network for 'Box' tasks. For PPGLearner.
-
-    Args:
-        action_space (Space): Action space of the environment.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor-Critic instance.
-    """
-
-    def __init__(
-        self, action_space: gym.Space, feature_dim: int, hidden_dim: int
-    ) -> None:
-        super().__init__()
-
-        self.trunk = nn.Sequential(
-            nn.LayerNorm(feature_dim),
-            nn.Tanh(),
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(),
-        )
-
-        self.actor_mu = nn.Linear(hidden_dim, action_space.shape[0])
-        self.actor_logstd = nn.Parameter(th.zeros(1, action_space.shape[0]))
-        self.critic = nn.Linear(hidden_dim, 1)
-        self.aux_critic = nn.Linear(hidden_dim, 1)
-        # placeholder for distribution
-        self.dist = None
-
-        self.apply(utils.network_init)
-
-    def get_value(self, obs: th.Tensor) -> th.Tensor:
-        """Get estimated values for observations.
-
-        Args:
-            obs: Observations.
-
-        Returns:
-            Estimated values.
-        """
-        return self.critic(self.trunk(obs))
-
-    def get_action(self, obs: th.Tensor) -> th.Tensor:
-        """Get deterministic actions for observations.
-
-        Args:
-            obs: Observations.
-
-        Returns:
-            Estimated values.
-        """
-        mu = self.actor_mu(self.trunk(obs))
-        logstd = self.actor_logstd.expand_as(mu)
-
-        return self.dist(mu, logstd.exp()).mean
-
-    def get_action_and_value(
-        self, obs: th.Tensor, actions: th.Tensor = None
-    ) -> Tuple[th.Tensor, ...]:
-        """Get actions and estimated values for observations.
-
-        Args:
-            obs: Sampled observations.
-            actions: Sampled actions.
-
-        Returns:
-            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
         h = self.trunk(obs)
-        mu = self.actor_mu(h)
-        logstd = self.actor_logstd.expand_as(mu)
-
-        dist = self.dist(mu, logstd.exp())
-        if actions is None:
-            actions = dist.sample()
-
-        log_probs = dist.log_prob(actions)
-        entropy = dist.entropy().mean()
-
-        return actions, self.critic(h), log_probs, entropy
-
-    def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
-        """Get probs and auxiliary estimated values for auxiliary phase update.
-
-        Args:
-            obs: Sampled observations.
-
-        Returns:
-            Distribution, estimated values, auxiliary estimated values.
-        """
-        h = self.trunk(obs)
-        logits = self.actor(h)
-        dist = self.dist(logits)
-
-        return dist, self.critic(h.detach()), self.aux_critic(h)
-
-    def get_logits(self, obs: th.Tensor) -> Distribution:
-        """Get the log-odds of sampling.
-
-        Args:
-            obs: Sampled observations.
-
-        Returns:
-            Distribution
-        """
-        return self.dist(self.actor(self.trunk(obs)))
-
+        dist = self.base(h, self.dist)
+        return dist
 
 class DiscreteLSTMActor(nn.Module):
     def __init__(
@@ -551,7 +316,7 @@ class DiscreteLSTMActor(nn.Module):
     ) -> None:
         super().__init__()
         """
-        Actor network for IMPALA learner that supports LSTM module.
+        Actor network for IMPALA  that supports LSTM module.
 
         Args:
             action_space (Space): Action space of the environment.

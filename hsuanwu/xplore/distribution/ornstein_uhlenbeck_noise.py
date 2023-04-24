@@ -99,11 +99,11 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         return self._noiseless_action
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of
-        samples if the distribution parameters are batched.
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of 
+            samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
