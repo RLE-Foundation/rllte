@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch as th
 from torch.distributions.utils import _standard_normal

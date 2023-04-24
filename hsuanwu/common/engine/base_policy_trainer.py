@@ -1,5 +1,4 @@
 import os
-os.environ["HYDRA_FULL_ERROR"] = "1"
 import numpy as np
 import omegaconf
 import torch as th
@@ -13,6 +12,8 @@ from omegaconf import OmegaConf
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+
+os.environ["HYDRA_FULL_ERROR"] = "1"
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
