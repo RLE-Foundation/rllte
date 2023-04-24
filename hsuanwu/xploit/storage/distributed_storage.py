@@ -1,20 +1,22 @@
 import collections
 import threading
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union, Dict, Generator, Any
+
 import gymnasium as gym
-from omegaconf import DictConfig
 import torch as th
+from omegaconf import DictConfig
 
 from hsuanwu.xploit.storage.base import BaseStorage
+
 
 class DistributedStorage(BaseStorage):
     """Distributed storage for distributed algorithms like IMPALA.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         num_steps (int): The sample steps of per rollout.
@@ -28,7 +30,7 @@ class DistributedStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = 'cpu',
+        device: th.device = "cpu",
         num_steps: int = 100,
         num_storages: int = 80,
         batch_size: int = 32,
@@ -53,7 +55,9 @@ class DistributedStorage(BaseStorage):
             episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
             last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-            policy_logits=dict(size=(num_steps + 1, self._action_shape[0]), dtype=th.float32),
+            policy_logits=dict(
+                size=(num_steps + 1, self._action_shape[0]), dtype=th.float32
+            ),
             baseline=dict(size=(num_steps + 1,), dtype=th.float32),
             action=dict(size=(num_steps + 1,), dtype=th.int64),
         )
@@ -62,10 +66,9 @@ class DistributedStorage(BaseStorage):
         for _ in range(num_storages):
             for key in self.storages:
                 self.storages[key].append(th.empty(**specs[key]).share_memory_())
-    
+
     def add(self, *args) -> None:
-        """Add sampled transitions into storage.
-        """
+        """Add sampled transitions into storage."""
 
     @staticmethod
     def sample(
@@ -76,7 +79,7 @@ class DistributedStorage(BaseStorage):
         storages: List,
         init_actor_state_storages: List,
         lock=threading.Lock(),
-    ) -> collections.namedtuple:
+    ) -> Tuple[Dict, Generator[Any, Any, None]]:
         """Sample transitions from the storage.
 
         Args:

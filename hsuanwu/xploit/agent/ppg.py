@@ -1,9 +1,9 @@
-from typing import Dict, Union, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
+from typing import Dict, Tuple, Union
 
+import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
@@ -66,10 +66,10 @@ class PPG(BaseAgent):
         Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -142,7 +142,7 @@ class PPG(BaseAgent):
             action_type=self.action_type,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
-            aux_critic=True
+            aux_critic=True,
         ).to(self.device)
 
         self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
@@ -176,7 +176,7 @@ class PPG(BaseAgent):
 
     def act(
         self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
+    ) -> Tuple[th.Tensor, ...]:
         """Sample actions based on observations.
 
         Args:
@@ -197,9 +197,7 @@ class PPG(BaseAgent):
             actions = self.ac.get_action(obs=encoded_obs)
             return actions.clamp(*self.action_range)
 
-    def update(
-        self, rollout_storage: Storage, episode: int = 0
-    ) -> Dict[str, float]:
+    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the agent.
 
         Args:
@@ -261,7 +259,7 @@ class PPG(BaseAgent):
                 samples={
                     "obs": rollout_storage.obs[:-1],
                     "actions": rollout_storage.actions,
-                    "next_obs": rollout_storage.obs[1:]
+                    "next_obs": rollout_storage.obs[1:],
                 },
                 step=episode * self.num_envs * self.num_steps,
             )
@@ -311,20 +309,21 @@ class PPG(BaseAgent):
                     obs=self.encoder(batch_obs_aug), actions=new_batch_actions
                 )
                 action_loss_aug = -log_probs_aug.mean()
-                value_loss_aug = (
-                    0.5 * (th.detach(values) - values_aug).pow(2).mean()
-                )
+                value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
                 aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
             else:
                 aug_loss = th.scalar_tensor(
                     s=0.0, requires_grad=False, device=critic_loss.device
                 )
-                
+
             # update
             self.encoder_opt.zero_grad(set_to_none=True)
             self.ac_opt.zero_grad(set_to_none=True)
             (
-                critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss
+                critic_loss * self.vf_coef
+                + actor_loss
+                - entropy * self.ent_coef
+                + aug_loss
             ).backward()
             nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
             nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
@@ -363,6 +362,9 @@ class PPG(BaseAgent):
                 ] = logits.reshape(
                     self.num_steps, self.num_envs, self.aux_logits.size()[2]
                 )
+        
+        total_aux_value_loss = 0.
+        total_kl_loss = 0.
 
         for e in range(self.aux_epochs):
             print("Auxiliary Phase", e)
@@ -411,3 +413,12 @@ class PPG(BaseAgent):
                     nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                     self.encoder_opt.step()
                     self.ac_opt.step()
+                
+                total_aux_value_loss += value_loss.item()
+                total_aux_value_loss += aux_value_loss.item()
+                total_kl_loss += kl_loss.item()
+            
+        return {
+            'aux_value_loss': total_aux_value_loss / self.aux_epochs,
+            'kl_loss': total_kl_loss / self.aux_epochs
+        }

@@ -1,9 +1,9 @@
 from typing import Dict, Tuple, Union
-import gymnasium as gym
-from omegaconf import DictConfig
 
+import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
@@ -68,10 +68,10 @@ class SAC(BaseAgent):
         Based on: https://github.com/denisyarats/pytorch_sac
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -132,7 +132,7 @@ class SAC(BaseAgent):
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy
-        self.target_entropy = - np.prod(action_space.shape)
+        self.target_entropy = -np.prod(action_space.shape)
         self.log_alpha = th.tensor(
             np.log(temperature), device=self.device, requires_grad=True
         )
@@ -166,8 +166,10 @@ class SAC(BaseAgent):
     def alpha(self) -> th.Tensor:
         """Get the temperature coefficient."""
         return self.log_alpha.exp()
-    
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -189,7 +191,7 @@ class SAC(BaseAgent):
         return action.clamp(*self.action_range)
 
     def update(
-        self, replay_storage: Dict[str, Dict], step: int = 0
+        self, replay_storage, step: int = 0
     ) -> Dict[str, float]:
         """Update the learner.
 
@@ -205,14 +207,22 @@ class SAC(BaseAgent):
             return metrics
 
         # weights for PrioritizedReplayStorage
-        indices, obs, action, reward, terminated, next_obs, weights = replay_storage.sample(step)
+        (
+            indices,
+            obs,
+            action,
+            reward,
+            terminated,
+            next_obs,
+            weights,
+        ) = replay_storage.sample(step)
 
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
                 samples={
                     "obs": obs.unsqueeze(1),
                     "actions": action.unsqueeze(1),
-                    "next_obs": next_obs.unsqueeze(1)
+                    "next_obs": next_obs.unsqueeze(1),
                 },
                 step=step,
             )
@@ -260,9 +270,7 @@ class SAC(BaseAgent):
             self.critic, self.critic_target, self.critic_target_tau
         )
 
-        metrics.update(
-            {'indices': indices}
-        )
+        metrics.update({"indices": indices})
 
         return metrics
 
@@ -339,10 +347,12 @@ class SAC(BaseAgent):
             "critic_q1": Q1.mean().item(),
             "critic_q2": Q2.mean().item(),
             "critic_target": target_Q.mean().item(),
-            'priorities': priorities.data.cpu().numpy()
+            "priorities": priorities.data.cpu().numpy(),
         }
 
-    def update_actor_and_alpha(self, obs: th.Tensor, weights: th.Tensor, step: int) -> Dict[str, float]:
+    def update_actor_and_alpha(
+        self, obs: th.Tensor, weights: th.Tensor, step: int
+    ) -> Dict[str, float]:
         """Update the actor network and temperature.
 
         Args:

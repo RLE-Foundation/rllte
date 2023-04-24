@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, Dict
 
 import gymnasium as gym
 import hydra
@@ -7,7 +7,8 @@ import numpy as np
 import omegaconf
 import torch as th
 
-from hsuanwu.common.engine import BasePolicyTrainer, utils
+from hsuanwu.common.engine import BasePolicyTrainer
+from hsuanwu.common.engine.utils import eval_mode
 from hsuanwu.xploit.storage.utils import worker_init_fn
 
 
@@ -104,7 +105,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 self._logger.test(msg=test_metrics)
 
             # sample actions
-            with th.no_grad(), utils.eval_mode(self._agent):
+            with th.no_grad(), eval_mode(self._agent):
                 action = self._agent.act(obs, training=True, step=self._global_step)
                 # TODO: Initial exploration
                 if self._global_step < self._num_init_steps:
@@ -118,7 +119,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._replay_storage.add(
                 obs[0].cpu().numpy(),
                 action[0].cpu().numpy(),
-                np.zeros_like(reward[0].cpu().numpy()) if self._cfgs.pretraining else reward[0].cpu().numpy(), # pre-training mode
+                np.zeros_like(reward[0].cpu().numpy())
+                if self._cfgs.pretraining
+                else reward[0].cpu().numpy(),  # pre-training mode
                 terminated[0].cpu().numpy(),
                 info,
                 next_obs[0].cpu().numpy(),
@@ -137,7 +140,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
                     )
                     # TODO: for PrioritizedReplayStorage
                     try:
-                        self._replay_storage.update_priorities(metrics['indices'], metrics['priorities'])
+                        self._replay_storage.update_priorities(
+                            metrics["indices"], metrics["priorities"]
+                        )
                     except:
                         pass
 
@@ -166,13 +171,13 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._logger.info("Training Accomplished!")
         self.save()
 
-    def test(self) -> None:
+    def test(self) -> Dict[str, float]:
         """Testing function."""
         step, episode, total_reward = 0, 0, 0
         obs, info = self._test_env.reset(seed=self._seed)
 
         while episode <= self._num_test_episodes:
-            with th.no_grad(), utils.eval_mode(self._agent):
+            with th.no_grad(), eval_mode(self._agent):
                 action = self._agent.act(obs, training=False, step=self._global_step)
 
             next_obs, reward, terminated, truncated, info = self._test_env.step(action)
@@ -207,5 +212,5 @@ class OffPolicyTrainer(BasePolicyTrainer):
             th.save(self._agent.encoder, save_dir / "encoder.pth")
             th.save(self._agent.actor, save_dir / "actor.pth")
             th.save(self._agent.critic, save_dir / "critic.pth")
-        
+
         self._logger.info(f"Model saved at: {save_dir}")

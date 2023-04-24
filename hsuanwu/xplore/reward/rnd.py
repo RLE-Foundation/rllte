@@ -1,14 +1,15 @@
-from typing import Union, Dict, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
+from typing import Dict, Tuple, Union
 
+import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
+
 
 class Encoder(nn.Module):
     """Encoder for encoding observations.
@@ -21,11 +22,8 @@ class Encoder(nn.Module):
     Returns:
         Encoder instance.
     """
-    def __init__(self,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 latent_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -37,7 +35,7 @@ class Encoder(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(64, 64, 3, 1),
                 nn.ReLU(),
-                nn.Flatten()
+                nn.Flatten(),
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -45,12 +43,9 @@ class Encoder(nn.Module):
 
             self.linear = nn.Linear(n_flatten, latent_dim)
         else:
-            self.trunk = nn.Sequential(
-                nn.Linear(obs_shape[0], 256),
-                nn.ReLU()
-            )
+            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
             self.linear = nn.Linear(256, latent_dim)
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
 
@@ -62,15 +57,16 @@ class Encoder(nn.Module):
         """
         return self.linear(self.trunk(obs))
 
+
 class RND(BaseIntrinsicRewardModule):
     """Exploration by Random Network Distillation (RND).
         See paper: https://arxiv.org/pdf/1810.12894.pdf
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -83,27 +79,29 @@ class RND(BaseIntrinsicRewardModule):
     Returns:
         Instance of RND.
     """
-    def __init__(self, 
-                 observation_space: Union[gym.Space, DictConfig],
-                 action_space: Union[gym.Space, DictConfig],
-                 device: th.device = 'cpu',
-                 beta: float = 0.05,
-                 kappa: float = 0.000025,
-                 latent_dim: int = 128,
-                 lr: int = 0.001,
-                 batch_size: int = 64
+
+    def __init__(
+        self,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = "cpu",
+        beta: float = 0.05,
+        kappa: float = 0.000025,
+        latent_dim: int = 128,
+        lr: float = 0.001,
+        batch_size: int = 64,
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         self.predictor = Encoder(
             obs_shape=observation_space.shape,
             action_shape=action_space.shape,
-            latent_dim=latent_dim
+            latent_dim=latent_dim,
         ).to(self._device)
 
         self.target = Encoder(
             obs_shape=observation_space.shape,
             action_shape=action_space.shape,
-            latent_dim=latent_dim
+            latent_dim=latent_dim,
         ).to(self._device)
 
         self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
@@ -112,7 +110,7 @@ class RND(BaseIntrinsicRewardModule):
         # freeze the network parameters
         for p in self.target.parameters():
             p.requires_grad = False
-    
+
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
         """Compute the intrinsic rewards for current samples.
 
@@ -129,9 +127,9 @@ class RND(BaseIntrinsicRewardModule):
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        next_obs_tensor = samples['next_obs'].to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        next_obs_tensor = samples["next_obs"].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
 
@@ -139,15 +137,15 @@ class RND(BaseIntrinsicRewardModule):
             for i in range(num_envs):
                 src_feats = self.predictor(next_obs_tensor[:, i])
                 tgt_feats = self.target(next_obs_tensor[:, i])
-                dist = F.mse_loss(src_feats, tgt_feats, reduction='none').mean(dim=1)
+                dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
                 dist = (dist - dist.min()) / (dist.max() - dist.min() + 1e-11)
                 intrinsic_rewards[:, i] = dist
-        
+
         # udpate the module
         self.update(samples)
 
         return intrinsic_rewards * beta_t
-    
+
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 
@@ -161,14 +159,16 @@ class RND(BaseIntrinsicRewardModule):
         Returns:
             None
         """
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = (
+            samples["obs"]
+            .view((num_envs * num_steps, *self._obs_shape))
+            .to(self._device)
+        )
 
         dataset = TensorDataset(obs_tensor)
-        loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size
-        )
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
         for idx, batch_data in enumerate(loader):
             obs = batch_data[0]

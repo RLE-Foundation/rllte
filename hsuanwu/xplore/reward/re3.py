@@ -1,12 +1,13 @@
-from typing import Union, Dict, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
+from typing import Dict, Tuple, Union
 
+import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
+
 
 class Encoder(nn.Module):
     """Encoder for encoding observations.
@@ -19,11 +20,8 @@ class Encoder(nn.Module):
     Returns:
         Encoder instance.
     """
-    def __init__(self,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 latent_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -35,7 +33,7 @@ class Encoder(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(64, 64, 3, 1),
                 nn.ReLU(),
-                nn.Flatten()
+                nn.Flatten(),
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -43,12 +41,9 @@ class Encoder(nn.Module):
 
             self.linear = nn.Linear(n_flatten, latent_dim)
         else:
-            self.trunk = nn.Sequential(
-                nn.Linear(obs_shape[0], 256),
-                nn.ReLU()
-            )
+            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
             self.linear = nn.Linear(256, latent_dim)
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
 
@@ -60,15 +55,16 @@ class Encoder(nn.Module):
         """
         return self.linear(self.trunk(obs))
 
+
 class RE3(BaseIntrinsicRewardModule):
     """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
         See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -81,30 +77,32 @@ class RE3(BaseIntrinsicRewardModule):
     Returns:
         Instance of RND.
     """
-    def __init__(self, 
-                 observation_space: Union[gym.Space, DictConfig],
-                 action_space: Union[gym.Space, DictConfig],
-                 device: th.device = 'cpu',
-                 beta: float = 0.05,
-                 kappa: float = 0.000025,
-                 latent_dim: int = 128,
-                 k: int = 5,
-                 average_entropy: bool = False
+
+    def __init__(
+        self,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = "cpu",
+        beta: float = 0.05,
+        kappa: float = 0.000025,
+        latent_dim: int = 128,
+        k: int = 5,
+        average_entropy: bool = False,
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         self.random_encoder = Encoder(
             obs_shape=observation_space.shape,
             action_shape=action_space.shape,
-            latent_dim=latent_dim
+            latent_dim=latent_dim,
         ).to(self._device)
 
         # freeze the network parameters
         for p in self.random_encoder.parameters():
             p.requires_grad = False
-        
+
         self.k = k
         self.average_entropy = average_entropy
-    
+
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
         """Compute the intrinsic rewards for current samples.
 
@@ -121,25 +119,31 @@ class RE3(BaseIntrinsicRewardModule):
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = samples["obs"].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
 
         with th.no_grad():
             for i in range(num_envs):
                 src_feats = self.random_encoder(obs_tensor[:, i])
-                dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
+                dist = th.linalg.vector_norm(
+                    src_feats.unsqueeze(1) - src_feats, ord=2, dim=2
+                )
                 if self.average_entropy:
                     for sub_k in range(self.k):
-                        intrinsic_rewards[:, i] += (th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0))
+                        intrinsic_rewards[:, i] += th.log(
+                            th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0
+                        )
                     intrinsic_rewards[:, i] /= self.k
                 else:
-                    intrinsic_rewards[:, i] = (th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0))
+                    intrinsic_rewards[:, i] = th.log(
+                        th.kthvalue(dist, self.k + 1, dim=1).values + 1.0
+                    )
 
         return intrinsic_rewards * beta_t
-    
+
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 

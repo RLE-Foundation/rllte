@@ -1,12 +1,11 @@
 import collections
 import threading
 from typing import Dict, Tuple, Union
-import gymnasium as gym
-from omegaconf import DictConfig
 
 import gymnasium as gym
 import omegaconf
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
@@ -180,10 +179,10 @@ class IMPALA(BaseAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -241,17 +240,17 @@ class IMPALA(BaseAgent):
         self.training = training
         self.actor.train(training)
         self.learner.train(training)
-    
-    def act(self, *kwargs) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-        """
+
+    def act(self, *kwargs):
+        """Sample actions based on observations."""
+        return None
 
     @staticmethod
     def update(
         cfgs: omegaconf.DictConfig,
         actor_model: nn.Module,
         learner_model: nn.Module,
-        batch: collections.namedtuple,
+        batch: Dict,
         init_actor_states: Tuple[th.Tensor, ...],
         optimizer: th.optim.Optimizer,
         lr_scheduler: th.optim.lr_scheduler,

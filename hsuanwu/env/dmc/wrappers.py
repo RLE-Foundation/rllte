@@ -10,22 +10,17 @@ from gymnasium import core, spaces
 from hsuanwu.env.dmc import natural_imgsource
 
 # The following DMCWrapper is re-implemented based on: https://github.com/facebookresearch/deep_bisim4control/blob/main/dmc2gym/wrappers.py
-
-
 def _spec_to_box(spec):
-    def extract_min_max(s):
+    mins, maxs = [], []
+    for s in spec:
         assert s.dtype == np.float64 or s.dtype == np.float32
         dim = int(np.prod(s.shape))
         if type(s) == specs.Array:
             bound = np.inf * np.ones(dim, dtype=np.float32)
-            return -bound, bound
+            mn, mx = -bound, bound
         elif type(s) == specs.BoundedArray:
             zeros = np.zeros(dim, dtype=np.float32)
-            return s.minimum + zeros, s.maximum + zeros
-
-    mins, maxs = [], []
-    for s in spec:
-        mn, mx = extract_min_max(s)
+            mn, mx = s.minimum + zeros, s.maximum + zeros
         mins.append(mn)
         maxs.append(mx)
     low = np.concatenate(mins, axis=0)
@@ -193,7 +188,7 @@ class DMCWrapper(core.Env):
         else:
             truncated = False
 
-        terminated = done
+        terminated = False
         return obs, reward, terminated, truncated, info
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:

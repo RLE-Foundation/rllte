@@ -8,8 +8,8 @@ import numpy as np
 import omegaconf
 import torch as th
 
-from hsuanwu.common.engine import BasePolicyTrainer, utils
-
+from hsuanwu.common.engine import BasePolicyTrainer
+from hsuanwu.common.engine.utils import eval_mode
 
 class OnPolicyTrainer(BasePolicyTrainer):
     """Trainer for on-policy algorithms.
@@ -85,7 +85,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
             for step in range(self._num_steps):
                 # sample actions
-                with th.no_grad(), utils.eval_mode(self._agent):
+                with th.no_grad(), eval_mode(self._agent):
                     actions, values, log_probs, entropy = self._agent.act(
                         obs, training=True, step=self._global_step
                     )
@@ -106,7 +106,9 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 self._rollout_storage.add(
                     obs=obs,
                     actions=actions,
-                    rewards=np.zeros_like(rewards) if self._cfgs.pretraining else rewards, # pre-training mode
+                    rewards=np.zeros_like(rewards)
+                    if self._cfgs.pretraining
+                    else rewards,  # pre-training mode
                     terminateds=terminateds,
                     truncateds=truncateds,
                     log_probs=log_probs,
@@ -150,14 +152,14 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._logger.info("Training Accomplished!")
         self.save()
 
-    def test(self) -> Dict:
+    def test(self) -> Dict[str, float]:
         """Testing function."""
         obs, info = self._test_env.reset(seed=self._seed)
         episode_rewards = list()
         episode_steps = list()
 
         while len(episode_rewards) < self._num_test_episodes:
-            with th.no_grad(), utils.eval_mode(self._agent):
+            with th.no_grad(), eval_mode(self._agent):
                 actions = self._agent.act(obs, training=False, step=self._global_step)
             obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions)
 

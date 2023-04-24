@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import gymnasium as gym
 import torch as th
 from gymnasium.envs.registration import register
+from gymnasium.envs import registry
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
@@ -64,7 +65,7 @@ def make_dmc_env(
             # shorten episode length
             max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
 
-            if not _env_id in gym.envs.registry:
+            if not _env_id in registry.values():
                 register(
                     id=env_id,
                     entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",

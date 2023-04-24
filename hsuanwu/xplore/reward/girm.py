@@ -1,9 +1,9 @@
 from typing import Dict, Tuple, Union
 
-from omegaconf import DictConfig
 import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch import nn, optim
 from torch.autograd import Variable
 from torch.nn import functional as F
@@ -23,11 +23,8 @@ class Encoder(nn.Module):
     Returns:
         Encoder instance.
     """
-    def __init__(self,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 latent_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -39,7 +36,7 @@ class Encoder(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(64, 64, 3, 1),
                 nn.ReLU(),
-                nn.Flatten()
+                nn.Flatten(),
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -47,10 +44,7 @@ class Encoder(nn.Module):
 
             self.linear = nn.Linear(n_flatten, latent_dim)
         else:
-            self.trunk = nn.Sequential(
-                nn.Linear(obs_shape[0], 256),
-                nn.ReLU()
-            )
+            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
             self.linear = nn.Linear(256, latent_dim)
 
         self.head = nn.Linear(latent_dim * 2, latent_dim)
@@ -70,7 +64,7 @@ class Encoder(nn.Module):
 
         x = self.head(th.cat([h, next_h], dim=1))
         return x
-    
+
     def encode(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
 
@@ -82,6 +76,7 @@ class Encoder(nn.Module):
         """
         return F.relu(self.linear(self.trunk(obs)))
 
+
 class Decoder(nn.Module):
     """Decoder of VAE.
 
@@ -92,17 +87,18 @@ class Decoder(nn.Module):
     Returns:
         Predicted next-observations.
     """
+
     def __init__(self, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(action_shape[0]+latent_dim, 256),
+            nn.Linear(action_shape[0] + latent_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(256, latent_dim)
+            nn.Linear(256, latent_dim),
         )
-    
+
     def forward(self, obs: th.Tensor, z: th.Tensor) -> th.Tensor:
         return self.trunk(th.cat([obs, z], dim=1))
 
@@ -119,11 +115,14 @@ class VAE(nn.Module):
     Returns:
         VAE instance.
     """
+
     def __init__(
         self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int
     ) -> None:
         super(VAE, self).__init__()
-        self.encoder = Encoder(obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim)
+        self.encoder = Encoder(
+            obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim
+        )
         self.decoder = Decoder(action_shape=action_shape, latent_dim=latent_dim)
 
         self.mu = nn.Linear(latent_dim, action_shape[0])
@@ -153,12 +152,12 @@ class VAE(nn.Module):
         else:
             return mu
 
-    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> Tuple[th.Tensor]:
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """VAE single forward.
         Args:
             obs (Tensor): Observations tensor.
             next_obs (Tensor): Next-observations tensor.
-        
+
         Returns:
             Latent vectors, mean, log of variance, and reconstructed next-observations.
         """
@@ -178,10 +177,10 @@ class GIRM(BaseIntrinsicRewardModule):
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -199,20 +198,21 @@ class GIRM(BaseIntrinsicRewardModule):
         Instance of GIRM.
     """
 
-    def __init__(self,
-                 observation_space: Union[gym.Space, DictConfig], 
-                 action_space: Union[gym.Space, DictConfig], 
-                 device: th.device = 'cpu', 
-                 beta: float = 0.05, 
-                 kappa: float = 0.000025,
-                 latent_dim: int = 128,
-                 lr: int = 0.001,
-                 batch_size: int = 64,
-                 lambd: float = 0.5,
-                 lambd_recon: float = 1.0,
-                 lambd_action: float = 1.0,
-                 kld_loss_beta: float = 1.0,
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = "cpu",
+        beta: float = 0.05,
+        kappa: float = 0.000025,
+        latent_dim: int = 128,
+        lr: float = 0.001,
+        batch_size: int = 64,
+        lambd: float = 0.5,
+        lambd_recon: float = 1.0,
+        lambd_action: float = 1.0,
+        kld_loss_beta: float = 1.0,
+    ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
 
         self.batch_size = batch_size
@@ -246,7 +246,7 @@ class GIRM(BaseIntrinsicRewardModule):
             x (Tensor): Input x.
             mean (Tensor): Sample mean.
             logvar (Tensor): Log of the sample variance.
-        
+
         Returns:
             Loss values.
         """
@@ -271,14 +271,16 @@ class GIRM(BaseIntrinsicRewardModule):
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].to(self._device)
-        actions_tensor = samples['actions'].to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = samples["obs"].to(self._device)
+        actions_tensor = samples["actions"].to(self._device)
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(
+                actions_tensor[:, :, 0].long(), self._action_shape[0]
+            ).float()
             actions_tensor = actions_tensor.to(self._device)
-        next_obs_tensor = samples['next_obs'].to(self._device)
+        next_obs_tensor = samples["next_obs"].to(self._device)
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
 
         with th.no_grad():
@@ -291,14 +293,17 @@ class GIRM(BaseIntrinsicRewardModule):
                     pred_actions = F.softmax(z, dim=1)
                 else:
                     pred_actions = z
-                combined_actions = self.lambd * actions_tensor[:, i] + (1.0 - self.lambd) * pred_actions
+                combined_actions = (
+                    self.lambd * actions_tensor[:, i]
+                    + (1.0 - self.lambd) * pred_actions
+                )
                 pred_next_obs = self.vae.decoder(
                     self.vae.encoder.encode(obs_tensor[:, i]), combined_actions
                 )
                 intrinsic_rewards[:, i] = F.mse_loss(
                     pred_next_obs,
                     self.vae.encoder.encode(next_obs_tensor[:, i]),
-                    reduction="mean"
+                    reduction="mean",
                 )
 
         # train the vae model
@@ -319,20 +324,34 @@ class GIRM(BaseIntrinsicRewardModule):
         Returns:
             None
         """
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-        next_obs_tensor = samples['next_obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = (
+            samples["obs"]
+            .view((num_envs * num_steps, *self._obs_shape))
+            .to(self._device)
+        )
+        next_obs_tensor = (
+            samples["next_obs"]
+            .view((num_envs * num_steps, *self._obs_shape))
+            .to(self._device)
+        )
 
         if self._action_type == "Discrete":
-            actions_tensor = samples['actions'].view((num_envs * num_steps)).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = (
+                samples["actions"].view((num_envs * num_steps)).to(self._device)
+            )
+            actions_tensor = F.one_hot(
+                actions_tensor.long(), self._action_shape[0]
+            ).float()
         else:
-            actions_tensor = samples['actions'].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+            actions_tensor = (
+                samples["actions"]
+                .view((num_envs * num_steps, self._action_shape[0]))
+                .to(self._device)
+            )
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size
-        )
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
         for idx, batch in enumerate(loader):
             obs, actions, next_obs = batch
@@ -345,10 +364,7 @@ class GIRM(BaseIntrinsicRewardModule):
             # compute the total loss
             action_loss = self.action_loss(z, actions)
             recon_loss, kld_loss = self.get_vae_loss(
-                pred_next_obs, 
-                self.vae.encoder.encode(next_obs), 
-                mu, 
-                logvar
+                pred_next_obs, self.vae.encoder.encode(next_obs), mu, logvar
             )
             vae_loss = (
                 self.lambd_recon * recon_loss

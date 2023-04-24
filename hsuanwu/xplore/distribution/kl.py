@@ -1,6 +1,8 @@
 import torch as th
 from torch.distributions import register_kl
+
 from hsuanwu.xplore.distribution.categorical import Categorical
+
 
 @register_kl(Categorical, Categorical)
 def kl_categorical_categorical(p, q):

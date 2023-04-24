@@ -1,19 +1,21 @@
-from typing import Tuple, Union, Any
+from typing import Any, Tuple, Union
+
 import gymnasium as gym
-from omegaconf import DictConfig
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 
 from hsuanwu.xploit.storage.base import BaseStorage
+
 
 class VanillaReplayStorage(BaseStorage):
     """Vanilla replay storage for off-policy algorithms.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -28,7 +30,7 @@ class VanillaReplayStorage(BaseStorage):
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = 'cpu',
+        device: th.device = "cpu",
         storage_size: int = 1000000,
         batch_size: int = 1024,
     ):
@@ -44,7 +46,9 @@ class VanillaReplayStorage(BaseStorage):
         if self._action_type == "Discrete":
             self.actions = self.actions = np.empty((storage_size, 1), dtype=np.float32)
         if self._action_type == "Box":
-            self.actions = np.empty((storage_size, self._action_shape[0]), dtype=np.float32)
+            self.actions = np.empty(
+                (storage_size, self._action_shape[0]), dtype=np.float32
+            )
 
         self.rewards = np.empty((storage_size, 1), dtype=np.float32)
         self.terminateds = np.empty((storage_size, 1), dtype=np.float32)

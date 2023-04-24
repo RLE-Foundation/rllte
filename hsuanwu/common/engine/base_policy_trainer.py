@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, Optional
 
 import gymnasium as gym
 
@@ -17,7 +17,6 @@ from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 from hsuanwu.xplore.reward import ALL_IRS_MODULES
-
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
@@ -174,7 +173,10 @@ class BasePolicyTrainer(ABC):
         else:
             new_cfgs.use_irs = False
 
-        observation_space, action_space = self._train_env.observation_space, self._train_env.action_space
+        observation_space, action_space = (
+            self._train_env.observation_space,
+            self._train_env.action_space,
+        )
 
         new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space
@@ -242,9 +244,11 @@ class BasePolicyTrainer(ABC):
             )
         else:
             self._logger.debug(f"Use Augmentation: {cfgs.use_aug}")
-        
+
         if cfgs.pretraining:
-            assert cfgs.reward._target_ is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
+            assert (
+                cfgs.reward._target_ is not None
+            ), "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if cfgs.reward._target_ is not None:
             self._logger.debug(
@@ -279,11 +283,11 @@ class BasePolicyTrainer(ABC):
         return cfgs
 
     @abstractmethod
-    def train(self) -> None:
+    def train(self) -> Optional[Dict[str, float]]:
         """Training function."""
 
     @abstractmethod
-    def test(self) -> None:
+    def test(self) -> Optional[Dict[str, float]]:
         """Testing function."""
 
     @abstractmethod

@@ -177,7 +177,7 @@ class DistributedTrainer(BasePolicyTrainer):
         actor_model: nn.Module,
         free_queue: mp.SimpleQueue,
         full_queue: mp.SimpleQueue,
-        storages: List[Dict[str, Dict]],
+        storages: Dict[str, List],
         init_actor_state_storages: List[th.Tensor],
     ) -> None:
         """Sampling function for each actor.
@@ -340,7 +340,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
-            return
+            return 
         else:
             for thread in threads:
                 thread.join()
@@ -353,9 +353,11 @@ class DistributedTrainer(BasePolicyTrainer):
             for actor in actor_pool:
                 actor.join(timeout=1)
 
-    def test(self) -> None:
+    def test(self) -> Dict[str, float]:
         """Testing function."""
-        pass
+        return {
+            'step': 0
+        }
 
     def save(self) -> None:
         """Save the trained model."""

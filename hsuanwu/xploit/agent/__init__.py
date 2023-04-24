@@ -3,8 +3,8 @@ from .drqv2 import DEFAULT_CFGS as DRQV2_DEFAULT_CFGS
 from .drqv2 import MATCH_KEYS as DRQV2_MATCH_KEYS
 from .drqv2 import DrQv2 as DrQv2
 from .impala import DEFAULT_CFGS as IMPALA_DEFAULT_CFGS
-from .impala import MATCH_KEYS as IMPALA_MATCH_KEYS
 from .impala import IMPALA as IMPALA
+from .impala import MATCH_KEYS as IMPALA_MATCH_KEYS
 from .ppg import DEFAULT_CFGS as PPG_DEFAULT_CFGS
 from .ppg import MATCH_KEYS as PPG_MATCH_KEYS
 from .ppg import PPG as PPG

@@ -58,7 +58,7 @@ class SquashedNormal(BaseDistribution):
         )
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
-        """Generates a sample_shape shaped sample or sample_shape shaped 
+        """Generates a sample_shape shaped sample or sample_shape shaped
             batch of samples if the distribution parameters are batched.
 
         Args:
@@ -70,7 +70,7 @@ class SquashedNormal(BaseDistribution):
         return self.dist.sample(sample_shape)
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
-        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped 
+        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped
             batch of reparameterized samples if the distribution parameters are batched.
 
         Args:
@@ -90,7 +90,7 @@ class SquashedNormal(BaseDistribution):
         return mu
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
-        """Scores the sample by inverting the transform(s) and computing the score using 
+        """Scores the sample by inverting the transform(s) and computing the score using
             the score of the base distribution and the log abs det jacobian.
         Args:
             actions (Tensor): The actions to be evaluated.

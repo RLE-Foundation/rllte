@@ -1,15 +1,16 @@
-from typing import Union, Dict, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
 from collections import deque
+from typing import Dict, Tuple, Union
 
+import gymnasium as gym
 import numpy as np
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
+
 
 class Encoder(nn.Module):
     """Encoder for encoding observations.
@@ -22,11 +23,8 @@ class Encoder(nn.Module):
     Returns:
         Encoder instance.
     """
-    def __init__(self,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 latent_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -38,7 +36,7 @@ class Encoder(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(64, 64, 3, 1),
                 nn.ReLU(),
-                nn.Flatten()
+                nn.Flatten(),
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -46,12 +44,9 @@ class Encoder(nn.Module):
 
             self.linear = nn.Linear(n_flatten, latent_dim)
         else:
-            self.trunk = nn.Sequential(
-                nn.Linear(obs_shape[0], 256),
-                nn.ReLU()
-            )
+            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
             self.linear = nn.Linear(256, latent_dim)
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
 
@@ -63,6 +58,7 @@ class Encoder(nn.Module):
         """
         return self.linear(self.trunk(obs))
 
+
 class InverseDynamicsModel(nn.Module):
     """Inverse model for reconstructing transition process.
 
@@ -73,13 +69,12 @@ class InverseDynamicsModel(nn.Module):
     Returns:
         Model instance.
     """
+
     def __init__(self, latent_dim, action_dim) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(2 * latent_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, action_dim)
+            nn.Linear(2 * latent_dim, 256), nn.ReLU(), nn.Linear(256, action_dim)
         )
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
@@ -94,6 +89,7 @@ class InverseDynamicsModel(nn.Module):
         """
         return self.trunk(th.cat([obs, next_obs], dim=1))
 
+
 class ForwardDynamicsModel(nn.Module):
     """Forward model for reconstructing transition process.
 
@@ -104,13 +100,14 @@ class ForwardDynamicsModel(nn.Module):
     Returns:
         Model instance.
     """
+
     def __init__(self, latent_dim, action_dim) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
             nn.Linear(latent_dim + action_dim, 256),
             nn.ReLU(),
-            nn.Linear(256, latent_dim)
+            nn.Linear(256, latent_dim),
         )
 
     def forward(self, obs: th.Tensor, pred_actions: th.Tensor) -> th.Tensor:
@@ -125,15 +122,16 @@ class ForwardDynamicsModel(nn.Module):
         """
         return self.trunk(th.cat([obs, pred_actions], dim=1))
 
+
 class RIDE(BaseIntrinsicRewardModule):
     """RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments.
         See paper: https://arxiv.org/pdf/2002.12292
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -152,36 +150,42 @@ class RIDE(BaseIntrinsicRewardModule):
     Returns:
         Instance of RND.
     """
-    def __init__(self, 
-                 observation_space: Union[gym.Space, DictConfig],
-                 action_space: Union[gym.Space, DictConfig],
-                 device: th.device = 'cpu',
-                 beta: float = 0.05,
-                 kappa: float = 0.000025,
-                 latent_dim: int = 128,
-                 lr: int = 0.001,
-                 batch_size: int = 64,
-                 capacity: int = 1000,
-                 k: int = 10,
-                 kernel_cluster_distance: float = 0.008,
-                 kernel_epsilon: float = 0.0001,
-                 c: float = 0.001,
-                 sm: float = 8.,
+
+    def __init__(
+        self,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: th.device = "cpu",
+        beta: float = 0.05,
+        kappa: float = 0.000025,
+        latent_dim: int = 128,
+        lr: float = 0.001,
+        batch_size: int = 64,
+        capacity: int = 1000,
+        k: int = 10,
+        kernel_cluster_distance: float = 0.008,
+        kernel_epsilon: float = 0.0001,
+        c: float = 0.001,
+        sm: float = 8.0,
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         self.encoder = Encoder(
             obs_shape=observation_space.shape,
             action_shape=action_space.shape,
-            latent_dim=latent_dim
+            latent_dim=latent_dim,
         ).to(self._device)
 
-        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
+        self.im = InverseDynamicsModel(
+            latent_dim=latent_dim, action_dim=self._action_shape[0]
+        ).to(self._device)
         if self._action_shape == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
             self.im_loss = nn.MSELoss()
 
-        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
+        self.fm = ForwardDynamicsModel(
+            latent_dim=latent_dim, action_dim=self._action_shape[0]
+        ).to(self._device)
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
@@ -195,21 +199,21 @@ class RIDE(BaseIntrinsicRewardModule):
         self.kernel_epsilon = kernel_epsilon
         self.c = c
         self.sm = sm
-    
+
     def pseudo_counts(self, e: th.Tensor) -> th.Tensor:
         """Pseudo counts.
 
         Args:
             e (Tensor): Encoded observations.
-        
+
         Returns:
             Conut values.
         """
         num_steps = e.size()[0]
-        counts = th.zeros(size=(num_steps, ))
+        counts = th.zeros(size=(num_steps,))
         memory = th.stack(list(self.episodic_memory)).squeeze(1)
         for step in range(num_steps):
-            dist = th.norm(e[step] - memory, p=2, dim=1).sort().values[:self.k]
+            dist = th.norm(e[step] - memory, p=2, dim=1).sort().values[: self.k]
             # moving average
             dist = dist / (dist.mean() + 1e-11)
             dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
@@ -217,10 +221,10 @@ class RIDE(BaseIntrinsicRewardModule):
             s = th.sqrt(kernel.sum()) + self.c
 
             if s is th.nan or s > self.sm:
-                counts[step] = 0.
+                counts[step] = 0.0
             else:
-                counts[step] = 1. / s
-        
+                counts[step] = 1.0 / s
+
         return counts
 
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
@@ -239,14 +243,16 @@ class RIDE(BaseIntrinsicRewardModule):
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].to(self._device)
-        actions_tensor = samples['actions']
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = samples["obs"].to(self._device)
+        actions_tensor = samples["actions"]
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(
+                actions_tensor[:, :, 0].long(), self._action_shape[0]
+            ).float()
             actions_tensor = actions_tensor.to(self._device)
-        next_obs_tensor = samples['next_obs'].to(self._device)
+        next_obs_tensor = samples["next_obs"].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
 
@@ -259,13 +265,15 @@ class RIDE(BaseIntrinsicRewardModule):
                 self.episodic_memory.extend(encoded_next_obs.split(1))
                 n_eps = self.pseudo_counts(e=encoded_next_obs)
 
-                dist = F.mse_loss(encoded_next_obs, encoded_obs, reduction='none').sum(dim=1)
+                dist = F.mse_loss(encoded_next_obs, encoded_obs, reduction="none").sum(
+                    dim=1
+                )
                 intrinsic_rewards[:, i] = dist.cpu() * n_eps
-        
+
         self.update(samples)
 
         return intrinsic_rewards * beta_t
-    
+
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 
@@ -279,21 +287,35 @@ class RIDE(BaseIntrinsicRewardModule):
         Returns:
             None
         """
-        num_steps = samples['obs'].size()[0]
-        num_envs = samples['obs'].size()[1]
-        obs_tensor = samples['obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-        next_obs_tensor = samples['next_obs'].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = (
+            samples["obs"]
+            .view((num_envs * num_steps, *self._obs_shape))
+            .to(self._device)
+        )
+        next_obs_tensor = (
+            samples["next_obs"]
+            .view((num_envs * num_steps, *self._obs_shape))
+            .to(self._device)
+        )
 
         if self._action_type == "Discrete":
-            actions_tensor = samples['actions'].view((num_envs * num_steps)).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = (
+                samples["actions"].view((num_envs * num_steps)).to(self._device)
+            )
+            actions_tensor = F.one_hot(
+                actions_tensor.long(), self._action_shape[0]
+            ).float()
         else:
-            actions_tensor = samples['actions'].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+            actions_tensor = (
+                samples["actions"]
+                .view((num_envs * num_steps, self._action_shape[0]))
+                .to(self._device)
+            )
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(
-            dataset=dataset, batch_size=self.batch_size
-        )
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
         for idx, batch in enumerate(loader):
             obs, actions, next_obs = batch

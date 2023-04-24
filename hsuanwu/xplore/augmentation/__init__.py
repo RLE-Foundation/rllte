@@ -3,10 +3,8 @@ from .base import BaseAugmentation as BaseAugmentation
 from .elastic_transform import ElasticTransform as ElasticTransform
 from .gaussian_noise import GaussianNoise as GaussianNoise
 from .grayscale import GrayScale as GrayScale
-from .random_adjustsharpness import \
-    RandomAdjustSharpness as RandomAdjustSharpness
-from .random_amplitude_scaling import \
-    RandomAmplitudeScaling as RandomAmplitudeScaling
+from .random_adjustsharpness import RandomAdjustSharpness as RandomAdjustSharpness
+from .random_amplitude_scaling import RandomAmplitudeScaling as RandomAmplitudeScaling
 from .random_augment import RandomAugment as RandomAugment
 from .random_autocontrast import RandomAutocontrast as RandomAutocontrast
 from .random_colorjitter import RandomColorJitter as RandomColorJitter

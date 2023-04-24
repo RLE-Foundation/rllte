@@ -1,19 +1,21 @@
-from typing import Generator, Union, Any
+from typing import Any, Generator, Union
+
 import gymnasium as gym
-from omegaconf import DictConfig
 import torch as th
+from omegaconf import DictConfig
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from hsuanwu.xploit.storage.base import BaseStorage
+
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -25,11 +27,12 @@ class VanillaRolloutStorage(BaseStorage):
     Returns:
         Vanilla rollout storage.
     """
+
     def __init__(
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = 'cpu',
+        device: th.device = "cpu",
         num_steps: int = 256,
         num_envs: int = 8,
         discount: float = 0.99,

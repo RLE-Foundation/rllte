@@ -15,12 +15,14 @@ class GaussianNoise(BaseAugmentation):
         Augmented states.
     """
 
-    def __init__(self, mu: float = 0, sigma: float = 1.) -> None:
+    def __init__(self, mu: float = 0, sigma: float = 1.0) -> None:
         super().__init__()
         self.dist = Normal(loc=mu, scale=sigma)
 
     def forward(self, x: th.Tensor) -> th.Tensor:
-        assert len(x.size()) == 2, 'GaussianNoise only supports state-based observations!'
+        assert (
+            len(x.size()) == 2
+        ), "GaussianNoise only supports state-based observations!"
         z = self.dist.sample(x.size())
 
         return z + x

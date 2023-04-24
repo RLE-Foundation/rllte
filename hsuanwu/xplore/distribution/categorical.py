@@ -23,8 +23,7 @@ class Categorical(BaseDistribution):
 
     @property
     def probs(self) -> th.Tensor:
-        """Return probabilities.
-        """
+        """Return probabilities."""
         return self.dist.probs
 
     @property

@@ -6,7 +6,7 @@ from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
 class TruncatedNormalNoise(BaseDistribution):
-    """Truncated normal action noise. See Section 3.1 of 
+    """Truncated normal action noise. See Section 3.1 of
         "Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning".
 
     Args:

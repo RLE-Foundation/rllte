@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 import torch as th
 from torch.distributions.utils import _standard_normal
@@ -57,13 +58,13 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
             self._sigma = utils.schedule(self._stddev_schedule, step)
 
     def sample(
-        self, clip: float = None, sample_shape: th.Size = th.Size()
+        self, clip: bool = False, sample_shape: th.Size = th.Size()
     ) -> th.Tensor:
         """Generates a sample_shape shaped sample
 
         Args:
-            clip: Range for noise truncation operation.
-            sample_shape: The size of the sample to be drawn.
+            clip (bool): Range for noise truncation operation.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -99,7 +100,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         return self._noiseless_action
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of 
+        """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
         Args:

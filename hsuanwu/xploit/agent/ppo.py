@@ -1,8 +1,8 @@
-from typing import Dict, Union, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
+from typing import Dict, Tuple, Union
 
+import gymnasium as gym
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
@@ -63,10 +63,10 @@ class PPO(BaseAgent):
         Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -119,7 +119,7 @@ class PPO(BaseAgent):
             action_shape=self.action_shape,
             action_type=self.action_type,
             feature_dim=feature_dim,
-            hidden_dim=hidden_dim
+            hidden_dim=hidden_dim,
         ).to(self.device)
 
         # create optimizers
@@ -154,7 +154,7 @@ class PPO(BaseAgent):
 
     def act(
         self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
+    ) -> Tuple[th.Tensor, ...]:
         """Sample actions based on observations.
 
         Args:
@@ -175,9 +175,7 @@ class PPO(BaseAgent):
             actions = self.ac.get_action(obs=encoded_obs)
             return actions.clamp(*self.action_range)
 
-    def update(
-        self, rollout_storage: Storage, episode: int = 0
-    ) -> Dict[str, float]:
+    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
         Args:
@@ -198,7 +196,7 @@ class PPO(BaseAgent):
                 samples={
                     "obs": rollout_storage.obs[:-1],
                     "actions": rollout_storage.actions,
-                    "next_obs": rollout_storage.obs[1:]
+                    "next_obs": rollout_storage.obs[1:],
                 },
                 step=episode * num_envs * num_steps,
             )

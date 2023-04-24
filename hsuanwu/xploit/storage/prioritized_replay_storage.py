@@ -1,9 +1,10 @@
-from typing import Tuple, Union, Any
+from collections import deque
+from typing import Any, Tuple, Union
+
 import gymnasium as gym
-from omegaconf import DictConfig
 import numpy as np
 import torch as th
-from collections import deque
+from omegaconf import DictConfig
 
 from hsuanwu.xploit.storage.base import BaseStorage
 
@@ -12,10 +13,10 @@ class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -27,15 +28,16 @@ class PrioritizedReplayStorage(BaseStorage):
     Returns:
         Prioritized replay storage.
     """
+
     def __init__(
         self,
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
-        device: th.device = 'cpu',
+        device: th.device = "cpu",
         storage_size: int = 1000000,
         batch_size: int = 1024,
         alpha: float = 0.6,
-        beta: float = 0.4
+        beta: float = 0.4,
     ):
         super().__init__(observation_space, action_space, device)
         self._storage_size = storage_size
@@ -44,31 +46,32 @@ class PrioritizedReplayStorage(BaseStorage):
         self._alpha = alpha
         self._beta = beta
         self._storage = deque(maxlen=storage_size)
-        self._priorities = np.zeros((storage_size, ), dtype=np.float32)
+        self._priorities = np.zeros((storage_size,), dtype=np.float32)
         self._position = 0
-    
+
     def __len__(self):
         return len(self._storage)
-    
+
     def annealing_beta(self, step: int) -> float:
         """Linearly increases beta from the initial value to 1 over global training steps.
 
         Args:
             step (int): The global training step.
-        
+
         Returns:
             Beta value.
         """
         return min(1.0, self._beta + step * (1.0 - self._beta) / self._storage_size)
-    
-    def add(self,
-            obs: Any,
-            action: Any,
-            reward: Any,
-            terminated: Any,
-            info: Any,
-            next_obs: Any,
-            ) -> None:
+
+    def add(
+        self,
+        obs: Any,
+        action: Any,
+        reward: Any,
+        terminated: Any,
+        info: Any,
+        next_obs: Any,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -100,10 +103,9 @@ class PrioritizedReplayStorage(BaseStorage):
         if len(self._storage) == self._storage_size:
             priorities = self._priorities
         else:
-            priorities = self._priorities[:self._position]
-        
+            priorities = self._priorities[: self._position]
 
-        probs = priorities ** self._alpha
+        probs = priorities**self._alpha
         probs /= probs.sum()
         indices = np.random.choice(len(self._storage), self._batch_size, p=probs)
 
@@ -134,7 +136,7 @@ class PrioritizedReplayStorage(BaseStorage):
         Args:
             indices (NdArray): The indices of current batch data.
             priorities (NdArray): The priorities of current batch data.
-        
+
         Returns:
             None.
         """

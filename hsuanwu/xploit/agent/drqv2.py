@@ -1,8 +1,8 @@
-from typing import Dict, Generator, Union, Tuple
-import gymnasium as gym
-from omegaconf import DictConfig
+from typing import Dict, Generator, Tuple, Union
 
+import gymnasium as gym
 import torch as th
+from omegaconf import DictConfig
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
@@ -66,10 +66,10 @@ class DrQv2(BaseAgent):
         Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like 
+            'action_space' is a 'DictConfig' like
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
@@ -134,8 +134,10 @@ class DrQv2(BaseAgent):
         self.critic.train(training)
         if self.encoder is not None:
             self.encoder.train(training)
-    
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
 
         Args:
@@ -183,7 +185,7 @@ class DrQv2(BaseAgent):
                 samples={
                     "obs": obs.unsqueeze(1),
                     "actions": action.unsqueeze(1),
-                    "next_obs": next_obs.unsqueeze(1)
+                    "next_obs": next_obs.unsqueeze(1),
                 },
                 step=step,
             )

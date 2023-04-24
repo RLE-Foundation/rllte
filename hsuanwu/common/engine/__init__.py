@@ -1,12 +1,13 @@
 import gymnasium as gym
 import omegaconf
 
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+
 from .base_policy_trainer import BasePolicyTrainer
 from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
-from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 class HsuanwuEngine:
     """Hsuanwu RL engine.

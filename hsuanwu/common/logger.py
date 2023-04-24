@@ -72,7 +72,7 @@ class Logger:
         """Return the current time stamp."""
         return (
             "["
-            + datetime.datetime.now().strftime(format="%m/%d/%Y %I:%M:%S %p")
+            + datetime.datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
             + "] - "
         )
 
@@ -124,7 +124,7 @@ class Logger:
         )
         print(self.time_stamp + prefix + msg)
 
-    def train(self, msg: str) -> None:
+    def train(self, msg: Dict) -> None:
         """Output msg with 'train' level.
 
         Args:
@@ -143,7 +143,7 @@ class Logger:
         self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
         self._train_file_write_header = False
 
-    def test(self, msg: str) -> None:
+    def test(self, msg: Dict) -> None:
         """Output msg with 'test' level.
 
         Args:

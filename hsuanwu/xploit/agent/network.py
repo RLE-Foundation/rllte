@@ -168,6 +168,7 @@ class DoubleCritic(nn.Module):
 
         return q1, q2
 
+
 class ActorCritic(nn.Module):
     """Actor-Critic network for on-policy algorithms.
 
@@ -181,32 +182,38 @@ class ActorCritic(nn.Module):
     Returns:
         Actor-Critic instance.
     """
+
     class DiscreteActor(nn.Module):
-        """Actor for 'Discrete' tasks.
-        """
+        """Actor for 'Discrete' tasks."""
+
         def __init__(self, action_shape, hidden_dim) -> None:
             super().__init__()
             self.actor = nn.Linear(hidden_dim, action_shape[0])
-        
+
         def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
             mu = self.actor(obs)
             return dist(mu)
-    
+
     class BoxActor(nn.Module):
-        """Actor for 'Box' tasks.
-        """
+        """Actor for 'Box' tasks."""
+
         def __init__(self, action_shape, hidden_dim) -> None:
             super().__init__()
             self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
             self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
-        
+
         def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
             mu = self.actor_mu(obs)
             logstd = self.actor_logstd.expand_as(mu)
             return dist(mu, logstd.exp())
 
     def __init__(
-        self, action_shape: int, action_type: str, feature_dim: int, hidden_dim: int, aux_critic: bool = False
+        self,
+        action_shape: Tuple,
+        action_type: str,
+        feature_dim: int,
+        hidden_dim: int,
+        aux_critic: bool = False,
     ) -> None:
         super().__init__()
 
@@ -216,13 +223,15 @@ class ActorCritic(nn.Module):
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(),
         )
-        if action_type == 'Discrete':
-            self.base = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
-        elif action_type == 'Box':
+        if action_type == "Discrete":
+            self.base = self.DiscreteActor(
+                action_shape=action_shape, hidden_dim=hidden_dim
+            )
+        elif action_type == "Box":
             self.base = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
         self.critic = nn.Linear(hidden_dim, 1)
         if aux_critic:
             self.aux_critic = nn.Linear(hidden_dim, 1)
@@ -231,7 +240,7 @@ class ActorCritic(nn.Module):
         self.dist = None
 
         self.apply(utils.network_init)
-    
+
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
 
@@ -256,7 +265,7 @@ class ActorCritic(nn.Module):
         dist = self.base(h, self.dist)
 
         return dist.mean
-        
+
     def get_action_and_value(
         self, obs: th.Tensor, actions: th.Tensor = None
     ) -> Tuple[th.Tensor, ...]:
@@ -305,6 +314,7 @@ class ActorCritic(nn.Module):
         h = self.trunk(obs)
         dist = self.base(h, self.dist)
         return dist
+
 
 class DiscreteLSTMActor(nn.Module):
     def __init__(

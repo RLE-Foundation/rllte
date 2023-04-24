@@ -1,7 +1,8 @@
-from typing import Union, Tuple, List
+from typing import List, Tuple, Union
+
 import gymnasium as gym
-from omegaconf import DictConfig
 import torch as th
+from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
@@ -70,12 +71,12 @@ class ResidualLayer(nn.Module):
 
 class EspeholtResidualEncoder(BaseEncoder):
     """ResNet-like encoder for processing image-based observations.
-        Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance 
+        Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance
         weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
         Target task: Atari games and Procgen games.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
         net_arch (List): Architecture of the network.
