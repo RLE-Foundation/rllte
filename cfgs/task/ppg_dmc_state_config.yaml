@@ -8,8 +8,8 @@ encoder:
   name: IdentityEncoder
   feature_dim: 5
 
-learner:
-  name: PPGLearner
+agent:
+  name: PPG
 
 distribution:
   name: DiagonalGaussian

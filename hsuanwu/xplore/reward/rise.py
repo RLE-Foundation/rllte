@@ -65,8 +65,8 @@ class RISE(BaseIntrinsicRewardModule):
         See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -83,7 +83,7 @@ class RISE(BaseIntrinsicRewardModule):
         Instance of RND.
     """
     def __init__(self, 
-                 obs_space: Union[gym.Space, DictConfig],
+                 observation_space: Union[gym.Space, DictConfig],
                  action_space: Union[gym.Space, DictConfig],
                  device: th.device = 'cpu',
                  beta: float = 0.05,
@@ -93,9 +93,9 @@ class RISE(BaseIntrinsicRewardModule):
                  k: int = 5,
                  average_entropy: bool = False
     ) -> None:
-        super().__init__(obs_space, action_space, device, beta, kappa)
+        super().__init__(observation_space, action_space, device, beta, kappa)
         self.random_encoder = Encoder(
-            obs_shape=obs_space.shape,
+            obs_shape=observation_space.shape,
             action_shape=action_space.shape,
             latent_dim=latent_dim
         ).to(self._device)

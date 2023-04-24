@@ -75,8 +75,8 @@ class NStepReplayStorage(IterableDataset):
     """Replay storage for off-policy algorithms (N-step returns supported).
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -97,7 +97,7 @@ class NStepReplayStorage(IterableDataset):
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device = 'cpu',
         storage_size: int = 500000,

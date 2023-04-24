@@ -1,13 +1,12 @@
 import gymnasium as gym
 import omegaconf
 
-from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
-
 from .base_policy_trainer import BasePolicyTrainer
 from .distributed_trainer import DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer
 
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
 class HsuanwuEngine:
     """Hsuanwu RL engine.
@@ -25,30 +24,30 @@ class HsuanwuEngine:
         self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
     ) -> None:
         try:
-            cfgs.learner.name
+            cfgs.agent.name
         except:
-            raise ValueError(f"The learner name must be specified!")
+            raise ValueError(f"The agent name must be specified!")
 
-        if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
+        if cfgs.agent.name not in ALL_DEFAULT_CFGS.keys():
             raise NotImplementedError(
-                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api/."
+                f"Unsupported agent {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/."
             )
 
-        if ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "OnPolicyTrainer":
+        if ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OnPolicyTrainer":
             self.trainer = OnPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "OffPolicyTrainer":
+        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OffPolicyTrainer":
             self.trainer = OffPolicyTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]["trainer"] == "DistributedTrainer":
+        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "DistributedTrainer":
             self.trainer = DistributedTrainer(
                 cfgs=cfgs, train_env=train_env, test_env=test_env
             )
         else:
             raise NotImplementedError(
-                f"Unsupported trainer {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api/."
+                f"Unsupported trainer {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/."
             )
 
     def invoke(self):

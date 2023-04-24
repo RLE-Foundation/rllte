@@ -12,8 +12,8 @@ class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -29,7 +29,7 @@ class PrioritizedReplayStorage(BaseStorage):
     """
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device = 'cpu',
         storage_size: int = 1000000,
@@ -37,7 +37,7 @@ class PrioritizedReplayStorage(BaseStorage):
         alpha: float = 0.6,
         beta: float = 0.4
     ):
-        super().__init__(obs_space, action_space, device)
+        super().__init__(observation_space, action_space, device)
         self._storage_size = storage_size
         self._batch_size = batch_size
         assert alpha > 0, "The prioritization value 'alpha' must be positive!"

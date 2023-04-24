@@ -90,8 +90,8 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         See paper: https://arxiv.org/pdf/2002.06038
     
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -113,7 +113,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         Instance of the base intrinsic reward module.
     """
     def __init__(self, 
-                 obs_space: Union[gym.Space, DictConfig], 
+                 observation_space: Union[gym.Space, DictConfig], 
                  action_space: Union[gym.Space, DictConfig], 
                  device: th.device = 'cpu', 
                  beta: float = 0.05, 
@@ -128,10 +128,10 @@ class PseudoCounts(BaseIntrinsicRewardModule):
                  c: float = 0.001,
                  sm: float = 8.,
                  ) -> None:
-        super().__init__(obs_space, action_space, device, beta, kappa)
+        super().__init__(observation_space, action_space, device, beta, kappa)
         
         self.encoder = Encoder(
-            obs_shape=obs_space.shape,
+            obs_shape=observation_space.shape,
             action_shape=action_space.shape,
             latent_dim=latent_dim
         ).to(self._device)

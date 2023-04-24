@@ -178,8 +178,8 @@ class GIRM(BaseIntrinsicRewardModule):
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -200,7 +200,7 @@ class GIRM(BaseIntrinsicRewardModule):
     """
 
     def __init__(self,
-                 obs_space: Union[gym.Space, DictConfig], 
+                 observation_space: Union[gym.Space, DictConfig], 
                  action_space: Union[gym.Space, DictConfig], 
                  device: th.device = 'cpu', 
                  beta: float = 0.05, 
@@ -213,7 +213,7 @@ class GIRM(BaseIntrinsicRewardModule):
                  lambd_action: float = 1.0,
                  kld_loss_beta: float = 1.0,
                  ) -> None:
-        super().__init__(obs_space, action_space, device, beta, kappa)
+        super().__init__(observation_space, action_space, device, beta, kappa)
 
         self.batch_size = batch_size
         self.lambd = lambd

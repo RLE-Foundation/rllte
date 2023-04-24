@@ -8,8 +8,8 @@ class BaseStorage(ABC):
     """Base class of storage module.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -20,12 +20,12 @@ class BaseStorage(ABC):
         Instance of the base storage.
     """
     def __init__(self,
-                 obs_space: Union[gym.Space, DictConfig],
+                 observation_space: Union[gym.Space, DictConfig],
                  action_space: Union[gym.Space, DictConfig],
                  device: th.device = 'cpu',
                  ) -> None:
-        if isinstance(obs_space, gym.Space) and isinstance(action_space, gym.Space):
-            self._obs_shape = obs_space.shape
+        if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
+            self._obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
                 self._action_shape = (int(action_space.n), )
                 self._action_type = "Discrete"
@@ -35,9 +35,9 @@ class BaseStorage(ABC):
                 self._action_type = "Box"
             else:
                 raise NotImplementedError("Unsupported action type!")
-        elif isinstance(obs_space, DictConfig) and isinstance(action_space, DictConfig):
+        elif isinstance(observation_space, DictConfig) and isinstance(action_space, DictConfig):
             # by DictConfig
-            self._obs_shape = obs_space.shape
+            self._obs_shape = observation_space.shape
             self._action_shape = action_space.shape
             self._action_type = action_space.type
         else:

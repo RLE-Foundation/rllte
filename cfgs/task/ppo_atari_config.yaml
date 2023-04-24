@@ -6,8 +6,8 @@ num_train_steps: 10000000   # Number of training steps.
 
 # use_aug: true
 
-learner:
-  name: PPOLearner
+agent:
+  name: PPO
 
 # augmentation:
 #   name: RandomShift

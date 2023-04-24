@@ -1,13 +1,13 @@
-from typing import Dict, Generator, Union
+from typing import Dict, Generator, Union, Tuple
 import gymnasium as gym
 from omegaconf import DictConfig
 
 import torch as th
 from torch.nn import functional as F
 
-from hsuanwu.xploit.learner import utils
-from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DeterministicActor, DoubleCritic
+from hsuanwu.xploit.agent import utils
+from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.xploit.agent.network import DeterministicActor, DoubleCritic
 
 MATCH_KEYS = {
     "trainer": "OffPolicyTrainer",
@@ -33,12 +33,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "TassaCnnEncoder",
-        "obs_space": dict(),
+        "observation_space": dict(),
         "feature_dim": 50,
     },
-    "learner": {
-        "name": "DrQv2Learner",
-        "obs_space": dict(),
+    "agent": {
+        "name": "DrQv2",
+        "observation_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -60,13 +60,14 @@ DEFAULT_CFGS = {
 }
 
 
-class DrQv2Learner(BaseLearner):
+class DrQv2(BaseAgent):
     """Data Regularized-Q v2 (DrQ-v2).
-        When 'augmentation' module is deprecated, this learner will transform into Deep Deterministic Policy Gradient (DDPG) Learner.
+        When 'augmentation' module is deprecated, this agent will transform into Deep Deterministic Policy Gradient (DDPG) agent.
+        Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -81,12 +82,12 @@ class DrQv2Learner(BaseLearner):
         update_every_steps (int): The agent update frequency.
 
     Returns:
-        DrQv2 learner instance.
+        DrQv2 agent instance.
     """
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
@@ -96,7 +97,7 @@ class DrQv2Learner(BaseLearner):
         critic_target_tau: float,
         update_every_steps: int,
     ) -> None:
-        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -133,9 +134,30 @@ class DrQv2Learner(BaseLearner):
         self.critic.train(training)
         if self.encoder is not None:
             self.encoder.train(training)
+    
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+        """Sample actions based on observations.
+
+        Args:
+            obs (Tensor): Observations.
+            training (bool): training mode, True or False.
+            step (int): Global training step.
+
+        Returns:
+            Sampled actions.
+        """
+        encoded_obs = self.encoder(obs)
+        dist = self.actor.get_action(obs=encoded_obs, step=step)
+
+        if not training:
+            action = dist.mean
+        else:
+            action = dist.sample()
+
+        return action.clamp(*self.action_range)
 
     def update(self, replay_iter: Generator, step: int = 0) -> Dict[str, float]:
-        """Update the learner.
+        """Update the agent.
 
         Args:
             replay_iter (Generator): Hsuanwu replay storage iterable dataloader.

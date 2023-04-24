@@ -6,7 +6,7 @@ from torch import nn
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from hsuanwu.xploit.learner import utils
+from hsuanwu.xploit.agent import utils
 
 
 class StochasticActor(nn.Module):

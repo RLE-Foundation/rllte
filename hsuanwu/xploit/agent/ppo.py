@@ -1,12 +1,12 @@
-from typing import Dict, Union
+from typing import Dict, Union, Tuple
 import gymnasium as gym
 from omegaconf import DictConfig
 
 import torch as th
 from torch import nn
 
-from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DiscreteActorCritic, BoxActorCritic
+from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.xploit.agent.network import DiscreteActorCritic, BoxActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -29,12 +29,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "EspeholtResidualEncoder",
-        "obs_space": dict(),
+        "observation_space": dict(),
         "feature_dim": 256,
     },
-    "learner": {
-        "name": "PPOLearner",
-        "obs_space": dict(),
+    "agent": {
+        "name": "PPO",
+        "observation_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -57,13 +57,13 @@ DEFAULT_CFGS = {
 }
 
 
-class PPOLearner(BaseLearner):
-    """Proximal Policy Optimization (PPO) Learner.
-        When 'augmentation' module is invoked, this learner will transform into Data Regularized Actor-Critic (DrAC) Learner.
+class PPO(BaseAgent):
+    """Proximal Policy Optimization (PPO) agent.
+        When 'augmentation' module is invoked, this learner will transform into Data Regularized Actor-Critic (DrAC) agent.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -88,7 +88,7 @@ class PPOLearner(BaseLearner):
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
@@ -103,7 +103,7 @@ class PPOLearner(BaseLearner):
         aug_coef: float,
         max_grad_norm: float,
     ) -> None:
-        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.n_epochs = n_epochs
         self.clip_range = clip_range
@@ -158,6 +158,29 @@ class PPOLearner(BaseLearner):
         """
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
+
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
+        """Sample actions based on observations.
+
+        Args:
+            obs: Observations.
+            training: training mode, True or False.
+            step: Global training step.
+
+        Returns:
+            Sampled actions.
+        """
+        encoded_obs = self.encoder(obs)
+        if training:
+            actions, values, log_probs, entropy = self.ac.get_action_and_value(
+                obs=encoded_obs
+            )
+            return actions.clamp(*self.action_range), values, log_probs, entropy
+        else:
+            actions = self.ac.get_action(obs=encoded_obs)
+            return actions.clamp(*self.action_range)
 
     def update(
         self, rollout_storage: Storage, episode: int = 0

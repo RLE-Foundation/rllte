@@ -128,16 +128,16 @@ class DistributedTrainer(BasePolicyTrainer):
         super().__init__(cfgs, train_env, test_env)
         self._logger.info(f"Deploying DistributedTrainer...")
         # xploit part
-        self._learner = hydra.utils.instantiate(self._cfgs.learner)
-        self._learner.actor.encoder = hydra.utils.instantiate(self._cfgs.encoder)
-        self._learner.learner.encoder = hydra.utils.instantiate(self._cfgs.encoder)
+        self._agent = hydra.utils.instantiate(self._cfgs.agent)
+        self._agent.actor.encoder = hydra.utils.instantiate(self._cfgs.encoder)
+        self._agent.learner.encoder = hydra.utils.instantiate(self._cfgs.encoder)
 
-        self._learner.actor.share_memory()
-        self._learner.learner.to(self._device)
-        self._learner.opt = th.optim.RMSprop(
-            self._learner.learner.parameters(),
-            lr=self._learner.lr,
-            eps=self._learner.eps,
+        self._agent.actor.share_memory()
+        self._agent.learner.to(self._device)
+        self._agent.opt = th.optim.RMSprop(
+            self._agent.learner.parameters(),
+            lr=self._agent.lr,
+            eps=self._agent.eps,
         )
 
         def lr_lambda(epoch):
@@ -150,8 +150,8 @@ class DistributedTrainer(BasePolicyTrainer):
                 / self._cfgs.num_train_steps
             )
 
-        self._learner.lr_scheduler = th.optim.lr_scheduler.LambdaLR(
-            self._learner.opt, lr_lambda
+        self._agent.lr_scheduler = th.optim.lr_scheduler.LambdaLR(
+            self._agent.opt, lr_lambda
         )
 
         ## TODO: build storage
@@ -165,8 +165,8 @@ class DistributedTrainer(BasePolicyTrainer):
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
 
-        self._learner.actor.dist = dist
-        self._learner.learner.dist = dist
+        self._agent.actor.dist = dist
+        self._agent.learner.dist = dist
 
     @staticmethod
     def act(
@@ -261,14 +261,14 @@ class DistributedTrainer(BasePolicyTrainer):
                     storages=self._shared_storages.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
-                metrics = self._learner.update(
+                metrics = self._agent.update(
                     cfgs=self._cfgs,
-                    actor_model=self._learner.actor,
-                    learner_model=self._learner.learner,
+                    actor_model=self._agent.actor,
+                    learner_model=self._agent.learner,
                     batch=batch,
                     init_actor_states=actor_states,
-                    optimizer=self._learner.opt,
-                    lr_scheduler=self._learner.lr_scheduler,
+                    optimizer=self._agent.opt,
+                    lr_scheduler=self._agent.lr_scheduler,
                 )
                 with lock:
                     global_step += self._cfgs.num_steps * self._cfgs.storage.batch_size
@@ -277,7 +277,7 @@ class DistributedTrainer(BasePolicyTrainer):
         # TODO: Add initial RNN state.
         init_actor_state_storages = []
         for _ in range(self._cfgs.storage.num_storages):
-            state = self._learner.actor.init_state(batch_size=1)
+            state = self._agent.actor.init_state(batch_size=1)
             for t in state:
                 t.share_memory_()
             init_actor_state_storages.append(state)
@@ -295,7 +295,7 @@ class DistributedTrainer(BasePolicyTrainer):
                     "logger": self._logger,
                     "gym_env": self._train_env[actor_idx],
                     "actor_idx": actor_idx,
-                    "actor_model": self._learner.actor,
+                    "actor_model": self._agent.actor,
                     "free_queue": free_queue,
                     "full_queue": full_queue,
                     "storages": self._shared_storages.storages,
@@ -361,5 +361,5 @@ class DistributedTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        th.save(self._learner.actor, save_dir / "actor.pth")
-        th.save(self._learner.learner, save_dir / "learner.pth")
+        th.save(self._agent.actor, save_dir / "actor.pth")
+        th.save(self._agent.learner, save_dir / "learner.pth")

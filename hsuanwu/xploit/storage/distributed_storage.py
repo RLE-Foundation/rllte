@@ -11,8 +11,8 @@ class DistributedStorage(BaseStorage):
     """Distributed storage for distributed algorithms like IMPALA.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -26,14 +26,14 @@ class DistributedStorage(BaseStorage):
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device = 'cpu',
         num_steps: int = 100,
         num_storages: int = 80,
         batch_size: int = 32,
     ) -> None:
-        super().__init__(obs_space, action_space, device)
+        super().__init__(observation_space, action_space, device)
         self._num_steps = num_steps
         self._num_storages = num_storages
         self._batch_size = batch_size

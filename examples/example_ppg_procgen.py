@@ -7,7 +7,7 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.env import make_procgen_env
-from hsuanwu.common.engine import OnPolicyTrainer
+from hsuanwu.common.engine import HsuanwuEngine
 
 train_env = make_procgen_env(
     env_id='fruitbot',
@@ -29,8 +29,8 @@ test_env = make_procgen_env(
 print(train_env.action_space)
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='ppg_procgen_config')
 def main(cfgs):
-    trainer = OnPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-    trainer.train()
+    trainer = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env)
+    trainer.invoke()
 
 if __name__ == '__main__':
     main()

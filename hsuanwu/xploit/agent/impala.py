@@ -10,8 +10,8 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DiscreteLSTMActor
+from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.xploit.agent.network import DiscreteLSTMActor
 
 MATCH_KEYS = {
     "trainer": "DistributedTrainer",
@@ -35,12 +35,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "MnihCnnEncoder",
-        "obs_space": dict(),
+        "observation_space": dict(),
         "feature_dim": 512,
     },
-    "learner": {
-        "name": "IMPALALearner",
-        "obs_space": dict(),
+    "agent": {
+        "name": "IMPALA",
+        "observation_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -176,12 +176,12 @@ class VTrace(object):
             return VTraceReturns(vs=vs, pg_advantages=pg_advantages)
 
 
-class IMPALALearner(BaseLearner):
+class IMPALA(BaseAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -197,12 +197,12 @@ class IMPALALearner(BaseLearner):
         max_grad_norm (float): Maximum norm of gradients.
         discount (float): Discount factor.
     Returns:
-        IMPALALearner distance.
+        IMPALA distance.
     """
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
@@ -214,7 +214,7 @@ class IMPALALearner(BaseLearner):
         max_grad_norm: float,
         discount: float,
     ) -> None:
-        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.ent_coef = ent_coef
         self.baseline_coef = baseline_coef
@@ -241,6 +241,10 @@ class IMPALALearner(BaseLearner):
         self.training = training
         self.actor.train(training)
         self.learner.train(training)
+    
+    def act(self, *kwargs) -> Tuple[th.Tensor]:
+        """Sample actions based on observations.
+        """
 
     @staticmethod
     def update(
@@ -306,7 +310,7 @@ class IMPALALearner(BaseLearner):
             rewards = batch["reward"]
             clipped_rewards = th.clamp(rewards, -1, 1)
 
-            discounts = (~batch["terminated"]).float() * cfgs.learner.discount
+            discounts = (~batch["terminated"]).float() * cfgs.agent.discount
 
             vtrace_returns = VTrace().from_logits(
                 behavior_policy_logits=batch["policy_logits"],
@@ -323,10 +327,10 @@ class IMPALALearner(BaseLearner):
                 batch["action"],
                 vtrace_returns.pg_advantages,
             )
-            baseline_loss = cfgs.learner.baseline_coef * compute_baseline_loss(
+            baseline_loss = cfgs.agent.baseline_coef * compute_baseline_loss(
                 vtrace_returns.vs - learner_outputs["baseline"]
             )
-            entropy_loss = cfgs.learner.ent_coef * compute_entropy_loss(
+            entropy_loss = cfgs.agent.ent_coef * compute_entropy_loss(
                 learner_outputs["policy_logits"]
             )
 
@@ -338,7 +342,7 @@ class IMPALALearner(BaseLearner):
             optimizer.zero_grad()
             total_loss.backward()
             nn.utils.clip_grad_norm_(
-                learner_model.parameters(), cfgs.learner.max_grad_norm
+                learner_model.parameters(), cfgs.agent.max_grad_norm
             )
             optimizer.step()
             lr_scheduler.step()

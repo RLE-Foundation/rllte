@@ -32,16 +32,16 @@ class OffPolicyTrainer(BasePolicyTrainer):
         if self._cfgs.pretraining:
             self._logger.info(f"Pre-training Mode On...")
         # xploit part
-        self._learner = hydra.utils.instantiate(self._cfgs.learner)
+        self._agent = hydra.utils.instantiate(self._cfgs.agent)
         ## TODO: build encoder
-        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
+        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
             self._device
         )
-        self._learner.encoder.train()
-        self._learner.encoder_opt = th.optim.Adam(
-            self._learner.encoder.parameters(),
-            lr=self._learner.lr,
-            eps=self._learner.eps,
+        self._agent.encoder.train()
+        self._agent.encoder_opt = th.optim.Adam(
+            self._agent.encoder.parameters(),
+            lr=self._agent.lr,
+            eps=self._agent.eps,
         )
         ## TODO: build storage
         self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
@@ -52,16 +52,16 @@ class OffPolicyTrainer(BasePolicyTrainer):
             dist = hydra.utils.instantiate(self._cfgs.distribution)
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
-        self._learner.dist = dist
-        self._learner.actor.dist = dist
+        self._agent.dist = dist
+        self._agent.actor.dist = dist
         ## TODO: get augmentation
         if self._cfgs.use_aug:
-            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
+            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
                 self._device
             )
         ## TODO: get intrinsic reward
         if self._cfgs.use_irs:
-            self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
+            self._agent.irs = hydra.utils.instantiate(self._cfgs.reward)
 
         # TODO: make data loader
         if "NStepReplayStorage" in self._cfgs.storage._target_:
@@ -89,31 +89,6 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._replay_iter = iter(self._replay_loader)
         return self._replay_iter
 
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): training mode, True or False.
-            step (int): Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        # sample actions
-        encoded_obs = self._learner.encoder(obs)
-        dist = self._learner.actor.get_action(obs=encoded_obs, step=self._global_step)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-            if step < self._num_init_steps:
-                action.uniform_(-1.0, 1.0)
-        return action.clamp(*self._cfgs.action_space["range"])
-
     def train(self) -> None:
         """Training function."""
         episode_step, episode_reward = 0, 0
@@ -129,8 +104,11 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 self._logger.test(msg=test_metrics)
 
             # sample actions
-            with th.no_grad(), utils.eval_mode(self._learner):
-                action = self.act(obs, training=True, step=self._global_step)
+            with th.no_grad(), utils.eval_mode(self._agent):
+                action = self._agent.act(obs, training=True, step=self._global_step)
+                # TODO: Initial exploration
+                if self._global_step < self._num_init_steps:
+                    action.uniform_(-1.0, 1.0)
             next_obs, reward, terminated, truncated, info = self._train_env.step(action)
             episode_reward += reward[0].cpu().numpy()
             episode_step += 1
@@ -150,11 +128,11 @@ class OffPolicyTrainer(BasePolicyTrainer):
             if self._global_step >= self._num_init_steps:
                 if self._use_nstep_replay_storage:
                     # TODO: for NStepReplayStorage
-                    metrics = self._learner.update(
+                    metrics = self._agent.update(
                         self.replay_iter, step=self._global_step
                     )
                 else:
-                    metrics = self._learner.update(
+                    metrics = self._agent.update(
                         self._replay_storage, step=self._global_step
                     )
                     # TODO: for PrioritizedReplayStorage
@@ -194,8 +172,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
         obs, info = self._test_env.reset(seed=self._seed)
 
         while episode <= self._num_test_episodes:
-            with th.no_grad(), utils.eval_mode(self._learner):
-                action = self.act(obs, training=False, step=self._global_step)
+            with th.no_grad(), utils.eval_mode(self._agent):
+                action = self._agent.act(obs, training=False, step=self._global_step)
 
             next_obs, reward, terminated, truncated, info = self._test_env.step(action)
             total_reward += reward[0].cpu().numpy()
@@ -222,12 +200,12 @@ class OffPolicyTrainer(BasePolicyTrainer):
         save_dir.mkdir(exist_ok=True)
 
         if self._cfgs.pretraining:
-            th.save(self._learner.encoder, save_dir / "pretrained_encoder.pth")
-            th.save(self._learner.actor, save_dir / "pretrained_actor.pth")
-            th.save(self._learner.critic, save_dir / "pretrained_critic.pth")
+            th.save(self._agent.encoder, save_dir / "pretrained_encoder.pth")
+            th.save(self._agent.actor, save_dir / "pretrained_actor.pth")
+            th.save(self._agent.critic, save_dir / "pretrained_critic.pth")
         else:
-            th.save(self._learner.encoder, save_dir / "encoder.pth")
-            th.save(self._learner.actor, save_dir / "actor.pth")
-            th.save(self._learner.critic, save_dir / "critic.pth")
+            th.save(self._agent.encoder, save_dir / "encoder.pth")
+            th.save(self._agent.actor, save_dir / "actor.pth")
+            th.save(self._agent.critic, save_dir / "critic.pth")
         
         self._logger.info(f"Model saved at: {save_dir}")

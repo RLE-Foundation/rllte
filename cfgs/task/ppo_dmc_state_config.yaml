@@ -8,8 +8,8 @@ encoder:
   name: IdentityEncoder
   feature_dim: 5
 
-learner:
-  name: PPOLearner
+agent:
+  name: PPO
 
 distribution:
   name: DiagonalGaussian

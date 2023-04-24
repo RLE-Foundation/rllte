@@ -75,8 +75,8 @@ class EspeholtResidualEncoder(BaseEncoder):
         Target task: Atari games and Procgen games.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
         net_arch (List): Architecture of the network.
             It represents the out channels of each residual layer.
@@ -88,14 +88,14 @@ class EspeholtResidualEncoder(BaseEncoder):
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         feature_dim: int = 0,
         net_arch: List[int] = [16, 32, 32],
     ) -> None:
-        super().__init__(obs_space, feature_dim)
+        super().__init__(observation_space, feature_dim)
         assert len(net_arch) >= 1, "At least one Residual layer!"
         modules = list()
-        shape = obs_space.shape
+        shape = observation_space.shape
         if len(shape) == 4:
             # vectorized envs
             shape = shape[1:]

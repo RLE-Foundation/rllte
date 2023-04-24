@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, Union, Tuple
 import gymnasium as gym
 from omegaconf import DictConfig
 
@@ -6,8 +6,8 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from hsuanwu.xploit.learner.base import BaseLearner
-from hsuanwu.xploit.learner.network import DiscreteActorAuxiliaryCritic, BoxActorAuxiliaryCritic
+from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.xploit.agent.network import DiscreteActorAuxiliaryCritic, BoxActorAuxiliaryCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -30,12 +30,12 @@ DEFAULT_CFGS = {
     ## TODO: xploit part
     "encoder": {
         "name": "EspeholtResidualEncoder",
-        "obs_space": dict(),
+        "observation_space": dict(),
         "feature_dim": 256,
     },
-    "learner": {
-        "name": "PPGLearner",
-        "obs_space": dict(),
+    "agent": {
+        "name": "PPG",
+        "observation_space": dict(),
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
@@ -61,12 +61,12 @@ DEFAULT_CFGS = {
 }
 
 
-class PPGLearner(BaseLearner):
-    """Phasic Policy Gradient (PPG) Learner.
+class PPG(BaseAgent):
+    """Phasic Policy Gradient (PPG) agent.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -90,12 +90,12 @@ class PPGLearner(BaseLearner):
         num_aux_grad_accum (int): Number of gradient accumulation for auxiliary phase update.
 
     Returns:
-        PPG learner instance.
+        PPG agent instance.
     """
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int = 256,
@@ -114,7 +114,7 @@ class PPGLearner(BaseLearner):
         kl_coef: float = 1.0,
         num_aux_grad_accum: int = 1,
     ) -> None:
-        super().__init__(obs_space, action_space, device, feature_dim, lr, eps)
+        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.clip_range = clip_range
         self.num_policy_mini_batch = num_policy_mini_batch
@@ -180,10 +180,33 @@ class PPGLearner(BaseLearner):
         encoded_obs = self.encoder(obs)
         return self.ac.get_value(obs=encoded_obs)
 
+    def act(
+        self, obs: th.Tensor, training: bool = True, step: int = 0
+    ) -> Tuple[th.Tensor]:
+        """Sample actions based on observations.
+
+        Args:
+            obs: Observations.
+            training: training mode, True or False.
+            step: Global training step.
+
+        Returns:
+            Sampled actions.
+        """
+        encoded_obs = self.encoder(obs)
+        if training:
+            actions, values, log_probs, entropy = self.ac.get_action_and_value(
+                obs=encoded_obs
+            )
+            return actions.clamp(*self.action_range), values, log_probs, entropy
+        else:
+            actions = self.ac.get_action(obs=encoded_obs)
+            return actions.clamp(*self.action_range)
+
     def update(
         self, rollout_storage: Storage, episode: int = 0
     ) -> Dict[str, float]:
-        """Update the learner.
+        """Update the agent.
 
         Args:
             rollout_storage (Storage): Hsuanwu rollout storage.

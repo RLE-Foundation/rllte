@@ -7,7 +7,7 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.env import make_dmc_env
-from hsuanwu.common.engine import OffPolicyTrainer
+from hsuanwu.common.engine import HsuanwuEngine
 
 train_env = make_dmc_env(env_id='cartpole_swingup', 
                          num_envs=1,
@@ -29,8 +29,8 @@ print(train_env.observation_space)
 
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='sac_dmc_state_config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-    trainer.train()
+    engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env)
+    engine.invoke()
 
 if __name__ == '__main__':
     main()

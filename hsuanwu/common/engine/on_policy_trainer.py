@@ -32,16 +32,16 @@ class OnPolicyTrainer(BasePolicyTrainer):
         if self._cfgs.pretraining:
             self._logger.info(f"Pre-training Mode On...")
         # xploit part
-        self._learner = hydra.utils.instantiate(self._cfgs.learner)
+        self._agent = hydra.utils.instantiate(self._cfgs.agent)
         # TODO: build encoder
-        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
+        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
             self._device
         )
-        self._learner.encoder.train()
-        self._learner.encoder_opt = th.optim.Adam(
-            self._learner.encoder.parameters(),
-            lr=self._learner.lr,
-            eps=self._learner.eps,
+        self._agent.encoder.train()
+        self._agent.encoder_opt = th.optim.Adam(
+            self._agent.encoder.parameters(),
+            lr=self._agent.lr,
+            eps=self._agent.eps,
         )
         # TODO: build storage
         self._rollout_storage = hydra.utils.instantiate(self._cfgs.storage)
@@ -49,46 +49,22 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # xplore part
         # TODO: get distribution
         dist = hydra.utils.get_class(self._cfgs.distribution._target_)
-        self._learner.dist = dist
-        self._learner.ac.dist = dist
+        self._agent.dist = dist
+        self._agent.ac.dist = dist
         # TODO: get augmentation
         if self._cfgs.use_aug:
-            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
+            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
                 self._device
             )
         # TODO: get intrinsic reward
         if self._cfgs.use_irs:
-            self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
+            self._agent.irs = hydra.utils.instantiate(self._cfgs.reward)
 
         self._num_steps = self._cfgs.num_steps
         self._num_envs = self._cfgs.num_envs
 
         # debug
         self._logger.debug("Check Accomplished. Start Training...")
-
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self._learner.encoder(obs)
-
-        if training:
-            actions, values, log_probs, entropy = self._learner.ac.get_action_and_value(
-                obs=encoded_obs
-            )
-            return actions.clamp(*self._cfgs.action_space["range"]), values, log_probs, entropy
-        else:
-            actions = self._learner.ac.get_action(obs=encoded_obs)
-            return actions.clamp(*self._cfgs.action_space["range"])
 
     def train(self) -> None:
         """Training function."""
@@ -109,8 +85,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
             for step in range(self._num_steps):
                 # sample actions
-                with th.no_grad(), utils.eval_mode(self._learner):
-                    actions, values, log_probs, entropy = self.act(
+                with th.no_grad(), utils.eval_mode(self._agent):
+                    actions, values, log_probs, entropy = self._agent.act(
                         obs, training=True, step=self._global_step
                     )
                 (
@@ -142,13 +118,13 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self._learner.get_value(next_obs).detach()
+                last_values = self._agent.get_value(next_obs).detach()
 
             # perform return and advantage estimation
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._learner.update(
+            metrics = self._agent.update(
                 self._rollout_storage, episode=self._global_episode
             )
 
@@ -181,8 +157,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
         episode_steps = list()
 
         while len(episode_rewards) < self._num_test_episodes:
-            with th.no_grad(), utils.eval_mode(self._learner):
-                actions = self.act(obs, training=False, step=self._global_step)
+            with th.no_grad(), utils.eval_mode(self._agent):
+                actions = self._agent.act(obs, training=False, step=self._global_step)
             obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions)
 
             if "episode" in infos:
@@ -204,10 +180,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
         save_dir.mkdir(exist_ok=True)
 
         if self._cfgs.pretraining:
-            th.save(self._learner.encoder, save_dir / "pretrained_encoder.pth")
-            th.save(self._learner.ac, save_dir / "pretrained_actor_critic.pth")
+            th.save(self._agent.encoder, save_dir / "pretrained_encoder.pth")
+            th.save(self._agent.ac, save_dir / "pretrained_actor_critic.pth")
         else:
-            th.save(self._learner.encoder, save_dir / "encoder.pth")
-            th.save(self._learner.ac, save_dir / "actor_critic.pth")
+            th.save(self._agent.encoder, save_dir / "encoder.pth")
+            th.save(self._agent.ac, save_dir / "actor_critic.pth")
 
         self._logger.info(f"Model saved at: {save_dir}")

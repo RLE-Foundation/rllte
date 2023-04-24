@@ -1,4 +1,4 @@
-from typing import Union, Dict
+from typing import Union, Dict, Tuple
 from abc import ABC, abstractmethod
 import gymnasium as gym
 from omegaconf import DictConfig
@@ -6,12 +6,12 @@ from omegaconf import DictConfig
 import torch as th
 
 
-class BaseLearner(ABC):
-    """Base class of learner.
+class BaseAgent(ABC):
+    """Base class of agent.
 
     Args:
-        obs_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
-            'obs_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra, 
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like 
             {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
@@ -22,34 +22,36 @@ class BaseLearner(ABC):
         eps (float): Term added to the denominator to improve numerical stability.
 
     Returns:
-        Base learner instance.
+        Base agent instance.
     """
 
     def __init__(
         self,
-        obs_space: Union[gym.Space, DictConfig],
+        observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: th.device,
         feature_dim: int,
         lr: float,
         eps: float,
     ) -> None:
-        if isinstance(obs_space, gym.Space) and isinstance(action_space, gym.Space):
-            self.obs_shape = obs_space.shape
+        if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
+            self.obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
                 self.action_shape = (int(action_space.n), )
                 self.action_type = "Discrete"
-
+                self.action_range = [0, int(action_space.n) - 1]
             elif action_space.__class__.__name__ == "Box":
                 self.action_shape = action_space.shape
                 self.action_type = "Box"
+                self.action_range = [float(action_space.low[0]), float(action_space.high[0])]
             else:
                 raise NotImplementedError("Unsupported action type!")
-        elif isinstance(obs_space, DictConfig) and isinstance(action_space, DictConfig):
+        elif isinstance(observation_space, DictConfig) and isinstance(action_space, DictConfig):
             # by DictConfig
-            self.obs_shape = obs_space.shape
+            self.obs_shape = observation_space.shape
             self.action_shape = action_space.shape
             self.action_type = action_space.type
+            self.action_range = action_space.range
         else:
             raise NotImplementedError("Unsupported observation and action spaces!")
         
@@ -76,15 +78,21 @@ class BaseLearner(ABC):
             None.
         """
         self.training = training
+    
+    @abstractmethod
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+        """Sample actions based on observations.
+
+        Args:
+            obs (Tensor): Observations.
+            training (bool): training mode, True or False.
+            step (int): Global training step.
+
+        Returns:
+            Sampled actions.
+        """
 
     @abstractmethod
     def update(self, *kwargs) -> Dict[str, float]:
-        """Update learner.
-
-        Args:
-            Any possible arguments.
-
-
-        Returns:
-            Training metrics such as loss functions.
+        """Update agent and return training metrics such as loss functions.
         """

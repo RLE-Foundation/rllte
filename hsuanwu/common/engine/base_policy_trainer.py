@@ -15,7 +15,9 @@ from omegaconf import OmegaConf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
-from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+from hsuanwu.xplore.reward import ALL_IRS_MODULES
+
 
 _DEFAULT_CFGS = {
     # Mandatory parameters
@@ -33,7 +35,7 @@ _DEFAULT_CFGS = {
     "encoder": {
         "name": None,
     },
-    "learner": {
+    "agent": {
         "name": None,
     },
     "storage": {
@@ -118,17 +120,17 @@ class BasePolicyTrainer(ABC):
             Processed configs.
         """
         new_cfgs = OmegaConf.create(_DEFAULT_CFGS)
-        # TODO: load the default configs of learner
-        learner_default_cfgs = ALL_DEFAULT_CFGS[cfgs.learner.name]
+        # TODO: load the default configs of agent
+        agent_default_cfgs = ALL_DEFAULT_CFGS[cfgs.agent.name]
 
-        for key in learner_default_cfgs.keys():
-            new_cfgs[key] = learner_default_cfgs[key]
+        for key in agent_default_cfgs.keys():
+            new_cfgs[key] = agent_default_cfgs[key]
 
         # TODO: try to load self-defined configs
         for part in cfgs.keys():
             if part not in [
                 "encoder",
-                "learner",
+                "agent",
                 "storage",
                 "distribution",
                 "augmentation",
@@ -139,7 +141,7 @@ class BasePolicyTrainer(ABC):
         for part in cfgs.keys():
             if part in [
                 "encoder",
-                "learner",
+                "agent",
                 "storage",
                 "distribution",
                 "augmentation",
@@ -152,7 +154,7 @@ class BasePolicyTrainer(ABC):
         for part in new_cfgs.keys():
             if part in [
                 "encoder",
-                "learner",
+                "agent",
                 "storage",
                 "distribution",
                 "augmentation",
@@ -175,22 +177,22 @@ class BasePolicyTrainer(ABC):
         observation_space, action_space = self._train_env.observation_space, self._train_env.action_space
 
         new_cfgs.num_envs = self._train_env.num_envs
-        new_cfgs.obs_space = observation_space
+        new_cfgs.observation_space = observation_space
         new_cfgs.action_space = action_space
 
-        # TODO: fill parameters for encoder, learner, and storage
+        # TODO: fill parameters for encoder, agent, and storage
         ## for encoder
         if new_cfgs.encoder._target_ == "IdentityEncoder":
             new_cfgs.encoder.feature_dim = observation_space["shape"][0]
 
-        new_cfgs.encoder.obs_space = observation_space
-        new_cfgs.learner.obs_space = observation_space
-        new_cfgs.learner.action_space = action_space
-        new_cfgs.learner.device = new_cfgs.device
-        new_cfgs.learner.feature_dim = new_cfgs.encoder.feature_dim
+        new_cfgs.encoder.observation_space = observation_space
+        new_cfgs.agent.observation_space = observation_space
+        new_cfgs.agent.action_space = action_space
+        new_cfgs.agent.device = new_cfgs.device
+        new_cfgs.agent.feature_dim = new_cfgs.encoder.feature_dim
 
         ## for storage
-        new_cfgs.storage.obs_space = observation_space
+        new_cfgs.storage.observation_space = observation_space
         new_cfgs.storage.action_space = action_space
         new_cfgs.storage.device = new_cfgs.device
 
@@ -204,7 +206,7 @@ class BasePolicyTrainer(ABC):
         ## for reward
         if new_cfgs.reward._target_ is not None:
             new_cfgs.reward.device = new_cfgs.device
-            new_cfgs.reward.obs_space = observation_space
+            new_cfgs.reward.observation_space = observation_space
             new_cfgs.reward.action_space = action_space
 
         return new_cfgs
@@ -221,17 +223,17 @@ class BasePolicyTrainer(ABC):
 
         # xploit part
         self._logger.debug(f"Selected Encoder: {cfgs.encoder._target_}")
-        self._logger.debug(f"Selected Learner: {cfgs.learner._target_}")
+        self._logger.debug(f"Selected Agent: {cfgs.agent._target_}")
         # Check the compatibility
         assert (
-            cfgs.storage._target_ in ALL_MATCH_KEYS[cfgs.learner._target_]["storage"]
-        ), f"{cfgs.storage._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/."
+            cfgs.storage._target_ in ALL_MATCH_KEYS[cfgs.agent._target_]["storage"]
+        ), f"{cfgs.storage._target_} is incompatible with {cfgs.agent._target_}! See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Storage: {cfgs.storage._target_}")
 
         assert (
             cfgs.distribution._target_
-            in ALL_MATCH_KEYS[cfgs.learner._target_]["distribution"]
-        ), f"{cfgs.distribution._target_} is incompatible with {cfgs.learner._target_}, See https://docs.hsuanwu.dev/."
+            in ALL_MATCH_KEYS[cfgs.agent._target_]["distribution"]
+        ), f"{cfgs.distribution._target_} is incompatible with {cfgs.agent._target_}! See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Distribution: {cfgs.distribution._target_}")
 
         if cfgs.augmentation._target_ is not None:
@@ -260,7 +262,7 @@ class BasePolicyTrainer(ABC):
         Returns:
             Processed configs.
         """
-        cfgs.learner._target_ = "hsuanwu.xploit." + "learner." + cfgs.learner._target_
+        cfgs.agent._target_ = "hsuanwu.xploit." + "agent." + cfgs.agent._target_
         cfgs.encoder._target_ = "hsuanwu.xploit." + "encoder." + cfgs.encoder._target_
         cfgs.storage._target_ = "hsuanwu.xploit." + "storage." + cfgs.storage._target_
 
@@ -275,21 +277,6 @@ class BasePolicyTrainer(ABC):
             cfgs.reward._target_ = "hsuanwu.xplore." + "reward." + cfgs.reward._target_
 
         return cfgs
-
-    @abstractmethod
-    def act(
-        self, obs: th.Tensor, training: bool = True, step: int = 0
-    ) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
 
     @abstractmethod
     def train(self) -> None:
