@@ -1,10 +1,10 @@
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 from scipy import stats as sts
 
 
-class Comparison(object):
+class Comparison:
     """Compare the performance between algorithms. Based on:
         https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 

@@ -13,7 +13,7 @@ class RandomFlip(BaseAugmentation):
     """
 
     def __init__(self, p: float = 0.2) -> None:
-        super(RandomFlip, self).__init__()
+        super().__init__()
         self.p = p
 
     def forward(self, x: th.Tensor) -> th.Tensor:

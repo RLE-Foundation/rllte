@@ -22,7 +22,7 @@ class ElasticTransform(BaseAugmentation):
         interpolation: int = 0,
         fill=0,
     ) -> None:
-        super(ElasticTransform, self).__init__()
+        super().__init__()
         self.alpha = alpha
         self.sigma = sigma
         self.interpolation = interpolation

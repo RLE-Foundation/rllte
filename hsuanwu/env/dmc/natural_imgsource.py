@@ -6,7 +6,7 @@ import skvideo.io
 import tqdm
 
 
-class BackgroundMatting(object):
+class BackgroundMatting:
     """
     Produce a mask by masking the given color. This is a simple strategy
     but effective for many games.
@@ -23,7 +23,7 @@ class BackgroundMatting(object):
         return img == self._color
 
 
-class ImageSource(object):
+class ImageSource:
     """
     Source of natural images to be added to a simulated environment.
     """

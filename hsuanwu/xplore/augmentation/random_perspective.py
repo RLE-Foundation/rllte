@@ -22,7 +22,7 @@ class RandomPerspective(BaseAugmentation):
         interpolation: int = 0,
         fill=0,
     ) -> None:
-        super(RandomPerspective, self).__init__()
+        super().__init__()
         self.distortion_scale = distortion_scale
         self.p = p
         self.interpolation = interpolation

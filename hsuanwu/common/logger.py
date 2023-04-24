@@ -1,7 +1,7 @@
 import csv
 import datetime
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any, Dict
 
 from termcolor import colored
 

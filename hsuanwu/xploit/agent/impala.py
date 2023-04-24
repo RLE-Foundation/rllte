@@ -73,7 +73,7 @@ VTraceFromLogitsReturns = collections.namedtuple(
 VTraceReturns = collections.namedtuple("VTraceReturns", "vs pg_advantages")
 
 
-class VTrace(object):
+class VTrace:
     """Compute V-trace off-policy actor critic targets."""
 
     def __init__(self) -> None:

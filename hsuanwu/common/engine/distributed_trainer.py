@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -107,7 +107,7 @@ class Environment:
             Formatted observation.
         """
         obs = th.from_numpy(np.array(obs))
-        return obs.view((1, 1) + obs.shape)
+        return obs.view((1, 1, *obs.shape))
 
 
 class DistributedTrainer(BasePolicyTrainer):
@@ -124,7 +124,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.info(f"Deploying DistributedTrainer...")
+        self._logger.info("Deploying DistributedTrainer...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         self._agent.actor.encoder = hydra.utils.instantiate(self._cfgs.encoder)

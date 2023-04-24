@@ -1,7 +1,6 @@
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 
 import gymnasium as gym
-import torch as th
 from gymnasium.envs import registry
 from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
@@ -55,7 +54,7 @@ def make_dmc_env(
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             domain_name, task_name = env_id.split("_")
-            _env_id = "dmc_%s_%s_%s-v1" % (domain_name, task_name, seed)
+            _env_id = f"dmc_{domain_name}_{task_name}_{seed}-v1"
 
             if from_pixels:
                 assert not visualize_reward, "Cannot use visualize reward when learning from pixels!"
@@ -63,7 +62,7 @@ def make_dmc_env(
             # shorten episode length
             max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
 
-            if not _env_id in registry.values():
+            if _env_id not in registry.values():
                 register(
                     id=env_id,
                     entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",

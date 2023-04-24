@@ -227,7 +227,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         if self._action_type == "Discrete":
-            actions_tensor = samples["actions"].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
             actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
             actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
@@ -235,7 +235,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)
 
-        for idx, batch in enumerate(loader):
+        for _idx, batch in enumerate(loader):
             obs, actions, next_obs = batch
             pred_actions = self.encoder(obs, next_obs)
             self.opt.zero_grad()

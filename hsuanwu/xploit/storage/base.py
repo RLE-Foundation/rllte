@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import gymnasium as gym
 import torch as th

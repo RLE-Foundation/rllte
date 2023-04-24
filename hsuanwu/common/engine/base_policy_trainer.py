@@ -74,7 +74,7 @@ class BasePolicyTrainer(ABC):
         try:
             self._logger.info(f"Experiment: {cfgs.experiment}")
         except:
-            self._logger.info(f"Experiment: Default")
+            self._logger.info("Experiment: Default")
         self._logger.info("Invoking Hsuanwu Engine...")
         # preprocess the cfgs
         processed_cfgs = self._process_cfgs(cfgs)

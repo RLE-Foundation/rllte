@@ -3,8 +3,6 @@ from typing import Callable, Dict, Tuple
 import gym as old_gym
 import gymnasium as gym
 import numpy as np
-import pybullet_envs
-import torch as th
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 

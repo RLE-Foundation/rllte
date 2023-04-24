@@ -14,7 +14,7 @@ class RandomCutoutColor(BaseAugmentation):
     """
 
     def __init__(self, min_cut: int = 10, max_cut: int = 30) -> None:
-        super(RandomCutoutColor, self).__init__()
+        super().__init__()
         self.min_cut = min_cut
         self.max_cut = max_cut
 

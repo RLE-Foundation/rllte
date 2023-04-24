@@ -11,7 +11,6 @@ import torch as th
 from omegaconf import DictConfig
 from torch.utils.data import IterableDataset
 
-from hsuanwu.xploit.storage.base import BaseStorage
 from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode
 
 
@@ -201,7 +200,7 @@ class NStepReplayStorage(IterableDataset):
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
         fetched_size = 0
         for eps_fn in eps_fns:
-            eps_idx, eps_len = [int(x) for x in eps_fn.stem.split("_")[1:]]
+            eps_idx, eps_len = (int(x) for x in eps_fn.stem.split("_")[1:])
             if eps_idx % self._num_workers != worker_id:
                 continue
             if eps_fn in self._worker_eps_pool.keys():

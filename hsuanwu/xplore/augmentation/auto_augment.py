@@ -16,7 +16,7 @@ class AutoAugment(BaseAugmentation):
         self,
         augment_policy: str = T.AutoAugmentPolicy.IMAGENET,
     ) -> None:
-        super(AutoAugment, self).__init__()
+        super().__init__()
         self.policy = augment_policy
         self.auto_augment_function = T.AutoAugment(self.policy)
 

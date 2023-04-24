@@ -18,7 +18,7 @@ class RandomAdjustSharpness(BaseAugmentation):
         sharpness_factor: float = 50.0,
         p: float = 5.0,
     ) -> None:
-        super(RandomAdjustSharpness, self).__init__()
+        super().__init__()
         self.sharpness_factor = sharpness_factor
         self.p = p
 

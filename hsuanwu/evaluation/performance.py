@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats as sts
 
 
-class Performance(object):
+class Performance:
     """Evaluate the performance of an algorithm. Based on:
         https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 

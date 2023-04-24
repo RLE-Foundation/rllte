@@ -198,7 +198,7 @@ class PPO(BaseAgent):
             )
             rollout_storage.rewards += intrinsic_reward.to(self.device)
 
-        for e in range(self.n_epochs):
+        for _e in range(self.n_epochs):
             generator = rollout_storage.sample(self.num_mini_batch)
 
             for batch in generator:

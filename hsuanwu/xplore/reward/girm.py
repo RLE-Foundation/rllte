@@ -117,7 +117,7 @@ class VAE(nn.Module):
     """
 
     def __init__(self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
-        super(VAE, self).__init__()
+        super().__init__()
         self.encoder = Encoder(obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim)
         self.decoder = Decoder(action_shape=action_shape, latent_dim=latent_dim)
 
@@ -315,14 +315,14 @@ class GIRM(BaseIntrinsicRewardModule):
         next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
 
         if self._action_type == "Discrete":
-            actions_tensor = samples["actions"].view((num_envs * num_steps)).to(self._device)
+            actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
             actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
         else:
             actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
-        for idx, batch in enumerate(loader):
+        for _idx, batch in enumerate(loader):
             obs, actions, next_obs = batch
             # forward prediction
             latent = self.vae.encoder(obs, next_obs)

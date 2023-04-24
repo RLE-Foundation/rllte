@@ -26,10 +26,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.info(f"Deploying OffPolicyTrainer...")
+        self._logger.info("Deploying OffPolicyTrainer...")
         # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
         if self._cfgs.pretraining:
-            self._logger.info(f"Pre-training Mode On...")
+            self._logger.info("Pre-training Mode On...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         ## TODO: build encoder

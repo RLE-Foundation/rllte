@@ -14,7 +14,7 @@ class GrayScale(BaseAugmentation):
     """
 
     def __init__(self) -> None:
-        super(GrayScale, self).__init__()
+        super().__init__()
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         b, c, h, w = x.size()

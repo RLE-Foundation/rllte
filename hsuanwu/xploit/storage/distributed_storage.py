@@ -1,4 +1,3 @@
-import collections
 import threading
 from typing import Any, Dict, Generator, List, Tuple, Union
 

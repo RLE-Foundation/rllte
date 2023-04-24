@@ -98,7 +98,7 @@ class DMCWrapper(core.Env):
                 self._bg_source = natural_imgsource.NoiseSource(shape2d)
             else:
                 files = glob.glob(os.path.expanduser(resource_files))
-                assert len(files), "Pattern {} does not match any files".format(resource_files)
+                assert len(files), f"Pattern {resource_files} does not match any files"
                 if img_source == "images":
                     self._bg_source = natural_imgsource.RandomImageSource(
                         shape2d, files, grayscale=True, total_frames=total_frames

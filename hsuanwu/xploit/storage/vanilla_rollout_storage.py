@@ -1,4 +1,4 @@
-from typing import Any, Generator, Union
+from typing import Generator, Union
 
 import gymnasium as gym
 import torch as th

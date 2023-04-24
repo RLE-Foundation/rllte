@@ -360,8 +360,8 @@ class PPG(BaseAgent):
                 # divergence loss
                 kl_loss = th.distributions.kl_divergence(old_dist, new_dist).mean()
                 # value loss
-                value_loss = 0.5 * ((new_values - batch_aux_returns)).mean()
-                aux_value_loss = 0.5 * ((new_aux_values - batch_aux_returns)).mean()
+                value_loss = 0.5 * (new_values - batch_aux_returns).mean()
+                aux_value_loss = 0.5 * (new_aux_values - batch_aux_returns).mean()
                 # total loss
                 (value_loss + aux_value_loss + self.kl_coef * kl_loss).backward()
 

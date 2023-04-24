@@ -15,7 +15,7 @@ class RandomAugment(BaseAugmentation):
     def __init__(
         self,
     ) -> None:
-        super(RandomAugment, self).__init__()
+        super().__init__()
         self.auto_augment_function = T.RandAugment()
 
     def forward(self, x: th.Tensor) -> th.Tensor:

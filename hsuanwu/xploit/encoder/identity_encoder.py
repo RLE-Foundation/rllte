@@ -1,11 +1,11 @@
-from typing import Dict, Union
+from typing import Union
 
 import gymnasium as gym
 import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
+from hsuanwu.xploit.encoder.base import BaseEncoder
 
 
 class IdentityEncoder(BaseEncoder):

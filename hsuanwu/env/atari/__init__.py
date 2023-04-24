@@ -1,8 +1,7 @@
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import gymnasium as gym
 import numpy as np
-import torch as th
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
 

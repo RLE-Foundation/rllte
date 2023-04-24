@@ -166,7 +166,7 @@ class RND(BaseIntrinsicRewardModule):
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
-        for idx, batch_data in enumerate(loader):
+        for _idx, batch_data in enumerate(loader):
             obs = batch_data[0]
             src_feats = self.predictor(obs)
             with th.no_grad():

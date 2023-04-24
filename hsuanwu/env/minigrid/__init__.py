@@ -1,8 +1,6 @@
-from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
-import torch as th
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper

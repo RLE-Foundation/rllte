@@ -18,12 +18,12 @@ def schedule(schdl, step):
     except ValueError:
         match = re.match(r"linear\((.+),(.+),(.+)\)", schdl)
         if match:
-            init, final, duration = [float(g) for g in match.groups()]
+            init, final, duration = (float(g) for g in match.groups())
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * init + mix * final
         match = re.match(r"step_linear\((.+),(.+),(.+),(.+),(.+)\)", schdl)
         if match:
-            init, final1, duration1, final2, duration2 = [float(g) for g in match.groups()]
+            init, final1, duration1, final2, duration2 = (float(g) for g in match.groups())
             if step <= duration1:
                 mix = np.clip(step / duration1, 0.0, 1.0)
                 return (1.0 - mix) * init + mix * final1

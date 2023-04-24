@@ -14,7 +14,7 @@ class RandomConvolution(BaseAugmentation):
     """
 
     def __init__(self) -> None:
-        super(RandomConvolution, self).__init__()
+        super().__init__()
 
     def forward(self, x: th.Tensor) -> th.Tensor:
         num_batch, num_stack_channel, img_h, img_w = x.size()

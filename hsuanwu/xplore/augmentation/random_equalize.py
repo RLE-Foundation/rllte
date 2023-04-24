@@ -16,7 +16,7 @@ class RandomEqualize(BaseAugmentation):
         self,
         p: float = 0.5,
     ) -> None:
-        super(RandomEqualize, self).__init__()
+        super().__init__()
         self.p = p
 
         self.augment_function = T.RandomEqualize(p=self.p)

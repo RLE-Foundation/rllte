@@ -16,7 +16,7 @@ class RandomAutocontrast(BaseAugmentation):
         self,
         p: float = 0.5,
     ) -> None:
-        super(RandomAutocontrast, self).__init__()
+        super().__init__()
         self.p = p
 
         self.augment_function = T.RandomAutocontrast(p=self.p)

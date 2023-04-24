@@ -1,6 +1,6 @@
 from collections import deque
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict
 
 import gymnasium as gym
 import hydra
@@ -26,10 +26,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.info(f"Deploying OnPolicyTrainer...")
+        self._logger.info("Deploying OnPolicyTrainer...")
         # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
         if self._cfgs.pretraining:
-            self._logger.info(f"Pre-training Mode On...")
+            self._logger.info("Pre-training Mode On...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         # TODO: build encoder
@@ -66,7 +66,6 @@ class OnPolicyTrainer(BasePolicyTrainer):
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
         obs, info = self._train_env.reset(seed=self._seed)
-        metrics = None
         # Number of updates
         num_updates = self._num_train_steps // self._num_envs // self._num_steps
 
@@ -76,7 +75,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 test_metrics = self.test()
                 self._logger.test(msg=test_metrics)
 
-            for step in range(self._num_steps):
+            for _step in range(self._num_steps):
                 # sample actions
                 with th.no_grad(), eval_mode(self._agent):
                     actions, values, log_probs, entropy = self._agent.act(obs, training=True, step=self._global_step)
@@ -115,7 +114,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._agent.update(self._rollout_storage, episode=self._global_episode)
+            self._agent.update(self._rollout_storage, episode=self._global_episode)
 
             # reset buffer
             self._rollout_storage.reset()
