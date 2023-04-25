@@ -18,15 +18,22 @@
 
 See the project structure below:
 <div align=center>
-<img src='./docs/assets/images/structure.svg' style="width: 100%">
+<img src='./docs/assets/images/structure.svg' style="width: 75%">
 </div>
 
 The following figure demonstrates the evolution roadmap of Hsuanwu:
 <div align=center>
-<img src='./docs/assets/images/roadmap.svg'>
+<img src='./docs/assets/images/roadmap.svg'  style="width: 75%">
 </div>
 
-Please cite the following paper if you use Hsuanwu in your work, thank you!
+Join the development community:
+|Slack|QQ|
+|:-:|:-:|
+|<img src='./docs/assets/images/slack.png' style="width: 60%">|<img src='./docs/assets/images/qq.jpg' style="width: 75%">|
+
+
+
+<!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023hsuanwu,
   title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
@@ -34,7 +41,7 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
   journal={arXiv preprint arXiv:2311.15277},
   year={2023}
 }
-```
+``` -->
 
 - [Quick Start](#quick-start)
   - [Installation](#installation)
