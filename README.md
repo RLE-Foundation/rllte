@@ -45,8 +45,11 @@ Join the development community for issues and discussions:
   - [Xploit](#xploit)
     - [Encoder](#encoder)
     - [Agent](#agent)
+    - [Storage](#storage)
   - [Xplore](#xplore)
     - [Intrinsic Reward](#intrinsic-reward)
+    - [Augmentation](#augmentation)
+    - [Distribution](#distribution)
 - [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -133,7 +136,7 @@ The following figure demonstrates the main evolution roadmap of Hsuanwu:
 
 ## Xploit
 ### Encoder
-|Name|Input|Paper|Target Task|
+|Name|Input|Reference|Target Task|
 |:-|:-|:-|:-|
 |EspeholtResidualEncoder|Images|[IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner Architectures](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)|Atari or Procgen games.|
 |IdentityEncoder|States|N/A|Deepmind Control Suite: state|
@@ -162,9 +165,19 @@ The following figure demonstrates the main evolution roadmap of Hsuanwu:
 > - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
 > - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
+### Storage
+|Name|Remark|
+|:-|:-|
+|VanillaRolloutStorage|On-Policy RL|
+|VanillaReplayStorage|Off-Policy RL|
+|NStepReplayStorage|Off-Policy RL|
+|PrioritizedReplayStorage|Off-Policy RL|
+|DistributedStorage|Distributed RL|
+
+
 ## Xplore
 ### Intrinsic Reward
-| Algorithm | Remark | Repr.  | Visual | Paper | 
+| Algorithm | Remark | Repr.  | Visual | Reference | 
 |:-|:-|:-|:-|:-|
 | PseudoCounts | Count-Based exploration |✔️|✔️|[Never Give Up: Learning Directed Exploration Strategies](https://arxiv.org/pdf/2002.06038) |
 | ICM  | Curiosity-driven exploration  | ✔️|✔️| [Curiosity-Driven Exploration by Self-Supervised Prediction](http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf) | 
@@ -181,7 +194,41 @@ The following figure demonstrates the main evolution roadmap of Hsuanwu:
 > - `Visual`: The method works well in visual RL.
 > - <sup>*</sup>: Incoming.
 
-For more detiled modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
+### Augmentation
+|Name|Input|Reference|
+|:-|:-|:-|
+|GaussianNoise|States| [Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomAmplitudeScaling|States|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|AutoAugment|Images|[torchvision](https://pytorch.org/vision) |
+|ElasticTransform|Images|[torchvision](https://pytorch.org/vision) |
+|GrayScale|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomAdjustSharpness|Images| [torchvision](https://pytorch.org/vision) |
+|RandomAugment|Images|[torchvision](https://pytorch.org/vision) |
+|RandomAutocontrast|Images|[torchvision](https://pytorch.org/vision) |
+|RandomColorJitter|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomConvolution|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomCrop|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomCutout|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomCutoutColor|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomEqualize|Images|[torchvision](https://pytorch.org/vision) |
+|RandomFlip|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomInvert|Images|[torchvision](https://pytorch.org/vision) |[torchvision](https://pytorch.org/vision) |
+|RandomPerspective|Images|[torchvision](https://pytorch.org/vision) |[torchvision](https://pytorch.org/vision) |
+|RandomRotate|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+|RandomShift|Images| [Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)
+|RandomTranslate|Images|[Reinforcement Learning with Augmented Data](https://proceedings.neurips.cc/paper/2020/file/e615c82aba461681ade82da2da38004a-Paper.pdf) |
+
+### Distribution
+|Name|Type|Reference|
+|:-|:-|:-|
+|NormalNoise|Noise|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
+|OrnsteinUhlenbeckNoise|Noise|[Continuous Control with Deep Reinforcement Learning](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)|
+|TruncatedNormalNoise|Noise|[Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)|
+|Categorical|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
+|DiagonalGaussian|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
+|SquashedNormal|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
+
+For more detiled descriptions of modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
 
 # Model Zoo
 Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)
