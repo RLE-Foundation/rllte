@@ -7,7 +7,7 @@ import numpy as np
 import omegaconf
 import torch as th
 
-from hsuanwu.common.engine import BasePolicyTrainer
+from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
 from hsuanwu.common.engine.utils import eval_mode
 from hsuanwu.xploit.storage.utils import worker_init_fn
 

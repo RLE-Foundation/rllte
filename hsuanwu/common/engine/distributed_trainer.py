@@ -14,7 +14,7 @@ import torch as th
 from torch import multiprocessing as mp
 from torch import nn
 
-from hsuanwu.common.engine import BasePolicyTrainer
+from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
 from hsuanwu.common.logger import Logger
 
 os.environ["OMP_NUM_THREADS"] = "1"
