@@ -22,6 +22,7 @@
 __pycache__/
 _build/
 /cfgs
+/examples
 /logs
 /dist
 /outputs
