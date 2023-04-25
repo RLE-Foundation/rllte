@@ -41,9 +41,12 @@ Join the development community for issues and discussions:
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Build your first Hsuanwu application](#build-your-first-hsuanwu-application)
-- [Implemented Algorithms](#implemented-algorithms)
-  - [Agents](#agents)
-  - [Intrinsic Reward Module](#intrinsic-reward-module)
+- [Implemented Modules](#implemented-modules)
+  - [Xploit](#xploit)
+    - [Encoder](#encoder)
+    - [Agent](#agent)
+  - [Xplore](#xplore)
+    - [Intrinsic Reward](#intrinsic-reward)
 - [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -122,13 +125,26 @@ Run `train.py` and you will see the following output:
 
 For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
 
-# Implemented Algorithms
-The following figure demonstrates the evolution roadmap of Hsuanwu:
+# Implemented Modules
+The following figure demonstrates the main evolution roadmap of Hsuanwu:
 <div align=center>
 <img src='./docs/assets/images/roadmap.svg'  style="width: 90%">
 </div>
 
-## Agents
+## Xploit
+### Encoder
+|Name|Input|Paper|Target Task|
+|:-|:-|:-|:-|
+|EspeholtResidualEncoder|Images|[IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner Architectures](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)|Atari or Procgen games.|
+|IdentityEncoder|States|N/A|Deepmind Control Suite: state|
+|MnihCnnEncoder|Images|[Playing Atari with Deep Reinforcement Learning](https://arxiv.org/pdf/1312.5602.pdf?source=post_page---------------------------)|Atari games.|
+|TassaCnnEncoder|Images|[Deepmind control suite](https://arxiv.org/pdf/1801.00690)|Deepmind Control Suite: pixel|
+|VanillaMlpEncoder|States|N/A|Deepmind Control Suite: state|
+> **Naming Rule**: 'Surname of the first author' + 'Backbone' + 'Encoder'
+> `Input`: Input type.
+> `Target Task`: The testing tasks in their paper or potential tasks.
+
+### Agent
 |Name|Recurrent|Box|Discrete|MultiBinary|Multi Processing|Paper|Citations|
 |:-|:-|:-|:-|:-|:-|:-|:-|
 |SAC|❌| ✔️ |❌|❌|❌| [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
@@ -145,7 +161,8 @@ The following figure demonstrates the evolution roadmap of Hsuanwu:
 > - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
 > - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
-## Intrinsic Reward Module
+## Xplore
+### Intrinsic Reward
 | Algorithm | Remark | Repr.  | Visual | Paper | 
 |:-|:-|:-|:-|:-|
 | PseudoCounts | Count-Based exploration |✔️|✔️|[Never Give Up: Learning Directed Exploration Strategies](https://arxiv.org/pdf/2002.06038) |
