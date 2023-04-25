@@ -5,11 +5,13 @@ from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
 class RandomPerspective(BaseAugmentation):
-    """RandomPerspective method based on “RandomPerspective: Performs a random perspective transformation of the given image with a given probability.”.
+    """RandomPerspective method based on “RandomPerspective: Performs
+        a random perspective transformation of the given image with a given probability.”.
     Args:
         distortion_scale (float) : argument to control the degree of distortion and ranges from 0 to 1. Default is 0.5.
         p (float) : Smoothness of displacements. Default is 5.0.
-        interpolation (Union, InterpolationMode) : Desired interpolation enum defined by torchvision.transforms.InterpolationMode. Default is InterpolationMode.BILINEAR.
+        interpolation (Union, InterpolationMode) : Desired interpolation enum defined by
+            torchvision.transforms.InterpolationMode. Default is InterpolationMode.BILINEAR.
         fill (sequence or int number) : Pixel fill value for the area outside the transformed image. Default is 0.
     Returns:
         Augmented images.

@@ -1,24 +1,23 @@
 import os
-from typing import Dict, List
-
-os.environ["OMP_NUM_THREADS"] = "1"
-
 import threading
 import time
 import traceback
-from collections import deque
-from pathlib import Path
-
 import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
 import torch as th
+
+from typing import Dict, List
+from collections import deque
+from pathlib import Path
 from torch import multiprocessing as mp
 from torch import nn
 
 from hsuanwu.common.engine import BasePolicyTrainer
 from hsuanwu.common.logger import Logger
+
+os.environ["OMP_NUM_THREADS"] = "1"
 
 
 class Environment:
@@ -165,7 +164,7 @@ class DistributedTrainer(BasePolicyTrainer):
         self._agent.learner.dist = dist
 
     @staticmethod
-    def act(
+    def act(  # noqa: C901
         cfgs: omegaconf.DictConfig,
         logger: Logger,
         gym_env: gym.Env,
@@ -235,7 +234,7 @@ class DistributedTrainer(BasePolicyTrainer):
             traceback.print_exc()
             raise e
 
-    def train(self) -> None:
+    def train(self) -> None:  # noqa: C901
         """Training function"""
         global_step = 0
         global_episode = 0
@@ -243,7 +242,7 @@ class DistributedTrainer(BasePolicyTrainer):
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
 
-        def sample_and_update(i, lock=threading.Lock()):
+        def sample_and_update(i, lock=threading.Lock()):  # noqa: B008
             """Thread target for the learning process."""
             nonlocal global_step, global_episode, metrics
             while global_step < self._cfgs.num_train_steps:

@@ -30,7 +30,7 @@ class NormalNoise(BaseDistribution):
         self._noiseless_action = None
         self._stddev_schedule = stddev_schedule
 
-    def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor:
+    def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
@@ -49,7 +49,7 @@ class NormalNoise(BaseDistribution):
 
         return noise + self._noiseless_action
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 

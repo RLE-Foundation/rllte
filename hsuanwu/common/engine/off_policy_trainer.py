@@ -127,10 +127,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 else:
                     metrics = self._agent.update(self._replay_storage, step=self._global_step)
                     # TODO: for PrioritizedReplayStorage
-                    try:
+                    if "indices" in metrics and "priorities" in metrics:
                         self._replay_storage.update_priorities(metrics["indices"], metrics["priorities"])
-                    except:
-                        pass
 
             # done
             if terminated or truncated:

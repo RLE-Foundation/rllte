@@ -5,7 +5,8 @@ from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
 class RandomEqualize(BaseAugmentation):
-    """RandomEqualize method based on “RandomEqualize: Equalize the histogram of the given image randomly with a given probability”.
+    """RandomEqualize method based on “RandomEqualize: Equalize the
+        histogram of the given image randomly with a given probability”.
     Args:
         p (float) : probability of the image being equalized. Default value is 0.5
     Returns:

@@ -5,7 +5,8 @@ from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
 class RandomAutocontrast(BaseAugmentation):
-    """RandomAutocontrast method based on “RandomAutocontrast: Autocontrast the pixels of the given image randomly with a given probability”.
+    """RandomAutocontrast method based on “RandomAutocontrast:
+        Autocontrast the pixels of the given image randomly with a given probability”.
     Args:
         p (float) : probability of the image being autocontrasted. Default value is 0.5
     Returns:

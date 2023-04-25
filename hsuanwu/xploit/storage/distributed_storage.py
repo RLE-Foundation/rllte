@@ -77,7 +77,7 @@ class DistributedStorage(BaseStorage):
         full_queue: th.multiprocessing.SimpleQueue,
         storages: List,
         init_actor_state_storages: List,
-        lock=threading.Lock(),
+        lock=threading.Lock(), # noqa B008
     ) -> Tuple[Dict, Generator[Any, Any, None]]:
         """Sample transitions from the storage.
 

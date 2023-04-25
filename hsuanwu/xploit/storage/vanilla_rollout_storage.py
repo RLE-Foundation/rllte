@@ -179,4 +179,5 @@ class VanillaRolloutStorage(BaseStorage):
             batch_old_log_probs = self.log_probs.view(-1, 1)[indices]
             adv_targ = self.advantages.view(-1, 1)[indices]
 
-            yield batch_obs, batch_actions, batch_values, batch_returns, batch_terminateds, batch_truncateds, batch_old_log_probs, adv_targ
+            yield batch_obs, batch_actions, batch_values, batch_returns, \
+                batch_terminateds, batch_truncateds, batch_old_log_probs, adv_targ

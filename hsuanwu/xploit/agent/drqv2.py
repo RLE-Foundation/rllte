@@ -62,7 +62,8 @@ DEFAULT_CFGS = {
 
 class DrQv2(BaseAgent):
     """Data Regularized-Q v2 (DrQ-v2).
-        When 'augmentation' module is deprecated, this agent will transform into Deep Deterministic Policy Gradient (DDPG) agent.
+        When 'augmentation' module is deprecated, this agent will transform into
+            Deep Deterministic Policy Gradient (DDPG) agent.
         Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
 
     Args:

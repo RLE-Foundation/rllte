@@ -56,9 +56,12 @@ def make_procgen_env(
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
         gamma (float): A discount factor.
-        num_levels (int): The number of unique levels that can be generated. Set to 0 to use unlimited levels.
-        start_level (int): The lowest seed that will be used to generated levels. 'start_level' and 'num_levels' fully specify the set of possible levels.
-        distribution_mode (str): What variant of the levels to use, the options are "easy", "hard", "extreme", "memory", "exploration".
+        num_levels (int): The number of unique levels that can be generated.
+            Set to 0 to use unlimited levels.
+        start_level (int): The lowest seed that will be used to generated levels.
+            'start_level' and 'num_levels' fully specify the set of possible levels.
+        distribution_mode (str): What variant of the levels to use, the options are "easy",
+            "hard", "extreme", "memory", "exploration".
         device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:

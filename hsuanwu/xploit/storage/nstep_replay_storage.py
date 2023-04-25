@@ -172,7 +172,7 @@ class NStepReplayStorage(IterableDataset):
     def _store_episode(self, eps_fn: Path) -> bool:
         try:
             episode = load_episode(eps_fn)
-        except:
+        except: # noqa E722
             return False
         eps_len = episode_len(episode)
         while eps_len + self._worker_size > self._worker_max_size:
@@ -195,7 +195,7 @@ class NStepReplayStorage(IterableDataset):
         self._fetched_samples = 0
         try:
             worker_id = th.utils.data.get_worker_info().id
-        except:
+        except: # noqa E722
             worker_id = 0
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
         fetched_size = 0
@@ -222,7 +222,7 @@ class NStepReplayStorage(IterableDataset):
         """
         try:
             self._try_fetch()
-        except:
+        except: # noqa E722
             traceback.print_exc()
         self._fetched_samples += 1
         episode = self._sample_episode()

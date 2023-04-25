@@ -87,7 +87,7 @@ class EspeholtResidualEncoder(BaseEncoder):
         self,
         observation_space: Union[gym.Space, DictConfig],
         feature_dim: int = 0,
-        net_arch: List[int] = [16, 32, 32],
+        net_arch: List[int] = [16, 32, 32], # noqa B008
     ) -> None:
         super().__init__(observation_space, feature_dim)
         assert len(net_arch) >= 1, "At least one Residual layer!"

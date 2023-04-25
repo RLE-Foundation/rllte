@@ -67,7 +67,8 @@ class FireResetEnv(gym.Wrapper):
 
 
 class EpisodicLifeEnv(gym.Wrapper):
-    """Make end-of-life == end-of-episode, but only reset on true game over. Done by DeepMind for the DQN and co. since it helps value estimation.
+    """Make end-of-life == end-of-episode, but only reset on true game over. Done by
+        DeepMind for the DQN and co. since it helps value estimation.
 
     Args:
         env (Env): Environment to wrap.

@@ -72,9 +72,9 @@ class BasePolicyTrainer(ABC):
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
         # debug
-        try:
+        if hasattr(cfgs, "experiment"):
             self._logger.info(f"Experiment: {cfgs.experiment}")
-        except:
+        else:
             self._logger.info("Experiment: Default")
         self._logger.info("Invoking Hsuanwu Engine...")
         # preprocess the cfgs
@@ -100,7 +100,7 @@ class BasePolicyTrainer(ABC):
         """Get global training episodes."""
         return self._global_episode
 
-    def _process_cfgs(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:
+    def _process_cfgs(self, cfgs: omegaconf.DictConfig) -> omegaconf.DictConfig:  # noqa: C901
         """Preprocess the configs.
 
         Args:

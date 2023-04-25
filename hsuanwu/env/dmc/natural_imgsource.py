@@ -47,7 +47,7 @@ class FixedColorSource(ImageSource):
             shape: [h, w]
             color: a 3-tuple
         """
-        self.arr = np.zeros((shape[0], shape[1], 3))
+        self.arr = np.zeros((shape[0], shape[1], 3))  # B006
         self.arr[:, :] = color
 
     def get_image(self):
@@ -136,7 +136,7 @@ class RandomVideoSource(ImageSource):
         self.current_idx = 0
         self.reset()
 
-    def build_arr(self):
+    def build_arr(self):  # noqa C901
         if not self.total_frames:
             self.total_frames = 0
             self.arr = None

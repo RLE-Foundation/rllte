@@ -5,7 +5,8 @@ from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
 class RandomAdjustSharpness(BaseAugmentation):
-    """RandomAdjustSharpness method based on “RandomAdjustSharpness: Adjust the sharpness of the image randomly with a given probability”.
+    """RandomAdjustSharpness method based on “RandomAdjustSharpness: Adjust the
+        sharpness of the image randomly with a given probability”.
     Args:
         sharpness_factor (float) : How much to adjust the sharpness. Can be any non-negative number. Default is 2.
         p (float) : probability of the image being sharpened. Default value is 0.5

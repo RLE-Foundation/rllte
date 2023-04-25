@@ -57,7 +57,7 @@ class SquashedNormal(BaseDistribution):
             transforms=[TanhTransform()],
         )
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped
             batch of samples if the distribution parameters are batched.
 
@@ -69,7 +69,7 @@ class SquashedNormal(BaseDistribution):
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped
             batch of reparameterized samples if the distribution parameters are batched.
 

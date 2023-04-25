@@ -7,7 +7,8 @@ from hsuanwu.xplore.augmentation.base import BaseAugmentation
 class AutoAugment(BaseAugmentation):
     """Augmentation method based on “AutoAugment: Learning Augmentation Strategies from Data”.
     Args:
-        augment_policy (str): Desired policy enum defined by torchvision.transforms.autoaugment.AutoAugmentPolicy. Default is AutoAugmentPolicy.IMAGENET.
+        augment_policy (str): Desired policy enum defined by torchvision.transforms.autoaugment.AutoAugmentPolicy.
+            Default is AutoAugmentPolicy.IMAGENET.
     Returns:
         Augmented images.
     """

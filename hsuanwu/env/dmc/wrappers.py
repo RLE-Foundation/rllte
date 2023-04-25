@@ -47,7 +47,7 @@ class DMCWrapper(core.Env):
         img_source,
         total_frames,
         task_kwargs=None,
-        visualize_reward={},
+        visualize_reward={}, # noqa B006
         from_pixels=False,
         height=84,
         width=84,
