@@ -140,6 +140,7 @@ The following figure demonstrates the main evolution roadmap of Hsuanwu:
 |MnihCnnEncoder|Images|[Playing Atari with Deep Reinforcement Learning](https://arxiv.org/pdf/1312.5602.pdf?source=post_page---------------------------)|Atari games.|
 |TassaCnnEncoder|Images|[Deepmind control suite](https://arxiv.org/pdf/1801.00690)|Deepmind Control Suite: pixel|
 |VanillaMlpEncoder|States|N/A|Deepmind Control Suite: state|
+
 > **Naming Rule**: 'Surname of the first author' + 'Backbone' + 'Encoder'
 > `Input`: Input type.
 > `Target Task`: The testing tasks in their paper or potential tasks.
