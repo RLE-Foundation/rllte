@@ -21,15 +21,10 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 75%">
 </div>
 
-The following figure demonstrates the evolution roadmap of Hsuanwu:
-<div align=center>
-<img src='./docs/assets/images/roadmap.svg'  style="width: 75%">
-</div>
-
 Join the development community for issues and discussions:
 |Slack|QQ|
 |:-:|:-:|
-|<img src='./docs/assets/images/slack.png' style="width: 55%">|<img src='./docs/assets/images/qq.jpg' style="width: 70%">|
+|<img src='./docs/assets/images/slack.png' style="width: 50%">|<img src='./docs/assets/images/qq.jpg' style="width: 65%">|
 
 
 
@@ -128,6 +123,11 @@ Run `train.py` and you will see the following output:
 For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
 
 # Implemented Algorithms
+The following figure demonstrates the evolution roadmap of Hsuanwu:
+<div align=center>
+<img src='./docs/assets/images/roadmap.svg'  style="width: 90%">
+</div>
+
 ## Agents
 |Name|Recurrent|Box|Discrete|MultiBinary|Multi Processing|Paper|Citations|
 |:-|:-|:-|:-|:-|:-|:-|:-|
