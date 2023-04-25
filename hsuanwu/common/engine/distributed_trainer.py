@@ -2,15 +2,15 @@ import os
 import threading
 import time
 import traceback
+from collections import deque
+from pathlib import Path
+from typing import Dict, List
+
 import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
 import torch as th
-
-from typing import Dict, List
-from collections import deque
-from pathlib import Path
 from torch import multiprocessing as mp
 from torch import nn
 

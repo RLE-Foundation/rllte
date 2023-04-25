@@ -11,7 +11,7 @@ class BaseDistribution(ABC):
         self.dist = None
 
     @abstractmethod
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 
@@ -23,7 +23,7 @@ class BaseDistribution(ABC):
         """
 
     @abstractmethod
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
         samples if the distribution parameters are batched.
 

@@ -242,7 +242,7 @@ class IMPALA(BaseAgent):
         init_actor_states: Tuple[th.Tensor, ...],
         optimizer: th.optim.Optimizer,
         lr_scheduler: th.optim.lr_scheduler,
-        lock=threading.Lock(), # noqa B008
+        lock=threading.Lock(),  # noqa B008
     ) -> Dict[str, Tuple]:
         """
         Update the learner model.

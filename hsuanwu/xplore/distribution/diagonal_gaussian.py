@@ -22,7 +22,7 @@ class DiagonalGaussian(BaseDistribution):
         self._sigma = sigma
         self.dist = pyd.Normal(loc=mu, scale=sigma)
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
@@ -34,7 +34,7 @@ class DiagonalGaussian(BaseDistribution):
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor: # noqa B008
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of
             reparameterized samples if the distribution parameters are batched.
 
