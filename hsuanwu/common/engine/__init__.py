@@ -3,10 +3,10 @@ import omegaconf
 
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
-from .distributed_trainer import DistributedTrainer
-from .off_policy_trainer import OffPolicyTrainer
-from .on_policy_trainer import OnPolicyTrainer
-
+from .base_policy_trainer import BasePolicyTrainer as BasePolicyTrainer
+from .distributed_trainer import DistributedTrainer as DistributedTrainer
+from .off_policy_trainer import OffPolicyTrainer as OffPolicyTrainer
+from .on_policy_trainer import OnPolicyTrainer as OnPolicyTrainer
 
 class HsuanwuEngine:
     """Hsuanwu RL engine.

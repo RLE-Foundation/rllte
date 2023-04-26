@@ -147,7 +147,6 @@ class NGU(BaseIntrinsicRewardModule):
             self.episodic_loss = nn.MSELoss()
 
         # life-long part
-        # life-long part
         self.predictor = Encoder(
             obs_shape=observation_space.shape,
             action_shape=action_space.shape,

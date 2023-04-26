@@ -39,7 +39,7 @@ Join the development community for issues and discussions:
 - [Implemented Modules](#implemented-modules)
   - [Roadmap](#roadmap)
   - [Project Structure](#project-structure)
-  - [Agents](#agents)
+  - [RL Agents](#rl-agents)
 - [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -155,7 +155,9 @@ See the project structure below:
 
 - **[Deployment](https://docs.hsuanwu.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
-## Agents
+For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/overview/api)
+
+## RL Agents
 |Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
 |:-|:-|:-|:-|:-|:-|:-|:-|:-|
 |SAC|❌| ✔️ |❌|❌|❌|🐌 | [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
@@ -172,9 +174,9 @@ See the project structure below:
 > - `Recurrent`: Support recurrent neural network.
 > - `Box`: A N-dimensional box that containes every point in the action space.
 > - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
-> - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination. 
+> - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
-For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/overview/api)
+
 
 # Model Zoo
 Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)

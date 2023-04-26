@@ -37,4 +37,4 @@ twine:
 	python3 -m twine upload --repository pypi dist/*
 
 gendocs:
-	gendocs --config mkgendocs.yml
+	gendocs --config docs/mkgendocs.yml
