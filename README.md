@@ -123,14 +123,14 @@ For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://do
 Hsuanwu evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of Hsuanwu:
 
 <div align=center>
-<img src='./docs/assets/images/roadmap.svg'  style="width: 80%">
+<img src='./docs/assets/images/roadmap.svg'  style="width: 90%">
 </div>
 
 ## Project Structure
 
 See the project structure below:
 <div align=center>
-<img src='./docs/assets/images/structure.svg' style="width: 80%">
+<img src='./docs/assets/images/structure.svg' style="width: 90%">
 </div>
 
 - **[Common](https://docs.hsuanwu.dev/common_index/)**: Auxiliary modules like trainer and logger.
