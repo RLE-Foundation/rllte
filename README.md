@@ -132,27 +132,27 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 80%">
 </div>
 
-- **[Common](https://docs.hsuanwu.dev/common_index/index.md)**: Auxiliary modules like trainer and logger.
+- **[Common](https://docs.hsuanwu.dev/common_index/)**: Auxiliary modules like trainer and logger.
     + **Engine**: Engine for building Hsuanwu application.
     + **Logger**: Logger for managing output information.
 
-- **[Xploit](https://docs.hsuanwu.dev/xploit_index/index.md)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
+- **[Xploit](https://docs.hsuanwu.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
     + **Agent**: *Agent for interacting and learning.*
     + **Storage**: *Buffer for storing collected experiences.*
 
-- **[Xplore](https://docs.hsuanwu.dev/xplore_index/index.md)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
+- **[Xplore](https://docs.hsuanwu.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
     + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
     + **Distribution**: Distributions for sampling actions.
     + **Reward**: Intrinsic reward modules for enhancing exploration.
 
-- **[Evaluation](https://docs.hsuanwu.dev/evaluation_index/index.md)**: Reasonable and reliable metrics for algorithm evaluation.
+- **[Evaluation](https://docs.hsuanwu.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
 
-- **[Env](https://docs.hsuanwu.dev/env_index/index.md)**: Packaged environments (e.g., Atari games) for fast invocation.
+- **[Env](https://docs.hsuanwu.dev/env_index/)**: Packaged environments (e.g., Atari games) for fast invocation.
 
-- **[Pre-training](https://docs.hsuanwu.dev/pretraining_index/index.md)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
+- **[Pre-training](https://docs.hsuanwu.dev/pretraining_index/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 
-- **[Deployment](https://docs.hsuanwu.dev/deployment_index/index.md)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
+- **[Deployment](https://docs.hsuanwu.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
 For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
 
