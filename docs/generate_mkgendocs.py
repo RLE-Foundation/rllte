@@ -53,6 +53,6 @@ for module in [engine, common, encoder, agent, storage,
 yaml = ruamel.yaml.YAML()
 yaml.indent(sequence=4, offset=2)
 
-with open('mkgendocs.yml', 'w') as f:
+with open('docs/mkgendocs.yml', 'w') as f:
     yaml.dump(pages, f)
     f.close()

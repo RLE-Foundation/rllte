@@ -74,6 +74,7 @@ nav:
     - Overview: overview/api.md
     - Common: 
       - Engine: 
+        - HsuanwuEngine: api/common/engine/__init__.md
         - BasePolicyTrainer: api/common/base_policy_trainer.md
         - OnPolicyTrainer: api/common/on_policy_trainer.md
         - OffPolicyTrainer: api/common/off_policy_trainer.md

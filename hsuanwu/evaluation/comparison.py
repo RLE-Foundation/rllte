@@ -30,7 +30,7 @@ class Comparison:
         self.num_runs_y = scores_y.shape[0]
         self.num_tasks = scores_y.shape[1]
 
-    def compute_poi(self) -> np.floating[Any]:
+    def compute_poi(self) -> np.floating:
         """Compute the overall Probability of imporvement of algorithm `X` over `Y`."""
         all_ips = list()  # all the imporvement probabilities
         for task in range(self.num_tasks):

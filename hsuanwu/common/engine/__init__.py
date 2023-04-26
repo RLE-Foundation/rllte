@@ -17,7 +17,7 @@ class HsuanwuEngine:
         test_env (Env): A Gym-like environment for testing.
 
     Returns:
-        Off-policy trainer instance.
+        Hsuanwu engine instance.
     """
 
     def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
@@ -36,5 +36,5 @@ class HsuanwuEngine:
             raise NotImplementedError(f"Unsupported trainer {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/.")
 
     def invoke(self):
-        """Training function."""
+        """Invoke the engine to perform training."""
         self.trainer.train()
