@@ -22,12 +22,12 @@ See the project structure below:
 <img src='./assets/images/structure.svg' style="width: 100%">
 </div>
 
-The following figure demonstrates the evolution roadmap of Hsuanwu:
+Hsuanwu evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of Hsuanwu:
 <div align=center>
 <img src='./assets/images/roadmap.svg'>
 </div>
 
-Please cite the following paper if you use Hsuanwu in your work, thank you!
+<!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023hsuanwu,
   title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
@@ -35,4 +35,4 @@ Please cite the following paper if you use Hsuanwu in your work, thank you!
   journal={arXiv preprint arXiv:2311.15277},
   year={2023}
 }
-```
+``` -->
