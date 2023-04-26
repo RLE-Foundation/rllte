@@ -140,7 +140,7 @@ See the project structure below:
 - **[Xploit](https://docs.hsuanwu.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
     + **Agent**: *Agent for interacting and learning.*
-    + **Storage**: *Buffer for storing collected experiences.*
+    + **Storage**: *Storage for storing collected experiences.*
 
 - **[Xplore](https://docs.hsuanwu.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
     + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
