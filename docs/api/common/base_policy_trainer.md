@@ -2,10 +2,10 @@
 
 
 ## BasePolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L52)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L48)
 ```python 
 BasePolicyTrainer(
-   cfgs: DictConfig, train_env: Env, test_env: Env = None
+   cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
 )
 ```
 
@@ -30,7 +30,7 @@ Base policy trainer instance.
 
 
 ### .global_step
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L103)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L95)
 ```python
 .global_step()
 ```
@@ -39,7 +39,7 @@ Base policy trainer instance.
 Get global training steps.
 
 ### .global_episode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L108)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L100)
 ```python
 .global_episode()
 ```
@@ -47,31 +47,8 @@ Get global training steps.
 ---
 Get global training episodes.
 
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L311)
-```python
-.act(
-   obs: Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs**  : Observations.
-* **training**  : training mode, True or False.
-* **step**  : Global training step.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L324)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L269)
 ```python
 .train()
 ```
@@ -80,7 +57,7 @@ Sampled actions.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L328)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L273)
 ```python
 .test()
 ```
@@ -89,7 +66,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L332)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L277)
 ```python
 .save()
 ```

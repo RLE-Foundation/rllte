@@ -2,10 +2,10 @@
 
 
 ## OnPolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L12)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L15)
 ```python 
 OnPolicyTrainer(
-   cfgs: DictConfig, train_env: Env, test_env: Env = None
+   cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
 )
 ```
 
@@ -29,31 +29,8 @@ On-policy trainer instance.
 **Methods:**
 
 
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L62)
-```python
-.act(
-   obs: Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs**  : Observations.
-* **training**  : training mode, True or False.
-* **step**  : Global training step.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L84)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L64)
 ```python
 .train()
 ```
@@ -62,7 +39,7 @@ Sampled actions.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L167)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L141)
 ```python
 .test()
 ```
@@ -71,7 +48,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L191)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/on_policy_trainer.py\#L165)
 ```python
 .save()
 ```

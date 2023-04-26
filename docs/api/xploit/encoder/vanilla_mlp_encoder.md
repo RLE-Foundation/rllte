@@ -2,10 +2,11 @@
 
 
 ## VanillaMlpEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/vanilla_mlp_encoder.py\#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/vanilla_mlp_encoder.py\#L11)
 ```python 
 VanillaMlpEncoder(
-   observation_space: Space, feature_dim: int = 64, hidden_dim: int = 256
+   observation_space: Union[gym.Space, DictConfig], feature_dim: int = 64,
+   hidden_dim: int = 256
 )
 ```
 
@@ -16,7 +17,8 @@ Multi layer perceptron (MLP) for processing state-based inputs.
 
 **Args**
 
-* **observation_space** (Space) : Observation space of the environment.
+* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
+    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **feature_dim** (int) : Number of features extracted.
 * **hidden_dim** (int) : Number of units per hidden layer.
 
@@ -30,10 +32,10 @@ Mlp-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/vanilla_mlp_encoder.py\#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/vanilla_mlp_encoder.py\#L43)
 ```python
 .forward(
-   obs: Tensor
+   obs: th.Tensor
 )
 ```
 

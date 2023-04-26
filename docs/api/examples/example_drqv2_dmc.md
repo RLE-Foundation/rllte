@@ -10,9 +10,10 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.env import make_dmc_env
-from hsuanwu.common.engine import OffPolicyTrainer
+from hsuanwu.common.engine import HsuanwuEngine
 
 train_env = make_dmc_env(env_id='cartpole_balance',
+                        device='cuda:0',
                         num_envs=1,
                         resource_files=None, 
                         img_source=None,
@@ -23,6 +24,7 @@ train_env = make_dmc_env(env_id='cartpole_balance',
                         frame_skip=2, frame_stack=3)
 
 test_env = make_dmc_env(env_id='cartpole_balance',
+                        device='cuda:0',
                         num_envs=1,
                         resource_files=None, 
                         img_source=None,
@@ -34,8 +36,8 @@ test_env = make_dmc_env(env_id='cartpole_balance',
 
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='drqv2_dmc_config')
 def main(cfgs):
-    trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-    trainer.train()
+    engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env)
+    engine.invoke()
 
 if __name__ == '__main__':
     main()```

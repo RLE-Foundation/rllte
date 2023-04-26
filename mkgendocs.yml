@@ -72,37 +72,52 @@ pages:
 ###################################################################
 
 
-# xploit.learner
+# xploit.agent
 ##################################################################
-  - page: "xploit/learner/base.md"
-    source: "hsuanwu/xploit/learner/base.py"
+  - page: "xploit/agent/base.md"
+    source: "hsuanwu/xploit/agent/base.py"
     classes:
-      - BaseLearner
+      - BaseAgent
 
-  - page: "xploit/learner/drqv2.md"
-    source: "hsuanwu/xploit/learner/drqv2.py"
+  - page: "xploit/agent/drqv2.md"
+    source: "hsuanwu/xploit/agent/drqv2.py"
     classes:
-      - DrQv2Learner
+      - DrQv2
+  
+  - page: "xploit/agent/drqv2.md"
+    source: "hsuanwu/xploit/agent/drqv2.py"
+    classes:
+      - DDPG
 
-  - page: "xploit/learner/ppg.md"
-    source: "hsuanwu/xploit/learner/ppg.py"
+  - page: "xploit/agent/ppg.md"
+    source: "hsuanwu/xploit/agent/ppg.py"
     classes:
-      - PPGLearner
+      - PPG
   
-  - page: "xploit/learner/ppo.md"
-    source: "hsuanwu/xploit/learner/ppo.py"
+  - page: "xploit/agent/ppo.md"
+    source: "hsuanwu/xploit/agent/ppo.py"
     classes:
-      - PPOLearner
+      - PPO
   
-  - page: "xploit/learner/sac.md"
-    source: "hsuanwu/xploit/learner/sac.py"
+  - page: "xploit/agent/ppo.md"
+    source: "hsuanwu/xploit/agent/ppo.py"
     classes:
-      - SACLearner
+      - DrAC
   
-  - page: "xploit/learner/impala.md"
-    source: "hsuanwu/xploit/learner/impala.py"
+  - page: "xploit/agent/sac.md"
+    source: "hsuanwu/xploit/agent/sac.py"
     classes:
-      - IMPALALearner
+      - SAC
+  
+  - page: "xploit/agent/sac.md"
+    source: "hsuanwu/xploit/agent/sac.py"
+    classes:
+      - DrQ
+  
+  - page: "xploit/agent/impala.md"
+    source: "hsuanwu/xploit/agent/impala.py"
+    classes:
+      - IMPALA
 ##################################################################
 
 
@@ -137,64 +152,50 @@ pages:
     classes:
       - BaseIntrinsicRewardModule
   
+  - page: "xplore/reward/pseudo_counts.md"
+    source: "hsuanwu/xplore/reward/pseudo_counts.py"
+    classes:
+      - PseudoCounts
+  
   - page: "xplore/reward/icm.md"
     source: "hsuanwu/xplore/reward/icm.py"
     classes:
       - ICM
-      - CnnEncoder
-      - InverseForwardDynamicsModel
   
   - page: "xplore/reward/rnd.md"
     source: "hsuanwu/xplore/reward/rnd.py"
     classes:
       - RND
-      - CnnEncoder
-      - MlpEncoder
   
   - page: "xplore/reward/girm.md"
     source: "hsuanwu/xplore/reward/girm.py"
     classes:
       - GIRM
-      - CnnEncoder
-      - CnnDecoder
-      - MlpEncoder
-      - MlpDecoder
-      - VAE
   
   - page: "xplore/reward/ngu.md"
     source: "hsuanwu/xplore/reward/ngu.py"
     classes:
       - NGU
-      - CnnEncoder
-      - MlpEncoder
   
   - page: "xplore/reward/ride.md"
     source: "hsuanwu/xplore/reward/ride.py"
     classes:
       - RIDE
-      - RandomCnnEncoder
-      - RandomMlpEncoder
 
   - page: "xplore/reward/re3.md"
     source: "hsuanwu/xplore/reward/re3.py"
     classes:
       - RE3
-      - RandomMlpEncoder
-      - RandomCnnEncoder
   
   - page: "xplore/reward/rise.md"
     source: "hsuanwu/xplore/reward/rise.py"
     classes:
       - RISE
-      - RandomMlpEncoder
-      - RandomCnnEncoder
 
   - page: "xplore/reward/revd.md"
     source: "hsuanwu/xplore/reward/revd.py"
     classes:
       - REVD
-      - RandomMlpEncoder
-      - RandomCnnEncoder
 
 ###################################################################
 
@@ -268,6 +269,11 @@ pages:
     source: "hsuanwu/xplore/distribution/categorical.py"
     classes:
       - Categorical
+  
+  - page: "xplore/distribution/diagonal_gaussian.md"
+    source: "hsuanwu/xplore/distribution/diagonal_gaussian.py"
+    classes:
+      - DiagonalGaussian
 
   - page: "xplore/distribution/squashed_normal.md"
     source: "hsuanwu/xplore/distribution/squashed_normal.py"
@@ -298,6 +304,11 @@ pages:
     source: "hsuanwu/env/atari/__init__.py"
     functions:
       - make_atari_env
+
+  - page: "env/bullet.md"
+    source: "hsuanwu/env/atari/__init__.py"
+    functions:
+      - make_bullet_env
 
   - page: "env/dmc.md"
     source: "hsuanwu/env/dmc/__init__.py"

@@ -2,10 +2,10 @@
 
 
 ## DistributedTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L118)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L112)
 ```python 
 DistributedTrainer(
-   cfgs: DictConfig, train_env: Env, test_env: Env = None
+   cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
 )
 ```
 
@@ -30,12 +30,12 @@ Distributed trainer instance.
 
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L175)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L167)
 ```python
 .act(
-   cfgs: DictConfig, logger: Logger, gym_env: Env, actor_idx: int,
-   actor_model: NNModule, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue,
-   storages: List[Storage], init_actor_state_storages: List[Tensor]
+   cfgs: omegaconf.DictConfig, logger: Logger, gym_env: gym.Env, actor_idx: int,
+   actor_model: nn.Module, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue,
+   storages: Dict[str, List], init_actor_state_storages: List[th.Tensor]
 )
 ```
 
@@ -61,7 +61,7 @@ Sampling function for each actor.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L247)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L237)
 ```python
 .train()
 ```
@@ -70,7 +70,7 @@ None.
 Training function
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L359)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L347)
 ```python
 .test()
 ```
@@ -79,7 +79,7 @@ Training function
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L363)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L351)
 ```python
 .save()
 ```

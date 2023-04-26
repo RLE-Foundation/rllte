@@ -10,7 +10,7 @@ parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
 from hsuanwu.env import make_atari_env
-from hsuanwu.common.engine import OnPolicyTrainer
+from hsuanwu.common.engine import HsuanwuEngine
 
 train_env = make_atari_env(
     env_id='Alien-v5',
@@ -30,8 +30,8 @@ test_env = make_atari_env(
 
 @hydra.main(version_base=None, config_path='../cfgs/task', config_name='ppo_atari_config')
 def main(cfgs):
-    trainer = OnPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-    trainer.train()
+    engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env)
+    engine.invoke()
 
 if __name__ == '__main__':
     main()```

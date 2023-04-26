@@ -2,10 +2,10 @@
 
 
 ## OffPolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L11)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L15)
 ```python 
 OffPolicyTrainer(
-   cfgs: DictConfig, train_env: Env, test_env: Env = None
+   cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
 )
 ```
 
@@ -30,7 +30,7 @@ Off-policy trainer instance.
 
 
 ### .replay_iter
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L78)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L81)
 ```python
 .replay_iter()
 ```
@@ -38,31 +38,8 @@ Off-policy trainer instance.
 ---
 Create iterable dataloader.
 
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L84)
-```python
-.act(
-   obs: Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs** (Tensor) : Observations.
-* **training** (bool) : training mode, True or False.
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L107)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L87)
 ```python
 .train()
 ```
@@ -71,7 +48,7 @@ Sampled actions.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L176)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L158)
 ```python
 .test()
 ```
@@ -80,7 +57,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L204)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L186)
 ```python
 .save()
 ```
