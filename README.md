@@ -39,6 +39,7 @@ Join the development community for issues and discussions:
 - [Implemented Modules](#implemented-modules)
   - [Roadmap](#roadmap)
   - [Project Structure](#project-structure)
+  - [Agents](#agents)
 - [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -154,7 +155,26 @@ See the project structure below:
 
 - **[Deployment](https://docs.hsuanwu.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
-For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
+## Agents
+|Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
+|:-|:-|:-|:-|:-|:-|:-|:-|:-|
+|SAC|❌| ✔️ |❌|❌|❌|🐌 | [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
+|DrQ|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/2004.13649) |433⭐|
+|DDPG|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------) |11819⭐|
+|DrQ-v2|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |100⭐|
+|PPO|❌| ✔️ |✔️|🐌|✔️|🐌 | [Link](https://arxiv.org/pdf/1707.06347) |11155⭐|
+|DrAC|❌| ✔️ |✔️|🐌|✔️|🐌 | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) |29⭐|
+|PPG|❌| ✔️ |✔️|🐌|✔️|🐌| [Link](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf) |82⭐|
+|IMPALA|✔️| ✔️ |✔️|🐌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
+
+> - 🐌: Developing.
+> - `NPU`: Support Neural-network processing unit.
+> - `Recurrent`: Support recurrent neural network.
+> - `Box`: A N-dimensional box that containes every point in the action space.
+> - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
+> - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination. 
+
+For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/overview/api)
 
 # Model Zoo
 Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)
