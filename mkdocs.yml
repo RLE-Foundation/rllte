@@ -92,18 +92,19 @@ nav:
         - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
         - IdentityEncoder: api/xploit/encoder/identity_encoder.md
 
-      - learner:
-        - BaseLearner: api/xploit/learner/base.md
-        - SACLearner: api/xploit/learner/sac.md
-        - DrQLearner: api/xploit/learner/sac.md
-        - DrQv2Learner: api/xploit/learner/drqv2.md
-        - DDPGLearner: api/xploit/learner/drqv2.md
-        - PPGLearner: api/xploit/learner/ppg.md
-        - PPOLearner: api/xploit/learner/ppo.md
-        - DrACLearner: api/xploit/learner/ppo.md
-        - IMPALALearner: api/xploit/learner/impala.md
+      - agent:
+        - BaseAgent: api/xploit/agent/base.md
+        - SAC: api/xploit/agent/sac.md
+        - DrQ: api/xploit/agent/sac.md
+        - DrQv2: api/xploit/agent/drqv2.md
+        - DDPG: api/xploit/agent/drqv2.md
+        - PPG: api/xploit/agent/ppg.md
+        - PPO: api/xploit/agent/ppo.md
+        - DrAC: api/xploit/agent/ppo.md
+        - IMPALA: api/xploit/agent/impala.md
       
       - storage:
+        - DistributedStorage: api/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api/xploit/storage/vanilla_replay_storage.md
         - NStepReplayStorage: api/xploit/storage/nstep_replay_storage.md
@@ -113,6 +114,7 @@ nav:
       - Xplore Overview: overview/xplore_index/index.md
       - reward:
         - BaseIntrinsicRewardModule: api/xplore/reward/base.md
+        - PseudoCounts: api/xplore/reward/pseudo_counts.md
         - ICM: api/xplore/reward/icm.md
         - RND: api/xplore/reward/rnd.md
         - GIRM: api/xplore/reward/girm.md
@@ -124,12 +126,22 @@ nav:
 
       - augmentation:
         - BaseAugmentation: api/xplore/augmentation/base.md
+        - ElasticTransform: api/xplore/augmentation/elastic_transform.md
+        - GaussianNoise: api/xplore/augmentation/gaussian_noise.md
+        - GrayScale: api/xplore/augmentation/grayscale.md
+        - RandomAdjustSharpness: api/xplore/augmentation/random_adjustsharpness.md
+        - RandomAmplitudeScaling: api/xplore/augmentation/random_amplitude_scaling.md
+        - RandomAugment: api/xplore/augmentation/random_augment.md
+        - RandomAutocontrast: api/xplore/augmentation/random_autocontrast.md
         - RandomColorJitter: api/xplore/augmentation/random_colorjitter.md
         - RandomConvolution: api/xplore/augmentation/random_convolution.md
         - RandomCrop: api/xplore/augmentation/random_crop.md
         - RandomCutout: api/xplore/augmentation/random_cutout.md
         - RandomCutoutColor: api/xplore/augmentation/random_cutoutcolor.md
+        - RandomEqualize: api/xplore/augmentation/random_equalize.md
         - RandomFlip: api/xplore/augmentation/random_flip.md
+        - RandomInvert: api/xplore/augmentation/random_invert.md
+        - RandomPerspective: api/xplore/augmentation/random_perspective.md
         - RandomRotate: api/xplore/augmentation/random_rotate.md
         - RandomShift: api/xplore/augmentation/random_shift.md
         - RandomTranslate: api/xplore/augmentation/random_translate.md
@@ -137,6 +149,7 @@ nav:
       - distribution:
         - BaseDistribution: api/xplore/distribution/base.md
         - Categorical: api/xplore/distribution/categorical.md
+        - DiagonalGaussian: api/xplore/distribution/diagonal_gaussian.md
         - SquashedNormal: api/xplore/distribution/squashed_normal.md
         - NormalNoise: api/xplore/distribution/truncated_normal_noise.md
         - OrnsteinUhlenbeckNoise: api/xplore/distribution/ornstein_uhlenbeck_noise.md
@@ -145,12 +158,17 @@ nav:
     - Env:
       - Overview: overview/env_index/index.md
       - make_atari_env: api/env/atari.md
-      - make_dmc_env: api/env/dmc.md
-      - make_procgen_env: api/env/procgen.md
-      - make_minigrid_env: api/env/minigrid.md
+      - make_bullet_env: api/env/bullet/__init__.md
+      - make_dmc_env: api/env/dmc/__init__.md
+      - make_procgen_env: api/env/procgen/__init__.md
+      - make_minigrid_env: api/env/minigrid/__init__.md
+      - utils:
+        - HsuanwuEnvWrapper: api/env/utils.md
     
     - Evaluation:
       - Overview: overview/evaluation_index/index.md
+      - Comparison: api/evaluation/comparison.md
+      - Performance: api/evaluation/performance.md
 
     - Pre-training: 
       - Pre-training Overview: overview/pretraining_index/index.md
