@@ -31,10 +31,10 @@ check-codestyle:
 commit-checks: format type lint
 
 build:
-	python3 -m build
+	python -m build
 
 twine:
-	python3 -m twine upload --repository pypi dist/*
+	python -m twine upload --repository pypi dist/*
 
 gendocs:
 	gendocs --config docs/mkgendocs.yml

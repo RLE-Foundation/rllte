@@ -48,6 +48,7 @@ Join the development community for issues and discussions:
 
 # Quick Start
 ## Installation
+- Prerequisites
 Currently, Hsuanwu requires `Python>=3.8`, user can create an virtual environment by
 ``` sh
 conda create -n hsuanwu python=3.8
