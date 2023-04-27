@@ -16,7 +16,7 @@
 - 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
 - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
-Join the development community for issues and discussions:
+Join the developer community for issues and discussions:
 |Slack|QQ|GitHub|
 |:-:|:-:|:-:|
 |<a href="https://app.slack.com/client/T054J4NJXP0/C054T78QZ9A"><img src='./docs/assets/images/slack.png' style="width: 50%" ></a>|<img src='./docs/assets/images/qq.jpg' style="width: 65%">|<a href="https://github.com/RLE-Foundation/Hsuanwu/issues"><img src='./docs/assets/images/github_issues.png' style="width: 50%"></a>|

@@ -27,6 +27,12 @@ Hsuanwu evolves based on reinforcement learning algorithms and integrates latest
 <img src='./assets/images/roadmap.svg'>
 </div>
 
+Join the developer community for issues and discussions:
+
+|Slack|QQ|GitHub|
+|:-:|:-:|:-:|
+|<a href="https://app.slack.com/client/T054J4NJXP0/C054T78QZ9A"><img src='./assets/images/slack.png' style="width: 50%" ></a>|<img src='./assets/images/qq.jpg' style="width: 65%">|<a href="https://github.com/RLE-Foundation/Hsuanwu/issues"><img src='./assets/images/github_issues.png' style="width: 50%"></a>|
+
 <!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023hsuanwu,
