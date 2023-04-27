@@ -14,9 +14,10 @@
 |ProtoRL<sup>🐌</sup>| Entropy Maximization | ✔️ | ✔️ | [Reinforcement Learning with Prototypical Representations](http://proceedings.mlr.press/v139/yarats21a/yarats21a.pdf) |
 |APS<sup>🐌</sup>| Skill Discovery | ✔️ | ✔️ | [APS: Active Pretraining with Successor Features](http://proceedings.mlr.press/v139/liu21b/liu21b.pdf) |
 
-> - 🐌: Developing.
-> - `Repr.`: The method involves representation learning.
-> - `Visual`: The method works well in visual RL.
+!!! tip "Tips of Reward"
+    - **🐌**: Developing.
+    - **Repr.**: The method involves representation learning.
+    - **Visual**: The method works well in visual RL.
 
 + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
 
@@ -54,4 +55,5 @@
 |DiagonalGaussian|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
 |SquashedNormal|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
 
-> - In Hsuanwu, the action noise is implemented via a `Distribution` manner to realize unification.
+!!! tip "Tips of Distribution"
+  - In Hsuanwu, the action noise is implemented via a `Distribution` manner to realize unification.

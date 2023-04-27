@@ -73,6 +73,7 @@ nav:
   - API Documentation:
     - Overview: overview/api.md
     - Common: 
+      - Common Overview: overview/common_index/index.md
       - Engine: 
         - HsuanwuEngine: api/common/engine/__init__.md
         - BasePolicyTrainer: api/common/base_policy_trainer.md
@@ -84,14 +85,6 @@ nav:
 
     - Xploit:
       - Xploit Overview: overview/xploit_index/index.md
-      - encoder:
-        - BaseEncoder: api/xploit/encoder/base.md
-        - TassaCnnEncoder: api/xploit/encoder/tassa_cnn_encoder.md
-        - MnihCnnEncoder: api/xploit/encoder/mnih_cnn_encoder.md
-        - EspeholtResidualEncoder: api/xploit/encoder/espeholt_residual_encoder.md
-        - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
-        - IdentityEncoder: api/xploit/encoder/identity_encoder.md
-
       - agent:
         - BaseAgent: api/xploit/agent/base.md
         - SAC: api/xploit/agent/sac.md
@@ -103,6 +96,14 @@ nav:
         - DrAC: api/xploit/agent/ppo.md
         - IMPALA: api/xploit/agent/impala.md
       
+      - encoder:
+        - BaseEncoder: api/xploit/encoder/base.md
+        - TassaCnnEncoder: api/xploit/encoder/tassa_cnn_encoder.md
+        - MnihCnnEncoder: api/xploit/encoder/mnih_cnn_encoder.md
+        - EspeholtResidualEncoder: api/xploit/encoder/espeholt_residual_encoder.md
+        - VanillaMlpEncoder: api/xploit/encoder/vanilla_mlp_encoder.md
+        - IdentityEncoder: api/xploit/encoder/identity_encoder.md
+
       - storage:
         - DistributedStorage: api/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api/xploit/storage/vanilla_rollout_storage.md
@@ -156,7 +157,7 @@ nav:
         - TruncatedNormalNoise: api/xplore/distribution/truncated_normal_noise.md
     
     - Env:
-      - Overview: overview/env_index/index.md
+      - Env Overview: overview/env_index/index.md
       - make_atari_env: api/env/atari.md
       - make_bullet_env: api/env/bullet/__init__.md
       - make_dmc_env: api/env/dmc/__init__.md
@@ -166,7 +167,7 @@ nav:
         - HsuanwuEnvWrapper: api/env/utils.md
     
     - Evaluation:
-      - Overview: overview/evaluation_index/index.md
+      - Evaluation Overview: overview/evaluation_index/index.md
       - Comparison: api/evaluation/comparison.md
       - Performance: api/evaluation/performance.md
 
