@@ -69,9 +69,7 @@ nav:
     - Verification: verification.md
   
   - Tutorials: 
-    - Overview: tutorials/overview.md
-    - Quick Start: tutorials/quick_start.md
-    - Write Configuration File:  tutorials/configuration.md
+    - Overview: tutorials/index.md
 
   - API Documentation:
     - Overview: overview/api.md
@@ -79,10 +77,10 @@ nav:
       - Common Overview: overview/common_index/index.md
       - Engine: 
         - HsuanwuEngine: api/common/engine/__init__.md
-        - BasePolicyTrainer: api/common/base_policy_trainer.md
-        - OnPolicyTrainer: api/common/on_policy_trainer.md
-        - OffPolicyTrainer: api/common/off_policy_trainer.md
-        - DistributedTrainer: api/common/distributed_trainer.md
+        - BasePolicyTrainer: api/common/engine/base_policy_trainer.md
+        - OnPolicyTrainer: api/common/engine/on_policy_trainer.md
+        - OffPolicyTrainer: api/common/engine/off_policy_trainer.md
+        - DistributedTrainer: api/common/engine/distributed_trainer.md
       - Logger: api/common/logger.md
       - Timer: api/common/timer.md
 
@@ -155,13 +153,13 @@ nav:
         - Categorical: api/xplore/distribution/categorical.md
         - DiagonalGaussian: api/xplore/distribution/diagonal_gaussian.md
         - SquashedNormal: api/xplore/distribution/squashed_normal.md
-        - NormalNoise: api/xplore/distribution/truncated_normal_noise.md
+        - NormalNoise: api/xplore/distribution/normal_noise.md
         - OrnsteinUhlenbeckNoise: api/xplore/distribution/ornstein_uhlenbeck_noise.md
         - TruncatedNormalNoise: api/xplore/distribution/truncated_normal_noise.md
     
     - Env:
       - Env Overview: overview/env_index/index.md
-      - make_atari_env: api/env/atari.md
+      - make_atari_env: api/env/atari/__init__.md
       - make_bullet_env: api/env/bullet/__init__.md
       - make_dmc_env: api/env/dmc/__init__.md
       - make_procgen_env: api/env/procgen/__init__.md
