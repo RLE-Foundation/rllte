@@ -45,7 +45,7 @@ More information can be found in [Get Started](https://pytorch.org/get-started/l
 
 ### with HUAWEI NPU
 !!! tip
-    Ascend NPU only supports aarch64!
+    Ascend NPU only supports aarch64 and Python 3.7!
 
 - Install the dependencies for PyTorch:
 ``` sh

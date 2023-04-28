@@ -68,7 +68,10 @@ nav:
     - Installation: getting_started.md
     - Verification: verification.md
   
-  - Tutorials: tutorials.md
+  - Tutorials: 
+    - Overview: tutorials/overview.md
+    - Quick Start: tutorials/quick_start.md
+    - Write Configuration File:  tutorials/configuration.md
 
   - API Documentation:
     - Overview: overview/api.md
