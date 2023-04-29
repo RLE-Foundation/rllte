@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hsuanwu"
-version = "0.0.1.beta03"
+version = "0.0.1.beta04"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]

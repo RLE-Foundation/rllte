@@ -175,7 +175,7 @@ class DMCWrapper(core.Env):
         else:
             truncated = False
 
-        terminated = False
+        terminated = truncated
         return obs, reward, terminated, truncated, info
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:

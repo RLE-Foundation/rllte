@@ -52,7 +52,7 @@ You can specify the working directory by  `config.yaml`, or an `outputs` folder 
 experiment: drqv2_dmc     # Experiment ID.
 device: cuda:0            # Device (cpu, cuda, ...).
 seed: 1                   # Random seed for reproduction.
-num_train_steps: 250000   # Number of training steps.
+num_train_steps: 5000     # Number of training steps.
 
 agent:
   name: DrQv2             # The agent name.
@@ -65,4 +65,4 @@ job:
 ```
 
 ## Load the Trained Model
-Once the training is finished, you can find the trained model in the specified working directory.
+Once the training is finished, you can find the trained model in the subfolder `model` of the specified working directory.
