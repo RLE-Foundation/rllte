@@ -228,6 +228,23 @@ class IMPALA(BaseAgent):
         self.training = training
         self.actor.train(training)
         self.learner.train(training)
+    
+    def integrate(self, **kwargs) -> None:
+        """Integrate agent and other modules (encoder, reward, ...) together
+        """
+        self.actor.encoder = kwargs['encoder'].copy()
+        self.learner.encoder = kwargs['encoder'].copy()
+        self.actor.dist = kwargs['dist']
+        self.learner.dist = kwargs['dist']
+        self.actor.share_memory()
+        self.learner.to(self._device)
+        self.opt = th.optim.RMSprop(
+            self.learner.parameters(),
+            lr=self.lr,
+            eps=self.eps,
+        )
+
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, kwargs['lr_lambda'])
 
     def act(self, *kwargs):
         """Sample actions based on observations."""

@@ -126,28 +126,7 @@ class DistributedTrainer(BasePolicyTrainer):
         self._logger.info("Deploying DistributedTrainer...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
-        self._agent.actor.encoder = hydra.utils.instantiate(self._cfgs.encoder)
-        self._agent.learner.encoder = hydra.utils.instantiate(self._cfgs.encoder)
-
-        self._agent.actor.share_memory()
-        self._agent.learner.to(self._device)
-        self._agent.opt = th.optim.RMSprop(
-            self._agent.learner.parameters(),
-            lr=self._agent.lr,
-            eps=self._agent.eps,
-        )
-
-        def lr_lambda(epoch):
-            return (
-                1.0
-                - min(
-                    epoch * self._cfgs.num_steps * self._cfgs.num_learners,
-                    self._cfgs.num_train_steps,
-                )
-                / self._cfgs.num_train_steps
-            )
-
-        self._agent.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self._agent.opt, lr_lambda)
+        encoder = hydra.utils.instantiate(self._cfgs.encoder)
 
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
@@ -160,8 +139,18 @@ class DistributedTrainer(BasePolicyTrainer):
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
 
-        self._agent.actor.dist = dist
-        self._agent.learner.dist = dist
+        def lr_lambda(epoch):
+            return (
+                1.0
+                - min(
+                    epoch * self._cfgs.num_steps * self._cfgs.num_learners,
+                    self._cfgs.num_train_steps,
+                )
+                / self._cfgs.num_train_steps
+            )
+
+        # TODO: Integrate agent and modules
+        self._agent.integrate(encoder=encoder, dist=dist, lr_lambda=lr_lambda)
 
     @staticmethod
     def act(  # noqa: C901

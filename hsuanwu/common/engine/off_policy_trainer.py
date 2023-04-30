@@ -34,20 +34,15 @@ class OffPolicyTrainer(BasePolicyTrainer):
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         ## TODO: build encoder
-        self._agent.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
-        self._agent.encoder.train()
-        self._agent.encoder_opt = th.optim.Adam(
-            self._agent.encoder.parameters(),
-            lr=self._agent.lr,
-            eps=self._agent.eps,
-        )
+        encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
+
         ### TODO: load initial parameters
         if self._cfgs.init_model_path is not None:
             self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
             encoder_params = th.load(os.path.join(self._cfgs.init_model_path, 'encoder.pth'), map_location=self._device)
             actor_params = th.load(os.path.join(self._cfgs.init_model_path, 'actor.pth'), map_location=self._device)
             critic_params = th.load(os.path.join(self._cfgs.init_model_path, 'critic.pth'), map_location=self._device)
-            self._agent.encoder.load_state_dict(encoder_params)
+            encoder.load_state_dict(encoder_params)
             self._agent.actor.load_state_dict(actor_params)
             self._agent.critic.load_state_dict(critic_params)
         ## TODO: build storage
@@ -59,14 +54,13 @@ class OffPolicyTrainer(BasePolicyTrainer):
             dist = hydra.utils.instantiate(self._cfgs.distribution)
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
-        self._agent.dist = dist
-        self._agent.actor.dist = dist
         ## TODO: get augmentation
-        if self._cfgs.use_aug:
-            self._agent.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device)
+        aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device) if self._cfgs.use_aug else None
         ## TODO: get intrinsic reward
-        if self._cfgs.use_irs:
-            self._agent.irs = hydra.utils.instantiate(self._cfgs.reward)
+        irs = hydra.utils.instantiate(self._cfgs.reward) if self._cfgs.use_irs else None
+        
+        # TODO: Integrate agent and modules
+        self._agent.integrate(encoder=encoder, dist=dist, aug=aug, irs=irs)
 
         # TODO: make data loader
         if "NStepReplayStorage" in self._cfgs.storage._target_:

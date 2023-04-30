@@ -65,7 +65,6 @@ class BaseAgent(ABC):
 
         # placeholder for distribution, augmentation, and intrinsic reward function.
         self.encoder = None
-        self.encoder_opt = None
         self.dist = None
         self.aug = None
         self.irs = None
@@ -81,6 +80,11 @@ class BaseAgent(ABC):
             None.
         """
         self.training = training
+    
+    @abstractmethod
+    def integrate(self, **kwargs) -> None:
+        """Integrate agent and other modules (encoder, reward, ...) together
+        """
 
     @abstractmethod
     def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
@@ -96,5 +100,5 @@ class BaseAgent(ABC):
         """
 
     @abstractmethod
-    def update(self, *kwargs) -> Dict[str, float]:
+    def update(self, **kwargs) -> Dict[str, float]:
         """Update agent and return training metrics such as loss functions."""

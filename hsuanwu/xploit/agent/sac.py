@@ -155,6 +155,19 @@ class SAC(BaseAgent):
         self.critic.train(training)
         if self.encoder is not None:
             self.encoder.train(training)
+    
+    def integrate(self, **kwargs) -> None:
+        """Integrate agent and other modules (encoder, reward, ...) together
+        """
+        self.encoder = kwargs['encoder']
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
+        self.encoder.train()
+        self.dist = kwargs['dist']
+        self.actor.dist = kwargs['dist']
+        if kwargs['aug'] is not None:
+            self.aug = kwargs['aug']
+        if kwargs['irs'] is not None:
+            self.irs = kwargs['irs']
 
     @property
     def alpha(self) -> th.Tensor:
