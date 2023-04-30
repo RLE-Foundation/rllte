@@ -17,7 +17,8 @@ If you want to further specify other parameters, this is a complete list of para
 ####### Train setup
 device: cuda:0                   # Device (cpu, cuda, ...) on which the code should be run.
 seed: 1                          # Random seed for reproduction.
-pretraining: false               # turn on the pre-training mode.
+pretraining: false               # Turn on the pre-training mode.
+init_model_path: ...             # Path of initial model parameters.
 num_train_steps: 250000          # Number of training steps.
 num_init_steps: 2000             # Number of initial exploration steps, only for `off-policy` agents.
 ####### Test setup
@@ -49,6 +50,12 @@ augmentation:
 reward:
  name: RE3                       # The reward name. Supported types: https://docs.hsuanwu.dev/api/
  ...
+
+hydra:
+run:
+  dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname} # Specify the output directory.
+job:
+  chdir: true # Change the working working.
 ```
 For a specified module, you can further specify its internal parameters based on [API Documentation](https://docs.hsuanwu.dev/api/).
 ## Override Values

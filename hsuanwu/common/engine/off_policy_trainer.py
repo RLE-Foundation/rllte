@@ -5,6 +5,7 @@ import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
+import os
 import torch as th
 
 from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
@@ -40,6 +41,15 @@ class OffPolicyTrainer(BasePolicyTrainer):
             lr=self._agent.lr,
             eps=self._agent.eps,
         )
+        ### TODO: load initial parameters
+        if self._cfgs.init_model_path is not None:
+            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
+            encoder_params = th.load(os.path.join(self._cfgs.init_model_path, 'encoder.pth'), map_location=self._device)
+            actor_params = th.load(os.path.join(self._cfgs.init_model_path, 'actor.pth'), map_location=self._device)
+            critic_params = th.load(os.path.join(self._cfgs.init_model_path, 'critic.pth'), map_location=self._device)
+            self._agent.encoder.load_state_dict(encoder_params)
+            self._agent.actor.load_state_dict(actor_params)
+            self._agent.critic.load_state_dict(critic_params)
         ## TODO: build storage
         self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
 
@@ -185,19 +195,17 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
     def save(self) -> None:
         """Save the trained model."""
-        save_dir = Path.cwd() / "model"
-        save_dir.mkdir(exist_ok=True)
-
         if self._cfgs.pretraining:
-            th.save(self._agent.encoder, save_dir / "pretrained_encoder.pth")
-            th.save(self._agent.actor, save_dir / "pretrained_actor.pth")
-            th.save(self._agent.critic, save_dir / "pretrained_critic.pth")
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+            th.save(self._agent.encoder.state_dict(), save_dir / "encoder.pth")
+            th.save(self._agent.actor.state_dict(), save_dir / "actor.pth")
+            th.save(self._agent.critic.state_dict(), save_dir / "critic.pth")
         else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
             mt = self._agent.encoder.get_submodule('trunk')
             ma = self._agent.actor.get_submodule('policy')
             th.save(mt.extend(ma), save_dir / "agent.pth")
-            # th.save(self._agent.encoder, save_dir / "encoder.pth")
-            # th.save(self._agent.actor, save_dir / "actor.pth")
-            # th.save(self._agent.critic, save_dir / "critic.pth")
 
         self._logger.info(f"Model saved at: {save_dir}")

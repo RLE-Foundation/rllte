@@ -24,6 +24,7 @@ _DEFAULT_CFGS = {
     "num_train_steps": 100000,
     "num_init_steps": 2000,  # only for off-policy algorithms
     "pretraining": False,
+    "init_model_path": None,
     ## TODO: Test setup
     "test_every_steps": 5000,  # only for off-policy algorithms
     "test_every_episodes": 10,  # only for on-policy algorithms

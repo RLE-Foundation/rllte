@@ -198,6 +198,8 @@ For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/ap
 > - `Repr.`: The method involves representation learning.
 > - `Visual`: The method works well in visual RL.
 
+See [Tutorials: Use intrinsic reward and observation augmentation](https://hub.hsuanwu.dev/tutorials/data_augmentation.md) for usage examples.
+
 # Model Zoo
 Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)
 
