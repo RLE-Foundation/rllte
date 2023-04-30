@@ -59,10 +59,22 @@ agent:
 
 hydra:
 run:
-  dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname} # Used to specify the output directory.
+  dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname} # Specify the output directory.
 job:
   chdir: true # Change the working working.
 ```
 
 ## Load the Trained Model
-Once the training is finished, you can find the trained model in the subfolder `model` of the specified working directory.
+Once the training is finished, you can find the trained model `agent.pth` in the subfolder `model` of the specified working directory.
+
+``` py title="play.py"
+import torch as th
+
+# load the model and specify the map location
+agent = th.load("agent.pth", map_location=th.device('cpu'))
+obs = th.zeros(size=(1, 9, 84, 84))
+action = agent(obs)
+print(action)
+
+# Output: tensor([[-1.0000]], grad_fn=<TanhBackward0>)
+```

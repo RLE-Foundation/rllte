@@ -77,14 +77,15 @@ class DeterministicActor(nn.Module):
 
     def __init__(self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
-        self.trunk = nn.Sequential(nn.LayerNorm(feature_dim), nn.Tanh())
-
         self.policy = nn.Sequential(
+            nn.LayerNorm(feature_dim), 
+            nn.Tanh(),
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, action_space.shape[0]),
+            nn.Tanh()
         )
         # placeholder for distribution
         self.dist = None
@@ -92,7 +93,7 @@ class DeterministicActor(nn.Module):
         self.apply(utils.network_init)
 
     def get_action(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get actions.
+        """Get actions in training.
 
         Args:
             obs (Tensor): Observations.
@@ -101,14 +102,23 @@ class DeterministicActor(nn.Module):
         Returns:
             Hsuanwu distribution.
         """
-        h = self.trunk(obs)
-        mu = self.policy(h)
-        mu = th.tanh(mu)
+        mu = self.policy(obs)
 
         # for Scheduled Exploration Noise
         self.dist.reset(mu, step)
 
         return self.dist
+    
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Get actions.
+
+        Args:
+            obs (Tensor): Observations.
+        
+        Returns:
+            Actions.
+        """
+        return self.policy(obs)
 
 
 class DoubleCritic(nn.Module):

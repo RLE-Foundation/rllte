@@ -193,8 +193,11 @@ class OffPolicyTrainer(BasePolicyTrainer):
             th.save(self._agent.actor, save_dir / "pretrained_actor.pth")
             th.save(self._agent.critic, save_dir / "pretrained_critic.pth")
         else:
-            th.save(self._agent.encoder, save_dir / "encoder.pth")
-            th.save(self._agent.actor, save_dir / "actor.pth")
-            th.save(self._agent.critic, save_dir / "critic.pth")
+            mt = self._agent.encoder.get_submodule('trunk')
+            ma = self._agent.actor.get_submodule('policy')
+            th.save(mt.extend(ma), save_dir / "agent.pth")
+            # th.save(self._agent.encoder, save_dir / "encoder.pth")
+            # th.save(self._agent.actor, save_dir / "actor.pth")
+            # th.save(self._agent.critic, save_dir / "critic.pth")
 
         self._logger.info(f"Model saved at: {save_dir}")
