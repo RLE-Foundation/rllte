@@ -1,4 +1,4 @@
-sources_dir: docs/api
+sources_dir: docs/api_docs
 templates_dir:
 repo: https://github.com/RLE-Foundation/Hsuanwu
 version: main
