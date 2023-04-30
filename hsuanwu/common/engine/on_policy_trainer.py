@@ -6,6 +6,7 @@ import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
+import os
 import torch as th
 
 from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
@@ -40,6 +41,13 @@ class OnPolicyTrainer(BasePolicyTrainer):
             lr=self._agent.lr,
             eps=self._agent.eps,
         )
+        ### TODO: load initial parameters
+        if self._cfgs.init_model_path is not None:
+            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
+            encoder_params = th.load(os.path.join(self._cfgs.init_model_path, 'encoder.pth'), map_location=self._device)
+            actor_critic_params = th.load(os.path.join(self._cfgs.init_model_path, 'actor_critic.pth'), map_location=self._device)
+            self._agent.encoder.load_state_dict(encoder_params)
+            self._agent.ac.load_state_dict(actor_critic_params)
         # TODO: build storage
         self._rollout_storage = hydra.utils.instantiate(self._cfgs.storage)
 
@@ -164,14 +172,16 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def save(self) -> None:
         """Save the trained model."""
-        save_dir = Path.cwd() / "model"
-        save_dir.mkdir(exist_ok=True)
-
         if self._cfgs.pretraining:
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
             th.save(self._agent.encoder, save_dir / "pretrained_encoder.pth")
             th.save(self._agent.ac, save_dir / "pretrained_actor_critic.pth")
         else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
             th.save(self._agent.encoder, save_dir / "encoder.pth")
-            th.save(self._agent.ac, save_dir / "actor_critic.pth")
+            del self._agent.ac.critic
+            th.save(self._agent.ac, save_dir / "actor.pth")
 
         self._logger.info(f"Model saved at: {save_dir}")

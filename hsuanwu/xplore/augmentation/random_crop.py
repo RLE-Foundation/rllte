@@ -32,6 +32,7 @@ class RandomCrop(BaseAugmentation):
         cropped = th.empty(size=(n, c, self._out, self._out))
 
         for idx, (img, new_h, new_w) in enumerate(zip(x, new_h, new_w)):
-            cropped[idx] = img[:, new_h : new_h + self._out, new_w : new_w + self._out]
+            t_h, t_w = new_h, new_w
+            cropped[idx] = img[:, t_h : t_h + self._out, t_w : t_w + self._out]
 
         return cropped

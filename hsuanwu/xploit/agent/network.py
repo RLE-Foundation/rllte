@@ -43,8 +43,8 @@ class StochasticActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get actions.
+    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
+        """Get sample distribution.
 
         Args:
             obs (Tensor): Observations.
@@ -63,7 +63,7 @@ class StochasticActor(nn.Module):
         return self.dist(mu, std)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Get actions.
+        """Get deterministic actions.
 
         Args:
             obs (Tensor): Observations.
@@ -104,8 +104,8 @@ class DeterministicActor(nn.Module):
 
         self.apply(utils.network_init)
 
-    def get_action(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get actions in training.
+    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
+        """Get sample distribution.
 
         Args:
             obs (Tensor): Observations.
@@ -206,9 +206,12 @@ class ActorCritic(nn.Module):
             super().__init__()
             self.actor = nn.Linear(hidden_dim, action_shape[0])
 
-        def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
+        def get_dist(self, obs: th.Tensor, dist: Distribution) -> Distribution:
             mu = self.actor(obs)
             return dist(mu)
+        
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            return self.actor(obs)
 
     class BoxActor(nn.Module):
         """Actor for 'Box' tasks."""
@@ -218,10 +221,13 @@ class ActorCritic(nn.Module):
             self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
             self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
 
-        def forward(self, obs: th.Tensor, dist: Distribution) -> Distribution:
+        def get_dist(self, obs: th.Tensor, dist: Distribution) -> Distribution:
             mu = self.actor_mu(obs)
             logstd = self.actor_logstd.expand_as(mu)
             return dist(mu, logstd.exp())
+        
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            return self.actor_mu(obs)
 
     def __init__(
         self,
@@ -240,9 +246,9 @@ class ActorCritic(nn.Module):
             nn.ReLU(),
         )
         if action_type == "Discrete":
-            self.base = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
+            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
         elif action_type == "Box":
-            self.base = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
+            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
         else:
             raise NotImplementedError("Unsupported action type!")
 
@@ -254,6 +260,19 @@ class ActorCritic(nn.Module):
         self.dist = None
 
         self.apply(utils.network_init)
+    
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Get actions.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Actions.
+        """
+        h = self.trunk(obs)
+
+        return self.actor(h)
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
@@ -266,7 +285,7 @@ class ActorCritic(nn.Module):
         """
         return self.critic(self.trunk(obs))
 
-    def get_action(self, obs: th.Tensor) -> th.Tensor:
+    def get_det_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
 
         Args:
@@ -276,7 +295,7 @@ class ActorCritic(nn.Module):
             Estimated values.
         """
         h = self.trunk(obs)
-        dist = self.base(h, self.dist)
+        dist = self.actor.get_dist(h, self.dist)
 
         return dist.mean
 
@@ -291,7 +310,7 @@ class ActorCritic(nn.Module):
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
         h = self.trunk(obs)
-        dist = self.base(h, self.dist)
+        dist = self.actor.get_dist(h, self.dist)
         if actions is None:
             actions = dist.sample()
 
@@ -310,7 +329,7 @@ class ActorCritic(nn.Module):
             Distribution, estimated values, auxiliary estimated values.
         """
         h = self.trunk(obs)
-        dist = self.base(h, self.dist)
+        dist = self.actor.get_dist(h, self.dist)
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
@@ -324,8 +343,8 @@ class ActorCritic(nn.Module):
             Distribution
         """
         h = self.trunk(obs)
-        dist = self.base(h, self.dist)
-        return dist
+        dist = self.actor.get_dist(h, self.dist)
+        return dist.logits
 
 
 class DiscreteLSTMActor(nn.Module):

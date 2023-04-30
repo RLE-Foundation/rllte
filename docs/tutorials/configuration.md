@@ -1,5 +1,5 @@
 ## Minimum Config
-As shown in [Quick Start](quick_start.md), Hsuanwu uses [Hydra](hydra.cc) to manage RL applications elegantly. To build a RL application, the 
+As shown in [Quick Start](quick_start.md), Hsuanwu uses [Hydra](https://hydra.cc/) to manage RL applications elegantly. To build a RL application, the 
 minimum configuration file can be
 ``` yaml title="minimum_config.yaml"
 device: cuda:0         # Device (cpu, cuda, ...).
@@ -78,7 +78,7 @@ python train.py seed=7 +num_init_steps=3000
 ```
 
 ## Multirun
-[Hydra](hydra.cc) allows us to conveniently run the same application with multiple different configurations:
+[Hydra](https://hydra.cc/) allows us to conveniently run the same application with multiple different configurations:
 ``` sh
 python train.py --multirun seed=7,8,9
 

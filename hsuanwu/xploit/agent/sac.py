@@ -173,7 +173,7 @@ class SAC(BaseAgent):
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.actor.get_action(obs=encoded_obs, step=step)
+        dist = self.actor.get_dist(obs=encoded_obs, step=step)
 
         if not training:
             action = dist.mean
@@ -291,7 +291,7 @@ class SAC(BaseAgent):
             Critic loss metrics.
         """
         with th.no_grad():
-            dist = self.actor.get_action(next_obs, step=step)
+            dist = self.actor.get_dist(next_obs, step=step)
             next_action = dist.rsample()
             log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
@@ -300,7 +300,7 @@ class SAC(BaseAgent):
 
             # enable observation augmentation
             if self.aug is not None:
-                dist_aug = self.actor.get_action(aug_next_obs, step=step)
+                dist_aug = self.actor.get_dist(aug_next_obs, step=step)
                 next_action_aug = dist_aug.rsample()
                 log_prob_aug = dist_aug.log_prob(next_action_aug).sum(-1, keepdim=True)
                 target_Q1, target_Q2 = self.critic_target(aug_next_obs, next_action_aug)
@@ -348,7 +348,7 @@ class SAC(BaseAgent):
             Actor loss metrics.
         """
         # sample actions
-        dist = self.actor.get_action(obs, step=step)
+        dist = self.actor.get_dist(obs, step=step)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
         Q1, Q2 = self.critic(obs, action)

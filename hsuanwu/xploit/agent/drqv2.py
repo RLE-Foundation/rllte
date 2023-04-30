@@ -146,7 +146,7 @@ class DrQv2(BaseAgent):
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.actor.get_action(obs=encoded_obs, step=step)
+        dist = self.actor.get_dist(obs=encoded_obs, step=step)
 
         if not training:
             action = dist.mean
@@ -234,7 +234,7 @@ class DrQv2(BaseAgent):
 
         with th.no_grad():
             # sample actions
-            dist = self.actor.get_action(next_obs, step=step)
+            dist = self.actor.get_dist(next_obs, step=step)
 
             next_action = dist.sample(clip=True)
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
@@ -269,7 +269,7 @@ class DrQv2(BaseAgent):
             Actor loss metrics.
         """
         # sample actions
-        dist = self.actor.get_action(obs, step=step)
+        dist = self.actor.get_dist(obs, step=step)
         action = dist.sample(clip=True)
 
         Q1, Q2 = self.critic(obs, action)

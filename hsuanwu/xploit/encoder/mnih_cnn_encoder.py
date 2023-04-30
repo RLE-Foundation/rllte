@@ -43,12 +43,11 @@ class MnihCnnEncoder(BaseEncoder):
             sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-        self.linear = nn.Linear(n_flatten, feature_dim)
-
+        self.trunk.append(nn.Linear(n_flatten, feature_dim))
         # self.apply(network_init)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0
         h = self.trunk(obs)
 
-        return self.linear(h.view(h.size()[0], -1))
+        return h.view(h.size()[0], -1)

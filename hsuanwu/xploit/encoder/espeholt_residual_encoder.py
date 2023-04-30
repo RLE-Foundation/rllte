@@ -102,13 +102,12 @@ class EspeholtResidualEncoder(BaseEncoder):
             shape = layer.get_output_shape()
             modules.append(layer)
         modules.append(nn.Flatten())
-
+        modules.append(nn.Linear(in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim))
         self.trunk = nn.Sequential(*modules)
-        self.linear = nn.Linear(in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim)
 
         self.apply(network_init)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0
         h = self.trunk(obs)
-        return self.linear(h)
+        return h

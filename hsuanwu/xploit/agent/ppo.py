@@ -168,7 +168,7 @@ class PPO(BaseAgent):
             actions, values, log_probs, entropy = self.ac.get_action_and_value(obs=encoded_obs)
             return actions.clamp(*self.action_range), values, log_probs, entropy
         else:
-            actions = self.ac.get_action(obs=encoded_obs)
+            actions = self.ac.get_det_action(obs=encoded_obs)
             return actions.clamp(*self.action_range)
 
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:

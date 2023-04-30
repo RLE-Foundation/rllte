@@ -1,6 +1,6 @@
 ## Build Application
 
-Hsuanwu uses [Hydra](hydra.cc) to manage RL applications elegantly. For example, 
+Hsuanwu uses [Hydra](https://hydra.cc/) to manage RL applications elegantly. For example, 
 we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of DeepMind Control Suite, and we only need the following two steps:
 
 1. Write a `config.yaml` file in your working directory like:
@@ -65,15 +65,16 @@ job:
 ```
 
 ## Load the Trained Model
-Once the training is finished, you can find the trained model `agent.pth` in the subfolder `model` of the specified working directory.
+Once the training is finished, you can find `encoder.pth` and `actor.pth` in the subfolder `model` of the specified working directory.
 
 ``` py title="play.py"
 import torch as th
 
 # load the model and specify the map location
-agent = th.load("agent.pth", map_location=th.device('cpu'))
+encoder = th.load("encoder.pth", map_location=th.device('cpu'))
+actor = th.load("actor.pth", map_location=th.device('cpu'))
 obs = th.zeros(size=(1, 9, 84, 84))
-action = agent(obs)
+action = actor(encoder(obs))
 print(action)
 
 # Output: tensor([[-1.0000]], grad_fn=<TanhBackward0>)

@@ -190,7 +190,7 @@ class PPG(BaseAgent):
             actions, values, log_probs, entropy = self.ac.get_action_and_value(obs=encoded_obs)
             return actions.clamp(*self.action_range), values, log_probs, entropy
         else:
-            actions = self.ac.get_action(obs=encoded_obs)
+            actions = self.ac.get_det_action(obs=encoded_obs)
             return actions.clamp(*self.action_range)
 
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
@@ -333,7 +333,7 @@ class PPG(BaseAgent):
                     .reshape(-1, *self.aux_obs.size()[2:])
                 )
                 # get logits
-                logits = self.ac.get_logits(self.encoder(aux_obs)).logits.cpu().clone()
+                logits = self.ac.get_logits(self.encoder(aux_obs)).cpu().clone()
                 self.aux_logits[:, idx * self.num_envs : (idx + 1) * self.num_envs] = logits.reshape(
                     self.num_steps, self.num_envs, self.aux_logits.size()[2]
                 )
