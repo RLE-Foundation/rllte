@@ -62,6 +62,18 @@ class StochasticActor(nn.Module):
 
         return self.dist(mu, std)
 
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Get actions.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Actions.
+        """
+        mu, _ = self.policy(obs).chunk(2, dim=-1)
+        return mu
+
 
 class DeterministicActor(nn.Module):
     """Deterministic actor network for DrQv2. Here the 'self.dist' refers to an action noise instance.
