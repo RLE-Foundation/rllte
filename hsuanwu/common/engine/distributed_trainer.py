@@ -341,5 +341,5 @@ class DistributedTrainer(BasePolicyTrainer):
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        th.save(self._agent.actor, save_dir / "actor.pth")
-        th.save(self._agent.learner, save_dir / "learner.pth")
+        self._agent.save(path=save_dir)
+        self._logger.info(f"Model saved at: {save_dir}")

@@ -35,13 +35,6 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         # TODO: build encoder
         encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
-        ### TODO: load initial parameters
-        if self._cfgs.init_model_path is not None:
-            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
-            encoder_params = th.load(os.path.join(self._cfgs.init_model_path, 'encoder.pth'), map_location=self._device)
-            actor_critic_params = th.load(os.path.join(self._cfgs.init_model_path, 'actor_critic.pth'), map_location=self._device)
-            encoder.load_state_dict(encoder_params)
-            self._agent.ac.load_state_dict(actor_critic_params)
         # TODO: build storage
         self._rollout_storage = hydra.utils.instantiate(self._cfgs.storage)
 
@@ -55,6 +48,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
         # TODO: Integrate agent and modules
         self._agent.integrate(encoder=encoder, dist=dist, aug=aug, irs=irs)
+        # TODO: load initial parameters
+        if self._cfgs.init_model_path is not None:
+            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
+            self._agent.load(self._cfgs.init_model_path)
 
         self._num_steps = self._cfgs.num_steps
         self._num_envs = self._cfgs.num_envs
@@ -165,16 +162,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def save(self) -> None:
         """Save the trained model."""
-        if self._cfgs.pretraining:
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self._agent.encoder, save_dir / "pretrained_encoder.pth")
-            th.save(self._agent.ac, save_dir / "pretrained_actor_critic.pth")
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self._agent.encoder, save_dir / "encoder.pth")
-            del self._agent.ac.critic
-            th.save(self._agent.ac, save_dir / "actor.pth")
-
+        save_dir = Path.cwd() / "pretrained" if self._cfgs.pretraining else Path.cwd() / "model"
+        save_dir.mkdir(exist_ok=True)
+        self._agent.save(path=save_dir)
         self._logger.info(f"Model saved at: {save_dir}")

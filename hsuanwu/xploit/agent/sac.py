@@ -4,6 +4,8 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from omegaconf import DictConfig
+import os
+from pathlib import Path
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
@@ -384,3 +386,37 @@ class SAC(BaseAgent):
             alpha_loss = th.scalar_tensor(s=0.0)
 
         return {"actor_loss": actor_loss.item(), "alpha_loss": alpha_loss.item()}
+
+    def save(self, path: Path) -> None:
+        """Save models.
+
+        Args:
+            path (Path): Storage path.
+
+        Returns:
+            None.
+        """
+        if "pretrained" in str(path): # pretraining
+            th.save(self.encoder.state_dict(), path / "encoder.pth")
+            th.save(self.actor.state_dict(), path / "actor.pth")
+            th.save(self.critic.state_dict(), path / "critic.pth")
+        else:
+            th.save(self._agent.encoder, path / "encoder.pth")
+            th.save(self._agent.actor, path / "actor.pth")
+            th.save(self._agent.critic, path / "critic.pth")
+
+    def load(self, path: str) -> None:
+        """Load initial parameters.
+
+        Args:
+            path (str): Import path.
+
+        Returns:
+            None.
+        """
+        encoder_params = th.load(os.path.join(path, 'encoder.pth'), map_location=self.device)
+        actor_params = th.load(os.path.join(path, 'actor.pth'), map_location=self.device)
+        critic_params = th.load(os.path.join(path, 'critic.pth'), map_location=self.device)
+        self.encoder.load_state_dict(encoder_params)
+        self.actor.load_state_dict(actor_params)
+        self.critic.load_state_dict(critic_params)

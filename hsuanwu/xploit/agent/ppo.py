@@ -3,6 +3,8 @@ from typing import Dict, Tuple, Union
 import gymnasium as gym
 import torch as th
 from omegaconf import DictConfig
+import os
+from pathlib import Path
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
@@ -284,3 +286,34 @@ class PPO(BaseAgent):
             "entropy": total_entropy_loss,
             "aug_loss": total_aug_loss,
         }
+
+    def save(self, path: Path) -> None:
+        """Save models.
+
+        Args:
+            path (Path): Storage path.
+
+        Returns:
+            None.
+        """
+        if "pretrained" in str(path): # pretraining
+            th.save(self.encoder.state_dict(), path / "encoder.pth")
+            th.save(self.ac.state_dict(), path / "actor_critic.pth")
+        else:
+            th.save(self._agent.encoder, path / "encoder.pth")
+            del self.ac.critic
+            th.save(self._agent.ac, path / "actor.pth")
+
+    def load(self, path: str) -> None:
+        """Load initial parameters.
+
+        Args:
+            path (str): Import path.
+
+        Returns:
+            None.
+        """
+        encoder_params = th.load(os.path.join(path, 'encoder.pth'), map_location=self.device)
+        actor_critic_params = th.load(os.path.join(path, 'actor_critic.pth'), map_location=self.device)
+        self.encoder.load_state_dict(encoder_params)
+        self.ac.load_state_dict(actor_critic_params)

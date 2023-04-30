@@ -4,6 +4,7 @@ from typing import Dict, Tuple, Union
 import gymnasium as gym
 import torch as th
 from omegaconf import DictConfig
+from pathlib import Path
 
 
 class BaseAgent(ABC):
@@ -102,3 +103,25 @@ class BaseAgent(ABC):
     @abstractmethod
     def update(self, **kwargs) -> Dict[str, float]:
         """Update agent and return training metrics such as loss functions."""
+
+    @abstractmethod
+    def save(self, path: Path) -> None:
+        """Save models.
+
+        Args:
+            path (path): Storage path.
+        
+        Returns:
+            None.
+        """
+    
+    @abstractmethod
+    def load(self, path: Path) -> None:
+        """Load initial parameters.
+
+        Args:
+            path (path): Import path.
+
+        Returns:
+            None.
+        """

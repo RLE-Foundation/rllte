@@ -4,8 +4,10 @@ from typing import Dict, Tuple, Union
 
 import gymnasium as gym
 import omegaconf
+import os
 import torch as th
 from omegaconf import DictConfig
+from pathlib import Path
 from torch import nn
 from torch.nn import functional as F
 
@@ -352,3 +354,29 @@ class IMPALA(BaseAgent):
                 "baseline_loss": baseline_loss.item(),
                 "entropy_loss": entropy_loss.item(),
             }
+
+    def save(self, path: Path) -> None:
+        """Save models.
+
+        Args:
+            path (Path): Storage path.
+
+        Returns:
+            None.
+        """
+        th.save(self.actor, path / "actor.pth")
+        th.save(self.learner, path / "learner.pth")
+
+    def load(self, path: str) -> None:
+        """Load initial parameters.
+
+        Args:
+            path (str): Import path.
+
+        Returns:
+            None.
+        """
+        actor_params = th.load(os.path.join(path, 'actor.pth'), map_location=self.device)
+        learner_params = th.load(os.path.join(path, 'learner.pth'), map_location=self.device)
+        self.actor.load_state_dict(actor_params)
+        self.learner.load_state_dict(learner_params)

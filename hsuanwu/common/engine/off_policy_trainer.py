@@ -35,16 +35,6 @@ class OffPolicyTrainer(BasePolicyTrainer):
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         ## TODO: build encoder
         encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
-
-        ### TODO: load initial parameters
-        if self._cfgs.init_model_path is not None:
-            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
-            encoder_params = th.load(os.path.join(self._cfgs.init_model_path, 'encoder.pth'), map_location=self._device)
-            actor_params = th.load(os.path.join(self._cfgs.init_model_path, 'actor.pth'), map_location=self._device)
-            critic_params = th.load(os.path.join(self._cfgs.init_model_path, 'critic.pth'), map_location=self._device)
-            encoder.load_state_dict(encoder_params)
-            self._agent.actor.load_state_dict(actor_params)
-            self._agent.critic.load_state_dict(critic_params)
         ## TODO: build storage
         self._replay_storage = hydra.utils.instantiate(self._cfgs.storage)
 
@@ -61,6 +51,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
         
         # TODO: Integrate agent and modules
         self._agent.integrate(encoder=encoder, dist=dist, aug=aug, irs=irs)
+        # TODO: load initial parameters
+        if self._cfgs.init_model_path is not None:
+            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
+            self._agent.load(self._cfgs.init_model_path)
 
         # TODO: make data loader
         if "NStepReplayStorage" in self._cfgs.storage._target_:
@@ -189,17 +183,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
     def save(self) -> None:
         """Save the trained model."""
-        if self._cfgs.pretraining:
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self._agent.encoder.state_dict(), save_dir / "encoder.pth")
-            th.save(self._agent.actor.state_dict(), save_dir / "actor.pth")
-            th.save(self._agent.critic.state_dict(), save_dir / "critic.pth")
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self._agent.encoder, save_dir / "encoder.pth")
-            th.save(self._agent.actor, save_dir / "actor.pth")
-            # th.save(self._agent.critic, save_dir / "critic.pth")
-
+        save_dir = Path.cwd() / "pretrained" if self._cfgs.pretraining else Path.cwd() / "model"
+        save_dir.mkdir(exist_ok=True)
+        self._agent.save(path=save_dir)
         self._logger.info(f"Model saved at: {save_dir}")
