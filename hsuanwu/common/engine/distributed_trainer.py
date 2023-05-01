@@ -146,7 +146,6 @@ class DistributedTrainer(BasePolicyTrainer):
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
         self._train_env = self._train_env.envs
-        self._test_env = self._test_env.envs[0]
 
         # xplore part
         ## TODO: build distribution
@@ -336,15 +335,15 @@ class DistributedTrainer(BasePolicyTrainer):
                     self._logger.train(msg=train_metrics)
                     log_times += 1
                 
-                if log_times % 10 == 0:
-                    episode_time, total_time = self._timer.reset()
-                    test_metrics = self.test()
-                    test_metrics.update({
-                        "step": global_step,
-                        "episode": global_episode,
-                        "total_time": total_time,
-                        })
-                    self._logger.test(msg=test_metrics)
+                # if log_times % 50 == 0:
+                #     episode_time, total_time = self._timer.reset()
+                #     test_metrics = self.test()
+                #     test_metrics.update({
+                #         "step": global_step,
+                #         "episode": global_episode,
+                #         "total_time": total_time,
+                #         })
+                #     self._logger.test(msg=test_metrics)
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
@@ -363,7 +362,7 @@ class DistributedTrainer(BasePolicyTrainer):
 
     def test(self) -> Dict[str, float]:
         """Testing function."""
-        env = Environment(self._test_env)
+        env = Environment(self._test_env.envs[0])
         seed = self._cfgs.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
         env_output = env.reset(seed)
         

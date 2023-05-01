@@ -242,7 +242,7 @@ class RIDE(BaseIntrinsicRewardModule):
         obs_tensor = samples["obs"].to(self._device)
         actions_tensor = samples["actions"]
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor[:, :, 0].long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
             actions_tensor = actions_tensor.to(self._device)
         next_obs_tensor = samples["next_obs"].to(self._device)
 

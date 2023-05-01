@@ -41,7 +41,7 @@ class Categorical(BaseDistribution):
         Returns:
             A sample_shape shaped sample.
         """
-        return self.dist.sample().unsqueeze(-1)
+        return self.dist.sample()
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
         """Returns the log of the probability density/mass function evaluated at `value`.
@@ -52,7 +52,7 @@ class Categorical(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return self.dist.log_prob(actions.squeeze(-1)).view(actions.size(0), -1).sum(-1).unsqueeze(-1)
+        return self.dist.log_prob(actions)
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
@@ -61,12 +61,12 @@ class Categorical(BaseDistribution):
     @property
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
-        return self.dist.probs.argmax(dim=-1, keepdim=True)
+        return self.dist.mode
 
     @property
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
-        return self.dist.probs.argmax(dim=-1, keepdim=True)
+        return self.dist.mode
 
     def reset(self) -> None:
         """Reset the distribution."""

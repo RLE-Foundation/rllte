@@ -69,12 +69,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         Returns:
             Batch of (observations, rewards, terminations, truncations, infos)
         """
-        if self.action_space["type"] == "Discrete":
-            actions = actions.squeeze(1).cpu().numpy()
-        else:
-            actions = actions.cpu().numpy()
-
-        obs, reward, terminated, truncated, info = self.env.step(actions)
+        obs, reward, terminated, truncated, info = self.env.step(actions.cpu().numpy())
         obs = th.as_tensor(obs, device=self._device)
         reward = th.as_tensor(reward, dtype=th.float32, device=self._device)
         terminated = th.as_tensor(

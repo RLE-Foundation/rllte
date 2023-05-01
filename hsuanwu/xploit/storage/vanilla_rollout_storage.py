@@ -53,7 +53,7 @@ class VanillaRolloutStorage(BaseStorage):
         if self._action_type == "Discrete":
             self._action_dim = 1
             self.actions = th.empty(
-                size=(num_steps, num_envs, self._action_dim),
+                size=(num_steps, num_envs),
                 dtype=th.float32,
                 device=self._device,
             )
@@ -112,7 +112,7 @@ class VanillaRolloutStorage(BaseStorage):
         self.terminateds[self._global_step + 1].copy_(terminateds)
         self.truncateds[self._global_step + 1].copy_(truncateds)
         self.obs[self._global_step + 1].copy_(next_obs)
-        self.log_probs[self._global_step].copy_(log_probs[:, 0])
+        self.log_probs[self._global_step].copy_(log_probs)
         self.values[self._global_step].copy_(values[:, 0])
 
         self._global_step = (self._global_step + 1) % self._num_steps
