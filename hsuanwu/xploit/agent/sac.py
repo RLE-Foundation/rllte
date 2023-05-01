@@ -401,9 +401,9 @@ class SAC(BaseAgent):
             th.save(self.actor.state_dict(), path / "actor.pth")
             th.save(self.critic.state_dict(), path / "critic.pth")
         else:
-            th.save(self._agent.encoder, path / "encoder.pth")
-            th.save(self._agent.actor, path / "actor.pth")
-            th.save(self._agent.critic, path / "critic.pth")
+            th.save(self.encoder, path / "encoder.pth")
+            th.save(self.actor, path / "actor.pth")
+            th.save(self.critic, path / "critic.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.

@@ -13,7 +13,7 @@ def make_atari_env(
     env_id: str = "Alien-v5",
     num_envs: int = 8,
     device: str = "cpu",
-    seed: int = 0,
+    seed: int = 1,
     frame_stack: int = 4,
 ) -> gym.Env:
     """Build Atari environments.

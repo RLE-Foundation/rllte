@@ -34,12 +34,19 @@ class Environment:
         self.env = env
         self.episode_return = None
         self.episode_step = None
+        if env.action_space.__class__.__name__ == "Discrete":
+            self.action_type = "Discrete"
+            self.action_dim = 1
+        elif env.action_space.__class__.__name__ == "Box":
+            self.action_type = "Box"
+            self.action_dim = env.action_space.shape[0]
+        else:
+            raise NotImplementedError('Unsupported action type!')
 
     def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
         init_reward = th.zeros(1, 1)
-        # This supports only single-tensor actions ATM.
-        init_last_action = th.zeros(1, 1, dtype=th.int64)
+        init_last_action = th.zeros(1, self.action_dim, dtype=th.int64)
         self.episode_return = th.zeros(1, 1)
         self.episode_step = th.zeros(1, 1, dtype=th.int32)
         init_terminated = th.ones(1, 1, dtype=th.uint8)
@@ -67,7 +74,14 @@ class Environment:
         Returns:
             Step information dict.
         """
-        obs, reward, terminated, truncated, info = self.env.step(action.item())
+        if self.action_type == "Discrete":
+            _action = action.item()
+        elif self.action_type == 'Box':
+            _action = action.squeeze(0).cpu().numpy()
+        else:
+            raise NotImplementedError('Unsupported action type!')
+        
+        obs, reward, terminated, truncated, info = self.env.step(_action)
         self.episode_step += 1
         self.episode_return += reward
         episode_step = self.episode_step
@@ -126,11 +140,13 @@ class DistributedTrainer(BasePolicyTrainer):
         self._logger.info("Deploying DistributedTrainer...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
-        encoder = hydra.utils.instantiate(self._cfgs.encoder)
-
+        actor_encoder = hydra.utils.instantiate(self._cfgs.encoder)
+        learner_encoder = hydra.utils.instantiate(self._cfgs.encoder)
+        
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
         self._train_env = self._train_env.envs
+        self._test_env = self._test_env.envs[0]
 
         # xplore part
         ## TODO: build distribution
@@ -150,7 +166,7 @@ class DistributedTrainer(BasePolicyTrainer):
             )
 
         # TODO: Integrate agent and modules
-        self._agent.integrate(encoder=encoder, dist=dist, lr_lambda=lr_lambda)
+        self._agent.integrate(actor_encoder=actor_encoder, learner_encoder=learner_encoder, dist=dist, lr_lambda=lr_lambda)
 
     @staticmethod
     def act(  # noqa: C901
@@ -298,6 +314,7 @@ class DistributedTrainer(BasePolicyTrainer):
             threads.append(thread)
 
         try:
+            log_times = 0
             while global_step < self._cfgs.num_train_steps:
                 start_step = global_step
                 time.sleep(5)
@@ -317,6 +334,17 @@ class DistributedTrainer(BasePolicyTrainer):
                         "total_time": total_time,
                     }
                     self._logger.train(msg=train_metrics)
+                    log_times += 1
+                
+                if log_times % 10 == 0:
+                    episode_time, total_time = self._timer.reset()
+                    test_metrics = self.test()
+                    test_metrics.update({
+                        "step": global_step,
+                        "episode": global_episode,
+                        "total_time": total_time,
+                        })
+                    self._logger.test(msg=test_metrics)
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
@@ -335,7 +363,24 @@ class DistributedTrainer(BasePolicyTrainer):
 
     def test(self) -> Dict[str, float]:
         """Testing function."""
-        return {"step": 0}
+        env = Environment(self._test_env)
+        seed = self._cfgs.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
+        env_output = env.reset(seed)
+        
+        episode_rewards = list()
+        episode_steps = list()
+        while len(episode_rewards) < self._cfgs.num_test_episodes:
+            with th.no_grad():
+                actor_output, _ = self._agent.actor.get_action(env_output, training=False)
+            env_output = env.step(actor_output["action"])
+            if env_output["terminated"].item() or env_output["truncated"].item():
+                episode_rewards.append(env_output['episode_return'].item())
+                episode_steps.append(env_output['episode_step'].item())
+        
+        return {
+            "episode_length": np.mean(episode_steps),
+            "episode_reward": np.mean(episode_rewards),
+        }
 
     def save(self) -> None:
         """Save the trained model."""

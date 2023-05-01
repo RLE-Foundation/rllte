@@ -357,7 +357,7 @@ class DiscreteLSTMActor(nn.Module):
     ) -> None:
         super().__init__()
         """
-        Actor network for IMPALA  that supports LSTM module.
+        Actor network for IMPALA that supports LSTM module.
 
         Args:
             action_space (Space): Action space of the environment.
@@ -435,17 +435,134 @@ class DiscreteLSTMActor(nn.Module):
 
         policy_logits = self.policy(lstm_output)
         baseline = self.baseline(lstm_output)
-
+        dist = self.dist(policy_logits)
         if training:
-            action = self.dist(policy_logits).sample()
+            action = dist.sample()
         else:
-            action = self.dist(policy_logits).mode
+            action = dist.mode
 
         policy_logits = policy_logits.view(T, B, self.num_actions)
         baseline = baseline.view(T, B)
         action = action.view(T, B)
 
         return (
-            dict(policy_logits=policy_logits, baseline=baseline, action=action),
-            lstm_state,
-        )
+            dict(policy_outputs=policy_logits, 
+                 baseline=baseline, 
+                 action=action),
+            lstm_state
+            )
+
+    def get_dist(self, logits: th.Tensor) -> Distribution:
+        return self.dist(logits)
+
+class BoxLSTMActor(nn.Module):
+    def __init__(
+        self,
+        action_space,
+        feature_dim,
+        hidden_dim: int = 512,
+        use_lstm: bool = False,
+    ) -> None:
+        super().__init__()
+        """
+        Actor network for IMPALA that supports LSTM module.
+
+        Args:
+            action_space (Space): Action space of the environment.
+            feature_dim (int): Number of features accepted.
+            hidden_dim (int): Number of units per hidden layer.
+            use_lstm (bool): Use LSTM or not.
+
+        Returns:
+            Actor network instance.
+        """
+        self.num_actions = action_space.shape[0]
+        self.action_range = action_space.range
+        self.use_lstm = use_lstm
+
+        # feature_dim + one-hot of last action + last reward
+        lstm_output_size = feature_dim + self.num_actions + 1
+        if use_lstm:
+            self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
+
+        # policy logits
+        self.actor_mu = nn.Linear(lstm_output_size, self.num_actions)
+        self.actor_logstd = nn.Parameter(th.zeros(1, self.num_actions))
+        # baseline value function
+        self.baseline = nn.Linear(lstm_output_size, 1)
+
+        # internal encoder
+        self.encoder = None
+        self.dist = None
+
+    def init_state(self, batch_size: int) -> Tuple[th.Tensor, ...]:
+        """Generate the initial states for LSTM.
+
+        Args:
+            batch_size (int): The batch size for training.
+
+        Returns:
+            Initial states.
+        """
+        if not self.use_lstm:
+            return tuple()
+        return tuple(th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size) for _ in range(2))
+
+    def get_action(
+        self,
+        inputs: Dict,
+        lstm_state: Tuple = (),
+        training: bool = True,
+    ) -> th.Tensor:
+        x = inputs["obs"]  # [T, B, *obs_shape], T: rollout length, B: batch size
+        T, B, *_ = x.shape
+        # TODO: merge time and batch
+        x = th.flatten(x, 0, 1)
+        # TODO: extract features from observations
+        features = F.relu(self.encoder(x))
+        # TODO: get one-hot last actions
+
+        lstm_input = th.cat([features, 
+                             inputs["reward"].view(T * B, 1), 
+                             inputs["last_action"].view(T * B, self.num_actions)], dim=-1)
+
+        if self.use_lstm:
+            lstm_input = lstm_input.view(T, B, -1)
+            lstm_output_list = []
+            notdone = (~inputs["terminated"]).float()
+            for input, nd in zip(lstm_input.unbind(), notdone.unbind()):
+                # Reset lstm state to zero whenever an episode ended.
+                # Make `done` broadcastable with (num_layers, B, hidden_size)
+                # states:
+                nd = nd.view(1, -1, 1)
+                lstm_state = tuple(nd * s for s in lstm_state)
+                output, lstm_state = self.lstm(input.unsqueeze(0), lstm_state)
+                lstm_output_list.append(output)
+            lstm_output = th.flatten(th.cat(lstm_output_list), 0, 1)
+        else:
+            lstm_output = lstm_input
+            lstm_state = tuple()
+        
+        mu = self.actor_mu(lstm_output)
+        logstd = self.actor_logstd.expand_as(mu)
+        baseline = self.baseline(lstm_output)
+        dist = self.dist(mu, logstd.exp())
+        if training:
+            action = dist.sample()
+        else:
+            action = dist.mean
+
+        policy_outputs = th.cat([mu, logstd], dim=-1).view(T, B, self.num_actions * 2)
+        baseline = baseline.view(T, B)
+        action = action.view(T, B, self.num_actions).squeeze(0).clamp(*self.action_range)
+
+        return (
+            dict(policy_outputs=policy_outputs, 
+                baseline=baseline, 
+                action=action),
+            lstm_state
+            )
+
+    def get_dist(self, outputs) -> Distribution:
+        mu, logstd = outputs.chunk(2, dim=-1)
+        return self.dist(mu, logstd.exp())

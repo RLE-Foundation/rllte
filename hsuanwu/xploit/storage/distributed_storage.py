@@ -43,8 +43,12 @@ class DistributedStorage(BaseStorage):
 
         if self._action_type == "Discrete":
             self._action_dim = 1
+            policy_outputs_dim = self._action_shape[0]
+            action_dtype = th.int64
         elif self._action_type == "Box":
             self._action_dim = self._action_shape[0]
+            policy_outputs_dim = self._action_shape[0] * 2
+            action_dtype = th.float32
         else:
             raise NotImplementedError
 
@@ -55,10 +59,10 @@ class DistributedStorage(BaseStorage):
             truncated=dict(size=(num_steps + 1,), dtype=th.bool),
             episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
             episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-            last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-            policy_logits=dict(size=(num_steps + 1, self._action_shape[0]), dtype=th.float32),
+            last_action=dict(size=(num_steps + 1, self._action_dim), dtype=action_dtype),
+            policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
             baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-            action=dict(size=(num_steps + 1,), dtype=th.int64),
+            action=dict(size=(num_steps + 1, self._action_dim), dtype=action_dtype),
         )
 
         self.storages = {key: [] for key in specs}

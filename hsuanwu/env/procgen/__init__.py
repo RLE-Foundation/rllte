@@ -45,7 +45,7 @@ def make_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
     gamma: float = 0.99,
-    num_levels: int = 0,
+    num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
     device: str = "cpu",

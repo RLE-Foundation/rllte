@@ -12,12 +12,12 @@ from torch import nn
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import DiscreteLSTMActor
+from hsuanwu.xploit.agent.network import DiscreteLSTMActor, BoxLSTMActor
 
 MATCH_KEYS = {
     "trainer": "DistributedTrainer",
     "storage": ["DistributedStorage"],
-    "distribution": ["Categorical"],
+    "distribution": ["Categorical", "DiagonalGaussian"],
     "augmentation": [],
     "reward": [],
 }
@@ -61,113 +61,70 @@ DEFAULT_CFGS = {
 }
 
 
-VTraceFromLogitsReturns = collections.namedtuple(
-    "VTraceFromLogitsReturns",
-    [
-        "vs",
-        "pg_advantages",
-        "log_rhos",
-        "behavior_action_log_probs",
-        "target_action_log_probs",
-    ],
-)
+class VTraceLoss:
+    def __init__(self,
+                clip_rho_threshold=1.0,
+                clip_pg_rho_threshold=1.0,
+                ) -> None:
+        self.dist = None
+        self.clip_rho_threshold = clip_rho_threshold
+        self.clip_pg_rho_threshold = clip_pg_rho_threshold
 
-VTraceReturns = collections.namedtuple("VTraceReturns", "vs pg_advantages")
+    def compute_ISW(self, target_dist, behavior_dist, action):
+        log_rhos = target_dist.log_prob(action) - behavior_dist.log_prob(action)
+        return th.exp(log_rhos)
 
+    def __call__(self, batch):
+        _target_dist = batch['target_dist']
+        _behavior_dist = batch['behavior_dist']
+        _action = batch['action']
+        _baseline = batch['values']
+        _bootstrap_value = batch['bootstrap_value']
+        _values = batch['values']
+        _discounts = batch['discounts']
+        _rewards = batch['reward']
 
-class VTrace:
-    """Compute V-trace off-policy actor critic targets."""
-
-    def __init__(self) -> None:
-        pass
-
-    def action_log_probs(self, policy_logits, actions):
-        return -F.nll_loss(
-            F.log_softmax(th.flatten(policy_logits, 0, -2), dim=-1),
-            th.flatten(actions),
-            reduction="none",
-        ).view_as(actions)
-
-    def from_logits(
-        self,
-        behavior_policy_logits,
-        target_policy_logits,
-        actions,
-        discounts,
-        rewards,
-        values,
-        bootstrap_value,
-        clip_rho_threshold=1.0,
-        clip_pg_rho_threshold=1.0,
-    ):
-        """V-trace for softmax policies."""
-
-        target_action_log_probs = self.action_log_probs(target_policy_logits, actions)
-        behavior_action_log_probs = self.action_log_probs(behavior_policy_logits, actions)
-        log_rhos = target_action_log_probs - behavior_action_log_probs
-        vtrace_returns = self.from_importance_weights(
-            log_rhos=log_rhos,
-            discounts=discounts,
-            rewards=rewards,
-            values=values,
-            bootstrap_value=bootstrap_value,
-            clip_rho_threshold=clip_rho_threshold,
-            clip_pg_rho_threshold=clip_pg_rho_threshold,
-        )
-        return VTraceFromLogitsReturns(
-            log_rhos=log_rhos,
-            behavior_action_log_probs=behavior_action_log_probs,
-            target_action_log_probs=target_action_log_probs,
-            **vtrace_returns._asdict(),
-        )
-
-    @th.no_grad()
-    def from_importance_weights(
-        self,
-        log_rhos,
-        discounts,
-        rewards,
-        values,
-        bootstrap_value,
-        clip_rho_threshold=1.0,
-        clip_pg_rho_threshold=1.0,
-    ):
-        """V-trace from log importance weights."""
         with th.no_grad():
-            rhos = th.exp(log_rhos)
-            if clip_rho_threshold is not None:
-                clipped_rhos = th.clamp(rhos, max=clip_rho_threshold)
+            rhos = self.compute_ISW(
+                target_dist=_target_dist,
+                behavior_dist=_behavior_dist,
+                action=_action
+            )
+            if self.clip_rho_threshold is not None:
+                clipped_rhos = th.clamp(rhos, max=self.clip_rho_threshold)
             else:
                 clipped_rhos = rhos
-
             cs = th.clamp(rhos, max=1.0)
             # Append bootstrapped value to get [v1, ..., v_t+1]
-            values_t_plus_1 = th.cat([values[1:], th.unsqueeze(bootstrap_value, 0)], dim=0)
-            deltas = clipped_rhos * (rewards + discounts * values_t_plus_1 - values)
+            values_t_plus_1 = th.cat(
+                [_values[1:], 
+                th.unsqueeze(_bootstrap_value, 0)], dim=0)
+            deltas = clipped_rhos * (_rewards + _discounts * values_t_plus_1 - _values)
 
-            acc = th.zeros_like(bootstrap_value)
+            acc = th.zeros_like(_bootstrap_value)
             result = []
-            for t in range(discounts.shape[0] - 1, -1, -1):
-                acc = deltas[t] + discounts[t] * cs[t] * acc
+            for t in range(_discounts.shape[0] - 1, -1, -1):
+                acc = deltas[t] + _discounts[t] * cs[t] * acc
                 result.append(acc)
             result.reverse()
             vs_minus_v_xs = th.stack(result)
 
             # Add V(x_s) to get v_s.
-            vs = th.add(vs_minus_v_xs, values)
-
+            vs = th.add(vs_minus_v_xs, _values)
             # Advantage for policy gradient.
-            broadcasted_bootstrap_values = th.ones_like(vs[0]) * bootstrap_value
+            broadcasted_bootstrap_values = th.ones_like(vs[0]) * _bootstrap_value
             vs_t_plus_1 = th.cat([vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0)
-            if clip_pg_rho_threshold is not None:
-                clipped_pg_rhos = th.clamp(rhos, max=clip_pg_rho_threshold)
+            if self.clip_pg_rho_threshold is not None:
+                clipped_pg_rhos = th.clamp(rhos, max=self.clip_pg_rho_threshold)
             else:
                 clipped_pg_rhos = rhos
-            pg_advantages = clipped_pg_rhos * (rewards + discounts * vs_t_plus_1 - values)
+            pg_advantages = clipped_pg_rhos * (_rewards + _discounts * vs_t_plus_1 - _values)
 
-            # Make sure no gradients backpropagated through the returned values.
-            return VTraceReturns(vs=vs, pg_advantages=pg_advantages)
+        pg_loss = - (_target_dist.log_prob(_action) * pg_advantages).sum()
+        baseline_loss = F.mse_loss(vs, _baseline, reduction='sum') * 0.5
+        entropy_loss = (_target_dist.entropy()).sum()
 
+        return pg_loss, baseline_loss, entropy_loss
 
 class IMPALA(BaseAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
@@ -214,9 +171,14 @@ class IMPALA(BaseAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
 
-        self.actor = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-
-        self.learner = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
+        if self.action_type == "Discrete":
+            self.actor = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
+            self.learner = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
+        elif self.action_type == 'Box':
+            self.actor = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
+            self.learner = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
+        else:
+            raise NotImplementedError('Unsupported action type!')
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
@@ -234,12 +196,13 @@ class IMPALA(BaseAgent):
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together
         """
-        self.actor.encoder = kwargs['encoder'].copy()
-        self.learner.encoder = kwargs['encoder'].copy()
+        self.actor.encoder = kwargs['actor_encoder']
+        self.learner.encoder = kwargs['learner_encoder']
         self.actor.dist = kwargs['dist']
         self.learner.dist = kwargs['dist']
+        self.dist = kwargs['dist']
         self.actor.share_memory()
-        self.learner.to(self._device)
+        self.learner.to(self.device)
         self.opt = th.optim.RMSprop(
             self.learner.parameters(),
             lr=self.lr,
@@ -279,28 +242,6 @@ class IMPALA(BaseAgent):
         Returns:
             Training metrics.
         """
-
-        ###########################################################################
-        def compute_policy_gradient_loss(logits, actions, advantages):
-            cross_entropy = F.nll_loss(
-                F.log_softmax(th.flatten(logits, 0, 1), dim=-1),
-                target=th.flatten(actions, 0, 1),
-                reduction="none",
-            )
-            cross_entropy = cross_entropy.view_as(advantages)
-            return th.sum(cross_entropy * advantages.detach())
-
-        def compute_baseline_loss(advantages):
-            return 0.5 * th.sum(advantages**2)
-
-        def compute_entropy_loss(logits):
-            """Return the entropy loss, i.e., the negative entropy of the policy."""
-            policy = F.softmax(logits, dim=-1)
-            log_policy = F.log_softmax(logits, dim=-1)
-            return th.sum(policy * log_policy)
-
-        ###########################################################################
-        """Performs a learning (optimization) step."""
         with lock:
             learner_outputs, _ = learner_model.get_action(batch, init_actor_states)
 
@@ -311,30 +252,18 @@ class IMPALA(BaseAgent):
             batch = {key: tensor[1:] for key, tensor in batch.items()}
             learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
-            rewards = batch["reward"]
-            clipped_rewards = th.clamp(rewards, -1, 1)
-
             discounts = (~batch["terminated"]).float() * cfgs.agent.discount
 
-            vtrace_returns = VTrace().from_logits(
-                behavior_policy_logits=batch["policy_logits"],
-                target_policy_logits=learner_outputs["policy_logits"],
-                actions=batch["action"],
-                discounts=discounts,
-                rewards=clipped_rewards,
-                values=learner_outputs["baseline"],
-                bootstrap_value=bootstrap_value,
-            )
+            batch.update({
+                'discounts': discounts,
+                'bootstrap_value': bootstrap_value,
+                'target_dist': learner_model.get_dist(learner_outputs["policy_outputs"]),
+                'behavior_dist': learner_model.get_dist(batch["policy_outputs"]),
+                'values': learner_outputs["baseline"]
+            })
 
-            pg_loss = compute_policy_gradient_loss(
-                learner_outputs["policy_logits"],
-                batch["action"],
-                vtrace_returns.pg_advantages,
-            )
-            baseline_loss = cfgs.agent.baseline_coef * compute_baseline_loss(vtrace_returns.vs - learner_outputs["baseline"])
-            entropy_loss = cfgs.agent.ent_coef * compute_entropy_loss(learner_outputs["policy_logits"])
-
-            total_loss = pg_loss + baseline_loss + entropy_loss
+            pg_loss, baseline_loss, entropy_loss = VTraceLoss()(batch)
+            total_loss = pg_loss + cfgs.agent.baseline_coef * baseline_loss - cfgs.agent.ent_coef * entropy_loss
 
             episode_returns = batch["episode_return"][batch["terminated"]]
             episode_steps = batch["episode_step"][batch["terminated"]]

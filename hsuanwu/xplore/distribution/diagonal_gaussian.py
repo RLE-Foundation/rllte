@@ -60,7 +60,7 @@ class DiagonalGaussian(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return self.dist.log_prob(actions)
+        return self.dist.log_prob(actions).sum(-1)
 
     def reset(self) -> None:
         """Reset the distribution."""

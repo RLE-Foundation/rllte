@@ -35,7 +35,7 @@ def _flatten_obs(obs):
     for v in obs.values():
         flat = np.array([v]) if np.isscalar(v) else v.ravel()
         obs_pieces.append(flat)
-    return np.concatenate(obs_pieces, axis=0)
+    return np.concatenate(obs_pieces, axis=0, dtype=np.float32)
 
 
 class DMCWrapper(core.Env):

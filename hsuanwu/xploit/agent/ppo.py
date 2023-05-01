@@ -300,9 +300,9 @@ class PPO(BaseAgent):
             th.save(self.encoder.state_dict(), path / "encoder.pth")
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
-            th.save(self._agent.encoder, path / "encoder.pth")
+            th.save(self.encoder, path / "encoder.pth")
             del self.ac.critic
-            th.save(self._agent.ac, path / "actor.pth")
+            th.save(self.ac, path / "actor.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.
