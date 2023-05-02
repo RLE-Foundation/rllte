@@ -111,6 +111,7 @@ nav:
         - IdentityEncoder: api_docs/xploit/encoder/identity_encoder.md
 
       - storage:
+        - BaseStorage: api_docs/xploit/storage/base_storage.md
         - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md
@@ -131,8 +132,8 @@ nav:
         - REVD: api_docs/xplore/reward/revd.md
 
       - augmentation:
-        - AutoAugment: api_docs/xplore/augmentation/auto_augment.md
         - BaseAugmentation: api_docs/xplore/augmentation/base.md
+        - AutoAugment: api_docs/xplore/augmentation/auto_augment.md
         - ElasticTransform: api_docs/xplore/augmentation/elastic_transform.md
         - GaussianNoise: api_docs/xplore/augmentation/gaussian_noise.md
         - GrayScale: api_docs/xplore/augmentation/grayscale.md

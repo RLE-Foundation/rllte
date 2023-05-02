@@ -1,5 +1,5 @@
 sources_dir: docs/api_docs
-templates_dir: docs/templates
+templates_dir:
 repo: https://github.com/RLE-Foundation/Hsuanwu
 version: main
 pages:
@@ -79,6 +79,10 @@ pages:
     source: hsuanwu/xploit/agent/sac.py
     classes:
       - SAC
+  - page: xploit/storage/base.md
+    source: hsuanwu/xploit/storage/base.py
+    classes:
+      - BaseStorage
   - page: xploit/storage/distributed_storage.md
     source: hsuanwu/xploit/storage/distributed_storage.py
     classes:
