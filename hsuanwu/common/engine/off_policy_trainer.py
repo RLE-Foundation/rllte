@@ -56,31 +56,10 @@ class OffPolicyTrainer(BasePolicyTrainer):
             self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
             self._agent.load(self._cfgs.init_model_path)
 
-        # TODO: make data loader
-        if "NStepReplayStorage" in self._cfgs.storage._target_:
-            self._replay_loader = th.utils.data.DataLoader(
-                self._replay_storage,
-                batch_size=self._replay_storage.get_batch_size,
-                num_workers=self._replay_storage.get_num_workers,
-                pin_memory=self._replay_storage.get_pin_memory,
-                worker_init_fn=worker_init_fn,
-            )
-            self._replay_iter = None
-            self._use_nstep_replay_storage = True
-        else:
-            self._use_nstep_replay_storage = False
-
         self._num_init_steps = self._cfgs.num_init_steps
 
         # debug
         self._logger.debug("Check Accomplished. Start Training...")
-
-    @property
-    def replay_iter(self) -> Iterable:
-        """Create iterable dataloader."""
-        if self._replay_iter is None:
-            self._replay_iter = iter(self._replay_loader)
-        return self._replay_iter
 
     def train(self) -> None:
         """Training function."""
@@ -90,9 +69,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         while self._global_step <= self._num_train_steps:
             # try to test
-            if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
-                test_metrics = self.test()
-                self._logger.test(msg=test_metrics)
+            # if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
+            #     test_metrics = self.test()
+            #     self._logger.test(msg=test_metrics)
 
             # sample actions
             with th.no_grad(), eval_mode(self._agent):
@@ -119,14 +98,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
             # update agent
             if self._global_step >= self._num_init_steps:
-                if self._use_nstep_replay_storage:
-                    # TODO: for NStepReplayStorage
-                    metrics = self._agent.update(self.replay_iter, step=self._global_step)
-                else:
-                    metrics = self._agent.update(self._replay_storage, step=self._global_step)
-                    # TODO: for PrioritizedReplayStorage
-                    if "indices" in metrics and "priorities" in metrics:
-                        self._replay_storage.update_priorities(metrics["indices"], metrics["priorities"])
+                metrics = self._agent.update(self._replay_storage, step=self._global_step)
+                self._replay_storage.update(metrics)
 
             # done
             if terminated or truncated:

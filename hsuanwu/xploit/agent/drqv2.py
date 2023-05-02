@@ -170,11 +170,11 @@ class DrQv2(BaseAgent):
 
         return action.clamp(*self.action_range)
 
-    def update(self, replay_iter: Generator, step: int = 0) -> Dict[str, float]:
+    def update(self, replay_storage, step: int = 0) -> Dict[str, float]:
         """Update the agent.
 
         Args:
-            replay_iter (Generator): Hsuanwu replay storage iterable dataloader.
+            replay_storage (Storage): Hsuanwu replay storage.
             step (int): Global training step.
 
         Returns:
@@ -185,7 +185,7 @@ class DrQv2(BaseAgent):
         if step % self.update_every_steps != 0:
             return metrics
 
-        obs, action, reward, discount, next_obs = next(replay_iter)
+        obs, action, reward, discount, next_obs = replay_storage.sample(step)
         obs = obs.float().to(self.device)
         action = action.float().to(self.device)
         reward = reward.float().to(self.device)

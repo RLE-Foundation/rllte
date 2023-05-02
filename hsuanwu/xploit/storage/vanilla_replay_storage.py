@@ -111,3 +111,6 @@ class VanillaReplayStorage(BaseStorage):
         weights = th.ones_like(terminateds, device=self._device)
 
         return indices, obs, actions, rewards, terminateds, next_obs, weights
+    
+    def update(self, *args) -> None:
+        """Update the storage"""

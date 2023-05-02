@@ -114,8 +114,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
             # policy update
             self._agent.update(self._rollout_storage, episode=self._global_episode)
 
-            # reset buffer
-            self._rollout_storage.reset()
+            # update and reset buffer
+            self._rollout_storage.update()
 
             self._global_episode += 1
             self._global_step += self._num_envs * self._num_steps

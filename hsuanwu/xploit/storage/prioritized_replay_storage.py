@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, Dict
 
 import gymnasium as gym
 import numpy as np
@@ -130,15 +130,17 @@ class PrioritizedReplayStorage(BaseStorage):
 
         return indices, obs, actions, rewards, terminateds, next_obs, weights
 
-    def update_priorities(self, indices: np.ndarray, priorities: np.ndarray) -> None:
+    def update(self, metrics: Dict) -> None:
         """Update the priorities.
 
         Args:
-            indices (NdArray): The indices of current batch data.
-            priorities (NdArray): The priorities of current batch data.
+            metrics (Dict): Training metrics from agent to udpate the priorities: 
+                indices (NdArray): The indices of current batch data.
+                priorities (NdArray): The priorities of current batch data.
 
         Returns:
             None.
         """
-        for i, priority in zip(indices, priorities):
-            self._priorities[i] = abs(priority)
+        if "indices" in metrics and "priorities" in metrics:
+            for i, priority in zip(metrics['indices'], metrics['priorities']):
+                self._priorities[i] = abs(priority)

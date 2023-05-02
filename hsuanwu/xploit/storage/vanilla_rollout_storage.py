@@ -117,7 +117,7 @@ class VanillaRolloutStorage(BaseStorage):
 
         self._global_step = (self._global_step + 1) % self._num_steps
 
-    def reset(self) -> None:
+    def update(self) -> None:
         """Reset the terminal state of each env."""
         self.terminateds[0].copy_(self.terminateds[-1])
         self.truncateds[0].copy_(self.truncateds[-1])

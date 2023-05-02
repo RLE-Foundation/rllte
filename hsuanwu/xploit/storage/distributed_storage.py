@@ -108,3 +108,6 @@ class DistributedStorage(BaseStorage):
 
         batch = {key: tensor.to(device=th.device(device), non_blocking=True) for key, tensor in batch.items()}
         return batch, init_actor_states
+
+    def update(self, *args) -> None:
+        """Update the storage"""

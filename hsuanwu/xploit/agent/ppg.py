@@ -50,7 +50,7 @@ DEFAULT_CFGS = {
         "vf_coef": 0.5,
         "ent_coef": 0.01,
         "max_grad_norm": 0.5,
-        "policy_epochs": 1,
+        "policy_epochs": 32,
         "aux_epochs": 6,
         "kl_coef": 1.0,
         "num_aux_grad_accum": 1,
