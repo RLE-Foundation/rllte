@@ -2,7 +2,7 @@
 
 
 ## BaseAgent
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L9)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L10)
 ```python 
 BaseAgent(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -58,8 +58,19 @@ Set the train mode.
 
 None.
 
-### .act
+### .integrate
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L86)
+```python
+.integrate(
+   **kwargs
+)
+```
+
+---
+Integrate agent and other modules (encoder, reward, ...) together
+
+### .act
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L90)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -82,12 +93,54 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L99)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L103)
 ```python
 .update(
-   *kwargs
+   **kwargs
 )
 ```
 
 ---
 Update agent and return training metrics such as loss functions.
+
+### .save
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L107)
+```python
+.save(
+   path: Path
+)
+```
+
+---
+Save models.
+
+
+**Args**
+
+* **path** (path) : Storage path.
+
+
+**Returns**
+
+None.
+
+### .load
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L118)
+```python
+.load(
+   path: Path
+)
+```
+
+---
+Load initial parameters.
+
+
+**Args**
+
+* **path** (path) : Import path.
+
+
+**Returns**
+
+None.

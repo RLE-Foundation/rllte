@@ -2,10 +2,13 @@
 
 
 ## Performance
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L9)
 ```python 
 Performance(
-   scores: np.ndarray
+   scores: np.ndarray, get_ci: bool = False, method: str = 'percentile',
+   task_bootstrap: bool = False, reps: int = 50000,
+   confidence_interval_size: float = 0.95,
+   random_state: Optional[random.RandomState] = None
 )
 ```
 
@@ -19,6 +22,14 @@ https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 
 * **scores** (NdArray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m`.
+* **get_ci** (bool) : Compute CIs or not.
+* **method** (str) :  One of `basic`, `percentile`, `bc` (identical to `debiased`,
+    `bias-corrected`), or `bca`.
+* **task_bootstrap** (bool) :  Whether to perform bootstrapping over tasks in addition to
+    runs. Defaults to False. See `StratifiedBoostrap` for more details.
+* **reps** (int) : Number of bootstrap replications.
+* **confidence_interval_size** (float) : Coverage of confidence interval.
+* **random_state** (int) : If specified, ensures reproducibility in uncertainty estimates.
 
 
 **Returns**
@@ -29,28 +40,28 @@ Performance evaluator.
 **Methods:**
 
 
-### .agg_mean
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L27)
+### .aggregate_mean
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L47)
 ```python
-.agg_mean()
+.aggregate_mean()
 ```
 
 ---
 Computes mean of sample mean scores per task.
 
-### .agg_median
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L32)
+### .aggregate_median
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L61)
 ```python
-.agg_median()
+.aggregate_median()
 ```
 
 ---
 Computes median of sample mean scores per task.
 
-### .agg_og
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L37)
+### .aggregate_og
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L75)
 ```python
-.agg_og(
+.aggregate_og(
    gamma: float = 1.0
 )
 ```
@@ -69,20 +80,34 @@ to `gamma`.
 
 Optimality gap at threshold `gamma`.
 
-### .agg_iqm
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L49)
+### .aggregate_iqm
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L96)
 ```python
-.agg_iqm()
+.aggregate_iqm()
 ```
 
 ---
 Computes the interquartile mean across runs and tasks.
 
-### .describe
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L53)
+### .get_interval_estimates
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L109)
 ```python
-.describe()
+.get_interval_estimates(
+   scores: np.array, metric: Callable
+)
 ```
 
 ---
-Compute all the evaluation metrics.
+Computes interval estimation of the above performance evaluators.
+
+
+**Args**
+
+* **scores** (NdArray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
+    represent the score on run `n` of task `m`.
+* **metric** (Callable) : One of the above performance evaluators used for estimation.
+
+
+**Returns**
+
+Confidence intervals.

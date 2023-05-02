@@ -1,5 +1,5 @@
 sources_dir: docs/api_docs
-templates_dir:
+templates_dir: docs/templates
 repo: https://github.com/RLE-Foundation/Hsuanwu
 version: main
 pages:
@@ -255,6 +255,7 @@ pages:
     source: hsuanwu/xplore/distribution/kl.py
     functions:
       - kl_categorical_categorical
+      - kl_diagonal_gaussian_diagonal_gaussian
   - page: env/utils.md
     source: hsuanwu/env/utils.py
     classes:

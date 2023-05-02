@@ -69,10 +69,10 @@ Add sampled transitions into storage.
 
 None.
 
-### .reset
+### .update
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L120)
 ```python
-.reset()
+.update()
 ```
 
 ---

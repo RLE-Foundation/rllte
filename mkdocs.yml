@@ -131,6 +131,7 @@ nav:
         - REVD: api_docs/xplore/reward/revd.md
 
       - augmentation:
+        - AutoAugment: api_docs/xplore/augmentation/auto_augment.md
         - BaseAugmentation: api_docs/xplore/augmentation/base.md
         - ElasticTransform: api_docs/xplore/augmentation/elastic_transform.md
         - GaussianNoise: api_docs/xplore/augmentation/gaussian_noise.md
@@ -160,6 +161,7 @@ nav:
         - NormalNoise: api_docs/xplore/distribution/normal_noise.md
         - OrnsteinUhlenbeckNoise: api_docs/xplore/distribution/ornstein_uhlenbeck_noise.md
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
+        - kl: api_docs/xplore/distribution/kl.md
     
     - Env:
       - make_atari_env: api_docs/env/atari/__init__.md

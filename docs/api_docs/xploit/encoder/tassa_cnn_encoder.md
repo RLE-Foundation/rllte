@@ -33,7 +33,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/tassa_cnn_encoder.py\#L52)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/tassa_cnn_encoder.py\#L51)
 ```python
 .forward(
    obs: th.Tensor

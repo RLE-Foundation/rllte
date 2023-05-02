@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L170)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L125)
 ```python 
 IMPALA(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -44,7 +44,7 @@ IMPALA distance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L219)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L179)
 ```python
 .train(
    training: bool = True
@@ -64,8 +64,19 @@ Set the train mode.
 
 None.
 
+### .integrate
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L192)
+```python
+.integrate(
+   **kwargs
+)
+```
+
+---
+Integrate agent and other modules (encoder, reward, ...) together
+
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L232)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L209)
 ```python
 .act(
    *kwargs
@@ -76,7 +87,7 @@ None.
 Sample actions based on observations.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L237)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L214)
 ```python
 .update(
    cfgs: omegaconf.DictConfig, actor_model: nn.Module, learner_model: nn.Module,
@@ -105,3 +116,45 @@ Update the learner model.
 **Returns**
 
 Training metrics.
+
+### .save
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L284)
+```python
+.save(
+   path: Path
+)
+```
+
+---
+Save models.
+
+
+**Args**
+
+* **path** (Path) : Storage path.
+
+
+**Returns**
+
+None.
+
+### .load
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L296)
+```python
+.load(
+   path: str
+)
+```
+
+---
+Load initial parameters.
+
+
+**Args**
+
+* **path** (str) : Import path.
+
+
+**Returns**
+
+None.

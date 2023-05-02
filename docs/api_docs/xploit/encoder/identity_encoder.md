@@ -30,7 +30,7 @@ Identity encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/identity_encoder.py\#L30)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/identity_encoder.py\#L31)
 ```python
 .forward(
    obs: th.Tensor

@@ -2,7 +2,7 @@
 
 
 ## NStepReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L68)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L191)
 ```python 
 NStepReplayStorage(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -44,29 +44,8 @@ N-step replay storage.
 **Methods:**
 
 
-### .get_batch_size
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L126)
-```python
-.get_batch_size()
-```
-
-
-### .get_num_workers
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L130)
-```python
-.get_num_workers()
-```
-
-
-### .get_pin_memory
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L134)
-```python
-.get_pin_memory()
-```
-
-
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L141)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L252)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -91,10 +70,21 @@ Add sampled transitions into storage.
 
 None.
 
-### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L214)
+### .replay_iter
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L284)
 ```python
-.sample()
+.replay_iter()
+```
+
+---
+Create iterable dataloader.
+
+### .sample
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L290)
+```python
+.sample(
+   step: int
+)
 ```
 
 ---
@@ -103,9 +93,20 @@ Generate samples.
 
 **Args**
 
-None.
+* **step** (int) : Global training step.
 
 
 **Returns**
 
 Batched samples.
+
+### .update
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L301)
+```python
+.update(
+   *args
+)
+```
+
+---
+Update the storage

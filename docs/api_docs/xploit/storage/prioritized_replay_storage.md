@@ -107,11 +107,11 @@ Sample from the storage.
 
 Batched samples.
 
-### .update_priorities
+### .update
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L133)
 ```python
-.update_priorities(
-   indices: np.ndarray, priorities: np.ndarray
+.update(
+   metrics: Dict
 )
 ```
 
@@ -121,8 +121,9 @@ Update the priorities.
 
 **Args**
 
-* **indices** (NdArray) : The indices of current batch data.
-* **priorities** (NdArray) : The priorities of current batch data.
+* **metrics** (Dict) : Training metrics from agent to udpate the priorities:
+    indices (NdArray): The indices of current batch data.
+    priorities (NdArray): The priorities of current batch data.
 
 
 **Returns**

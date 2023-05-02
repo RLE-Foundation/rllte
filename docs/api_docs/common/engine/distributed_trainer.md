@@ -2,7 +2,7 @@
 
 
 ## DistributedTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L112)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L126)
 ```python 
 DistributedTrainer(
    cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
@@ -30,7 +30,7 @@ Distributed trainer instance.
 
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L167)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L171)
 ```python
 .act(
    cfgs: omegaconf.DictConfig, logger: Logger, gym_env: gym.Env, actor_idx: int,
@@ -61,7 +61,7 @@ Sampling function for each actor.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L237)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L241)
 ```python
 .train()
 ```
@@ -70,7 +70,7 @@ None.
 Training function
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L347)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L363)
 ```python
 .test()
 ```
@@ -79,7 +79,7 @@ Training function
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L351)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/distributed_trainer.py\#L384)
 ```python
 .save()
 ```

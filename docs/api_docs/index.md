@@ -16,7 +16,7 @@
 - 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
 - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
-Join the development community for issues and discussions:
+Join the developer community for issues and discussions:
 |Slack|QQ|GitHub|
 |:-:|:-:|:-:|
 |<a href="https://app.slack.com/client/T054J4NJXP0/C054T78QZ9A"><img src='./docs/assets/images/slack.png' style="width: 50%" ></a>|<img src='./docs/assets/images/qq.jpg' style="width: 65%">|<a href="https://github.com/RLE-Foundation/Hsuanwu/issues"><img src='./docs/assets/images/github_issues.png' style="width: 50%"></a>|
@@ -40,6 +40,7 @@ Join the development community for issues and discussions:
   - [Roadmap](#roadmap)
   - [Project Structure](#project-structure)
   - [RL Agents](#rl-agents)
+  - [Intrinsic Reward Modules](#intrinsic-reward-modules)
 - [Model Zoo](#model-zoo)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -47,6 +48,8 @@ Join the development community for issues and discussions:
 
 # Quick Start
 ## Installation
+- Prerequisites
+
 Currently, Hsuanwu requires `Python>=3.8`, user can create an virtual environment by
 ``` sh
 conda create -n hsuanwu python=3.8
@@ -134,8 +137,8 @@ See the project structure below:
 </div>
 
 - **[Common](https://docs.hsuanwu.dev/common_index/)**: Auxiliary modules like trainer and logger.
-    + **Engine**: Engine for building Hsuanwu application.
-    + **Logger**: Logger for managing output information.
+    + **Engine**: *Engine for building Hsuanwu application.*
+    + **Logger**: *Logger for managing output information.*
 
 - **[Xploit](https://docs.hsuanwu.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
@@ -143,9 +146,9 @@ See the project structure below:
     + **Storage**: *Storage for storing collected experiences.*
 
 - **[Xplore](https://docs.hsuanwu.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
-    + **Augmentation**: PyTorch.nn-like modules for observation augmentation.
-    + **Distribution**: Distributions for sampling actions.
-    + **Reward**: Intrinsic reward modules for enhancing exploration.
+    + **Augmentation**: *PyTorch.nn-like modules for observation augmentation.*
+    + **Distribution**: *Distributions for sampling actions.*
+    + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
 - **[Evaluation](https://docs.hsuanwu.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
 
@@ -155,7 +158,7 @@ See the project structure below:
 
 - **[Deployment](https://docs.hsuanwu.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
-For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/overview/api)
+For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
 
 ## RL Agents
 |Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
@@ -176,7 +179,26 @@ For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/ap
 > - `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
 > - `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
+## Intrinsic Reward Modules
+| Module | Remark | Repr.  | Visual | Reference | 
+|:-|:-|:-|:-|:-|
+| PseudoCounts | Count-Based exploration |✔️|✔️|[Never Give Up: Learning Directed Exploration Strategies](https://arxiv.org/pdf/2002.06038) |
+| ICM  | Curiosity-driven exploration  | ✔️|✔️| [Curiosity-Driven Exploration by Self-Supervised Prediction](http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf) | 
+| RND  | Count-based exploration  | ❌|✔️| [Exploration by Random Network Distillation](https://arxiv.org/pdf/1810.12894.pdf) | 
+| GIRM | Curiosity-driven exploration  | ✔️ |✔️| [Intrinsic Reward Driven Imitation Learning via Generative Model](http://proceedings.mlr.press/v119/yu20d/yu20d.pdf)|
+| NGU | Memory-based exploration  | ✔️  |✔️| [Never Give Up: Learning Directed Exploration Strategies](https://arxiv.org/pdf/2002.06038) | 
+| RIDE| Procedurally-generated environment | ✔️ |✔️| [RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments](https://arxiv.org/pdf/2002.12292)|
+| RE3  | Entropy Maximization | ❌ |✔️| [State Entropy Maximization with Random Encoders for Efficient Exploration](http://proceedings.mlr.press/v139/seo21a/seo21a.pdf) |
+| RISE  | Entropy Maximization  | ❌  |✔️| [Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning](https://ieeexplore.ieee.org/abstract/document/9802917/) | 
+| REVD  | Divergence Maximization | ❌  |✔️| [Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning](https://openreview.net/pdf?id=V2pw1VYMrDo)|
+|ProtoRL<sup>🐌</sup>| Entropy Maximization | ✔️ | ✔️ | [Reinforcement Learning with Prototypical Representations](http://proceedings.mlr.press/v139/yarats21a/yarats21a.pdf) |
+|APS<sup>🐌</sup>| Skill Discovery | ✔️ | ✔️ | [APS: Active Pretraining with Successor Features](http://proceedings.mlr.press/v139/liu21b/liu21b.pdf) |
 
+> - 🐌: Developing.
+> - `Repr.`: The method involves representation learning.
+> - `Visual`: The method works well in visual RL.
+
+See [Tutorials: Use intrinsic reward and observation augmentation](https://hub.hsuanwu.dev/tutorials/data_augmentation.md) for usage examples.
 
 # Model Zoo
 Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/)

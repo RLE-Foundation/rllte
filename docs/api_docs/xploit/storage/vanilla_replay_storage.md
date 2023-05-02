@@ -82,3 +82,14 @@ Sample from the storage.
 **Returns**
 
 Batched samples.
+
+### .update
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_replay_storage.py\#L115)
+```python
+.update(
+   *args
+)
+```
+
+---
+Update the storage

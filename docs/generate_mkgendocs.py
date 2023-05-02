@@ -16,7 +16,7 @@ from hsuanwu.xploit import encoder, agent, storage
 from hsuanwu.xplore import distribution, reward, augmentation
 
 pages = {
-    'sources_dir': 'docs/api',
+    'sources_dir': 'docs/api_docs',
     'templates_dir': None,
     'repo': 'https://github.com/RLE-Foundation/Hsuanwu',
     'version': 'main',

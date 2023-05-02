@@ -2,7 +2,7 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L60)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L62)
 ```python 
 PPO(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -51,7 +51,7 @@ PPO learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L129)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L131)
 ```python
 .train(
    training: bool = True
@@ -71,8 +71,19 @@ Set the train mode.
 
 None.
 
+### .integrate
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L145)
+```python
+.integrate(
+   **kwargs
+)
+```
+
+---
+Integrate agent and other modules (encoder, reward, ...) together
+
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L143)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L157)
 ```python
 .get_value(
    obs: th.Tensor
@@ -93,7 +104,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L155)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L169)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -116,7 +127,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L174)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L188)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -136,3 +147,45 @@ Update the learner.
 **Returns**
 
 Training metrics such as actor loss, critic_loss, etc.
+
+### .save
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L289)
+```python
+.save(
+   path: Path
+)
+```
+
+---
+Save models.
+
+
+**Args**
+
+* **path** (Path) : Storage path.
+
+
+**Returns**
+
+None.
+
+### .load
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L306)
+```python
+.load(
+   path: str
+)
+```
+
+---
+Load initial parameters.
+
+
+**Args**
+
+* **path** (str) : Import path.
+
+
+**Returns**
+
+None.

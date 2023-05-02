@@ -2,7 +2,7 @@
 
 
 ## HsuanwuEngine
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/__init__.py\#L11)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/__init__.py\#L12)
 ```python 
 HsuanwuEngine(
    cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
@@ -30,7 +30,7 @@ Hsuanwu engine instance.
 
 
 ### .invoke
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/__init__.py\#L38)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/__init__.py\#L39)
 ```python
 .invoke()
 ```

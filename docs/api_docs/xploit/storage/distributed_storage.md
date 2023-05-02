@@ -39,7 +39,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L69)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L73)
 ```python
 .add(
    *args
@@ -50,7 +50,7 @@ Vanilla rollout storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L73)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L77)
 ```python
 .sample(
    device: th.device, batch_size: int, free_queue: th.multiprocessing.SimpleQueue,
@@ -77,3 +77,14 @@ Sample transitions from the storage.
 **Returns**
 
 Batched samples.
+
+### .update
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L112)
+```python
+.update(
+   *args
+)
+```
+
+---
+Update the storage

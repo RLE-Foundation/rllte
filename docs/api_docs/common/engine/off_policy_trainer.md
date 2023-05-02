@@ -2,7 +2,7 @@
 
 
 ## OffPolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L15)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L16)
 ```python 
 OffPolicyTrainer(
    cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
@@ -29,17 +29,8 @@ Off-policy trainer instance.
 **Methods:**
 
 
-### .replay_iter
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L81)
-```python
-.replay_iter()
-```
-
----
-Create iterable dataloader.
-
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L87)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L64)
 ```python
 .train()
 ```
@@ -48,7 +39,7 @@ Create iterable dataloader.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L158)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L129)
 ```python
 .test()
 ```
@@ -57,7 +48,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L186)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L157)
 ```python
 .save()
 ```
