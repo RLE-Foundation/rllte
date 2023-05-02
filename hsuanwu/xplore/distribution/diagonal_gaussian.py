@@ -18,8 +18,8 @@ class DiagonalGaussian(BaseDistribution):
     def __init__(self, mu: th.Tensor, sigma: th.Tensor) -> None:
         super().__init__()
 
-        self._mu = mu
-        self._sigma = sigma
+        self.loc = mu
+        self.scale = sigma
         self.dist = pyd.Normal(loc=mu, scale=sigma)
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008

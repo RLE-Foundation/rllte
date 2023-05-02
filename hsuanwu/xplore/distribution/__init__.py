@@ -2,6 +2,7 @@ from .base import BaseDistribution as BaseDistribution
 from .categorical import Categorical as Categorical
 from .diagonal_gaussian import DiagonalGaussian as DiagonalGaussian
 from .kl import kl_categorical_categorical as kl_categorical_categorical
+from .kl import kl_diagonal_gaussian_diagonal_gaussian as kl_diagonal_gaussian_diagonal_gaussian
 from .normal_noise import NormalNoise as NormalNoise
 from .ornstein_uhlenbeck_noise import OrnsteinUhlenbeckNoise as OrnsteinUhlenbeckNoise
 from .squashed_normal import SquashedNormal as SquashedNormal

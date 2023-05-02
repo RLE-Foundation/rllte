@@ -50,7 +50,7 @@ DEFAULT_CFGS = {
         "vf_coef": 0.5,
         "ent_coef": 0.01,
         "max_grad_norm": 0.5,
-        "policy_epochs": 32,
+        "policy_epochs": 1,
         "aux_epochs": 6,
         "kl_coef": 1.0,
         "num_aux_grad_accum": 1,
@@ -134,7 +134,8 @@ class PPG(BaseAgent):
         # auxiliary storage
         self.aux_obs = None
         self.aux_returns = None
-        self.aux_logits = None
+        # self.aux_logits = None
+        self.aux_policy_outputs = None
 
         # create models
         self.encoder = None
@@ -236,15 +237,37 @@ class PPG(BaseAgent):
                 device="cpu",
                 dtype=th.float32,
             )
-            self.aux_logits = th.empty(
-                size=(
-                    num_steps,
-                    num_envs * self.policy_epochs,
-                    self.action_shape[0],
-                ),
-                device="cpu",
-                dtype=th.float32,
-            )
+            # self.aux_logits = th.empty(
+            #     size=(
+            #         num_steps,
+            #         num_envs * self.policy_epochs,
+            #         self.action_shape[0],
+            #     ),
+            #     device="cpu",
+            #     dtype=th.float32,
+            # )
+            if self.action_type == "Discrete":
+                self.aux_policy_outputs = th.empty(
+                    size=(
+                        num_steps,
+                        num_envs * self.policy_epochs,
+                        self.action_shape[0],
+                    ),
+                    device="cpu",
+                    dtype=th.float32,
+                )
+            elif self.action_type == "Box":
+                self.aux_policy_outputs = th.empty(
+                    size=(
+                        num_steps,
+                        num_envs * self.policy_epochs,
+                        self.action_shape[0] * 2,
+                    ),
+                    device="cpu",
+                    dtype=th.float32,
+                )
+            else:
+                raise NotImplementedError
             self.num_aux_rollouts = num_envs * self.policy_epochs
             self.num_envs = num_envs
             self.num_steps = num_steps
@@ -347,11 +370,16 @@ class PPG(BaseAgent):
                     .to(self.device)
                     .reshape(-1, *self.aux_obs.size()[2:])
                 )
-                # get logits
-                logits = self.ac.get_logits(self.encoder(aux_obs)).cpu().clone()
-                self.aux_logits[:, idx * self.num_envs : (idx + 1) * self.num_envs] = logits.reshape(
-                    self.num_steps, self.num_envs, self.aux_logits.size()[2]
+                # get policy outputs
+                policy_outputs = self.ac.get_policy_outputs(self.encoder(aux_obs)).cpu().clone()
+                self.aux_policy_outputs[:, idx * self.num_envs : (idx + 1) * self.num_envs] = policy_outputs.reshape(
+                    self.num_steps, self.num_envs, self.aux_policy_outputs.size()[2]
                 )
+                # # get logits
+                # logits = self.ac.get_logits(self.encoder(aux_obs)).cpu().clone()
+                # self.aux_logits[:, idx * self.num_envs : (idx + 1) * self.num_envs] = logits.reshape(
+                #     self.num_steps, self.num_envs, self.aux_logits.size()[2]
+                # )
 
         total_aux_value_loss = 0.0
         total_kl_loss = 0.0
@@ -365,13 +393,21 @@ class PPG(BaseAgent):
                 batch_inds = aux_inds[idx : idx + self.num_aux_mini_batch]
                 batch_aux_obs = self.aux_obs[:, batch_inds].reshape(-1, *self.aux_obs.size()[2:]).to(self.device)
                 batch_aux_returns = self.aux_returns[:, batch_inds].reshape(-1, *self.aux_returns.size()[2:]).to(self.device)
-                batch_aux_logits = self.aux_logits[:, batch_inds].reshape(-1, *self.aux_logits.size()[2:]).to(self.device)
+                # batch_aux_logits = self.aux_logits[:, batch_inds].reshape(-1, *self.aux_logits.size()[2:]).to(self.device)
+                batch_aux_policy_outputs = self.aux_policy_outputs[:, batch_inds].reshape(
+                    -1, *self.aux_policy_outputs.size()[2:]).to(self.device)
 
-                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(self.encoder(batch_aux_obs))
+                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(
+                    self.encoder(batch_aux_obs))
 
                 new_values = new_values.view(-1)
                 new_aux_values = new_aux_values.view(-1)
-                old_dist = self.dist(logits=batch_aux_logits)
+                if self.action_type == "Discrete":
+                    old_dist = self.dist(batch_aux_policy_outputs)
+                elif self.action_type == 'Box':
+                    old_dist = self.dist(*batch_aux_policy_outputs.chunk(2, dim=1))
+                else:
+                    raise NotImplementedError
                 # divergence loss
                 kl_loss = th.distributions.kl_divergence(old_dist, new_dist).mean()
                 # value loss

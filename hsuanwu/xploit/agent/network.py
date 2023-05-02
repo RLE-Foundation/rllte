@@ -206,11 +206,12 @@ class ActorCritic(nn.Module):
             super().__init__()
             self.actor = nn.Linear(hidden_dim, action_shape[0])
 
-        def get_dist(self, obs: th.Tensor, dist: Distribution) -> Distribution:
-            mu = self.actor(obs)
-            return dist(mu)
+        def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
+            logits = self.actor(obs)
+            return (logits, )
         
         def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
             return self.actor(obs)
 
     class BoxActor(nn.Module):
@@ -221,12 +222,13 @@ class ActorCritic(nn.Module):
             self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
             self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
 
-        def get_dist(self, obs: th.Tensor, dist: Distribution) -> Distribution:
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
             mu = self.actor_mu(obs)
             logstd = self.actor_logstd.expand_as(mu)
-            return dist(mu, logstd.exp())
+            return (mu, logstd.exp())
         
         def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
             return self.actor_mu(obs)
 
     def __init__(
@@ -262,7 +264,7 @@ class ActorCritic(nn.Module):
         self.apply(utils.network_init)
     
     def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Get actions.
+        """Only for model inference
 
         Args:
             obs (Tensor): Observations.
@@ -295,7 +297,8 @@ class ActorCritic(nn.Module):
             Estimated values.
         """
         h = self.trunk(obs)
-        dist = self.actor.get_dist(h, self.dist)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        dist = self.dist(*policy_outputs)
 
         return dist.mean
 
@@ -310,7 +313,8 @@ class ActorCritic(nn.Module):
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
         h = self.trunk(obs)
-        dist = self.actor.get_dist(h, self.dist)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        dist = self.dist(*policy_outputs)
         if actions is None:
             actions = dist.sample()
 
@@ -329,9 +333,15 @@ class ActorCritic(nn.Module):
             Distribution, estimated values, auxiliary estimated values.
         """
         h = self.trunk(obs)
-        dist = self.actor.get_dist(h, self.dist)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        dist = self.dist(*policy_outputs)
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
+
+    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
+        h = self.trunk(obs)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        return th.cat(policy_outputs, dim=1)
 
     def get_logits(self, obs: th.Tensor) -> Distribution:
         """Get the log-odds of sampling.
