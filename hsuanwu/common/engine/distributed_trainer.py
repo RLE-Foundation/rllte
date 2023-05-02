@@ -41,7 +41,7 @@ class Environment:
             self.action_type = "Box"
             self.action_dim = env.action_space.shape[0]
         else:
-            raise NotImplementedError('Unsupported action type!')
+            raise NotImplementedError("Unsupported action type!")
 
     def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
@@ -76,11 +76,11 @@ class Environment:
         """
         if self.action_type == "Discrete":
             _action = action.item()
-        elif self.action_type == 'Box':
+        elif self.action_type == "Box":
             _action = action.squeeze(0).cpu().numpy()
         else:
-            raise NotImplementedError('Unsupported action type!')
-        
+            raise NotImplementedError("Unsupported action type!")
+
         obs, reward, terminated, truncated, info = self.env.step(_action)
         self.episode_step += 1
         self.episode_return += reward
@@ -142,7 +142,7 @@ class DistributedTrainer(BasePolicyTrainer):
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
         actor_encoder = hydra.utils.instantiate(self._cfgs.encoder)
         learner_encoder = hydra.utils.instantiate(self._cfgs.encoder)
-        
+
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
         self._train_env = self._train_env.envs
@@ -334,7 +334,7 @@ class DistributedTrainer(BasePolicyTrainer):
                     }
                     self._logger.train(msg=train_metrics)
                     log_times += 1
-                
+
                 # if log_times % 50 == 0:
                 #     episode_time, total_time = self._timer.reset()
                 #     test_metrics = self.test()
@@ -365,7 +365,7 @@ class DistributedTrainer(BasePolicyTrainer):
         env = Environment(self._test_env.envs[0])
         seed = self._cfgs.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
         env_output = env.reset(seed)
-        
+
         episode_rewards = list()
         episode_steps = list()
         while len(episode_rewards) < self._cfgs.num_test_episodes:
@@ -373,9 +373,9 @@ class DistributedTrainer(BasePolicyTrainer):
                 actor_output, _ = self._agent.actor.get_action(env_output, training=False)
             env_output = env.step(actor_output["action"])
             if env_output["terminated"].item() or env_output["truncated"].item():
-                episode_rewards.append(env_output['episode_return'].item())
-                episode_steps.append(env_output['episode_step'].item())
-        
+                episode_rewards.append(env_output["episode_return"].item())
+                episode_steps.append(env_output["episode_step"].item())
+
         return {
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),

@@ -26,7 +26,7 @@ class IdentityEncoder(BaseEncoder):
         obs_shape = observation_space.shape
         assert len(obs_shape) == 1
         self.trunk = nn.Sequential(nn.Identity(obs_shape[0]))
-        self.unused = nn.Linear(1, 1) # for avoiding the ValueError: optimizer got an empty parameter list
+        self.unused = nn.Linear(1, 1)  # for avoiding the ValueError: optimizer got an empty parameter list
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)

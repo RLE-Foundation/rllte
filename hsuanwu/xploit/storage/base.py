@@ -56,7 +56,7 @@ class BaseStorage(ABC):
     @abstractmethod
     def sample(self, *args) -> Any:
         """Sample from the storage."""
-    
+
     @abstractmethod
     def update(self, *args) -> None:
         """Update the storage"""

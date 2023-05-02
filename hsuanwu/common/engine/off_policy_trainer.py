@@ -48,7 +48,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
         aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device) if self._cfgs.use_aug else None
         ## TODO: get intrinsic reward
         irs = hydra.utils.instantiate(self._cfgs.reward) if self._cfgs.use_irs else None
-        
+
         # TODO: Integrate agent and modules
         self._agent.integrate(encoder=encoder, dist=dist, aug=aug, irs=irs)
         # TODO: load initial parameters

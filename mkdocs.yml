@@ -81,7 +81,6 @@ nav:
   - API Documentation:
     - Overview: api.md
     - Common: 
-      - Common Overview: overview/common_index/index.md
       - Engine: 
         - HsuanwuEngine: api_docs/common/engine/__init__.md
         - BasePolicyTrainer: api_docs/common/engine/base_policy_trainer.md
@@ -92,7 +91,6 @@ nav:
       - Timer: api_docs/common/timer.md
 
     - Xploit:
-      - Xploit Overview: overview/xploit_index/index.md
       - agent:
         - BaseAgent: api_docs/xploit/agent/base.md
         - SAC: api_docs/xploit/agent/sac.md
@@ -120,7 +118,6 @@ nav:
         - PrioritizedReplayStorage: api_docs/xploit/storage/prioritized_replay_storage.md
 
     - Xplore:
-      - Xplore Overview: overview/xplore_index/index.md
       - reward:
         - BaseIntrinsicRewardModule: api_docs/xplore/reward/base.md
         - PseudoCounts: api_docs/xplore/reward/pseudo_counts.md
@@ -165,7 +162,6 @@ nav:
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
     
     - Env:
-      - Env Overview: overview/env_index/index.md
       - make_atari_env: api_docs/env/atari/__init__.md
       - make_bullet_env: api_docs/env/bullet/__init__.md
       - make_dmc_env: api_docs/env/dmc/__init__.md
@@ -175,13 +171,10 @@ nav:
         - HsuanwuEnvWrapper: api_docs/env/utils.md
     
     - Evaluation:
-      - Evaluation Overview: overview/evaluation_index/index.md
       - Comparison: api_docs/evaluation/comparison.md
       - Performance: api_docs/evaluation/performance.md
 
-    - Pre-training: 
-      - Pre-training Overview: overview/pretraining_index/index.md
+    - Pre-training: tutorials/pre-training.md
     
-    - Deployment: 
-      - Deployment Overview: overview/deployment_index/index.md
+    - Deployment: tutorials/deployment.md
   - Benchmarks: benchmarks.md

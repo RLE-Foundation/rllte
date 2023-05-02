@@ -81,11 +81,10 @@ class BaseAgent(ABC):
             None.
         """
         self.training = training
-    
+
     @abstractmethod
     def integrate(self, **kwargs) -> None:
-        """Integrate agent and other modules (encoder, reward, ...) together
-        """
+        """Integrate agent and other modules (encoder, reward, ...) together"""
 
     @abstractmethod
     def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
@@ -110,11 +109,11 @@ class BaseAgent(ABC):
 
         Args:
             path (path): Storage path.
-        
+
         Returns:
             None.
         """
-    
+
     @abstractmethod
     def load(self, path: Path) -> None:
         """Load initial parameters.

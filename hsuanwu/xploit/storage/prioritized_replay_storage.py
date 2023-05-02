@@ -134,7 +134,7 @@ class PrioritizedReplayStorage(BaseStorage):
         """Update the priorities.
 
         Args:
-            metrics (Dict): Training metrics from agent to udpate the priorities: 
+            metrics (Dict): Training metrics from agent to udpate the priorities:
                 indices (NdArray): The indices of current batch data.
                 priorities (NdArray): The priorities of current batch data.
 
@@ -142,5 +142,5 @@ class PrioritizedReplayStorage(BaseStorage):
             None.
         """
         if "indices" in metrics and "priorities" in metrics:
-            for i, priority in zip(metrics['indices'], metrics['priorities']):
+            for i, priority in zip(metrics["indices"], metrics["priorities"]):
                 self._priorities[i] = abs(priority)

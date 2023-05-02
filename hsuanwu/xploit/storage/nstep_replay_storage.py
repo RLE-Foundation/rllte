@@ -187,6 +187,7 @@ class NStepReplayDataset(IterableDataset):
         while True:
             yield self._sample()
 
+
 class NStepReplayStorage(BaseStorage):
     """Replay storage for off-policy algorithms (N-step returns supported).
 
@@ -210,6 +211,7 @@ class NStepReplayStorage(BaseStorage):
     Returns:
         N-step replay storage.
     """
+
     def __init__(
         self,
         observation_space: Union[gym.Space, DictConfig],
@@ -233,9 +235,9 @@ class NStepReplayStorage(BaseStorage):
             n_step=n_step,
             discount=discount,
             fetch_every=fetch_every,
-            save_snapshot=save_snapshot
+            save_snapshot=save_snapshot,
         )
-        
+
         # make data loader
         self._replay_loader = th.utils.data.DataLoader(
             self._replay_dataset,
@@ -246,7 +248,7 @@ class NStepReplayStorage(BaseStorage):
         )
 
         self._replay_iter = None
-    
+
     def add(
         self,
         obs: Any,
@@ -277,7 +279,7 @@ class NStepReplayStorage(BaseStorage):
             raise ValueError("When using NStepReplayStorage, please put the discount factor in 'info'!")
 
         self._replay_storage.add(obs, action, reward, terminated, discount)
-    
+
     @property
     def replay_iter(self) -> Iterable:
         """Create iterable dataloader."""

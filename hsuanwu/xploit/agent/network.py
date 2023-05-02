@@ -90,14 +90,14 @@ class DeterministicActor(nn.Module):
     def __init__(self, action_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
         self.policy = nn.Sequential(
-            nn.LayerNorm(feature_dim), 
+            nn.LayerNorm(feature_dim),
             nn.Tanh(),
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, action_space.shape[0]),
-            nn.Tanh()
+            nn.Tanh(),
         )
         # placeholder for distribution
         self.dist = None
@@ -120,13 +120,13 @@ class DeterministicActor(nn.Module):
         self.dist.reset(mu, step)
 
         return self.dist
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Get actions.
 
         Args:
             obs (Tensor): Observations.
-        
+
         Returns:
             Actions.
         """
@@ -208,8 +208,8 @@ class ActorCritic(nn.Module):
 
         def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
             logits = self.actor(obs)
-            return (logits, )
-        
+            return (logits,)
+
         def forward(self, obs: th.Tensor) -> th.Tensor:
             """Only for model inference"""
             return self.actor(obs)
@@ -226,7 +226,7 @@ class ActorCritic(nn.Module):
             mu = self.actor_mu(obs)
             logstd = self.actor_logstd.expand_as(mu)
             return (mu, logstd.exp())
-        
+
         def forward(self, obs: th.Tensor) -> th.Tensor:
             """Only for model inference"""
             return self.actor_mu(obs)
@@ -262,7 +262,7 @@ class ActorCritic(nn.Module):
         self.dist = None
 
         self.apply(utils.network_init)
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference
 
@@ -455,15 +455,11 @@ class DiscreteLSTMActor(nn.Module):
         baseline = baseline.view(T, B)
         action = action.view(T, B)
 
-        return (
-            dict(policy_outputs=policy_logits, 
-                 baseline=baseline, 
-                 action=action),
-            lstm_state
-            )
+        return (dict(policy_outputs=policy_logits, baseline=baseline, action=action), lstm_state)
 
     def get_dist(self, logits: th.Tensor) -> Distribution:
         return self.dist(logits)
+
 
 class BoxLSTMActor(nn.Module):
     def __init__(
@@ -532,9 +528,9 @@ class BoxLSTMActor(nn.Module):
         features = F.relu(self.encoder(x))
         # TODO: get one-hot last actions
 
-        lstm_input = th.cat([features, 
-                             inputs["reward"].view(T * B, 1), 
-                             inputs["last_action"].view(T * B, self.num_actions)], dim=-1)
+        lstm_input = th.cat(
+            [features, inputs["reward"].view(T * B, 1), inputs["last_action"].view(T * B, self.num_actions)], dim=-1
+        )
 
         if self.use_lstm:
             lstm_input = lstm_input.view(T, B, -1)
@@ -552,7 +548,7 @@ class BoxLSTMActor(nn.Module):
         else:
             lstm_output = lstm_input
             lstm_state = tuple()
-        
+
         mu = self.actor_mu(lstm_output)
         logstd = self.actor_logstd.expand_as(mu)
         baseline = self.baseline(lstm_output)
@@ -566,12 +562,7 @@ class BoxLSTMActor(nn.Module):
         baseline = baseline.view(T, B)
         action = action.view(T, B, self.num_actions).squeeze(0).clamp(*self.action_range)
 
-        return (
-            dict(policy_outputs=policy_outputs, 
-                baseline=baseline, 
-                action=action),
-            lstm_state
-            )
+        return (dict(policy_outputs=policy_outputs, baseline=baseline, action=action), lstm_state)
 
     def get_dist(self, outputs) -> Distribution:
         mu, logstd = outputs.chunk(2, dim=-1)

@@ -166,17 +166,16 @@ class PPG(BaseAgent):
             self.encoder.train(training)
 
     def integrate(self, **kwargs) -> None:
-        """Integrate agent and other modules (encoder, reward, ...) together
-        """
-        self.encoder = kwargs['encoder']
+        """Integrate agent and other modules (encoder, reward, ...) together"""
+        self.encoder = kwargs["encoder"]
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
         self.encoder.train()
-        self.dist = kwargs['dist']
-        self.ac.dist = kwargs['dist']
-        if kwargs['aug'] is not None:
-            self.aug = kwargs['aug']
-        if kwargs['irs'] is not None:
-            self.irs = kwargs['irs']
+        self.dist = kwargs["dist"]
+        self.ac.dist = kwargs["dist"]
+        if kwargs["aug"] is not None:
+            self.aug = kwargs["aug"]
+        if kwargs["irs"] is not None:
+            self.irs = kwargs["irs"]
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
@@ -394,17 +393,17 @@ class PPG(BaseAgent):
                 batch_aux_obs = self.aux_obs[:, batch_inds].reshape(-1, *self.aux_obs.size()[2:]).to(self.device)
                 batch_aux_returns = self.aux_returns[:, batch_inds].reshape(-1, *self.aux_returns.size()[2:]).to(self.device)
                 # batch_aux_logits = self.aux_logits[:, batch_inds].reshape(-1, *self.aux_logits.size()[2:]).to(self.device)
-                batch_aux_policy_outputs = self.aux_policy_outputs[:, batch_inds].reshape(
-                    -1, *self.aux_policy_outputs.size()[2:]).to(self.device)
+                batch_aux_policy_outputs = (
+                    self.aux_policy_outputs[:, batch_inds].reshape(-1, *self.aux_policy_outputs.size()[2:]).to(self.device)
+                )
 
-                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(
-                    self.encoder(batch_aux_obs))
+                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(self.encoder(batch_aux_obs))
 
                 new_values = new_values.view(-1)
                 new_aux_values = new_aux_values.view(-1)
                 if self.action_type == "Discrete":
                     old_dist = self.dist(batch_aux_policy_outputs)
-                elif self.action_type == 'Box':
+                elif self.action_type == "Box":
                     old_dist = self.dist(*batch_aux_policy_outputs.chunk(2, dim=1))
                 else:
                     raise NotImplementedError
@@ -439,7 +438,7 @@ class PPG(BaseAgent):
         Returns:
             None.
         """
-        if "pretrained" in str(path): # pretraining
+        if "pretrained" in str(path):  # pretraining
             th.save(self.encoder.state_dict(), path / "encoder.pth")
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
@@ -456,7 +455,7 @@ class PPG(BaseAgent):
         Returns:
             None.
         """
-        encoder_params = th.load(os.path.join(path, 'encoder.pth'), map_location=self.device)
-        actor_critic_params = th.load(os.path.join(path, 'actor_critic.pth'), map_location=self.device)
+        encoder_params = th.load(os.path.join(path, "encoder.pth"), map_location=self.device)
+        actor_critic_params = th.load(os.path.join(path, "actor_critic.pth"), map_location=self.device)
         self.encoder.load_state_dict(encoder_params)
         self.ac.load_state_dict(actor_critic_params)

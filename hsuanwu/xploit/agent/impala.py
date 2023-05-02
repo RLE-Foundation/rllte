@@ -62,10 +62,11 @@ DEFAULT_CFGS = {
 
 
 class VTraceLoss:
-    def __init__(self,
-                clip_rho_threshold=1.0,
-                clip_pg_rho_threshold=1.0,
-                ) -> None:
+    def __init__(
+        self,
+        clip_rho_threshold=1.0,
+        clip_pg_rho_threshold=1.0,
+    ) -> None:
         self.dist = None
         self.clip_rho_threshold = clip_rho_threshold
         self.clip_pg_rho_threshold = clip_pg_rho_threshold
@@ -75,30 +76,24 @@ class VTraceLoss:
         return th.exp(log_rhos)
 
     def __call__(self, batch):
-        _target_dist = batch['target_dist']
-        _behavior_dist = batch['behavior_dist']
-        _action = batch['action']
-        _baseline = batch['values']
-        _bootstrap_value = batch['bootstrap_value']
-        _values = batch['values']
-        _discounts = batch['discounts']
-        _rewards = batch['reward']
+        _target_dist = batch["target_dist"]
+        _behavior_dist = batch["behavior_dist"]
+        _action = batch["action"]
+        _baseline = batch["values"]
+        _bootstrap_value = batch["bootstrap_value"]
+        _values = batch["values"]
+        _discounts = batch["discounts"]
+        _rewards = batch["reward"]
 
         with th.no_grad():
-            rhos = self.compute_ISW(
-                target_dist=_target_dist,
-                behavior_dist=_behavior_dist,
-                action=_action
-            )
+            rhos = self.compute_ISW(target_dist=_target_dist, behavior_dist=_behavior_dist, action=_action)
             if self.clip_rho_threshold is not None:
                 clipped_rhos = th.clamp(rhos, max=self.clip_rho_threshold)
             else:
                 clipped_rhos = rhos
             cs = th.clamp(rhos, max=1.0)
             # Append bootstrapped value to get [v1, ..., v_t+1]
-            values_t_plus_1 = th.cat(
-                [_values[1:], 
-                th.unsqueeze(_bootstrap_value, 0)], dim=0)
+            values_t_plus_1 = th.cat([_values[1:], th.unsqueeze(_bootstrap_value, 0)], dim=0)
             deltas = clipped_rhos * (_rewards + _discounts * values_t_plus_1 - _values)
 
             acc = th.zeros_like(_bootstrap_value)
@@ -120,11 +115,12 @@ class VTraceLoss:
                 clipped_pg_rhos = rhos
             pg_advantages = clipped_pg_rhos * (_rewards + _discounts * vs_t_plus_1 - _values)
 
-        pg_loss = - (_target_dist.log_prob(_action) * pg_advantages).sum()
-        baseline_loss = F.mse_loss(vs, _baseline, reduction='sum') * 0.5
+        pg_loss = -(_target_dist.log_prob(_action) * pg_advantages).sum()
+        baseline_loss = F.mse_loss(vs, _baseline, reduction="sum") * 0.5
         entropy_loss = (_target_dist.entropy()).sum()
 
         return pg_loss, baseline_loss, entropy_loss
+
 
 class IMPALA(BaseAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
@@ -174,11 +170,11 @@ class IMPALA(BaseAgent):
         if self.action_type == "Discrete":
             self.actor = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
             self.learner = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-        elif self.action_type == 'Box':
+        elif self.action_type == "Box":
             self.actor = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
             self.learner = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
         else:
-            raise NotImplementedError('Unsupported action type!')
+            raise NotImplementedError("Unsupported action type!")
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
@@ -192,15 +188,14 @@ class IMPALA(BaseAgent):
         self.training = training
         self.actor.train(training)
         self.learner.train(training)
-    
+
     def integrate(self, **kwargs) -> None:
-        """Integrate agent and other modules (encoder, reward, ...) together
-        """
-        self.actor.encoder = kwargs['actor_encoder']
-        self.learner.encoder = kwargs['learner_encoder']
-        self.actor.dist = kwargs['dist']
-        self.learner.dist = kwargs['dist']
-        self.dist = kwargs['dist']
+        """Integrate agent and other modules (encoder, reward, ...) together"""
+        self.actor.encoder = kwargs["actor_encoder"]
+        self.learner.encoder = kwargs["learner_encoder"]
+        self.actor.dist = kwargs["dist"]
+        self.learner.dist = kwargs["dist"]
+        self.dist = kwargs["dist"]
         self.actor.share_memory()
         self.learner.to(self.device)
         self.opt = th.optim.RMSprop(
@@ -209,7 +204,7 @@ class IMPALA(BaseAgent):
             eps=self.eps,
         )
 
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, kwargs['lr_lambda'])
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, kwargs["lr_lambda"])
 
     def act(self, *kwargs):
         """Sample actions based on observations."""
@@ -254,13 +249,15 @@ class IMPALA(BaseAgent):
 
             discounts = (~batch["terminated"]).float() * cfgs.agent.discount
 
-            batch.update({
-                'discounts': discounts,
-                'bootstrap_value': bootstrap_value,
-                'target_dist': learner_model.get_dist(learner_outputs["policy_outputs"]),
-                'behavior_dist': learner_model.get_dist(batch["policy_outputs"]),
-                'values': learner_outputs["baseline"]
-            })
+            batch.update(
+                {
+                    "discounts": discounts,
+                    "bootstrap_value": bootstrap_value,
+                    "target_dist": learner_model.get_dist(learner_outputs["policy_outputs"]),
+                    "behavior_dist": learner_model.get_dist(batch["policy_outputs"]),
+                    "values": learner_outputs["baseline"],
+                }
+            )
 
             pg_loss, baseline_loss, entropy_loss = VTraceLoss()(batch)
             total_loss = pg_loss + cfgs.agent.baseline_coef * baseline_loss - cfgs.agent.ent_coef * entropy_loss
@@ -305,7 +302,7 @@ class IMPALA(BaseAgent):
         Returns:
             None.
         """
-        actor_params = th.load(os.path.join(path, 'actor.pth'), map_location=self.device)
-        learner_params = th.load(os.path.join(path, 'learner.pth'), map_location=self.device)
+        actor_params = th.load(os.path.join(path, "actor.pth"), map_location=self.device)
+        learner_params = th.load(os.path.join(path, "learner.pth"), map_location=self.device)
         self.actor.load_state_dict(actor_params)
         self.learner.load_state_dict(learner_params)
