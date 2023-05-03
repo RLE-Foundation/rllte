@@ -230,6 +230,21 @@ class ActorCritic(nn.Module):
         def forward(self, obs: th.Tensor) -> th.Tensor:
             """Only for model inference"""
             return self.actor_mu(obs)
+    
+    class MultiBinaryActor(nn.Module):
+        """Actor for 'MultiBinary' tasks."""
+
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor = nn.Linear(hidden_dim, action_shape[0])
+
+        def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
+            logits = self.actor(obs)
+            return (logits,)
+
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
+            return self.actor(obs)
 
     def __init__(
         self,
@@ -251,6 +266,8 @@ class ActorCritic(nn.Module):
             self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
         elif action_type == "Box":
             self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
+        elif action_type == "MultiBinary":
+            self.actor = self.MultiBinaryActor(action_shape=action_shape, hidden_dim=hidden_dim)
         else:
             raise NotImplementedError("Unsupported action type!")
 

@@ -64,6 +64,13 @@ class VanillaRolloutStorage(BaseStorage):
                 dtype=th.float32,
                 device=self._device,
             )
+        elif self._action_type == "MultiBinary":
+            self._action_dim = self._action_shape[0]
+            self.actions = th.empty(
+                size=(num_steps, num_envs, self._action_dim),
+                dtype=th.float32,
+                device=self._device,
+            )
         else:
             raise NotImplementedError
         self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)

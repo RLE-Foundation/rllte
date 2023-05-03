@@ -35,12 +35,14 @@ class BaseIntrinsicRewardModule(ABC):
         if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
             self._obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
-                self._action_shape = (int(action_space.n),)  # type: ignore[attr-defined]
+                self._action_shape = (int(action_space.n),)
                 self._action_type = "Discrete"
-
             elif action_space.__class__.__name__ == "Box":
-                self._action_shape = action_space.shape  # type: ignore[attr-defined, assignment]
+                self._action_shape = action_space.shape
                 self._action_type = "Box"
+            elif action_space.__class__.__name__ == "MultiBinary":
+                self._action_shape = action_space.shape
+                self._action_type = "MultiBinary"
             else:
                 raise NotImplementedError("Unsupported action type!")
         elif isinstance(observation_space, DictConfig) and isinstance(action_space, DictConfig):

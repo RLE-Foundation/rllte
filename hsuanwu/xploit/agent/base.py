@@ -38,16 +38,20 @@ class BaseAgent(ABC):
         if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
             self.obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
-                self.action_shape = (int(action_space.n),)  # type: ignore[attr-defined]
+                self.action_shape = (int(action_space.n),)  
                 self.action_type = "Discrete"
-                self.action_range = [0, int(action_space.n) - 1]  # type: ignore[attr-defined]
+                self.action_range = [0, int(action_space.n) - 1]  
             elif action_space.__class__.__name__ == "Box":
-                self.action_shape = action_space.shape  # type: ignore[attr-defined, list-item, assignment]
+                self.action_shape = action_space.shape  
                 self.action_type = "Box"
                 self.action_range = [
-                    float(action_space.low[0]),  # type: ignore[attr-defined, list-item]
-                    float(action_space.high[0]),  # type: ignore[attr-defined, list-item]
+                    float(action_space.low[0]),  
+                    float(action_space.high[0]),  
                 ]
+            elif action_space.__class__.__name__ == "MultiBinary":
+                self.action_shape = action_space.shape
+                self.action_type = "MultiBinary"
+                self.action_range = [0, 1]
             else:
                 raise NotImplementedError("Unsupported action type!")
         elif isinstance(observation_space, DictConfig) and isinstance(action_space, DictConfig):

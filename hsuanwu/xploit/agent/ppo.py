@@ -14,7 +14,7 @@ from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
     "storage": ["VanillaRolloutStorage"],
-    "distribution": ["Categorical", "DiagonalGaussian"],
+    "distribution": ["Categorical", "DiagonalGaussian", "Bernoulli"],
     "augmentation": [],
     "reward": [],
 }

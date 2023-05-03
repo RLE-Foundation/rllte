@@ -156,6 +156,7 @@ nav:
 
       - distribution:
         - BaseDistribution: api_docs/xplore/distribution/base.md
+        - Bernoulli: api_docs/xplore/distribution/bernoulli.md
         - Categorical: api_docs/xplore/distribution/categorical.md
         - DiagonalGaussian: api_docs/xplore/distribution/diagonal_gaussian.md
         - SquashedNormal: api_docs/xplore/distribution/squashed_normal.md
