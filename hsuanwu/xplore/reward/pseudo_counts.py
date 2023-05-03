@@ -103,7 +103,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         sm (float): The kernel maximum similarity.
 
     Returns:
-        Instance of the base intrinsic reward module.
+        Instance of PseudoCounts.
     """
 
     def __init__(

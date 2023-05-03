@@ -75,7 +75,7 @@ class RE3(BaseIntrinsicRewardModule):
         average_entropy (bool): Use the average of entropy estimation.
 
     Returns:
-        Instance of RND.
+        Instance of RE3.
     """
 
     def __init__(

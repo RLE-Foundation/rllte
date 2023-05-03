@@ -146,7 +146,7 @@ class RIDE(BaseIntrinsicRewardModule):
         sm (float): The kernel maximum similarity.
 
     Returns:
-        Instance of RND.
+        Instance of RIDE.
     """
 
     def __init__(

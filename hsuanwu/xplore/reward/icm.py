@@ -139,7 +139,7 @@ class ICM(BaseIntrinsicRewardModule):
         batch_size (int): The batch size for update.
 
     Returns:
-        Instance of RND.
+        Instance of ICM.
     """
 
     def __init__(

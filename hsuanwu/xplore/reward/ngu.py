@@ -104,7 +104,7 @@ class NGU(BaseIntrinsicRewardModule):
         mrs (float): The maximum reward scaling.
 
     Returns:
-        Instance of the base intrinsic reward module.
+        Instance of NGU.
     """
 
     def __init__(

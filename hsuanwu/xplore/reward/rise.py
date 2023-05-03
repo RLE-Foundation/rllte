@@ -76,7 +76,7 @@ class RISE(BaseIntrinsicRewardModule):
         average_entropy (bool): Use the average of entropy estimation.
 
     Returns:
-        Instance of RND.
+        Instance of RISE.
     """
 
     def __init__(
