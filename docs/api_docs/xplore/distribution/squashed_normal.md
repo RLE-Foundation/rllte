@@ -5,7 +5,7 @@
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L39)
 ```python 
 SquashedNormal(
-   mu: th.Tensor, sigma: th.Tensor
+   loc: th.Tensor, scale: th.Tensor
 )
 ```
 
@@ -16,8 +16,8 @@ Squashed normal distribution for Soft Actor-Critic learner.
 
 **Args**
 
-* **mu** (Tensor) : The mean of the distribution (often referred to as mu).
-* **sigma** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
+* **loc** (Tensor) : The mean of the distribution (often referred to as mu).
+* **scale** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
 
 
 **Returns**
@@ -81,8 +81,17 @@ A sample_shape shaped sample.
 ---
 Return the transformed mean.
 
+### .mode
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L93)
+```python
+.mode()
+```
+
+---
+Returns the mode of the distribution.
+
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L92)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L97)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -102,17 +111,8 @@ the score of the base distribution and the log abs det jacobian.
 
 The log_prob value.
 
-### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L103)
-```python
-.reset()
-```
-
----
-Reset the distribution.
-
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L107)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L108)
 ```python
 .entropy()
 ```
@@ -120,11 +120,29 @@ Reset the distribution.
 ---
 Returns the Shannon entropy of distribution.
 
-### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L111)
+### .stddev
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L113)
 ```python
-.mode()
+.stddev()
 ```
 
 ---
-Returns the mode of the distribution.
+Returns the standard deviation of the distribution.
+
+### .variance
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L118)
+```python
+.variance()
+```
+
+---
+Returns the variance of the distribution.
+
+### .reset
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/squashed_normal.py\#L122)
+```python
+.reset()
+```
+
+---
+Reset the distribution.

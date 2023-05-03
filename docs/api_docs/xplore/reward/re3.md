@@ -35,7 +35,7 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Returns**
 
-Instance of RND.
+Instance of RE3.
 
 
 **Methods:**

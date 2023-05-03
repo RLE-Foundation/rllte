@@ -5,7 +5,7 @@
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L8)
 ```python 
 TruncatedNormalNoise(
-   mu: float = 0.0, sigma: float = 1.0, stddev_schedule: str = 'linear(1.0, 0.1,
+   loc: float = 0.0, scale: float = 1.0, stddev_schedule: str = 'linear(1.0, 0.1,
    100000)', stddev_clip: float = 0.3
 )
 ```
@@ -18,8 +18,8 @@ Truncated normal action noise. See Section 3.1 of
 
 **Args**
 
-* **mu** (float) : mean of the noise (often referred to as mu).
-* **sigma** (float) : standard deviation of the noise (often referred to as sigma).
+* **loc** (float) : mean of the noise (often referred to as mu).
+* **scale** (float) : standard deviation of the noise (often referred to as sigma).
 * **stddev_schedule** (str) : Use the exploration std schedule.
 * **stddev_clip** (float) : The exploration std clip range.
 
@@ -98,17 +98,8 @@ Returns the log of the probability density/mass function evaluated at `value`.
 
 The log_prob value.
 
-### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L82)
-```python
-.entropy()
-```
-
----
-Returns the Shannon entropy of distribution.
-
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L86)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L82)
 ```python
 .reset(
    noiseless_action: th.Tensor, step: int = 0
@@ -130,7 +121,7 @@ Reset the noise instance.
 None.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L102)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L98)
 ```python
 .mean()
 ```
@@ -139,10 +130,37 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L107)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L103)
 ```python
 .mode()
 ```
 
 ---
 Returns the mode of the distribution.
+
+### .entropy
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L107)
+```python
+.entropy()
+```
+
+---
+Returns the Shannon entropy of distribution.
+
+### .stddev
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L112)
+```python
+.stddev()
+```
+
+---
+Returns the standard deviation of the distribution.
+
+### .variance
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/truncated_normal_noise.py\#L117)
+```python
+.variance()
+```
+
+---
+Returns the variance of the distribution.

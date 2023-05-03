@@ -5,7 +5,7 @@
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L7)
 ```python 
 DiagonalGaussian(
-   mu: th.Tensor, sigma: th.Tensor
+   loc: th.Tensor, scale: th.Tensor
 )
 ```
 
@@ -16,8 +16,8 @@ Diagonal Gaussian distribution for 'Box' tasks.
 
 **Args**
 
-* **mu** (Tensor) : The mean of the distribution (often referred to as mu).
-* **sigma** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
+* **loc** (Tensor) : The mean of the distribution (often referred to as mu).
+* **scale** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
 
 
 **Returns**
@@ -79,10 +79,37 @@ A sample_shape shaped sample.
 ```
 
 ---
-Return the transformed mean.
+Returns the mean of the distribution.
+
+### .mode
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L55)
+```python
+.mode()
+```
+
+---
+Returns the mode of the distribution.
+
+### .stddev
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L60)
+```python
+.stddev()
+```
+
+---
+Returns the standard deviation of the distribution.
+
+### .variance
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L65)
+```python
+.variance()
+```
+
+---
+Returns the variance of the distribution.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L54)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L69)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -90,8 +117,8 @@ Return the transformed mean.
 ```
 
 ---
-Scores the sample by inverting the transform(s) and computing the score using the
-score of the base distribution and the log abs det jacobian.
+Returns the log of the probability density/mass function evaluated at actions.
+
 
 **Args**
 
@@ -103,7 +130,7 @@ score of the base distribution and the log abs det jacobian.
 The log_prob value.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L65)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L80)
 ```python
 .reset()
 ```
@@ -112,19 +139,10 @@ The log_prob value.
 Reset the distribution.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L69)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L84)
 ```python
 .entropy()
 ```
 
 ---
 Returns the Shannon entropy of distribution.
-
-### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/diagonal_gaussian.py\#L73)
-```python
-.mode()
-```
-
----
-Returns the mode of the distribution.

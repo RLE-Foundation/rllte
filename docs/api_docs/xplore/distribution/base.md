@@ -115,3 +115,21 @@ Returns the mean of the distribution.
 
 ---
 Returns the mode of the distribution.
+
+### .stddev
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L65)
+```python
+.stddev()
+```
+
+---
+Returns the standard deviation of the distribution.
+
+### .variance
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L69)
+```python
+.variance()
+```
+
+---
+Returns the variance of the distribution.

@@ -35,7 +35,7 @@ See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
 
 **Returns**
 
-Instance of RND.
+Instance of ICM.
 
 
 **Methods:**

@@ -231,6 +231,10 @@ pages:
     source: hsuanwu/xplore/distribution/base.py
     classes:
       - BaseDistribution
+  - page: xplore/distribution/bernoulli.md
+    source: hsuanwu/xplore/distribution/bernoulli.py
+    classes:
+      - Bernoulli
   - page: xplore/distribution/categorical.md
     source: hsuanwu/xplore/distribution/categorical.py
     classes:
@@ -280,6 +284,10 @@ pages:
     source: hsuanwu/env/minigrid/__init__.py
     functions:
       - make_minigrid_env
+  - page: env/multibinary/__init__.md
+    source: hsuanwu/env/multibinary/__init__.py
+    functions:
+      - make_multibinary_env
   - page: env/procgen/__init__.md
     source: hsuanwu/env/procgen/__init__.py
     functions:

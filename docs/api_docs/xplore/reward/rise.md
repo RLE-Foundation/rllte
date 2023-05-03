@@ -36,7 +36,7 @@ See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
 
 **Returns**
 
-Instance of RND.
+Instance of RISE.
 
 
 **Methods:**

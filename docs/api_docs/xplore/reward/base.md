@@ -37,7 +37,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L59)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L61)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -63,7 +63,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L75)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/base.py\#L77)
 ```python
 .update(
    samples: Dict

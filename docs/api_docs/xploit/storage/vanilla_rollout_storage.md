@@ -40,7 +40,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L83)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L90)
 ```python
 .add(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -70,7 +70,7 @@ Add sampled transitions into storage.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L120)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L127)
 ```python
 .update()
 ```
@@ -79,7 +79,7 @@ None.
 Reset the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L125)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L132)
 ```python
 .compute_returns_and_advantages(
    last_values: th.Tensor
@@ -102,7 +102,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L151)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L158)
 ```python
 .sample(
    num_mini_batch: int = 8

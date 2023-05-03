@@ -29,7 +29,7 @@ HsuanwuEnvWrapper instance.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L45)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L53)
 ```python
 .reset(
    seed: Optional[Union[int, List[int]]] = None, options: Optional[dict] = None
@@ -51,7 +51,7 @@ Reset all parallel environments and return a batch of initial observations and i
 A batch of observations and info from the vectorized environment.
 
 ### .step
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L63)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L71)
 ```python
 .step(
    actions: th.Tensor

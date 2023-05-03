@@ -5,7 +5,7 @@
 [source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/ornstein_uhlenbeck_noise.py\#L9)
 ```python 
 OrnsteinUhlenbeckNoise(
-   mu: float = 0.0, sigma: float = 1.0, theta: float = 0.15, dt: float = 0.01,
+   loc: float = 0.0, scale: float = 1.0, theta: float = 0.15, dt: float = 0.01,
    stddev_schedule: str = 'linear(1.0, 0.1, 100000)'
 )
 ```
@@ -18,8 +18,8 @@ Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-u
 
 **Args**
 
-* **mu** (float) : mean of the noise (often referred to as mu).
-* **sigma** (float) : standard deviation of the noise (often referred to as sigma).
+* **loc** (float) : mean of the noise (often referred to as mu).
+* **scale** (float) : standard deviation of the noise (often referred to as sigma).
 * **theta** (float) : Rate of mean reversion.
 * **dt** (float) : Timestep for the noise.
 
@@ -145,3 +145,21 @@ The log_prob value.
 
 ---
 Returns the Shannon entropy of distribution.
+
+### .stddev
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/ornstein_uhlenbeck_noise.py\#L127)
+```python
+.stddev()
+```
+
+---
+Returns the standard deviation of the distribution.
+
+### .variance
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/ornstein_uhlenbeck_noise.py\#L132)
+```python
+.variance()
+```
+
+---
+Returns the variance of the distribution.

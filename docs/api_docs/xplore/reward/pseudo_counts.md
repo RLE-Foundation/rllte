@@ -43,7 +43,7 @@ See paper: https://arxiv.org/pdf/2002.06038
 
 **Returns**
 
-Instance of the base intrinsic reward module.
+Instance of PseudoCounts.
 
 
 **Methods:**

@@ -43,7 +43,7 @@ See paper: https://arxiv.org/pdf/2002.12292
 
 **Returns**
 
-Instance of RND.
+Instance of RIDE.
 
 
 **Methods:**
