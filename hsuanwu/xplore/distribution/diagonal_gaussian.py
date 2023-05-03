@@ -8,19 +8,19 @@ class DiagonalGaussian(BaseDistribution):
     """Diagonal Gaussian distribution for 'Box' tasks.
 
     Args:
-        mu (Tensor): The mean of the distribution (often referred to as mu).
-        sigma (Tensor): The standard deviation of the distribution (often referred to as sigma).
+        loc (Tensor): The mean of the distribution (often referred to as mu).
+        scale (Tensor): The standard deviation of the distribution (often referred to as sigma).
 
     Returns:
         Squashed normal distribution instance.
     """
 
-    def __init__(self, mu: th.Tensor, sigma: th.Tensor) -> None:
+    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
         super().__init__()
 
-        self.loc = mu
-        self.scale = sigma
-        self.dist = pyd.Normal(loc=mu, scale=sigma)
+        self.loc = loc
+        self.scale = scale
+        self.dist = pyd.Normal(loc=loc, scale=scale)
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
@@ -48,12 +48,27 @@ class DiagonalGaussian(BaseDistribution):
 
     @property
     def mean(self) -> th.Tensor:
-        """Return the transformed mean."""
-        return self._mu
+        """Returns the mean of the distribution."""
+        return self.loc
+    
+    @property
+    def mode(self) -> th.Tensor:
+        """Returns the mode of the distribution."""
+        return self.loc
+    
+    @property
+    def stddev(self) -> th.Tensor:
+        """Returns the standard deviation of the distribution."""
+        raise self.scale
+    
+    @property
+    def variance(self) -> th.Tensor:
+        """Returns the variance of the distribution."""
+        return self.stddev.pow(2)
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
-        """Scores the sample by inverting the transform(s) and computing the score using the
-            score of the base distribution and the log abs det jacobian.
+        """Returns the log of the probability density/mass function evaluated at actions.
+
         Args:
             actions (Tensor): The actions to be evaluated.
 
@@ -64,12 +79,8 @@ class DiagonalGaussian(BaseDistribution):
 
     def reset(self) -> None:
         """Reset the distribution."""
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__} does not implement reset!")
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         return self.dist.entropy()
-
-    def mode(self) -> th.Tensor:
-        """Returns the mode of the distribution."""
-        raise NotImplementedError

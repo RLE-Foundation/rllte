@@ -40,20 +40,20 @@ class SquashedNormal(BaseDistribution):
     """Squashed normal distribution for Soft Actor-Critic learner.
 
     Args:
-        mu (Tensor): The mean of the distribution (often referred to as mu).
-        sigma (Tensor): The standard deviation of the distribution (often referred to as sigma).
+        loc (Tensor): The mean of the distribution (often referred to as mu).
+        scale (Tensor): The standard deviation of the distribution (often referred to as sigma).
 
     Returns:
         Squashed normal distribution instance.
     """
 
-    def __init__(self, mu: th.Tensor, sigma: th.Tensor) -> None:
+    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
         super().__init__()
 
-        self._mu = mu
-        self._sigma = sigma
+        self.loc = loc
+        self.scale = scale
         self.dist = pyd.TransformedDistribution(
-            base_distribution=pyd.Normal(loc=mu, scale=sigma),
+            base_distribution=pyd.Normal(loc=loc, scale=scale),
             transforms=[TanhTransform()],
         )
 
@@ -84,10 +84,15 @@ class SquashedNormal(BaseDistribution):
     @property
     def mean(self) -> th.Tensor:
         """Return the transformed mean."""
-        mu = self._mu
+        loc = self.loc
         for tr in self.dist.transforms:
-            mu = tr(mu)
-        return mu
+            loc = tr(loc)
+        return loc
+    
+    @property
+    def mode(self) -> th.Tensor:
+        """Returns the mode of the distribution."""
+        return self.mean
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
         """Scores the sample by inverting the transform(s) and computing the score using
@@ -100,14 +105,20 @@ class SquashedNormal(BaseDistribution):
         """
         return self.dist.log_prob(actions)
 
-    def reset(self) -> None:
-        """Reset the distribution."""
-        raise NotImplementedError
-
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__} does not implement entropy!")
+    
+    @property
+    def stddev(self) -> th.Tensor:
+        """Returns the standard deviation of the distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement stddev!")
 
-    def mode(self) -> th.Tensor:
-        """Returns the mode of the distribution."""
-        raise NotImplementedError
+    @property
+    def variance(self) -> th.Tensor:
+        """Returns the variance of the distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement variance!")
+
+    def reset(self) -> None:
+        """Reset the distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement reset!")

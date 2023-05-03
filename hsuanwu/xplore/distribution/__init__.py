@@ -1,4 +1,5 @@
 from .base import BaseDistribution as BaseDistribution
+from .bernoulli import Bernoulli as Bernoulli
 from .categorical import Categorical as Categorical
 from .diagonal_gaussian import DiagonalGaussian as DiagonalGaussian
 from .kl import kl_categorical_categorical as kl_categorical_categorical

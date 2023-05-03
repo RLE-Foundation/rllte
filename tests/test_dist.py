@@ -18,7 +18,7 @@ from hsuanwu.xplore.distribution import (
 if __name__ == "__main__":
     device = torch.device("cuda:0")
 
-    dist = SquashedNormal(mu=torch.rand(1, 17), sigma=torch.rand(1, 17))
+    dist = SquashedNormal(loc=torch.rand(1, 17), scale=torch.rand(1, 17))
 
     print(dist.sample())
     print(dist.rsample())

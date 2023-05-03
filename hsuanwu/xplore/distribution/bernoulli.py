@@ -4,8 +4,8 @@ import torch.distributions as pyd
 from hsuanwu.xplore.distribution import BaseDistribution
 
 
-class Categorical(BaseDistribution):
-    """Categorical distribution for sampling actions for 'Discrete' tasks.
+class Bernoulli(BaseDistribution):
+    """Bernoulli distribution for sampling actions for 'MultiBinary' tasks.
     Args:
         logits (Tensor): The event log probabilities (unnormalized).
 
@@ -18,7 +18,7 @@ class Categorical(BaseDistribution):
         logits: th.Tensor,
     ) -> None:
         super().__init__()
-        self.dist = pyd.Categorical(logits=logits)
+        self.dist = pyd.Bernoulli(logits=logits)
 
     @property
     def probs(self) -> th.Tensor:
@@ -51,21 +51,21 @@ class Categorical(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return self.dist.log_prob(actions)
+        return self.dist.log_prob(actions).sum(-1)
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
-        return self.dist.entropy()
+        return self.dist.entropy().sum(-1)
 
     @property
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
-        return self.dist.mode
+        return th.gt(self.dist.probs, 0.5).float()
 
     @property
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
-        return self.dist.mode
+        return th.gt(self.dist.probs, 0.5).float()
     
     @property
     def stddev(self) -> th.Tensor:
