@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -std=c++11 -O3  -shared -Wl,-soname,libtrt.so -o libtrt.so CMakeFiles/trt.dir/trt.cpp.o  -lnvinfer -lnvonnxparser /usr/local/cuda-12.0/lib64/libcudart_static.a -lpthread -ldl -lrt 

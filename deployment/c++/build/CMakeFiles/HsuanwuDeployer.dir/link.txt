@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -std=c++11 -O3 -g  -shared -Wl,-soname,libHsuanwuDeployer.so -o libHsuanwuDeployer.so CMakeFiles/HsuanwuDeployer.dir/HsuanwuDeployer.cpp.o  -lnvinfer -lnvonnxparser /usr/local/cuda-12.0/lib64/libcudart_static.a -lpthread -ldl -lrt 

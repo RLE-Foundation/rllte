@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jakeluo/Documents/Hsuanwu/deployment/c++/trt.h
+NvInfer.h
+/home/jakeluo/Documents/Hsuanwu/deployment/c++/NvInfer.h
+NvOnnxParser.h
+/home/jakeluo/Documents/Hsuanwu/deployment/c++/NvOnnxParser.h
+iostream
+-
+vector
+-
+memory
+-
+cstring
+-
+algorithm
+-
+fstream
+-
+
+/home/jakeluo/Documents/Hsuanwu/deployment/c++/trt_test.cpp
+trt.h
+/home/jakeluo/Documents/Hsuanwu/deployment/c++/trt.h
+
