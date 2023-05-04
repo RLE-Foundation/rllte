@@ -53,7 +53,7 @@ class TruncatedNormalNoise(BaseDistribution):
         )
         if clip:
             # clip the sampled noises
-            noise = th.clamp(noise, -self._stddev_clip, self._stddev_clip)
+            noise = th.clamp(noise, -self.stddev_clip, self.stddev_clip)
         return noise + self.noiseless_action
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008

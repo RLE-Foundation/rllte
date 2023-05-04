@@ -9,7 +9,7 @@ from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import DeterministicActor, DoubleCritic
+from hsuanwu.xploit.agent.network import OffPolicyDeterministicActor, OffPolicyDoubleCritic
 
 MATCH_KEYS = {
     "trainer": "OffPolicyTrainer",
@@ -106,11 +106,11 @@ class DrQv2(BaseAgent):
         self.update_every_steps = update_every_steps
 
         # create models
-        self.actor = DeterministicActor(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+        self.actor = OffPolicyDeterministicActor(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
             self.device
         )
-        self.critic = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
-        self.critic_target = DoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
+        self.critic_target = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
             self.device
         )
         self.critic_target.load_state_dict(self.critic.state_dict())

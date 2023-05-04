@@ -69,9 +69,9 @@ class OffPolicyTrainer(BasePolicyTrainer):
 
         while self._global_step <= self._num_train_steps:
             # try to test
-            # if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
-            #     test_metrics = self.test()
-            #     self._logger.test(msg=test_metrics)
+            if (self._global_step % self._test_every_steps) == 0 and (self._test_env is not None):
+                test_metrics = self.test()
+                self._logger.test(msg=test_metrics)
 
             # sample actions
             with th.no_grad(), eval_mode(self._agent):
@@ -99,6 +99,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             # update agent
             if self._global_step >= self._num_init_steps:
                 metrics = self._agent.update(self._replay_storage, step=self._global_step)
+                # try to update storage
                 self._replay_storage.update(metrics)
 
             # done

@@ -9,7 +9,7 @@ from pathlib import Path
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import SharedActorCritic
+from hsuanwu.xploit.agent.network import OnPolicySharedActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -140,7 +140,7 @@ class PPG(BaseAgent):
         # create models
         self.encoder = None
         # create models
-        self.ac = SharedActorCritic(
+        self.ac = OnPolicySharedActorCritic(
             action_shape=self.action_shape,
             action_type=self.action_type,
             feature_dim=feature_dim,

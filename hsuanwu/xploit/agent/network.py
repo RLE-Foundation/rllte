@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from hsuanwu.xploit.agent import utils
 
 
-class StochasticActor(nn.Module):
+class OffPolicyStochasticActor(nn.Module):
     """Stochastic actor network for SAC. Here the 'self.dist' refers to an sampling distribution instance.
 
     Args:
@@ -75,7 +75,7 @@ class StochasticActor(nn.Module):
         return mu
 
 
-class DeterministicActor(nn.Module):
+class OffPolicyDeterministicActor(nn.Module):
     """Deterministic actor network for DrQv2. Here the 'self.dist' refers to an action noise instance.
 
     Args:
@@ -133,7 +133,7 @@ class DeterministicActor(nn.Module):
         return self.policy(obs)
 
 
-class DoubleCritic(nn.Module):
+class OffPolicyDoubleCritic(nn.Module):
     """Double critic network for DrQv2 and SAC.
 
     Args:
@@ -185,7 +185,7 @@ class DoubleCritic(nn.Module):
         return q1, q2
 
 
-class SharedActorCritic(nn.Module):
+class OnPolicySharedActorCritic(nn.Module):
     """Actor-Critic network using a shared encoder for on-policy algorithms.
 
     Args:
