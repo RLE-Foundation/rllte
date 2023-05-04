@@ -94,7 +94,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 self._rollout_storage.add(
                     obs=obs,
                     actions=actions,
-                    rewards=np.zeros_like(rewards) if self._cfgs.pretraining else rewards,  # pre-training mode
+                    rewards=th.zeros_like(rewards, device=self._device) if self._cfgs.pretraining else rewards,  # pre-training mode
                     terminateds=terminateds,
                     truncateds=truncateds,
                     log_probs=log_probs,

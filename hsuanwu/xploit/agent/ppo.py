@@ -8,7 +8,7 @@ from pathlib import Path
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import ActorCritic
+from hsuanwu.xploit.agent.network import SharedActorCritic
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -117,16 +117,12 @@ class PPO(BaseAgent):
         self.max_grad_norm = max_grad_norm
 
         # create models
-        self.ac = ActorCritic(
+        self.ac = SharedActorCritic(
             action_shape=self.action_shape,
             action_type=self.action_type,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
-        ).to(self.device)
-
-        # create optimizers
-        self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=lr, eps=eps)
-        self.train()
+        )
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
@@ -139,16 +135,17 @@ class PPO(BaseAgent):
         """
         self.training = training
         self.ac.train(training)
-        if self.encoder is not None:
-            self.encoder.train(training)
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
-        self.encoder = kwargs["encoder"]
-        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
-        self.encoder.train()
         self.dist = kwargs["dist"]
+        self.ac.encoder = kwargs["encoder"]
         self.ac.dist = kwargs["dist"]
+        # to device
+        self.ac.to(self.device)
+        # create optimizers
+        self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=self.lr, eps=self.eps)
+        self.train()
         if kwargs["aug"] is not None:
             self.aug = kwargs["aug"]
         if kwargs["irs"] is not None:
@@ -163,8 +160,7 @@ class PPO(BaseAgent):
         Returns:
             Estimated values.
         """
-        encoded_obs = self.encoder(obs)
-        return self.ac.get_value(obs=encoded_obs)
+        return self.ac.get_value(obs)
 
     def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor, ...]:
         """Sample actions based on observations.
@@ -177,12 +173,11 @@ class PPO(BaseAgent):
         Returns:
             Sampled actions.
         """
-        encoded_obs = self.encoder(obs)
         if training:
-            actions, values, log_probs, entropy = self.ac.get_action_and_value(obs=encoded_obs)
+            actions, values, log_probs, entropy = self.ac.get_action_and_value(obs)
             return actions.clamp(*self.action_range), values, log_probs, entropy
         else:
-            actions = self.ac.get_det_action(obs=encoded_obs)
+            actions = self.ac.get_det_action(obs)
             return actions.clamp(*self.action_range)
 
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
@@ -229,7 +224,7 @@ class PPO(BaseAgent):
 
                 # evaluate sampled actions
                 _, values, log_probs, entropy = self.ac.get_action_and_value(
-                    obs=self.encoder(batch_obs), actions=batch_actions
+                    obs=batch_obs, actions=batch_actions
                 )
 
                 # actor loss part
@@ -247,10 +242,10 @@ class PPO(BaseAgent):
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
-                    new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=self.encoder(batch_obs))
+                    new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
                     _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
-                        obs=self.encoder(batch_obs_aug), actions=new_batch_actions
+                        obs=batch_obs_aug, actions=new_batch_actions
                     )
                     action_loss_aug = -log_probs_aug.mean()
                     value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
@@ -259,13 +254,10 @@ class PPO(BaseAgent):
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
                 # update
-                self.encoder_opt.zero_grad(set_to_none=True)
                 self.ac_opt.zero_grad(set_to_none=True)
                 (critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss).backward()
-                nn.utils.clip_grad_norm_(self.encoder.parameters(), self.max_grad_norm)
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()
-                self.encoder_opt.step()
 
                 total_actor_loss += actor_loss.item()
                 total_critic_loss += critic_loss.item()
@@ -296,10 +288,8 @@ class PPO(BaseAgent):
             None.
         """
         if "pretrained" in str(path):  # pretraining
-            th.save(self.encoder.state_dict(), path / "encoder.pth")
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
-            th.save(self.encoder, path / "encoder.pth")
             del self.ac.critic
             th.save(self.ac, path / "actor.pth")
 
@@ -312,7 +302,5 @@ class PPO(BaseAgent):
         Returns:
             None.
         """
-        encoder_params = th.load(os.path.join(path, "encoder.pth"), map_location=self.device)
         actor_critic_params = th.load(os.path.join(path, "actor_critic.pth"), map_location=self.device)
-        self.encoder.load_state_dict(encoder_params)
         self.ac.load_state_dict(actor_critic_params)

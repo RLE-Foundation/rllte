@@ -185,8 +185,8 @@ class DoubleCritic(nn.Module):
         return q1, q2
 
 
-class ActorCritic(nn.Module):
-    """Actor-Critic network for on-policy algorithms.
+class SharedActorCritic(nn.Module):
+    """Actor-Critic network using a shared encoder for on-policy algorithms.
 
     Args:
         action_shape (Tuple): The data shape of actions.
@@ -256,18 +256,18 @@ class ActorCritic(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.trunk = nn.Sequential(
-            nn.LayerNorm(feature_dim),
-            nn.Tanh(),
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(),
-        )
+        # self.trunk = nn.Sequential(
+        #     nn.LayerNorm(feature_dim),
+        #     nn.Tanh(),
+        #     nn.Linear(feature_dim, hidden_dim),
+        #     nn.ReLU(),
+        # )
         if action_type == "Discrete":
-            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=hidden_dim)
+            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=feature_dim)
         elif action_type == "Box":
-            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=hidden_dim)
+            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=feature_dim)
         elif action_type == "MultiBinary":
-            self.actor = self.MultiBinaryActor(action_shape=action_shape, hidden_dim=hidden_dim)
+            self.actor = self.MultiBinaryActor(action_shape=action_shape, hidden_dim=feature_dim)
         else:
             raise NotImplementedError("Unsupported action type!")
 
@@ -276,6 +276,7 @@ class ActorCritic(nn.Module):
             self.aux_critic = nn.Linear(hidden_dim, 1)
 
         # placeholder for distribution
+        self.encoder = None
         self.dist = None
 
         self.apply(utils.network_init)
@@ -289,9 +290,7 @@ class ActorCritic(nn.Module):
         Returns:
             Actions.
         """
-        h = self.trunk(obs)
-
-        return self.actor(h)
+        return self.actor(self.encoder(obs))
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
@@ -302,7 +301,7 @@ class ActorCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        return self.critic(self.trunk(obs))
+        return self.critic(self.encoder(obs))
 
     def get_det_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
@@ -313,8 +312,7 @@ class ActorCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        h = self.trunk(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
+        policy_outputs = self.actor.get_policy_outputs(self.encoder(obs))
         dist = self.dist(*policy_outputs)
 
         return dist.mean
@@ -329,7 +327,7 @@ class ActorCritic(nn.Module):
         Returns:
             Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
-        h = self.trunk(obs)
+        h = self.encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
         if actions is None:
@@ -349,14 +347,14 @@ class ActorCritic(nn.Module):
         Returns:
             Distribution, estimated values, auxiliary estimated values.
         """
-        h = self.trunk(obs)
+        h = self.encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
     def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
-        h = self.trunk(obs)
+        h = self.encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         return th.cat(policy_outputs, dim=1)
 
@@ -369,8 +367,7 @@ class ActorCritic(nn.Module):
         Returns:
             Distribution
         """
-        h = self.trunk(obs)
-        dist = self.actor.get_dist(h, self.dist)
+        dist = self.actor.get_dist(self.encoder(obs), self.dist)
         return dist.logits
 
 

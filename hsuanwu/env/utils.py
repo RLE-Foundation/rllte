@@ -38,7 +38,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
                     "range": [low, high],
                 }
             )
-        if env.single_action_space.__class__.__name__ == "MultiBinary":
+        elif env.single_action_space.__class__.__name__ == "MultiBinary":
             self.action_space = OmegaConf.create(
                 {
                     "shape": env.single_action_space.shape,

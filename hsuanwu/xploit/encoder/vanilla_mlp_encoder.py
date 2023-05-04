@@ -36,6 +36,7 @@ class VanillaMlpEncoder(BaseEncoder):
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, feature_dim),
+            nn.ReLU()
         )
 
         self.apply(network_init)
