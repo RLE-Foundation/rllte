@@ -13,7 +13,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import DiscreteLSTMActor, BoxLSTMActor
+from hsuanwu.xploit.agent.network import DistributedActorCritic
 
 MATCH_KEYS = {
     "trainer": "DistributedTrainer",
@@ -168,14 +168,16 @@ class IMPALA(BaseAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
 
-        if self.action_type == "Discrete":
-            self.actor = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-            self.learner = DiscreteLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-        elif self.action_type == "Box":
-            self.actor = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-            self.learner = BoxLSTMActor(action_space=action_space, feature_dim=feature_dim, use_lstm=use_lstm)
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        self.actor = DistributedActorCritic(action_shape=self.action_shape,
+                                            action_type=self.action_type,
+                                            action_range=self.action_range,
+                                            feature_dim=feature_dim, 
+                                            use_lstm=use_lstm)
+        self.learner = DistributedActorCritic(action_shape=self.action_shape,
+                                              action_type=self.action_type,
+                                              action_range=self.action_range,
+                                              feature_dim=feature_dim, 
+                                              use_lstm=use_lstm)
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
