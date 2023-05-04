@@ -20,6 +20,7 @@
 |PPG|❌| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf) |82⭐|
 |IMPALA|✔️| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
 
+
 !!! tip "Tips of Agent"
     - 🐌: Developing.
     - **NPU**: Support Neural-network processing unit.
