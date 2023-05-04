@@ -2,7 +2,7 @@
 
 
 ## PseudoCounts
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/pseudo_counts.py\#L81)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L81)
 ```python 
 PseudoCounts(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -50,7 +50,7 @@ Instance of PseudoCounts.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/pseudo_counts.py\#L147)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L147)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -71,7 +71,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/pseudo_counts.py\#L174)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L174)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -97,7 +97,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/pseudo_counts.py\#L211)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L211)
 ```python
 .update(
    samples: Dict

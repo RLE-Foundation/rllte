@@ -2,7 +2,7 @@
 
 
 ## NStepReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L191)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L191)
 ```python 
 NStepReplayStorage(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -45,7 +45,7 @@ N-step replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L252)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L252)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -71,7 +71,7 @@ Add sampled transitions into storage.
 None.
 
 ### .replay_iter
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L284)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L284)
 ```python
 .replay_iter()
 ```
@@ -80,7 +80,7 @@ None.
 Create iterable dataloader.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L290)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L290)
 ```python
 .sample(
    step: int
@@ -101,7 +101,7 @@ Generate samples.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/nstep_replay_storage.py\#L301)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L301)
 ```python
 .update(
    *args

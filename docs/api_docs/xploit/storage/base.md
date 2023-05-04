@@ -2,7 +2,7 @@
 
 
 ## BaseStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/base.py\#L9)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/base.py/#L9)
 ```python 
 BaseStorage(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -35,7 +35,7 @@ Instance of the base storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/base.py\#L53)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/base.py/#L53)
 ```python
 .add(
    *args
@@ -46,7 +46,7 @@ Instance of the base storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/base.py\#L57)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/base.py/#L57)
 ```python
 .sample(
    *args
@@ -57,7 +57,7 @@ Add sampled transitions into storage.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/base.py\#L61)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/base.py/#L61)
 ```python
 .update(
    *args

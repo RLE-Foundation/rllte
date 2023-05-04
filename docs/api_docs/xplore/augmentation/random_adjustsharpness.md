@@ -2,7 +2,7 @@
 
 
 ## RandomAdjustSharpness
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_adjustsharpness.py\#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_adjustsharpness.py/#L7)
 ```python 
 RandomAdjustSharpness(
    sharpness_factor: float = 50.0, p: float = 5.0
@@ -29,7 +29,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_adjustsharpness.py\#L28)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_adjustsharpness.py/#L28)
 ```python
 .forward(
    x: th.Tensor

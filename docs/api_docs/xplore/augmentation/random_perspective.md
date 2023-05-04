@@ -2,7 +2,7 @@
 
 
 ## RandomPerspective
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_perspective.py\#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_perspective.py/#L7)
 ```python 
 RandomPerspective(
    distortion_scale: float = 0.5, p: float = 0.5, interpolation: int = 0, fill = 0
@@ -32,7 +32,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_perspective.py\#L40)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_perspective.py/#L40)
 ```python
 .forward(
    x: th.Tensor

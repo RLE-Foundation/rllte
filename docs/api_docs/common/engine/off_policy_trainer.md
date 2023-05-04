@@ -2,7 +2,7 @@
 
 
 ## OffPolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L16)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/off_policy_trainer.py/#L16)
 ```python 
 OffPolicyTrainer(
    cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
@@ -30,7 +30,7 @@ Off-policy trainer instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L64)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/off_policy_trainer.py/#L64)
 ```python
 .train()
 ```
@@ -39,7 +39,7 @@ Off-policy trainer instance.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L129)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/off_policy_trainer.py/#L129)
 ```python
 .test()
 ```
@@ -48,7 +48,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/off_policy_trainer.py\#L157)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/off_policy_trainer.py/#L157)
 ```python
 .save()
 ```

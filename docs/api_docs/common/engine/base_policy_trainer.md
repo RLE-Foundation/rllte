@@ -2,7 +2,7 @@
 
 
 ## BasePolicyTrainer
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L49)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L49)
 ```python 
 BasePolicyTrainer(
    cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None
@@ -30,7 +30,7 @@ Base policy trainer instance.
 
 
 ### .global_step
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L96)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L96)
 ```python
 .global_step()
 ```
@@ -39,7 +39,7 @@ Base policy trainer instance.
 Get global training steps.
 
 ### .global_episode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L101)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L101)
 ```python
 .global_episode()
 ```
@@ -48,7 +48,7 @@ Get global training steps.
 Get global training episodes.
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L270)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L270)
 ```python
 .train()
 ```
@@ -57,7 +57,7 @@ Get global training episodes.
 Training function.
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L274)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L274)
 ```python
 .test()
 ```
@@ -66,7 +66,7 @@ Training function.
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/engine/base_policy_trainer.py\#L278)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/base_policy_trainer.py/#L278)
 ```python
 .save()
 ```

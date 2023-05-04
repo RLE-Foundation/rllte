@@ -2,7 +2,7 @@
 
 
 ## PPG
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L66)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L66)
 ```python 
 PPG(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -57,7 +57,7 @@ PPG agent instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L154)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L154)
 ```python
 .train(
    training: bool = True
@@ -78,7 +78,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L168)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L168)
 ```python
 .integrate(
    **kwargs
@@ -89,7 +89,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L180)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L180)
 ```python
 .get_value(
    obs: th.Tensor
@@ -110,7 +110,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L192)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L192)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -133,7 +133,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L211)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L211)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -155,7 +155,7 @@ Update the agent.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L432)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L432)
 ```python
 .save(
    path: Path
@@ -176,7 +176,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppg.py\#L449)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L449)
 ```python
 .load(
    path: str

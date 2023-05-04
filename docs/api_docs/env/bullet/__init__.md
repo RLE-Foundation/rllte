@@ -2,7 +2,7 @@
 
 
 ### make_bullet_env
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/bullet/__init__.py\#L46)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/bullet/__init__.py/#L46)
 ```python
 .make_bullet_env(
    env_id: str = 'AntBulletEnv-v0', num_envs: int = 1, device: str = 'cpu', seed: int = 0

@@ -2,7 +2,7 @@
 
 
 ## IdentityEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/identity_encoder.py\#L11)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/identity_encoder.py/#L11)
 ```python 
 IdentityEncoder(
    observation_space: Union[gym.Space, DictConfig], feature_dim: int = 64
@@ -30,7 +30,7 @@ Identity encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/identity_encoder.py\#L31)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/identity_encoder.py/#L31)
 ```python
 .forward(
    obs: th.Tensor

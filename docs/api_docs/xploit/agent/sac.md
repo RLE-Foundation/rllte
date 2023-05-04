@@ -2,7 +2,7 @@
 
 
 ## SAC
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L67)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L67)
 ```python 
 SAC(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -52,7 +52,7 @@ Soft Actor-Critic learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L146)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L146)
 ```python
 .train(
    training: bool = True
@@ -73,7 +73,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L161)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L161)
 ```python
 .integrate(
    **kwargs
@@ -84,7 +84,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L174)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L174)
 ```python
 .alpha()
 ```
@@ -93,7 +93,7 @@ Integrate agent and other modules (encoder, reward, ...) together
 Get the temperature coefficient.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L178)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L178)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -116,7 +116,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L199)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L199)
 ```python
 .update(
    replay_storage, step: int = 0
@@ -138,7 +138,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L279)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L279)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
@@ -169,7 +169,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L353)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L353)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor, weights: th.Tensor, step: int
@@ -192,7 +192,7 @@ Update the actor network and temperature.
 Actor loss metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L389)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L389)
 ```python
 .save(
    path: Path
@@ -213,7 +213,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/sac.py\#L407)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/sac.py/#L407)
 ```python
 .load(
    path: str

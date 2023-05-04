@@ -2,7 +2,7 @@
 
 
 ## ICM
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L123)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L123)
 ```python 
 ICM(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -42,7 +42,7 @@ Instance of ICM.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L176)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L176)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -68,7 +68,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/icm.py\#L214)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/icm.py/#L214)
 ```python
 .update(
    samples: Dict

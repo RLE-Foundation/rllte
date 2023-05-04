@@ -2,7 +2,7 @@
 
 
 ### make_procgen_env
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/procgen/__init__.py\#L44)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/procgen/__init__.py/#L44)
 ```python
 .make_procgen_env(
    env_id: str = 'bigfish', num_envs: int = 64, gamma: float = 0.99, num_levels: int = 200,

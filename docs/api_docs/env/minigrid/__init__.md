@@ -2,7 +2,7 @@
 
 
 ### make_minigrid_env
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/minigrid/__init__.py\#L26)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/minigrid/__init__.py/#L26)
 ```python
 .make_minigrid_env(
    env_id: str = 'Alien-v5', num_envs: int = 8, fully_observable: bool = True,

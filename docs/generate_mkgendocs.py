@@ -24,31 +24,37 @@ pages = {
 }
 
 for module in [engine, common, encoder, agent, storage, 
-               reward, augmentation, distribution, env, evaluation]:
+           reward, augmentation, distribution, env, evaluation]:
+    last_file = None
+    save_old = False
     for name, item in inspect.getmembers(module):
         if inspect.isclass(item):
             file = inspect.getfile(item).split('hsuanwu')[1]
-            if '\\' in file:
-                file = file.replace('\\', '/')
-                file = file.lstrip(file[0])
+            file = file.lstrip(file[0])
             page = {
                 'page': file.replace('.py', '.md'),
                 'source': 'hsuanwu/' + file,
                 'classes': [item.__name__]
             }
             pages['pages'].append(page)
-        
+
         if inspect.isfunction(item):
             file = inspect.getfile(item).split('hsuanwu')[1]
-            if '\\' in file:
-                file = file.replace('\\', '/')
-                file = file.lstrip(file[0])
-            page = {
-                'page': file.replace('.py', '.md'),
-                'source': 'hsuanwu/' + file,
-                'functions': [item.__name__]
-            }
-            pages['pages'].append(page)
+            file = file.lstrip(file[0])
+            if file == last_file:
+                page['functions'].append(item.__name__)
+                save_old = False
+            else:
+                save_old = True
+                page = {
+                    'page': file.replace('.py', '.md'),
+                    'source': 'hsuanwu/' + file,
+                    'functions': [item.__name__]
+                }
+
+            if save_old:
+                pages['pages'].append(page)
+            last_file = file
 
 yaml = ruamel.yaml.YAML()
 yaml.indent(sequence=4, offset=2)

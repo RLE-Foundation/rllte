@@ -300,3 +300,7 @@ pages:
     source: hsuanwu/evaluation/performance.py
     classes:
       - Performance
+  - page: evaluation/utils.md
+    source: hsuanwu/evaluation/utils.py
+    functions:
+      - min_max_normalize

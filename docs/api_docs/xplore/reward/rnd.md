@@ -2,7 +2,7 @@
 
 
 ## RND
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rnd.py\#L61)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L61)
 ```python 
 RND(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -42,7 +42,7 @@ Instance of RND.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rnd.py\#L114)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L114)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -68,7 +68,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rnd.py\#L149)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rnd.py/#L149)
 ```python
 .update(
    samples: Dict

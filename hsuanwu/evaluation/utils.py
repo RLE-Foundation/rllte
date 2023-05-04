@@ -5,6 +5,10 @@ from numpy import random
 
 Float = Union[float, np.float32, np.float64]
 
+def min_max_normalize(value: np.ndarray, min_scores: np.ndarray, max_scores: np.ndarray) -> np.ndarray:
+    """Perform `Max-Min` normalization."""
+    return (value - min_scores) / (max_scores - min_scores)
+
 class StratifiedBootstrap(arch_bs.IIDBootstrap):
     """Bootstrap using stratified resampling.
         Borrowed from: https://github.com/google-research/rliable/blob/master/rliable/library.py

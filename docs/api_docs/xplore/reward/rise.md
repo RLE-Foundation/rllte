@@ -2,7 +2,7 @@
 
 
 ## RISE
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L59)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L59)
 ```python 
 RISE(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -43,7 +43,7 @@ Instance of RISE.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L109)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L109)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -69,7 +69,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L145)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/rise.py/#L145)
 ```python
 .update(
    samples: Dict

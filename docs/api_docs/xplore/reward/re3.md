@@ -2,7 +2,7 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L59)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L59)
 ```python 
 RE3(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -42,7 +42,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L106)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L106)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -68,7 +68,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/re3.py\#L141)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/re3.py/#L141)
 ```python
 .update(
    samples: Dict
