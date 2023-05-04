@@ -140,8 +140,7 @@ class DistributedTrainer(BasePolicyTrainer):
         self._logger.info("Deploying DistributedTrainer...")
         # xploit part
         self._agent = hydra.utils.instantiate(self._cfgs.agent)
-        actor_encoder = hydra.utils.instantiate(self._cfgs.encoder)
-        learner_encoder = hydra.utils.instantiate(self._cfgs.encoder)
+        encoder = hydra.utils.instantiate(self._cfgs.encoder)
 
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
@@ -165,7 +164,7 @@ class DistributedTrainer(BasePolicyTrainer):
             )
 
         # TODO: Integrate agent and modules
-        self._agent.integrate(actor_encoder=actor_encoder, learner_encoder=learner_encoder, dist=dist, lr_lambda=lr_lambda)
+        self._agent.integrate(encoder=encoder, dist=dist, lr_lambda=lr_lambda)
 
     @staticmethod
     def act(  # noqa: C901

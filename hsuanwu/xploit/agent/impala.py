@@ -1,6 +1,7 @@
 import collections
 import threading
 from typing import Dict, Tuple, Union
+from copy import deepcopy
 
 import gymnasium as gym
 import omegaconf
@@ -191,8 +192,8 @@ class IMPALA(BaseAgent):
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
-        self.actor.encoder = kwargs["actor_encoder"]
-        self.learner.encoder = kwargs["learner_encoder"]
+        self.actor.encoder = kwargs["encoder"]
+        self.learner.encoder = deepcopy(kwargs["encoder"])
         self.actor.dist = kwargs["dist"]
         self.learner.dist = kwargs["dist"]
         self.dist = kwargs["dist"]

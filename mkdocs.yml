@@ -111,7 +111,7 @@ nav:
         - IdentityEncoder: api_docs/xploit/encoder/identity_encoder.md
 
       - storage:
-        - BaseStorage: api_docs/xploit/storage/base_storage.md
+        - BaseStorage: api_docs/xploit/storage/base.md
         - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md
@@ -171,6 +171,7 @@ nav:
       - make_dmc_env: api_docs/env/dmc/__init__.md
       - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_minigrid_env: api_docs/env/minigrid/__init__.md
+      - make_multibinary_env: api_docs/env/multibinary/__init__.md
       - utils:
         - HsuanwuEnvWrapper: api_docs/env/utils.md
     
