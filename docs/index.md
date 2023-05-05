@@ -14,7 +14,7 @@
 - ⚙️ Support for custom environments;
 - 🖥️ Support for multiple computing devices like GPU and NPU;
 - 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
-- 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
+- 💾 Large number of reusable bechmarks ([See HsuanwuHub](https://hub.hsuanwu.dev/));
 - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
 See the project structure below:
