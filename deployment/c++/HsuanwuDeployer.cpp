@@ -37,11 +37,6 @@ void HsuanwuDeployer::checkCudaErrorCode(cudaError_t code) {
 
 HsuanwuDeployer::~HsuanwuDeployer()
 {
-    // for(void* buffer : m_buffers) 
-    // {
-    //     checkCudaErrorCode(cudaFree(buffer));
-    // }
-    // m_buffers.clear();
 }
 
 void HsuanwuDeployer::setEngineName()
@@ -164,7 +159,11 @@ bool HsuanwuDeployer::build(const std::string & onnxModelPath)
     if (!plan) {
         return false;
     }
-
+    plan->destroy();
+    config->destroy();
+    network->destroy();
+    parser->destroy();
+    builder->destroy();
     std::ofstream outfile(m_engineName, std::ofstream::binary);
     outfile.write(reinterpret_cast<const char*>(plan->data()), plan->size());
     outfile.close();
@@ -254,7 +253,11 @@ bool HsuanwuDeployer::build(const std::string & onnxModelPath, const std::string
     if (!plan) {
         return false;
     }
-
+    plan->destroy();
+    config->destroy();
+    network->destroy();
+    parser->destroy();
+    builder->destroy();
     std::ofstream outfile(engineSavePath+"/"+m_engineName, std::ofstream::binary);
     outfile.write(reinterpret_cast<const char*>(plan->data()), plan->size());
     outfile.close();
@@ -273,9 +276,9 @@ bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
     if (!file.read(buffer.data(), size)) {
         throw std::runtime_error("Unable to read plane file");
     }
-
-    std::unique_ptr<IRuntime> runtime{createInferRuntime(m_logger)};
-    if (!runtime) {
+    file.close();
+    m_runtime.reset(nvinfer1::createInferRuntime(m_logger));
+    if (!m_runtime) {
         return false;
     }
     cudaError_t ret = cudaSetDevice(m_options.deviceIndex);
@@ -285,11 +288,11 @@ bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
         std::string errMsg = "Unable to use GPU: " + std::to_string(m_options.deviceIndex)+".";
         throw std::runtime_error(errMsg);
     }
-    m_engine = std::unique_ptr<nvinfer1::ICudaEngine>(runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
+    m_engine.reset(m_runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
     if (!m_engine) {
         return false;
     }
-    m_context = std::unique_ptr<nvinfer1::IExecutionContext>(m_engine->createExecutionContext());
+    m_context.reset(m_engine->createExecutionContext());
     if (!m_context) {
         return false;
     }
@@ -302,59 +305,50 @@ bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
             m_input_indexs.emplace_back(i);
             m_input_dims.emplace_back(m_engine->getBindingDimensions(i));
             std::cout<<"Input binding, index: "<<i<<", name: "<<m_engine->getBindingName(i)<<", format"<<m_engine->getBindingFormatDesc(i)<<std::endl;
+            m_input_names.emplace_back(m_engine->getBindingName(i));
+            int tmp_size = 1;
             for (int d = 0; d < m_engine->getBindingDimensions(i).nbDims; d ++)
             {
+                tmp_size *= m_engine->getBindingDimensions(i).d[d];
                 printf("%d,", m_engine->getBindingDimensions(i).d[d]);
             }
+            m_input_byte_sizes.emplace_back(tmp_size*sizeof(float));
             printf("\n");
         }else{
             m_output_indexs.emplace_back(i);
             m_output_dims.emplace_back(m_engine->getBindingDimensions(i));
             std::cout<<"Output binding, index: "<<i<<", name: "<<m_engine->getBindingName(i)<<", format"<<m_engine->getBindingFormatDesc(i)<<std::endl;
+            m_output_names.emplace_back(m_engine->getBindingName(i));
+            int tmp_size = 1;
             for (int d = 0; d < m_engine->getBindingDimensions(i).nbDims; d ++)
             {
+                tmp_size *= m_engine->getBindingDimensions(i).d[d];
                 printf("%d,", m_engine->getBindingDimensions(i).d[d]);
             }
+            m_output_byte_sizes.emplace_back(tmp_size*sizeof(float));
             printf("\n");
         }
     }
-
     return true;
 }
 
-bool HsuanwuDeployer::infer(float* input, float* output, int batchSize)
+bool HsuanwuDeployer::infer(std::vector<float*> input, std::vector<float*> output, int batchSize)
 {
-    m_context->setBindingDimensions(m_input_indexs[0], m_input_dims[0]);
-    void* buffers[m_engine->getNbBindings()];
-    int bytesofinput = 1, bytesofoutput = 1;
-    for(int i = 0; i<m_input_dims[0].nbDims; i++)
+    samplesCommon::BufferManager buffers(m_engine);
+    for(int i = 0; i<m_input_names.size();i++)
     {
-        bytesofinput*=m_input_dims[0].d[i];
+        memcpy(buffers.getHostBuffer(m_input_names[i]), input[i], m_input_byte_sizes[i]*batchSize);
     }
-    for(int i = 0; i<m_output_dims[0].nbDims; i++)
+    buffers.copyInputToDevice();
+    bool status = m_context->executeV2(buffers.getDeviceBindings().data());
+    if (!status)
     {
-        bytesofoutput*=m_output_dims[0].d[i];
+        return false;
     }
-    std::cout<<"output size: "<< bytesofoutput<<std::endl;
-    std::cout<<"index: "<<m_input_indexs[0] << " "<<m_output_indexs[0]<<std::endl;
-    checkCudaErrorCode(cudaMalloc(&buffers[m_input_indexs[0]], batchSize*bytesofinput * sizeof(float)));
-    checkCudaErrorCode(cudaMalloc(&buffers[m_output_indexs[0]], batchSize*bytesofoutput * sizeof(float)));
-std::cout<<"123"<<std::endl;
-    cudaStream_t stream;
-    checkCudaErrorCode(cudaStreamCreate(&stream));
-std::cout<<"1234"<<std::endl;
-    checkCudaErrorCode(cudaMemcpyAsync(buffers[m_input_indexs[0]], input, batchSize*bytesofinput* sizeof(float), cudaMemcpyHostToDevice, stream));
-        std::cout<<"12345"<<std::endl;
-    m_context->enqueueV2(buffers, stream, nullptr);
-    std::cout<<"123456"<<std::endl;
-    checkCudaErrorCode(cudaMemcpyAsync(output, buffers[m_output_indexs[0]], batchSize*bytesofoutput* sizeof(float), cudaMemcpyDeviceToHost, stream));
-    cudaStreamSynchronize(stream);
-    std::cout<<"1234567"<<std::endl;
-    // for(int i = 0; i < 50; i++)
-    // {
-    //     printf("5f ", output[i]);
-    // }
-    // cudaStreamDestroy(stream);
-    // checkCudaErrorCode(cudaFree(buffers[m_input_indexs[0]]));
-    // checkCudaErrorCode(cudaFree(buffers[m_output_indexs[0]]));
+    buffers.copyOutputToHost();
+    for(int i = 0; i<m_output_names.size();i++)
+    {
+        memcpy(output[i], buffers.getHostBuffer(m_output_names[i]), m_output_byte_sizes[i]*batchSize);
+    }
+    return true;
 }

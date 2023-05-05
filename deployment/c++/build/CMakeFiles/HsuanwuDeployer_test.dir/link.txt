@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11 -O3 -g  -rdynamic CMakeFiles/HsuanwuDeployer_test.dir/HsuanwuDeployer_test.cpp.o  -o HsuanwuDeployer_test  -Wl,-rpath,/home/jakeluo/Documents/Hsuanwu/deployment/c++/build libHsuanwuDeployer.so -lnvinfer -lnvonnxparser /usr/local/cuda-12.0/lib64/libcudart_static.a -lpthread -ldl -lrt 

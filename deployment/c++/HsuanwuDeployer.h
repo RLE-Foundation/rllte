@@ -8,7 +8,9 @@
 #include <cstring>
 #include <algorithm>
 #include <fstream>
-
+#include <chrono>
+#include <thread>
+#include "common/buffers.h"
 
 enum class Precision {
     FP32,
@@ -36,7 +38,7 @@ public:
     bool build(const std::string & onnxModelPath);
     bool build(const std::string & onnxModelPath, const std::string & engineSavePath);
     bool loadPlane(const std::string & planeFile);
-    bool infer(float* input, float* output, int batchSize);
+    bool infer(std::vector<float*> input, std::vector<float*> output, int batchSize);
 
 private:
     void setEngineName();
@@ -48,8 +50,9 @@ private:
     std::vector<void*> m_buffers;
     std::vector<uint32_t> m_outputLengthsFloat{};
 
-    std::unique_ptr<nvinfer1::ICudaEngine> m_engine = nullptr;
-    std::unique_ptr<nvinfer1::IExecutionContext> m_context = nullptr;
+    std::shared_ptr<nvinfer1::ICudaEngine> m_engine = nullptr;
+    std::shared_ptr<nvinfer1::IExecutionContext> m_context = nullptr;
+    std::shared_ptr<nvinfer1::IRuntime> m_runtime = nullptr;
     Options m_options;
     Logger m_logger;
     std::string m_engineName;
@@ -57,6 +60,8 @@ private:
     std::vector<nvinfer1::Dims> m_output_dims;
     std::vector<std::string> m_input_names;
     std::vector<std::string> m_output_names;
+    std::vector<int> m_input_byte_sizes;
+    std::vector<int> m_output_byte_sizes;
     std::vector<int> m_input_indexs;
     std::vector<int> m_output_indexs;
 

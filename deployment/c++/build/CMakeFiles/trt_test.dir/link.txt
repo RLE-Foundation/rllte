@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11 -O3  -rdynamic CMakeFiles/trt_test.dir/trt_test.cpp.o  -o trt_test  -Wl,-rpath,/home/jakeluo/Documents/Hsuanwu/deployment/c++/build libtrt.so -lnvinfer -lnvonnxparser /usr/local/cuda-12.0/lib64/libcudart_static.a -lpthread -ldl -lrt 
