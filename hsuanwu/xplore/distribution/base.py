@@ -60,11 +60,11 @@ class BaseDistribution(ABC):
     @abstractmethod
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
-    
+
     @abstractmethod
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""
-    
+
     @abstractmethod
     def variance(self) -> th.Tensor:
         """Returns the variance of the distribution."""

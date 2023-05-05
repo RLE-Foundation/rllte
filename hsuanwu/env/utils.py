@@ -40,11 +40,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
             )
         elif env.single_action_space.__class__.__name__ == "MultiBinary":
             self.action_space = OmegaConf.create(
-                {
-                    "shape": env.single_action_space.shape,
-                    "type": "MultiBinary", 
-                    "range": [0, 1]
-                    }
+                {"shape": env.single_action_space.shape, "type": "MultiBinary", "range": [0, 1]}
             )
         else:
             raise NotImplementedError("Unsupported action type!")

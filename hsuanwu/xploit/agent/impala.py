@@ -1,14 +1,13 @@
-import collections
+import os
 import threading
-from typing import Dict, Tuple, Union
 from copy import deepcopy
+from pathlib import Path
+from typing import Dict, Tuple, Union
 
 import gymnasium as gym
 import omegaconf
-import os
 import torch as th
 from omegaconf import DictConfig
-from pathlib import Path
 from torch import nn
 from torch.nn import functional as F
 
@@ -168,16 +167,20 @@ class IMPALA(BaseAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
 
-        self.actor = DistributedActorCritic(action_shape=self.action_shape,
-                                            action_type=self.action_type,
-                                            action_range=self.action_range,
-                                            feature_dim=feature_dim, 
-                                            use_lstm=use_lstm)
-        self.learner = DistributedActorCritic(action_shape=self.action_shape,
-                                              action_type=self.action_type,
-                                              action_range=self.action_range,
-                                              feature_dim=feature_dim, 
-                                              use_lstm=use_lstm)
+        self.actor = DistributedActorCritic(
+            action_shape=self.action_shape,
+            action_type=self.action_type,
+            action_range=self.action_range,
+            feature_dim=feature_dim,
+            use_lstm=use_lstm,
+        )
+        self.learner = DistributedActorCritic(
+            action_shape=self.action_shape,
+            action_type=self.action_type,
+            action_range=self.action_range,
+            feature_dim=feature_dim,
+            use_lstm=use_lstm,
+        )
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.

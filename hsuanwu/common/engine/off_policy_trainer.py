@@ -1,16 +1,14 @@
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict
 
 import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
-import os
 import torch as th
 
 from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
 from hsuanwu.common.engine.utils import eval_mode
-from hsuanwu.xploit.storage.utils import worker_init_fn
 
 
 class OffPolicyTrainer(BasePolicyTrainer):

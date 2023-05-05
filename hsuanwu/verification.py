@@ -1,8 +1,10 @@
 import gymnasium as gym
+from gym.vector import SyncVectorEnv
 from omegaconf import OmegaConf
+from termcolor import colored
+
 from hsuanwu.common.engine import HsuanwuEngine
 from hsuanwu.env.utils import HsuanwuEnvWrapper
-from termcolor import colored
 
 
 def make_env():
@@ -12,7 +14,7 @@ def make_env():
     return _thunk
 
 
-gym_env = gym.vector.SyncVectorEnv([make_env() for _ in range(1)])
+gym_env = SyncVectorEnv([make_env() for _ in range(1)])
 gym_env = gym.wrappers.RecordEpisodeStatistics(gym_env)
 train_env = HsuanwuEnvWrapper(gym_env, device="cpu")
 

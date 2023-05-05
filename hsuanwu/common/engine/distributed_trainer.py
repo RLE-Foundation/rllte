@@ -145,7 +145,7 @@ class DistributedTrainer(BasePolicyTrainer):
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
         self._train_env = self._train_env.envs
-        
+
         # xplore part
         ## TODO: build distribution
         if "Noise" in self._cfgs.distribution._target_:

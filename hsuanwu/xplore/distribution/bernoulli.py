@@ -66,7 +66,7 @@ class Bernoulli(BaseDistribution):
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return th.gt(self.dist.probs, 0.5).float()
-    
+
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""

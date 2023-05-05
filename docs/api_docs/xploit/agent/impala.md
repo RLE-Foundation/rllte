@@ -44,7 +44,7 @@ IMPALA distance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L180)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L182)
 ```python
 .train(
    training: bool = True
@@ -65,7 +65,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L193)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L195)
 ```python
 .integrate(
    **kwargs
@@ -76,7 +76,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L210)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L212)
 ```python
 .act(
    *kwargs
@@ -87,7 +87,7 @@ Integrate agent and other modules (encoder, reward, ...) together
 Sample actions based on observations.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L215)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L217)
 ```python
 .update(
    cfgs: omegaconf.DictConfig, actor_model: nn.Module, learner_model: nn.Module,
@@ -118,7 +118,7 @@ Update the learner model.
 Training metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L285)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L287)
 ```python
 .save(
    path: Path
@@ -139,7 +139,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L297)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L299)
 ```python
 .load(
    path: str

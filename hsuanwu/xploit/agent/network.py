@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
 
 import gymnasium as gym
 import torch as th
@@ -206,7 +206,7 @@ class OnPolicySharedActorCritic(nn.Module):
             super().__init__()
             self.actor = nn.Linear(hidden_dim, action_shape[0])
 
-        def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
             logits = self.actor(obs)
             return (logits,)
 
@@ -230,7 +230,7 @@ class OnPolicySharedActorCritic(nn.Module):
         def forward(self, obs: th.Tensor) -> th.Tensor:
             """Only for model inference"""
             return self.actor_mu(obs)
-    
+
     class MultiBinaryActor(nn.Module):
         """Actor for 'MultiBinary' tasks."""
 
@@ -238,7 +238,7 @@ class OnPolicySharedActorCritic(nn.Module):
             super().__init__()
             self.actor = nn.Linear(hidden_dim, action_shape[0])
 
-        def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
             logits = self.actor(obs)
             return (logits,)
 
@@ -256,12 +256,6 @@ class OnPolicySharedActorCritic(nn.Module):
     ) -> None:
         super().__init__()
 
-        # self.trunk = nn.Sequential(
-        #     nn.LayerNorm(feature_dim),
-        #     nn.Tanh(),
-        #     nn.Linear(feature_dim, hidden_dim),
-        #     nn.ReLU(),
-        # )
         if action_type == "Discrete":
             self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=feature_dim)
         elif action_type == "Box":
@@ -353,10 +347,164 @@ class OnPolicySharedActorCritic(nn.Module):
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
+    def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
         h = self.encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         return th.cat(policy_outputs, dim=1)
+
+
+class OnPolicyDecoupledActorCritic(nn.Module):
+    """Actor-Critic network using separate encoders for on-policy algorithms.
+
+    Args:
+        action_shape (Tuple): The data shape of actions.
+        action_type (str): The action type like 'Discrete' or 'Box', etc.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Actor-Critic instance.
+    """
+
+    class DiscreteActor(nn.Module):
+        """Actor for 'Discrete' tasks."""
+
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor = nn.Linear(hidden_dim, action_shape[0])
+
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
+            logits = self.actor(obs)
+            return (logits,)
+
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
+            return self.actor(obs)
+
+    class BoxActor(nn.Module):
+        """Actor for 'Box' tasks."""
+
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
+            self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
+
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+            mu = self.actor_mu(obs)
+            logstd = self.actor_logstd.expand_as(mu)
+            return (mu, logstd.exp())
+
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
+            return self.actor_mu(obs)
+
+    class MultiBinaryActor(nn.Module):
+        """Actor for 'MultiBinary' tasks."""
+
+        def __init__(self, action_shape, hidden_dim) -> None:
+            super().__init__()
+            self.actor = nn.Linear(hidden_dim, action_shape[0])
+
+        def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
+            logits = self.actor(obs)
+            return (logits,)
+
+        def forward(self, obs: th.Tensor) -> th.Tensor:
+            """Only for model inference"""
+            return self.actor(obs)
+
+    def __init__(
+        self,
+        action_shape: Tuple,
+        action_type: str,
+        feature_dim: int,
+        hidden_dim: int,
+    ) -> None:
+        super().__init__()
+
+        self.num_actions = action_shape[0]
+        self.action_type = action_type
+        if action_type == "Discrete":
+            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=feature_dim)
+        elif action_type == "Box":
+            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=feature_dim)
+        elif action_type == "MultiBinary":
+            self.actor = self.MultiBinaryActor(action_shape=action_shape, hidden_dim=feature_dim)
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
+        self.gae = nn.Linear(feature_dim + action_shape[0], 1)
+        self.critic = nn.Linear(feature_dim, 1)
+
+        # placeholder for distribution
+        self.actor_encoder = None
+        self.critic_encoder = None
+        self.dist = None
+
+        self.apply(utils.network_init)
+
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Only for model inference
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Actions.
+        """
+        return self.actor(self.actor_encoder(obs))
+
+    def get_value(self, obs: th.Tensor) -> th.Tensor:
+        """Get estimated values for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        return self.critic(self.critic_encoder(obs))
+
+    def get_det_action(self, obs: th.Tensor) -> th.Tensor:
+        """Get deterministic actions for observations.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Estimated values.
+        """
+        policy_outputs = self.actor.get_policy_outputs(self.actor_encoder(obs))
+        dist = self.dist(*policy_outputs)
+
+        return dist.mean
+
+    def get_action_and_value(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
+        """Get actions and estimated values for observations.
+
+        Args:
+            obs (Tensor): Sampled observations.
+            actions (Tensor): Sampled actions.
+
+        Returns:
+            Actions, Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
+        """
+        h = self.actor_encoder(obs)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        dist = self.dist(*policy_outputs)
+        if actions is None:
+            actions = dist.sample()
+
+        if self.action_type == "Discrete":
+            encoded_actions = F.one_hot(actions.long(), self.num_actions).squeeze(1).to(h.device)
+        else:
+            encoded_actions = actions
+
+        gae = self.gae(th.cat([h, encoded_actions], dim=1))
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy().mean()
+
+        return actions, gae, self.critic(h), log_probs, entropy
 
 
 class DistributedActorCritic(nn.Module):
@@ -371,7 +519,8 @@ class DistributedActorCritic(nn.Module):
 
     Returns:
         Actor network instance.
-    """ 
+    """
+
     class DiscreteActor(nn.Module):
         """Actor for 'Discrete' tasks."""
 
@@ -403,7 +552,7 @@ class DistributedActorCritic(nn.Module):
         def forward(self, obs: th.Tensor) -> th.Tensor:
             """Only for model inference"""
             return self.actor_mu(obs)
-        
+
     def __init__(
         self,
         action_shape: Tuple,
@@ -424,26 +573,24 @@ class DistributedActorCritic(nn.Module):
         lstm_output_size = feature_dim + self.num_actions + 1
         if use_lstm:
             self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
-        
+
         if action_type == "Discrete":
-            self.actor = self.DiscreteActor(action_shape=action_shape, 
-                                            hidden_dim=lstm_output_size)
+            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=lstm_output_size)
             self.action_dim = 1
             self.policy_reshape_dim = action_shape[0]
         elif action_type == "Box":
-            self.actor = self.BoxActor(action_shape=action_shape, 
-                                       hidden_dim=lstm_output_size)
+            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=lstm_output_size)
             self.action_dim = action_shape[0]
             self.policy_reshape_dim = action_shape[0] * 2
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
         # baseline value function
         self.critic = nn.Linear(lstm_output_size, 1)
         # internal encoder
         self.encoder = None
         self.dist = None
-    
+
     def init_state(self, batch_size: int) -> Tuple[th.Tensor, ...]:
         """Generate the initial states for LSTM.
 
@@ -456,12 +603,13 @@ class DistributedActorCritic(nn.Module):
         if not self.use_lstm:
             return tuple()
         return tuple(th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size) for _ in range(2))
-    
-    def get_action(self,
-                   inputs: Dict,
-                   lstm_state: Tuple = (),
-                   training: bool = True,
-                   ) -> th.Tensor:
+
+    def get_action(
+        self,
+        inputs: Dict,
+        lstm_state: Tuple = (),
+        training: bool = True,
+    ) -> th.Tensor:
         """Get actions in training.
 
         Args:
@@ -515,7 +663,7 @@ class DistributedActorCritic(nn.Module):
 
         policy_outputs = th.cat(policy_outputs, dim=1).view(T, B, self.policy_reshape_dim)
         baseline = baseline.view(T, B)
-        
+
         if self.action_type == "Discrete":
             action = action.view(T, B)
         elif self.action_type == "Box":
@@ -523,15 +671,14 @@ class DistributedActorCritic(nn.Module):
         else:
             raise NotImplementedError("Unsupported action type!")
 
-
         return (dict(policy_outputs=policy_outputs, baseline=baseline, action=action), lstm_state)
-    
+
     def get_dist(self, outputs: th.Tensor) -> Distribution:
         """Get sample distributions.
 
         Args:
             outputs (Tensor): Policy outputs.
-        
+
         Returns:
             Sample distributions.
         """
@@ -542,11 +689,12 @@ class DistributedActorCritic(nn.Module):
             return self.dist(mu, logstd.exp())
         else:
             raise NotImplementedError("Unsupported action type!")
-    
-    def forward(self,
-               inputs: Dict,
-               lstm_state: Tuple = (),
-               ) -> th.Tensor:
+
+    def forward(
+        self,
+        inputs: Dict,
+        lstm_state: Tuple = (),
+    ) -> th.Tensor:
         """Get actions in training.
 
         Args:
@@ -557,5 +705,3 @@ class DistributedActorCritic(nn.Module):
         Returns:
             Actions.
         """
-
-        

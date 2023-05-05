@@ -1,11 +1,11 @@
-from typing import Dict, Tuple, Union
+import os
+from pathlib import Path
+from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 from omegaconf import DictConfig
-import os
-from pathlib import Path
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
@@ -186,7 +186,7 @@ class PPG(BaseAgent):
         """
         return self.ac.get_value(obs)
 
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor, ...]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Union[Tuple[th.Tensor, ...], Dict[str, Any]]:
         """Sample actions based on observations.
 
         Args:
@@ -199,12 +199,12 @@ class PPG(BaseAgent):
         """
         if training:
             actions, values, log_probs, entropy = self.ac.get_action_and_value(obs)
-            return actions.clamp(*self.action_range), values, log_probs, entropy
+            return {"actions": actions.clamp(*self.action_range), "values": values, "log_probs": log_probs}
         else:
             actions = self.ac.get_det_action(obs)
             return actions.clamp(*self.action_range)
 
-    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
+    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:  # noqa: c901
         """Update the agent.
 
         Args:
@@ -313,9 +313,7 @@ class PPG(BaseAgent):
                 batch_obs_aug = self.aug(batch_obs)
                 new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
-                    obs=batch_obs_aug, actions=new_batch_actions
-                )
+                _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(obs=batch_obs_aug, actions=new_batch_actions)
                 action_loss_aug = -log_probs_aug.mean()
                 value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
                 aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)

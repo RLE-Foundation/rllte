@@ -52,10 +52,10 @@ class DistributedStorage(BaseStorage):
                 truncated=dict(size=(num_steps + 1,), dtype=th.bool),
                 episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
                 episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-                last_action=dict(size=(num_steps + 1, ), dtype=th.int64),
+                last_action=dict(size=(num_steps + 1,), dtype=th.int64),
                 policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
                 baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-                action=dict(size=(num_steps + 1, ), dtype=th.int64),
+                action=dict(size=(num_steps + 1,), dtype=th.int64),
             )
 
         elif self._action_type == "Box":
@@ -63,17 +63,17 @@ class DistributedStorage(BaseStorage):
             policy_outputs_dim = self._action_shape[0] * 2
 
             specs = dict(
-            obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
-            reward=dict(size=(num_steps + 1,), dtype=th.float32),
-            terminated=dict(size=(num_steps + 1,), dtype=th.bool),
-            truncated=dict(size=(num_steps + 1,), dtype=th.bool),
-            episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
-            episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-            last_action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
-            policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
-            baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-            action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
-        )
+                obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
+                reward=dict(size=(num_steps + 1,), dtype=th.float32),
+                terminated=dict(size=(num_steps + 1,), dtype=th.bool),
+                truncated=dict(size=(num_steps + 1,), dtype=th.bool),
+                episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
+                episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
+                last_action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+                policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
+                baseline=dict(size=(num_steps + 1,), dtype=th.float32),
+                action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+            )
         else:
             raise NotImplementedError
 

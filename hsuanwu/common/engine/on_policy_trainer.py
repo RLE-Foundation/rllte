@@ -6,7 +6,6 @@ import gymnasium as gym
 import hydra
 import numpy as np
 import omegaconf
-import os
 import torch as th
 
 from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
@@ -76,14 +75,26 @@ class OnPolicyTrainer(BasePolicyTrainer):
             for _step in range(self._num_steps):
                 # sample actions
                 with th.no_grad(), eval_mode(self._agent):
-                    actions, values, log_probs, entropy = self._agent.act(obs, training=True, step=self._global_step)
+                    agent_outputs = self._agent.act(obs, training=True, step=self._global_step)
                 (
                     next_obs,
                     rewards,
                     terminateds,
                     truncateds,
                     infos,
-                ) = self._train_env.step(actions)
+                ) = self._train_env.step(agent_outputs["actions"])
+
+                agent_outputs.update(
+                    {
+                        "obs": obs,
+                        "rewards": th.zeros_like(rewards, device=self._device)
+                        if self._cfgs.pretraining
+                        else rewards,  # pre-training mode
+                        "terminateds": terminateds,
+                        "truncateds": truncateds,
+                        "next_obs": next_obs,
+                    }
+                )
 
                 if "episode" in infos:
                     indices = np.nonzero(infos["episode"]["r"])
@@ -91,16 +102,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                     episode_steps.extend(infos["episode"]["l"][indices].tolist())
 
                 # add transitions
-                self._rollout_storage.add(
-                    obs=obs,
-                    actions=actions,
-                    rewards=th.zeros_like(rewards, device=self._device) if self._cfgs.pretraining else rewards,  # pre-training mode
-                    terminateds=terminateds,
-                    truncateds=truncateds,
-                    log_probs=log_probs,
-                    next_obs=next_obs,
-                    values=values,
-                )
+                self._rollout_storage.add(**agent_outputs)
 
                 obs = next_obs
 

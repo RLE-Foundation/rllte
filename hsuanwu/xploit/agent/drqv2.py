@@ -1,10 +1,10 @@
-from typing import Dict, Generator, Tuple, Union
+import os
+from pathlib import Path
+from typing import Dict, Tuple, Union
 
 import gymnasium as gym
 import torch as th
 from omegaconf import DictConfig
-import os
-from pathlib import Path
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
@@ -109,10 +109,12 @@ class DrQv2(BaseAgent):
         self.actor = OffPolicyDeterministicActor(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
             self.device
         )
-        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
-        self.critic_target = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
             self.device
         )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # create optimizers

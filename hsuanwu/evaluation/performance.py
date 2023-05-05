@@ -1,8 +1,9 @@
-from typing import Dict, Callable, Tuple, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 from numpy import random
 from scipy import stats as sts
+
 from hsuanwu.evaluation.utils import StratifiedBootstrap
 
 
@@ -44,7 +45,7 @@ class Performance:
         self.confidence_interval_size = confidence_interval_size
         self.random_state = random_state
 
-    def aggregate_mean(self) -> Tuple[np.ndarray]:
+    def aggregate_mean(self) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Computes mean of sample mean scores per task."""
 
         def _thunk(scores):
@@ -58,7 +59,7 @@ class Performance:
         else:
             return _thunk(self.scores)
 
-    def aggregate_median(self) -> Tuple[np.ndarray]:
+    def aggregate_median(self) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Computes median of sample mean scores per task."""
 
         def _thunk(scores):
@@ -72,7 +73,7 @@ class Performance:
         else:
             return _thunk(self.scores)
 
-    def aggregate_og(self, gamma: float = 1.0) -> np.ndarray:
+    def aggregate_og(self, gamma: float = 1.0) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Computes optimality gap across all runs and tasks.
 
         Args:
@@ -93,7 +94,7 @@ class Performance:
         else:
             return _thunk(self.scores, gamma)
 
-    def aggregate_iqm(self) -> np.ndarray:
+    def aggregate_iqm(self) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Computes the interquartile mean across runs and tasks."""
 
         def _thunk(scores):
@@ -108,7 +109,7 @@ class Performance:
 
     def get_interval_estimates(
         self,
-        scores: np.array,
+        scores: np.ndarray,
         metric: Callable,
     ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
         """Computes interval estimation of the above performance evaluators.

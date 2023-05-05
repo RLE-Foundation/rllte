@@ -97,6 +97,7 @@ nav:
         - DrQ: api_docs/xploit/agent/sac.md
         - DrQv2: api_docs/xploit/agent/drqv2.md
         - DDPG: api_docs/xploit/agent/drqv2.md
+        - DAAC: api_docs/xploit/agent/daac.md
         - PPG: api_docs/xploit/agent/ppg.md
         - PPO: api_docs/xploit/agent/ppo.md
         - DrAC: api_docs/xploit/agent/ppo.md
@@ -112,6 +113,7 @@ nav:
 
       - storage:
         - BaseStorage: api_docs/xploit/storage/base.md
+        - DecoupledRolloutStorage: api_docs/xploit/storage/decoupled_rollout_storage.md
         - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md

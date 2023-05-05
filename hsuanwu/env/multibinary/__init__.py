@@ -1,6 +1,5 @@
-from typing import Any, Callable, Dict, SupportsFloat, Tuple, Optional
+from typing import Any, Callable, Dict, Optional, SupportsFloat, Tuple
 
-import gym as old_gym
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import SyncVectorEnv
@@ -8,21 +7,16 @@ from gymnasium.wrappers import RecordEpisodeStatistics
 
 from hsuanwu.env.utils import HsuanwuEnvWrapper
 
+
 class StateEnv(gym.Env):
     def __init__(self) -> None:
         super().__init__()
-        self.observation_space = gym.spaces.Box(
-            low=-1.0,
-            high=1.0,
-            shape=(7, ),
-            dtype=np.float32)
-        self.action_space = gym.spaces.MultiBinary(
-            n=3
-        )
-    
-    def reset(self, seed: Optional[int] = None, options = Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
+        self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
+        self.action_space = gym.spaces.MultiBinary(n=3)
+
+    def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         return self.observation_space.sample(), {}
-    
+
     def step(self, action: Any) -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
         obs = self.observation_space.sample()
         reward = 0.5
@@ -34,20 +28,15 @@ class StateEnv(gym.Env):
         info = {}
 
         return obs, reward, terminated, truncated, info
+
 
 class PixelEnv(gym.Env):
     def __init__(self) -> None:
         super().__init__()
-        self.observation_space = gym.spaces.Box(
-            low=-1.0,
-            high=1.0,
-            shape=(4, 84, 84),
-            dtype=np.float32)
-        self.action_space = gym.spaces.MultiBinary(
-            n=3
-        )
+        self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(4, 84, 84), dtype=np.float32)
+        self.action_space = gym.spaces.MultiBinary(n=3)
 
-    def reset(self, seed: Optional[int] = None, options = Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
+    def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         return self.observation_space.sample(), {}
 
     def step(self, action: Any) -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
@@ -61,6 +50,7 @@ class PixelEnv(gym.Env):
         info = {}
 
         return obs, reward, terminated, truncated, info
+
 
 def make_multibinary_env(
     env_id: str = "multibinary_state",

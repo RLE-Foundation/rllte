@@ -3,7 +3,7 @@ import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Iterable
+from typing import Any, Dict, Iterator, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
@@ -281,7 +281,7 @@ class NStepReplayStorage(BaseStorage):
         self._replay_storage.add(obs, action, reward, terminated, discount)
 
     @property
-    def replay_iter(self) -> Iterable:
+    def replay_iter(self) -> Iterator:
         """Create iterable dataloader."""
         if self._replay_iter is None:
             self._replay_iter = iter(self._replay_loader)

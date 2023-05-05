@@ -1,24 +1,23 @@
 #
 
 
-## PPG
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L66)
+## DAAC
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L67)
 ```python 
-PPG(
+DAAC(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int = 256, lr: float = 0.0005,
-   eps: float = 1e-05, hidden_dim: int = 256, clip_range: float = 0.2,
-   num_policy_mini_batch: int = 8, num_aux_mini_batch: int = 4, vf_coef: float = 0.5,
-   ent_coef: float = 0.01, aug_coef: float = 0.1, max_grad_norm: float = 0.5,
-   policy_epochs: int = 32, aux_epochs: int = 6, kl_coef: float = 1.0,
-   num_aux_grad_accum: int = 1
+   DictConfig], device: str, feature_dim: int, lr: float, eps: float,
+   hidden_dim: int, clip_range: float, policy_epochs: int, value_freq: int,
+   value_epochs: int, num_mini_batch: int, vf_coef: float, ent_coef: float,
+   aug_coef: float, adv_coef: float, max_grad_norm: float
 )
 ```
 
 
 ---
-Phasic Policy Gradient (PPG) agent.
-Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
+Decoupled Advantage Actor-Critic (DAAC) agent.
+When 'augmentation' module is invoked, this learner will transform into Data Regularized Decoupled Actor-Critic (DrAAC) agent.
+Based on: https://github.com/rraileanu/idaac
 
 
 **Args**
@@ -35,29 +34,28 @@ Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 * **eps** (float) : Term added to the denominator to improve numerical stability.
 * **hidden_dim** (int) : The size of the hidden layers.
 * **clip_range** (float) : Clipping parameter.
-* **num_policy_mini_batch** (int) : Number of mini-batches in policy phase.
+* **policy_epochs** (int) : Times of updating the policy network.
+* **value_freq** (int) : Update frequency of the value network.
+* **value_epochs** (int) : Times of updating the value network.
+* **num_mini_batch** (int) : Number of mini-batches.
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **aug_coef** (float) : Weighting coefficient of augmentation loss.
+* **adv_ceof** (float) : Weighting coefficient of advantage loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
-* **policy_epochs** (int) : Number of iterations in the policy phase.
-* **aux_epochs** (int) : Number of iterations in the auxiliary phase.
-* **kl_coef** (float) : Weighting coefficient of divergence loss.
-* **num_aux_grad_accum** (int) : Number of gradient accumulation for auxiliary phase update.
 
-num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
 
 
 **Returns**
 
-PPG agent instance.
+DAAC learner instance.
 
 
 **Methods:**
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L151)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L143)
 ```python
 .train(
    training: bool = True
@@ -78,7 +76,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L163)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L155)
 ```python
 .integrate(
    **kwargs
@@ -89,7 +87,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L178)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L179)
 ```python
 .get_value(
    obs: th.Tensor
@@ -110,7 +108,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L189)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L190)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -133,7 +131,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L211)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L213)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -141,7 +139,7 @@ Sampled actions.
 ```
 
 ---
-Update the agent.
+Update the learner.
 
 
 **Args**
@@ -155,7 +153,7 @@ Update the agent.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L412)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L350)
 ```python
 .save(
    path: Path
@@ -176,7 +174,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppg.py/#L427)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L365)
 ```python
 .load(
    path: str

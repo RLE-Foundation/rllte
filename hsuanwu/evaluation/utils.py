@@ -1,13 +1,16 @@
 from typing import Dict, List, Optional, Tuple, Union
+
 import arch.bootstrap as arch_bs
 import numpy as np
 from numpy import random
 
 Float = Union[float, np.float32, np.float64]
 
+
 def min_max_normalize(value: np.ndarray, min_scores: np.ndarray, max_scores: np.ndarray) -> np.ndarray:
     """Perform `Max-Min` normalization."""
     return (value - min_scores) / (max_scores - min_scores)
+
 
 class StratifiedBootstrap(arch_bs.IIDBootstrap):
     """Bootstrap using stratified resampling.
@@ -53,7 +56,7 @@ class StratifiedBootstrap(arch_bs.IIDBootstrap):
             `IIDBootstrap`.
     """
 
-    _name = 'Stratified Bootstrap'
+    _name = "Stratified Bootstrap"
 
     def __init__(
         self,
@@ -98,13 +101,14 @@ class StratifiedBootstrap(arch_bs.IIDBootstrap):
         strata_indices = np.ogrid[ogrid_indices]
         return strata_indices[1:]
 
-    def update_indices(self,) -> Tuple[np.ndarray, ...]:
+    def update_indices(
+        self,
+    ) -> Tuple[np.ndarray, ...]:
         """Selects the indices to sample from the bootstrap distribution."""
         # `self._num_items` corresponds to the number of runs
         indices = np.random.choice(self._num_items, self._args_shape, replace=True)
         if self._task_bootstrap:
-            task_indices = np.random.choice(
-                self._num_tasks, self._strata_indices[0].shape, replace=True)
+            task_indices = np.random.choice(self._num_tasks, self._strata_indices[0].shape, replace=True)
             return (indices, task_indices, *self._strata_indices[1:])
         return (indices, *self._strata_indices)
 
@@ -148,16 +152,12 @@ class StratifiedIndependentBootstrap(arch_bs.IndependentSamplesBootstrap):
         super().__init__(*args, random_state=random_state, **kwargs)
         self._args_shapes = [arg.shape for arg in args]
         self._kwargs_shapes = {key: val.shape for key, val in self._kwargs.items()}
-        self._args_strata_indices = [
-            self._get_strata_indices(arg_shape) for arg_shape in self._args_shapes
-        ]
+        self._args_strata_indices = [self._get_strata_indices(arg_shape) for arg_shape in self._args_shapes]
         self._kwargs_strata_indices = {
-            key: self._get_strata_indices(kwarg_shape)
-            for key, kwarg_shape in self._kwargs_shapes.items()
+            key: self._get_strata_indices(kwarg_shape) for key, kwarg_shape in self._kwargs_shapes.items()
         }
 
-    def _get_strata_indices(
-        self, array_shape: Tuple[int, ...]) -> List[np.ndarray]:
+    def _get_strata_indices(self, array_shape: Tuple[int, ...]) -> List[np.ndarray]:
         """Samples partial indices for bootstrap resamples.
 
         Args:
@@ -171,8 +171,9 @@ class StratifiedIndependentBootstrap(arch_bs.IndependentSamplesBootstrap):
         strata_indices = np.ogrid[ogrid_indices]
         return strata_indices[1:]
 
-    def _get_indices(self, num_runs: int, array_shape: Tuple[int, ...],
-        strata_indices: List[np.ndarray]) -> Tuple[np.ndarray, ...]:
+    def _get_indices(
+        self, num_runs: int, array_shape: Tuple[int, ...], strata_indices: List[np.ndarray]
+    ) -> Tuple[np.ndarray, ...]:
         """Helper function for updating bootstrap indices."""
         indices = np.random.choice(num_runs, array_shape, replace=True)
         return (indices, *strata_indices)
@@ -183,13 +184,12 @@ class StratifiedIndependentBootstrap(arch_bs.IndependentSamplesBootstrap):
         """Update independent sampling indices for the next bootstrap iteration."""
 
         pos_indices = [
-            self._get_indices(self._num_arg_items[i], self._args_shapes[i],
-                self._args_strata_indices[i])
+            self._get_indices(self._num_arg_items[i], self._args_shapes[i], self._args_strata_indices[i])
             for i in range(self._num_args)
         ]
         kw_indices = {}
         for key in self._kwargs:
-            kw_indices[key] = self._get_indices(self._num_kw_items[key],
-                self._kwargs_shapes[key],
-                self._kwargs_strata_indices[key])
+            kw_indices[key] = self._get_indices(
+                self._num_kw_items[key], self._kwargs_shapes[key], self._kwargs_strata_indices[key]
+            )
         return pos_indices, kw_indices

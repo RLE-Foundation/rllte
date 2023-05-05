@@ -102,7 +102,7 @@ class NormalNoise(BaseDistribution):
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         return self.noiseless_action
-    
+
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""

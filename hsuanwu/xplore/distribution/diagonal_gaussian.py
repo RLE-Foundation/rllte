@@ -50,17 +50,17 @@ class DiagonalGaussian(BaseDistribution):
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return self.loc
-    
+
     @property
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         return self.loc
-    
+
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""
         raise self.scale
-    
+
     @property
     def variance(self) -> th.Tensor:
         """Returns the variance of the distribution."""

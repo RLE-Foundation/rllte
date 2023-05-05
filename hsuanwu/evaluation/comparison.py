@@ -1,8 +1,9 @@
-from typing import Any, Tuple, Dict, Callable, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 from numpy import random
 from scipy import stats as sts
+
 from hsuanwu.evaluation.utils import StratifiedIndependentBootstrap
 
 
@@ -76,8 +77,8 @@ class Comparison:
 
     def get_interval_estimates(
         self,
-        scores_x: np.array,
-        scores_y: np.array,
+        scores_x: np.ndarray,
+        scores_y: np.ndarray,
         metric: Callable,
     ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
         """Computes interval estimation of the above performance evaluators.

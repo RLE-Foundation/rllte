@@ -59,6 +59,10 @@ pages:
     source: hsuanwu/xploit/agent/base.py
     classes:
       - BaseAgent
+  - page: xploit/agent/daac.md
+    source: hsuanwu/xploit/agent/daac.py
+    classes:
+      - DAAC
   - page: xploit/agent/drqv2.md
     source: hsuanwu/xploit/agent/drqv2.py
     classes:
@@ -83,6 +87,10 @@ pages:
     source: hsuanwu/xploit/storage/base.py
     classes:
       - BaseStorage
+  - page: xploit/storage/decoupled_rollout_storage.md
+    source: hsuanwu/xploit/storage/decoupled_rollout_storage.py
+    classes:
+      - DecoupledRolloutStorage
   - page: xploit/storage/distributed_storage.md
     source: hsuanwu/xploit/storage/distributed_storage.py
     classes:

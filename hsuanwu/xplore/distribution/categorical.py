@@ -66,7 +66,7 @@ class Categorical(BaseDistribution):
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return self.dist.mode
-    
+
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""

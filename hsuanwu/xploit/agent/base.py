@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple, Union
+from pathlib import Path
+from typing import Any, Dict, Union
 
 import gymnasium as gym
 import torch as th
 from omegaconf import DictConfig
-from pathlib import Path
 
 
 class BaseAgent(ABC):
@@ -38,15 +38,15 @@ class BaseAgent(ABC):
         if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
             self.obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
-                self.action_shape = (int(action_space.n),)  
+                self.action_shape = (int(action_space.n),)
                 self.action_type = "Discrete"
-                self.action_range = [0, int(action_space.n) - 1]  
+                self.action_range = [0, int(action_space.n) - 1]
             elif action_space.__class__.__name__ == "Box":
-                self.action_shape = action_space.shape  
+                self.action_shape = action_space.shape
                 self.action_type = "Box"
                 self.action_range = [
-                    float(action_space.low[0]),  
-                    float(action_space.high[0]),  
+                    float(action_space.low[0]),
+                    float(action_space.high[0]),
                 ]
             elif action_space.__class__.__name__ == "MultiBinary":
                 self.action_shape = action_space.shape
@@ -91,7 +91,7 @@ class BaseAgent(ABC):
         """Integrate agent and other modules (encoder, reward, ...) together"""
 
     @abstractmethod
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Any:
         """Sample actions based on observations.
 
         Args:
@@ -119,7 +119,7 @@ class BaseAgent(ABC):
         """
 
     @abstractmethod
-    def load(self, path: Path) -> None:
+    def load(self, path: str) -> None:
         """Load initial parameters.
 
         Args:

@@ -1,4 +1,5 @@
 from .base import BaseStorage as BaseStorage
+from .decoupled_rollout_storage import DecoupledRolloutStorage as DecoupledRolloutStorage
 from .distributed_storage import DistributedStorage as DistributedStorage
 from .nstep_replay_storage import NStepReplayStorage as NStepReplayStorage
 from .prioritized_replay_storage import PrioritizedReplayStorage as PrioritizedReplayStorage

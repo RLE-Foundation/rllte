@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Any, Tuple, Union, Dict
+from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
 import numpy as np

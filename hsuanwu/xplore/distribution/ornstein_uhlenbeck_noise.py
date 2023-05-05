@@ -122,7 +122,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         raise NotImplementedError(f"{self.__class__} does not implement entropy!")
-    
+
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""

@@ -1,11 +1,11 @@
+import os
+from pathlib import Path
 from typing import Dict, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 from omegaconf import DictConfig
-import os
-from pathlib import Path
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
@@ -125,10 +125,12 @@ class SAC(BaseAgent):
             hidden_dim=hidden_dim,
             log_std_range=log_std_range,
         ).to(self.device)
-        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(self.device)
-        self.critic_target = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
             self.device
         )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy

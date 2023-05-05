@@ -1,4 +1,7 @@
 from .base import BaseAgent as BaseAgent
+from .daac import DAAC as DAAC
+from .daac import DEFAULT_CFGS as DAAC_DEFAULT_CFGS
+from .daac import MATCH_KEYS as DAAC_MATCH_KEYS
 from .drqv2 import DEFAULT_CFGS as DRQV2_DEFAULT_CFGS
 from .drqv2 import MATCH_KEYS as DRQV2_MATCH_KEYS
 from .drqv2 import DrQv2 as DrQv2
@@ -16,6 +19,7 @@ from .sac import MATCH_KEYS as SAC_MATCH_KEYS
 from .sac import SAC as SAC
 
 ALL_DEFAULT_CFGS = {
+    "DAAC": DAAC_DEFAULT_CFGS,
     "DrQv2": DRQV2_DEFAULT_CFGS,
     "PPG": PPG_DEFAULT_CFGS,
     "SAC": SAC_DEFAULT_CFGS,
@@ -23,6 +27,7 @@ ALL_DEFAULT_CFGS = {
     "IMPALA": IMPALA_DEFAULT_CFGS,
 }
 ALL_MATCH_KEYS = {
+    "DAAC": DAAC_MATCH_KEYS,
     "DrQv2": DRQV2_MATCH_KEYS,
     "PPG": PPG_MATCH_KEYS,
     "SAC": SAC_MATCH_KEYS,
