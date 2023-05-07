@@ -1,19 +1,15 @@
-from hsuanwu.common.typing import DictConfig, Env
-from hsuanwu.xploit.learner import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+import gymnasium as gym
+import omegaconf
 
-from .base_policy_trainer import BasePolicyTrainer
-from .distributed_trainer import DistributedTrainer
-from .off_policy_trainer import OffPolicyTrainer
-from .on_policy_trainer import OnPolicyTrainer
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
 
-_LEARNER_TO_TRAINER = {
-    "OffPolicyTrainer": ["DrQv2Learner", "SACLearner"],
-    "OnPolicyTrainer": ["PPOLearner", "PPGLearner"],
-    "DistributedTrainer": ["IMPALALearner"],
-}
+from .base_policy_trainer import BasePolicyTrainer as BasePolicyTrainer
+from .distributed_trainer import DistributedTrainer as DistributedTrainer
+from .off_policy_trainer import OffPolicyTrainer as OffPolicyTrainer
+from .on_policy_trainer import OnPolicyTrainer as OnPolicyTrainer
 
 
-class Engine:
+class HsuanwuEngine:
     """Hsuanwu RL engine.
 
     Args:
@@ -22,37 +18,24 @@ class Engine:
         test_env (Env): A Gym-like environment for testing.
 
     Returns:
-        Off-policy trainer instance.
+        Hsuanwu engine instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
-        try:
-            cfgs.learner.name
-        except:
-            raise ValueError(f"The learner name must be specified!")
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
+        assert hasattr(cfgs.agent, "name"), "The agent name must be specified!"
 
-        if cfgs.learner.name not in ALL_DEFAULT_CFGS.keys():
-            raise NotImplementedError(
-                f"Unsupported learner {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
-            )
+        if cfgs.agent.name not in ALL_DEFAULT_CFGS.keys():
+            raise NotImplementedError(f"Unsupported agent {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/.")
 
-        if ALL_MACTH_KEYS[cfgs.learner.name]['trainer'] == "OnPolicyTrainer":
-            self.trainer = OnPolicyTrainer(
-                cfgs=cfgs, train_env=train_env, test_env=test_env
-            )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "OffPolicyTrainer":
-            self.trainer = OffPolicyTrainer(
-                cfgs=cfgs, train_env=train_env, test_env=test_env
-            )
-        elif ALL_MATCH_KEYS[cfgs.learner.name]['trainer'] == "DistributedTrainer":
-            self.trainer = DistributedTrainer(
-                cfgs=cfgs, train_env=train_env, test_env=test_env
-            )
+        if ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OnPolicyTrainer":
+            self.trainer = OnPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
+        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OffPolicyTrainer":
+            self.trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
+        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "DistributedTrainer":
+            self.trainer = DistributedTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
         else:
-            raise NotImplementedError(
-                f"Unsupported trainer {cfgs.learner.name}, see https://docs.hsuanwu.dev/overview/api_overview/."
-            )
+            raise NotImplementedError(f"Unsupported trainer {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/.")
 
     def invoke(self):
-        """Training function."""
+        """Invoke the engine to perform training."""
         self.trainer.train()

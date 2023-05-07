@@ -1,9 +1,9 @@
 import io
 import random
+from pathlib import Path
+from typing import Dict
 
 import numpy as np
-
-from hsuanwu.common.typing import Dict, Path
 
 
 def dump_episode(episode: Dict, fn: Path) -> None:

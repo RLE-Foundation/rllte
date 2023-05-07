@@ -1,10 +1,9 @@
 import csv
 import datetime
 from pathlib import Path
+from typing import Any, Dict
 
 from termcolor import colored
-
-from hsuanwu.common.typing import Any, Dict, Type
 
 TRAIN_MSG_FORMAT = [
     ("step", "S", "int"),
@@ -42,7 +41,7 @@ class Logger:
         self._train_file_write_header = True
         self._test_file_write_header = True
 
-    def _format(self, key: str, value: Any, ty: Type):
+    def _format(self, key: str, value: Any, ty: str):
         if ty == "int":
             value = int(value)
             return f"{key}: {value}"
@@ -52,16 +51,16 @@ class Logger:
             value = str(datetime.timedelta(seconds=int(value)))
             return f"{key}: {value}"
         else:
-            raise f"invalid format type: {ty}"
+            raise TypeError(f"invalid format type: {ty}")
 
-    def parse_train_msg(self, msg: Any):
+    def parse_train_msg(self, msg: Any) -> str:
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
             value = msg.get(key, 0)
             pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
-    def parse_test_msg(self, msg: Any):
+    def parse_test_msg(self, msg: Any) -> str:
         pieces = []
         for key, disp_key, ty in TEST_MSG_FORMAT:
             value = msg.get(key, 0)
@@ -71,11 +70,7 @@ class Logger:
     @property
     def time_stamp(self) -> str:
         """Return the current time stamp."""
-        return (
-            "["
-            + datetime.datetime.now().strftime(format="%m/%d/%Y %I:%M:%S %p")
-            + "] - "
-        )
+        return "[" + datetime.datetime.now().strftime("%m/%d/%Y %I:%M:%S %p") + "] - "
 
     def info(self, msg: str) -> None:
         """Output msg with 'info' level.
@@ -86,11 +81,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = (
-            "["
-            + colored("HSUANWU INFO".ljust(13, " "), "cyan", attrs=["bold"])
-            + "] - "
-        )
+        prefix = "[" + colored("HSUANWU INFO".ljust(13, " "), "cyan", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def debug(self, msg: str) -> None:
@@ -102,11 +93,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = (
-            "["
-            + colored("HSUANWU DEBUG".ljust(13, " "), "yellow", attrs=["bold"])
-            + "] - "
-        )
+        prefix = "[" + colored("HSUANWU DEBUG".ljust(13, " "), "yellow", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def error(self, msg: str) -> None:
@@ -118,14 +105,10 @@ class Logger:
         Returns:
             None.
         """
-        prefix = (
-            "["
-            + colored("HSUANWU ERROR".ljust(13, " "), "white", attrs=["bold"])
-            + "] - "
-        )
+        prefix = "[" + colored("HSUANWU ERROR".ljust(13, " "), "white", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
-    def train(self, msg: str) -> None:
+    def train(self, msg: Dict) -> None:
         """Output msg with 'train' level.
 
         Args:
@@ -134,17 +117,13 @@ class Logger:
         Returns:
             None.
         """
-        prefix = (
-            "["
-            + colored("HSUANWU Train".ljust(13, " "), "red", attrs=["bold"])
-            + "] - "
-        )
+        prefix = "[" + colored("HSUANWU TRAIN".ljust(13, " "), "red", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + self.parse_train_msg(msg))
         # save data
         self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
         self._train_file_write_header = False
 
-    def test(self, msg: str) -> None:
+    def test(self, msg: Dict) -> None:
         """Output msg with 'test' level.
 
         Args:
@@ -153,11 +132,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = (
-            "["
-            + colored("HSUANWU Test".ljust(13, " "), "green", attrs=["bold"])
-            + "] - "
-        )
+        prefix = "[" + colored("HSUANWU TEST".ljust(13, " "), "green", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + self.parse_test_msg(msg))
         # save data
         self._dump_to_csv(self._test_file, msg, self._test_file_write_header)
@@ -165,9 +140,7 @@ class Logger:
 
     def _dump_to_csv(self, file: Path, data: Dict, write_header: bool) -> None:
         csv_file = file.open("a")
-        csv_writer = csv.DictWriter(
-            csv_file, fieldnames=sorted(data.keys()), restval=0.0
-        )
+        csv_writer = csv.DictWriter(csv_file, fieldnames=sorted(data.keys()), restval=0.0)
 
         if write_header:
             csv_writer.writeheader()

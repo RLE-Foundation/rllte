@@ -20,7 +20,6 @@ if __name__ == "__main__":
     seed = 1
     envs = make_atari_env(env_id="Alien-v5", num_envs=3, seed=seed, frame_stack=4)
     print(envs.observation_space, envs.action_space)
-    print(envs.action_space.sample())
 
     obs, info = envs.reset(seed=seed)
     print(obs.size(), info)
@@ -43,7 +42,6 @@ if __name__ == "__main__":
         distribution_mode="easy",
     )
     print(envs.observation_space, envs.action_space)
-    print(envs.action_space.sample())
 
     obs, info = envs.reset(seed=seed)
     print(obs.size(), info)
@@ -67,7 +65,6 @@ if __name__ == "__main__":
         seed=seed,
     )
     print(envs.observation_space, envs.action_space)
-    print(envs.action_space.sample())
 
     obs, info = envs.reset(seed=seed)
     print(obs.size(), info)

@@ -1,7 +1,6 @@
-import torch
-import torch.nn.functional as F
+import torch as th
+from torch.nn import functional as F
 
-from hsuanwu.common.typing import *
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
 
 
@@ -19,22 +18,18 @@ class RandomShift(BaseAugmentation):
         super().__init__()
         self._pad = pad
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         n, c, h, w = x.size()
         assert h == w
         padding = tuple([self._pad] * 4)
         x = F.pad(x, padding, "replicate")
         eps = 1.0 / (h + 2 * self._pad)
-        arange = torch.linspace(
-            -1.0 + eps, 1.0 - eps, h + 2 * self._pad, device=x.device, dtype=x.dtype
-        )[:h]
+        arange = th.linspace(-1.0 + eps, 1.0 - eps, h + 2 * self._pad, device=x.device, dtype=x.dtype)[:h]
         arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
-        base_grid = torch.cat([arange, arange.transpose(1, 0)], dim=2)
+        base_grid = th.cat([arange, arange.transpose(1, 0)], dim=2)
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
 
-        shift = torch.randint(
-            0, 2 * self._pad + 1, size=(n, 1, 1, 2), device=x.device, dtype=x.dtype
-        )
+        shift = th.randint(0, 2 * self._pad + 1, size=(n, 1, 1, 2), device=x.device, dtype=x.dtype)
         shift *= 2.0 / (h + 2 * self._pad)
 
         grid = base_grid + shift

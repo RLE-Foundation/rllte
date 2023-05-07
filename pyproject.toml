@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hsuanwu"
-version = "0.0.1.beta02"
+version = "0.0.1.beta05"
 authors = [
-  { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
+  { name="Reinforcement Learning Evolution Foundation", email="hsuanwudev@gmail.com" },
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
@@ -27,7 +27,8 @@ dependencies = [
   "opencv-python",
   "tensorboardX",
   "termcolor",
-  "scipy"
+  "scipy>= 1.7.0",
+  "arch==5.3.0"
 ]
 
 [project.optional-dependencies]
@@ -38,7 +39,6 @@ tests = [
   "pytest-env",
   "pytest-xdist",
   "pytype",
-  "mypy",
   "ruff",
   "isort>=5.0",
   "black"
@@ -64,3 +64,25 @@ docs = [
 "Documentation" = "https://docs.hsuanwu.dev/"
 "Benchmark" = "https://hub.hsuanwu.dev/"
 "Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
+
+[tool.ruff]
+# Same as Black.
+line-length = 127
+# Assume Python 3.7
+target-version = "py37"
+# See https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "B", "UP", "C90", "RUF"]
+# Ignore explicit stacklevel`
+ignore = ["B028"]
+
+[tool.black]
+line-length = 127
+
+[tool.isort]
+profile = "black"
+line_length = 127
+src_paths = ["hsuanwu"]
+
+[tool.pytype]
+inputs = ["hsuanwu"]
+disable = ["pyi-error"]

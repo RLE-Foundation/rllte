@@ -8,11 +8,10 @@
 .DS_Store
 .idea
 .vscode
-.coverage
+.coverage*
 .coverage.*
 *.npz
 *.pth
-*.png
 *.egg-info
 .cache
 .ipynb_checkpoints
@@ -22,9 +21,12 @@
 
 __pycache__/
 _build/
+/cfgs
+/examples
 /logs
 /dist
 /outputs
 /test.py
+/train.py
 
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf

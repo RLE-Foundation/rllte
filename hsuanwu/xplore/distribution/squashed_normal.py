@@ -1,10 +1,9 @@
 import math
 
-import torch
+import torch as th
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import Tensor, TorchSize
 from hsuanwu.xplore.distribution.base import BaseDistribution
 
 
@@ -41,39 +40,41 @@ class SquashedNormal(BaseDistribution):
     """Squashed normal distribution for Soft Actor-Critic learner.
 
     Args:
-        mu (Tensor): The mean of the distribution (often referred to as mu).
-        sigma (Tensor): The standard deviation of the distribution (often referred to as sigma).
+        loc (Tensor): The mean of the distribution (often referred to as mu).
+        scale (Tensor): The standard deviation of the distribution (often referred to as sigma).
 
     Returns:
         Squashed normal distribution instance.
     """
 
-    def __init__(self, mu: Tensor, sigma: Tensor) -> None:
+    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
         super().__init__()
 
-        self._mu = mu
-        self._sigma = sigma
+        self.loc = loc
+        self.scale = scale
         self.dist = pyd.TransformedDistribution(
-            base_distribution=pyd.Normal(loc=mu, scale=sigma),
+            base_distribution=pyd.Normal(loc=loc, scale=scale),
             transforms=[TanhTransform()],
         )
 
-    def sample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of samples if the distribution parameters are batched.
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+        """Generates a sample_shape shaped sample or sample_shape shaped
+            batch of samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: TorchSize = torch.Size()) -> Tensor:
-        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of reparameterized samples if the distribution parameters are batched.
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped
+            batch of reparameterized samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (TorchSize): The size of the sample to be drawn.
+            sample_shape (Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -81,15 +82,21 @@ class SquashedNormal(BaseDistribution):
         return self.dist.rsample(sample_shape)
 
     @property
-    def mean(self) -> Tensor:
+    def mean(self) -> th.Tensor:
         """Return the transformed mean."""
-        mu = self._mu
+        loc = self.loc
         for tr in self.dist.transforms:
-            mu = tr(mu)
-        return mu
+            loc = tr(loc)
+        return loc
 
-    def log_prob(self, actions: Tensor) -> Tensor:
-        """Scores the sample by inverting the transform(s) and computing the score using the score of the base distribution and the log abs det jacobian.
+    @property
+    def mode(self) -> th.Tensor:
+        """Returns the mode of the distribution."""
+        return self.mean
+
+    def log_prob(self, actions: th.Tensor) -> th.Tensor:
+        """Scores the sample by inverting the transform(s) and computing the score using
+            the score of the base distribution and the log abs det jacobian.
         Args:
             actions (Tensor): The actions to be evaluated.
 
@@ -98,14 +105,20 @@ class SquashedNormal(BaseDistribution):
         """
         return self.dist.log_prob(actions)
 
+    def entropy(self) -> th.Tensor:
+        """Returns the Shannon entropy of distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement entropy!")
+
+    @property
+    def stddev(self) -> th.Tensor:
+        """Returns the standard deviation of the distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement stddev!")
+
+    @property
+    def variance(self) -> th.Tensor:
+        """Returns the variance of the distribution."""
+        raise NotImplementedError(f"{self.__class__} does not implement variance!")
+
     def reset(self) -> None:
         """Reset the distribution."""
-        raise NotImplementedError
-
-    def entropy(self) -> Tensor:
-        """Returns the Shannon entropy of distribution."""
-        raise NotImplementedError
-
-    def mode(self) -> Tensor:
-        """Returns the mode of the distribution."""
-        raise NotImplementedError
+        raise NotImplementedError(f"{self.__class__} does not implement reset!")

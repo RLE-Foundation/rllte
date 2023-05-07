@@ -1,24 +1,29 @@
-import torch
+from typing import Union
+
+import gymnasium as gym
+import torch as th
+from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.common.typing import Space, Tensor
-from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
+from hsuanwu.xploit.encoder.base import BaseEncoder
 
 
 class MnihCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.
-    Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
+    Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with
+    deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
     Target task: Atari games.
 
     Args:
-        observation_space (Space): Observation space of the environment.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
 
     Returns:
         CNN-based encoder instance.
     """
 
-    def __init__(self, observation_space: Space, feature_dim: int = 0) -> None:
+    def __init__(self, observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0) -> None:
         super().__init__(observation_space, feature_dim)
 
         obs_shape = observation_space.shape
@@ -34,16 +39,15 @@ class MnihCnnEncoder(BaseEncoder):
             nn.Flatten(),
         )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
+        with th.no_grad():
+            sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-        self.linear = nn.Linear(n_flatten, feature_dim)
-
+        self.trunk.extend([nn.Linear(n_flatten, feature_dim), nn.ReLU()])
         # self.apply(network_init)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0
         h = self.trunk(obs)
 
-        return self.linear(h.view(h.size()[0], -1))
+        return h.view(h.size()[0], -1)

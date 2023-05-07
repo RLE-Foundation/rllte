@@ -1,12 +1,15 @@
 from collections import deque
 from pathlib import Path
+from typing import Dict
 
+import gymnasium as gym
 import hydra
 import numpy as np
-import torch
+import omegaconf
+import torch as th
 
-from hsuanwu.common.engine import BasePolicyTrainer, utils
-from hsuanwu.common.typing import Dict, DictConfig, Env, Tensor, Tuple
+from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
+from hsuanwu.common.engine.utils import eval_mode
 
 
 class OnPolicyTrainer(BasePolicyTrainer):
@@ -21,37 +24,33 @@ class OnPolicyTrainer(BasePolicyTrainer):
         On-policy trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.info(f"Deploying OnPolicyTrainer...")
+        self._logger.info("Deploying OnPolicyTrainer...")
+        # TODO: turn on the pretraining mode, no extrinsic rewards will be provided.
+        if self._cfgs.pretraining:
+            self._logger.info("Pre-training Mode On...")
         # xploit part
-        self._learner = hydra.utils.instantiate(self._cfgs.learner)
+        self._agent = hydra.utils.instantiate(self._cfgs.agent)
         # TODO: build encoder
-        self._learner.encoder = hydra.utils.instantiate(self._cfgs.encoder).to(
-            self._device
-        )
-        self._learner.encoder.train()
-        self._learner.encoder_opt = torch.optim.Adam(
-            self._learner.encoder.parameters(),
-            lr=self._learner.lr,
-            eps=self._learner.eps,
-        )
+        encoder = hydra.utils.instantiate(self._cfgs.encoder).to(self._device)
         # TODO: build storage
         self._rollout_storage = hydra.utils.instantiate(self._cfgs.storage)
 
         # xplore part
         # TODO: get distribution
         dist = hydra.utils.get_class(self._cfgs.distribution._target_)
-        self._learner.dist = dist
-        self._learner.ac.dist = dist
-        # TODO: get augmentation
-        if self._cfgs.use_aug:
-            self._learner.aug = hydra.utils.instantiate(self._cfgs.augmentation).to(
-                self._device
-            )
-        # TODO: get intrinsic reward
-        if self._cfgs.use_irs:
-            self._learner.irs = hydra.utils.instantiate(self._cfgs.reward)
+        ## TODO: get augmentation
+        aug = hydra.utils.instantiate(self._cfgs.augmentation).to(self._device) if self._cfgs.use_aug else None
+        ## TODO: get intrinsic reward
+        irs = hydra.utils.instantiate(self._cfgs.reward) if self._cfgs.use_irs else None
+
+        # TODO: Integrate agent and modules
+        self._agent.integrate(encoder=encoder, dist=dist, aug=aug, irs=irs)
+        # TODO: load initial parameters
+        if self._cfgs.init_model_path is not None:
+            self._logger.info(f"Loading Initial Parameters from {self._cfgs.init_model_path}")
+            self._agent.load(self._cfgs.init_model_path)
 
         self._num_steps = self._cfgs.num_steps
         self._num_envs = self._cfgs.num_envs
@@ -59,58 +58,43 @@ class OnPolicyTrainer(BasePolicyTrainer):
         # debug
         self._logger.debug("Check Accomplished. Start Training...")
 
-    def act(self, obs: Tensor, training: bool = True, step: int = 0) -> Tuple[Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self._learner.encoder(obs)
-
-        if training:
-            actions, values, log_probs, entropy = self._learner.ac.get_action_and_value(
-                obs=encoded_obs
-            )
-            return actions, values, log_probs, entropy
-        else:
-            actions = self._learner.ac.get_action(obs=encoded_obs)
-            return actions
-
     def train(self) -> None:
         """Training function."""
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
         obs, info = self._train_env.reset(seed=self._seed)
-        metrics = None
         # Number of updates
         num_updates = self._num_train_steps // self._num_envs // self._num_steps
 
         for update in range(num_updates):
             # try to test
-            if (update % self._test_every_episodes) == 0 and (
-                self._test_env is not None
-            ):
+            if (update % self._test_every_episodes) == 0 and (self._test_env is not None):
                 test_metrics = self.test()
                 self._logger.test(msg=test_metrics)
 
-            for step in range(self._num_steps):
+            for _step in range(self._num_steps):
                 # sample actions
-                with torch.no_grad(), utils.eval_mode(self._learner):
-                    actions, values, log_probs, entropy = self.act(
-                        obs, training=True, step=self._global_step
-                    )
+                with th.no_grad(), eval_mode(self._agent):
+                    agent_outputs = self._agent.act(obs, training=True, step=self._global_step)
                 (
                     next_obs,
                     rewards,
                     terminateds,
                     truncateds,
                     infos,
-                ) = self._train_env.step(actions)
+                ) = self._train_env.step(agent_outputs["actions"])
+
+                agent_outputs.update(
+                    {
+                        "obs": obs,
+                        "rewards": th.zeros_like(rewards, device=self._device)
+                        if self._cfgs.pretraining
+                        else rewards,  # pre-training mode
+                        "terminateds": terminateds,
+                        "truncateds": truncateds,
+                        "next_obs": next_obs,
+                    }
+                )
 
                 if "episode" in infos:
                     indices = np.nonzero(infos["episode"]["r"])
@@ -118,32 +102,22 @@ class OnPolicyTrainer(BasePolicyTrainer):
                     episode_steps.extend(infos["episode"]["l"][indices].tolist())
 
                 # add transitions
-                self._rollout_storage.add(
-                    obs=obs,
-                    actions=actions,
-                    rewards=rewards,
-                    terminateds=terminateds,
-                    truncateds=truncateds,
-                    log_probs=log_probs,
-                    values=values,
-                )
+                self._rollout_storage.add(**agent_outputs)
 
                 obs = next_obs
 
             # get the value estimation of the last step
-            with torch.no_grad():
-                last_values = self._learner.get_value(next_obs).detach()
+            with th.no_grad():
+                last_values = self._agent.get_value(next_obs).detach()
 
             # perform return and advantage estimation
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._learner.update(
-                self._rollout_storage, episode=self._global_episode
-            )
+            self._agent.update(self._rollout_storage, episode=self._global_episode)
 
-            # reset buffer
-            self._rollout_storage.reset()
+            # update and reset buffer
+            self._rollout_storage.update()
 
             self._global_episode += 1
             self._global_step += self._num_envs * self._num_steps
@@ -164,15 +138,15 @@ class OnPolicyTrainer(BasePolicyTrainer):
         self._logger.info("Training Accomplished!")
         self.save()
 
-    def test(self) -> Dict:
+    def test(self) -> Dict[str, float]:
         """Testing function."""
         obs, info = self._test_env.reset(seed=self._seed)
         episode_rewards = list()
         episode_steps = list()
 
         while len(episode_rewards) < self._num_test_episodes:
-            with torch.no_grad(), utils.eval_mode(self._learner):
-                actions = self.act(obs, training=False, step=self._global_step)
+            with th.no_grad(), eval_mode(self._agent):
+                actions = self._agent.act(obs, training=False, step=self._global_step)
             obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions)
 
             if "episode" in infos:
@@ -190,7 +164,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def save(self) -> None:
         """Save the trained model."""
-        save_dir = Path.cwd() / "model"
+        save_dir = Path.cwd() / "pretrained" if self._cfgs.pretraining else Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.encoder, save_dir / "encoder.pth")
-        torch.save(self._learner.ac, save_dir / "actor_critic.pth")
+        self._agent.save(path=save_dir)
+        self._logger.info(f"Model saved at: {save_dir}")

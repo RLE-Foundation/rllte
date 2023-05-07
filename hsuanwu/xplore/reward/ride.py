@@ -1,74 +1,124 @@
-import numpy as np
-import torch
-from torch import nn
+from collections import deque
+from typing import Dict, Tuple, Union
 
-from hsuanwu.common.typing import *
+import gymnasium as gym
+import numpy as np
+import torch as th
+from omegaconf import DictConfig
+from torch import nn
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, TensorDataset
+
 from hsuanwu.xplore.reward.base import BaseIntrinsicRewardModule
 
 
-class RandomCnnEncoder(nn.Module):
-    """
-    Random encoder for encoding image-based observations.
+class Encoder(nn.Module):
+    """Encoder for encoding observations.
 
     Args:
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
+        obs_shape (Tuple): The data shape of observations.
+        action_shape (Tuple): The data shape of actions.
+        latent_dim (int): The dimension of encoding vectors.
 
     Returns:
-        CNN-based random encoder.
+        Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
         super().__init__()
-        self.trunk = nn.Sequential(
-            nn.Conv2d(obs_shape[0], 32, (8, 8), stride=(4, 4)),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, (4, 4), stride=(2, 2)),
-            nn.ReLU(),
-            nn.Conv2d(64, 32, (3, 3), stride=(1, 1)),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
 
-        with torch.no_grad():
-            sample = torch.ones(size=tuple(obs_shape)).float()
-            n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
+        # visual
+        if len(obs_shape) == 3:
+            self.trunk = nn.Sequential(
+                nn.Conv2d(obs_shape[0], 32, 8, 4),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, 4, 2),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, 3, 1),
+                nn.ReLU(),
+                nn.Flatten(),
+            )
+            with th.no_grad():
+                sample = th.ones(size=tuple(obs_shape))
+                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-        self.linear = nn.Linear(n_flatten, latent_dim)
-        self.layer_norm = nn.LayerNorm(latent_dim)
+            self.linear = nn.Linear(n_flatten, latent_dim)
+        else:
+            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
+            self.linear = nn.Linear(256, latent_dim)
 
-    def forward(self, obs: Tensor) -> Tensor:
-        h = self.trunk(obs)
-        h = self.linear(h)
-        h = self.layer_norm(h)
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Encode the input tensors.
 
-        return h
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Encoding tensors.
+        """
+        return self.linear(self.trunk(obs))
 
 
-class RandomMlpEncoder(nn.Module):
-    """Random encoder for encoding state-based observations.
+class InverseDynamicsModel(nn.Module):
+    """Inverse model for reconstructing transition process.
 
     Args:
-        obs_shape: The data shape of observations.
-        latent_dim: The dimension of encoding vectors of the observations.
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
 
     Returns:
-        MLP-based random encoder.
+        Model instance.
     """
 
-    def __init__(self, obs_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, latent_dim, action_dim) -> None:
         super().__init__()
+
+        self.trunk = nn.Sequential(nn.Linear(2 * latent_dim, 256), nn.ReLU(), nn.Linear(256, action_dim))
+
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted actions.
+
+        Args:
+            obs (Tensor): Current observations.
+            next_obs (Tensor): Next observations.
+
+        Returns:
+            Predicted actions.
+        """
+        return self.trunk(th.cat([obs, next_obs], dim=1))
+
+
+class ForwardDynamicsModel(nn.Module):
+    """Forward model for reconstructing transition process.
+
+    Args:
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
+
+    Returns:
+        Model instance.
+    """
+
+    def __init__(self, latent_dim, action_dim) -> None:
+        super().__init__()
+
         self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0], 64),
+            nn.Linear(latent_dim + action_dim, 256),
             nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, latent_dim),
-            nn.LayerNorm(latent_dim),
+            nn.Linear(256, latent_dim),
         )
 
-    def forward(self, obs: Tensor) -> Tensor:
-        return self.trunk(obs)
+    def forward(self, obs: th.Tensor, pred_actions: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted next-obs.
+
+        Args:
+            obs (Tensor): Current observations.
+            pred_actions (Tensor): Predicted observations.
+
+        Returns:
+            Predicted next-obs.
+        """
+        return self.trunk(th.cat([obs, pred_actions], dim=1))
 
 
 class RIDE(BaseIntrinsicRewardModule):
@@ -76,13 +126,24 @@ class RIDE(BaseIntrinsicRewardModule):
         See paper: https://arxiv.org/pdf/2002.12292
 
     Args:
-        obs_shape: Data shape of observation.
-        action_space: Data shape of action.
-        action_type: Continuous or discrete action. "cont" or "dis".
-        device: Device (cpu, cuda, ...) on which the code should be run.
-        beta: The initial weighting coefficient of the intrinsic rewards.
-        kappa: The decay rate.
-        latent_dim: The dimension of encoding vectors of the observations.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        beta (float): The initial weighting coefficient of the intrinsic rewards.
+        kappa (float): The decay rate.
+        latent_dim (int): The dimension of encoding vectors.
+        lr (float): The learning rate.
+        batch_size (int): The batch size for update.
+        capacity (int): The of capacity the episodic memory.
+        k (int): Number of neighbors.
+        kernel_cluster_distance (float): The kernel cluster distance.
+        kernel_epsilon (float): The kernel constant.
+        c (float): The pseudo-counts constant.
+        sm (float): The kernel maximum similarity.
 
     Returns:
         Instance of RIDE.
@@ -90,88 +151,162 @@ class RIDE(BaseIntrinsicRewardModule):
 
     def __init__(
         self,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
-        device: torch.device,
-        beta: float,
-        kappa: float,
-        latent_dim: int,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: str = "cpu",
+        beta: float = 0.05,
+        kappa: float = 0.000025,
+        latent_dim: int = 128,
+        lr: float = 0.001,
+        batch_size: int = 64,
+        capacity: int = 1000,
+        k: int = 10,
+        kernel_cluster_distance: float = 0.008,
+        kernel_epsilon: float = 0.0001,
+        c: float = 0.001,
+        sm: float = 8.0,
     ) -> None:
-        super().__init__(obs_shape, action_shape, action_type, device, beta, kappa)
+        super().__init__(observation_space, action_space, device, beta, kappa)
+        self.encoder = Encoder(
+            obs_shape=observation_space.shape,
+            action_shape=action_space.shape,
+            latent_dim=latent_dim,
+        ).to(self._device)
 
-        if len(self._obs_shape) == 3:
-            self.encoder = RandomCnnEncoder(
-                obs_shape=self._obs_shape, latent_dim=latent_dim
-            )
+        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
+        if self._action_shape == "Discrete":
+            self.im_loss = nn.CrossEntropyLoss()
         else:
-            self.encoder = RandomMlpEncoder(
-                obs_shape=self._obs_shape, latent_dim=latent_dim
-            )
+            self.im_loss = nn.MSELoss()
 
-        self.encoder.to(self._device)
+        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
 
-        # freeze the network parameters
-        for p in self.encoder.parameters():
-            p.requires_grad = False
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
+        self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
+        self.batch_size = batch_size
 
-    def pseudo_counts(
-        self,
-        src_feats,
-        k=10,
-        kernel_cluster_distance=0.008,
-        kernel_epsilon=0.0001,
-        c=0.001,
-        sm=8,
-    ):
-        counts = np.zeros(shape=(src_feats.size()[0],))
-        for step in range(src_feats.size()[0]):
-            ob_dist = torch.norm(src_feats[step] - src_feats, p=2, dim=1)
-            ob_dist = torch.sort(ob_dist).values
-            ob_dist = ob_dist[:k]
-            dist = ob_dist.cpu().numpy()
-            # moving average
-            dist = dist / np.mean(dist + 1e-11)
-            dist = np.max(dist - kernel_cluster_distance, 0)
-            kernel = kernel_epsilon / (dist + kernel_epsilon)
-            s = np.sqrt(np.sum(kernel)) + c
+        # episodic memory
+        self.episodic_memory = deque(maxlen=capacity)
+        self.k = k
+        self.kernel_cluster_distance = kernel_cluster_distance
+        self.kernel_epsilon = kernel_epsilon
+        self.c = c
+        self.sm = sm
 
-            if np.isnan(s) or s > sm:
-                counts[step] = 0.0
-            else:
-                counts[step] = 1 / s
-        return
-
-    def compute_irs(self, rollouts: Dict, step: int) -> ndarray:
-        """Compute the intrinsic rewards using the collected observations.
+    def pseudo_counts(self, e: th.Tensor) -> th.Tensor:
+        """Pseudo counts.
 
         Args:
-            rollouts: The collected experiences. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'numpy.ndarray'>,
-                actions (n_steps, n_envs, action_shape) <class 'numpy.ndarray'>,
-                rewards (n_steps, n_envs, 1) <class 'numpy.ndarray'>}.
-            step: The current time step.
+            e (Tensor): Encoded observations.
 
         Returns:
-            The intrinsic rewards
+            Conut values.
+        """
+        num_steps = e.size()[0]
+        counts = th.zeros(size=(num_steps,))
+        memory = th.stack(list(self.episodic_memory)).squeeze(1)
+        for step in range(num_steps):
+            dist = th.norm(e[step] - memory, p=2, dim=1).sort().values[: self.k]
+            # moving average
+            dist = dist / (dist.mean() + 1e-11)
+            dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
+            kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
+            s = th.sqrt(kernel.sum()) + self.c
+
+            if s is th.nan or s > self.sm:
+                counts[step] = 0.0
+            else:
+                counts[step] = 1.0 / s
+
+        return counts
+
+    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
+        """Compute the intrinsic rewards for current samples.
+
+        Args:
+            samples (Dict): The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            step (int): The global training step.
+
+        Returns:
+            The intrinsic rewards.
         """
         # compute the weighting coefficient of timestep t
         beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        n_steps = rollouts["observations"].shape[0]
-        n_envs = rollouts["observations"].shape[1]
-        intrinsic_rewards = np.zeros(shape=(n_steps, n_envs, 1))
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = samples["obs"].to(self._device)
+        actions_tensor = samples["actions"]
+        if self._action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = actions_tensor.to(self._device)
+        next_obs_tensor = samples["next_obs"].to(self._device)
 
-        obs_tensor = torch.as_tensor(
-            rollouts["observations"], dtype=torch.float32, device=self._device
-        )
+        intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
 
-        with torch.no_grad():
-            for idx in range(n_envs):
-                src_feats = self.encoder(obs_tensor[:, idx])
-                dist = torch.linalg.vector_norm(
-                    src_feats[:-1] - src_feats[1:], ord=2, dim=1
-                )
-                n_eps = self.pseudo_counts(src_feats)
-                intrinsic_rewards[:-1, idx, 0] = n_eps[1:] * dist.cpu().numpy()
+        with th.no_grad():
+            for i in range(num_envs):
+                encoded_obs = self.encoder(obs_tensor[:, i])
+                encoded_next_obs = self.encoder(next_obs_tensor[:, i])
 
-        return beta_t * intrinsic_rewards
+                # TODO: add encodings into memory
+                self.episodic_memory.extend(encoded_next_obs.split(1))
+                n_eps = self.pseudo_counts(e=encoded_next_obs)
+
+                dist = F.mse_loss(encoded_next_obs, encoded_obs, reduction="none").sum(dim=1)
+                intrinsic_rewards[:, i] = dist.cpu() * n_eps
+
+        self.update(samples)
+
+        return intrinsic_rewards * beta_t
+
+    def update(self, samples: Dict) -> None:
+        """Update the intrinsic reward module if necessary.
+
+        Args:
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
+        Returns:
+            None
+        """
+        num_steps = samples["obs"].size()[0]
+        num_envs = samples["obs"].size()[1]
+        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
+
+        if self._action_type == "Discrete":
+            actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+        else:
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
+
+        for _idx, batch in enumerate(loader):
+            obs, actions, next_obs = batch
+
+            self.encoder_opt.zero_grad()
+            self.im_opt.zero_grad()
+            self.fm_opt.zero_grad()
+
+            encoded_obs = self.encoder(obs)
+            encoded_next_obs = self.encoder(next_obs)
+
+            pred_actions = self.im(encoded_obs, encoded_next_obs)
+            im_loss = self.im_loss(pred_actions, actions)
+            pred_next_obs = self.fm(encoded_obs, actions)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            (im_loss + fm_loss).backward()
+
+            self.encoder_opt.step()
+            self.im_opt.step()
+            self.fm_opt.step()

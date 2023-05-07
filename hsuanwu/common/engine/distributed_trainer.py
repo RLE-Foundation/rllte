@@ -1,29 +1,23 @@
 import os
-
-os.environ["OMP_NUM_THREADS"] = "1"
 import threading
 import time
 import traceback
 from collections import deque
 from pathlib import Path
+from typing import Dict, List
 
+import gymnasium as gym
 import hydra
 import numpy as np
-import torch
+import omegaconf
+import torch as th
 from torch import multiprocessing as mp
+from torch import nn
 
-from hsuanwu.common.engine import BasePolicyTrainer
+from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
 from hsuanwu.common.logger import Logger
-from hsuanwu.common.typing import (
-    Dict,
-    DictConfig,
-    Env,
-    List,
-    Ndarray,
-    NNModule,
-    Storage,
-    Tensor,
-)
+
+os.environ["OMP_NUM_THREADS"] = "1"
 
 
 class Environment:
@@ -36,20 +30,27 @@ class Environment:
         Processed env.
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: gym.Env) -> None:
         self.env = env
         self.episode_return = None
         self.episode_step = None
+        if env.action_space.__class__.__name__ == "Discrete":
+            self.action_type = "Discrete"
+            self.action_dim = 1
+        elif env.action_space.__class__.__name__ == "Box":
+            self.action_type = "Box"
+            self.action_dim = env.action_space.shape[0]
+        else:
+            raise NotImplementedError("Unsupported action type!")
 
-    def reset(self, seed) -> Dict[str, Tensor]:
+    def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
-        init_reward = torch.zeros(1, 1)
-        # This supports only single-tensor actions ATM.
-        init_last_action = torch.zeros(1, 1, dtype=torch.int64)
-        self.episode_return = torch.zeros(1, 1)
-        self.episode_step = torch.zeros(1, 1, dtype=torch.int32)
-        init_terminated = torch.ones(1, 1, dtype=torch.uint8)
-        init_truncated = torch.ones(1, 1, dtype=torch.uint8)
+        init_reward = th.zeros(1, 1)
+        init_last_action = th.zeros(1, self.action_dim, dtype=th.int64)
+        self.episode_return = th.zeros(1, 1)
+        self.episode_step = th.zeros(1, 1, dtype=th.int32)
+        init_terminated = th.ones(1, 1, dtype=th.uint8)
+        init_truncated = th.ones(1, 1, dtype=th.uint8)
 
         obs, info = self.env.reset(seed=seed)
         obs = self._format_obs(obs)
@@ -64,7 +65,7 @@ class Environment:
             last_action=init_last_action,
         )
 
-    def step(self, action: Tensor) -> Dict[str, Tensor]:
+    def step(self, action: th.Tensor) -> Dict[str, th.Tensor]:
         """Step function that returns a dict consists of current and history observation and action.
 
         Args:
@@ -73,20 +74,27 @@ class Environment:
         Returns:
             Step information dict.
         """
-        obs, reward, terminated, truncated, info = self.env.step(action.item())
+        if self.action_type == "Discrete":
+            _action = action.item()
+        elif self.action_type == "Box":
+            _action = action.squeeze(0).cpu().numpy()
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
+        obs, reward, terminated, truncated, info = self.env.step(_action)
         self.episode_step += 1
         self.episode_return += reward
         episode_step = self.episode_step
         episode_return = self.episode_return
         if terminated or truncated:
             obs, info = self.env.reset()
-            self.episode_return = torch.zeros(1, 1)
-            self.episode_step = torch.zeros(1, 1, dtype=torch.int32)
+            self.episode_return = th.zeros(1, 1)
+            self.episode_step = th.zeros(1, 1, dtype=th.int32)
 
         obs = self._format_obs(obs)
-        reward = torch.as_tensor(reward, dtype=torch.float32).view(1, 1)
-        terminated = torch.as_tensor(terminated, dtype=torch.uint8).view(1, 1)
-        truncated = torch.as_tensor(truncated, dtype=torch.uint8).view(1, 1)
+        reward = th.as_tensor(reward, dtype=th.float32).view(1, 1)
+        terminated = th.as_tensor(terminated, dtype=th.uint8).view(1, 1)
+        truncated = th.as_tensor(truncated, dtype=th.uint8).view(1, 1)
 
         return dict(
             obs=obs,
@@ -102,7 +110,7 @@ class Environment:
         """Close the environment."""
         self.env.close()
 
-    def _format_obs(self, obs: Ndarray) -> Tensor:
+    def _format_obs(self, obs: np.ndarray) -> th.Tensor:
         """Reformat the observation by adding an time dimension.
 
         Args:
@@ -111,12 +119,12 @@ class Environment:
         Returns:
             Formatted observation.
         """
-        obs = torch.from_numpy(np.array(obs))
-        return obs.view((1, 1) + obs.shape)
+        obs = th.from_numpy(np.array(obs))
+        return obs.view((1, 1, *obs.shape))
 
 
 class DistributedTrainer(BasePolicyTrainer):
-    """Trainer for on-policy algorithms.
+    """Trainer for distributed algorithms.
 
     Args:
         train_env (Env): A list of Gym-like environments for training.
@@ -124,38 +132,15 @@ class DistributedTrainer(BasePolicyTrainer):
         cfgs (DictConfig): Dict config for configuring RL algorithms.
 
     Returns:
-        On-policy trainer instance.
+        Distributed trainer instance.
     """
 
-    def __init__(self, cfgs: DictConfig, train_env: Env, test_env: Env = None) -> None:
+    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
         super().__init__(cfgs, train_env, test_env)
-        self._logger.info(f"Deploying DistributedTrainer...")
+        self._logger.info("Deploying DistributedTrainer...")
         # xploit part
-        self._learner = hydra.utils.instantiate(self._cfgs.learner)
-        self._learner.actor.encoder = hydra.utils.instantiate(self._cfgs.encoder)
-        self._learner.learner.encoder = hydra.utils.instantiate(self._cfgs.encoder)
-
-        self._learner.actor.share_memory()
-        self._learner.learner.to(self._device)
-        self._learner.opt = torch.optim.RMSprop(
-            self._learner.learner.parameters(),
-            lr=self._learner.lr,
-            eps=self._learner.eps,
-        )
-
-        def lr_lambda(epoch):
-            return (
-                1.0
-                - min(
-                    epoch * self._cfgs.num_steps * self._cfgs.num_learners,
-                    self._cfgs.num_train_steps,
-                )
-                / self._cfgs.num_train_steps
-            )
-
-        self._learner.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-            self._learner.opt, lr_lambda
-        )
+        self._agent = hydra.utils.instantiate(self._cfgs.agent)
+        encoder = hydra.utils.instantiate(self._cfgs.encoder)
 
         ## TODO: build storage
         self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
@@ -168,20 +153,30 @@ class DistributedTrainer(BasePolicyTrainer):
         else:
             dist = hydra.utils.get_class(self._cfgs.distribution._target_)
 
-        self._learner.actor.dist = dist
-        self._learner.learner.dist = dist
+        def lr_lambda(epoch):
+            return (
+                1.0
+                - min(
+                    epoch * self._cfgs.num_steps * self._cfgs.num_learners,
+                    self._cfgs.num_train_steps,
+                )
+                / self._cfgs.num_train_steps
+            )
+
+        # TODO: Integrate agent and modules
+        self._agent.integrate(encoder=encoder, dist=dist, lr_lambda=lr_lambda)
 
     @staticmethod
-    def act(
-        cfgs: DictConfig,
+    def act(  # noqa: C901
+        cfgs: omegaconf.DictConfig,
         logger: Logger,
-        gym_env: Env,
+        gym_env: gym.Env,
         actor_idx: int,
-        actor_model: NNModule,
+        actor_model: nn.Module,
         free_queue: mp.SimpleQueue,
         full_queue: mp.SimpleQueue,
-        storages: List[Storage],
-        init_actor_state_storages: List[Tensor],
+        storages: Dict[str, List],
+        init_actor_state_storages: List[th.Tensor],
     ) -> None:
         """Sampling function for each actor.
 
@@ -224,10 +219,8 @@ class DistributedTrainer(BasePolicyTrainer):
 
                 # Do new rollout.
                 for t in range(cfgs.num_steps):
-                    with torch.no_grad():
-                        actor_output, actor_state = actor_model.get_action(
-                            env_output, actor_state
-                        )
+                    with th.no_grad():
+                        actor_output, actor_state = actor_model.get_action(env_output, actor_state)
                     env_output = env.step(actor_output["action"])
 
                     for key in env_output:
@@ -244,7 +237,7 @@ class DistributedTrainer(BasePolicyTrainer):
             traceback.print_exc()
             raise e
 
-    def train(self) -> None:
+    def train(self) -> None:  # noqa: C901
         """Training function"""
         global_step = 0
         global_episode = 0
@@ -252,7 +245,7 @@ class DistributedTrainer(BasePolicyTrainer):
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
 
-        def sample_and_update(i, lock=threading.Lock()):
+        def sample_and_update(i, lock=threading.Lock()):  # noqa: B008
             """Thread target for the learning process."""
             nonlocal global_step, global_episode, metrics
             while global_step < self._cfgs.num_train_steps:
@@ -264,14 +257,14 @@ class DistributedTrainer(BasePolicyTrainer):
                     storages=self._shared_storages.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
-                metrics = self._learner.update(
+                metrics = self._agent.update(
                     cfgs=self._cfgs,
-                    actor_model=self._learner.actor,
-                    learner_model=self._learner.learner,
+                    actor_model=self._agent.actor,
+                    learner_model=self._agent.learner,
                     batch=batch,
                     init_actor_states=actor_states,
-                    optimizer=self._learner.opt,
-                    lr_scheduler=self._learner.lr_scheduler,
+                    optimizer=self._agent.opt,
+                    lr_scheduler=self._agent.lr_scheduler,
                 )
                 with lock:
                     global_step += self._cfgs.num_steps * self._cfgs.storage.batch_size
@@ -280,7 +273,7 @@ class DistributedTrainer(BasePolicyTrainer):
         # TODO: Add initial RNN state.
         init_actor_state_storages = []
         for _ in range(self._cfgs.storage.num_storages):
-            state = self._learner.actor.init_state(batch_size=1)
+            state = self._agent.actor.init_state(batch_size=1)
             for t in state:
                 t.share_memory_()
             init_actor_state_storages.append(state)
@@ -298,7 +291,7 @@ class DistributedTrainer(BasePolicyTrainer):
                     "logger": self._logger,
                     "gym_env": self._train_env[actor_idx],
                     "actor_idx": actor_idx,
-                    "actor_model": self._learner.actor,
+                    "actor_model": self._agent.actor,
                     "free_queue": free_queue,
                     "full_queue": full_queue,
                     "storages": self._shared_storages.storages,
@@ -313,14 +306,13 @@ class DistributedTrainer(BasePolicyTrainer):
 
         threads = []
         for i in range(self._cfgs.num_learners):
-            thread = threading.Thread(
-                target=sample_and_update, name="sample-and-update-%d" % i, args=(i,)
-            )
+            thread = threading.Thread(target=sample_and_update, name="sample-and-update-%d" % i, args=(i,))
             thread.start()
             self._logger.info(f"Learner {i} started!")
             threads.append(thread)
 
         try:
+            log_times = 0
             while global_step < self._cfgs.num_train_steps:
                 start_step = global_step
                 time.sleep(5)
@@ -340,6 +332,17 @@ class DistributedTrainer(BasePolicyTrainer):
                         "total_time": total_time,
                     }
                     self._logger.train(msg=train_metrics)
+                    log_times += 1
+
+                # if log_times % 50 == 0:
+                #     episode_time, total_time = self._timer.reset()
+                #     test_metrics = self.test()
+                #     test_metrics.update({
+                #         "step": global_step,
+                #         "episode": global_episode,
+                #         "total_time": total_time,
+                #         })
+                #     self._logger.test(msg=test_metrics)
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
@@ -356,13 +359,30 @@ class DistributedTrainer(BasePolicyTrainer):
             for actor in actor_pool:
                 actor.join(timeout=1)
 
-    def test(self) -> None:
+    def test(self) -> Dict[str, float]:
         """Testing function."""
-        pass
+        env = Environment(self._test_env.envs[0])
+        seed = self._cfgs.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
+        env_output = env.reset(seed)
+
+        episode_rewards = list()
+        episode_steps = list()
+        while len(episode_rewards) < self._cfgs.num_test_episodes:
+            with th.no_grad():
+                actor_output, _ = self._agent.actor.get_action(env_output, training=False)
+            env_output = env.step(actor_output["action"])
+            if env_output["terminated"].item() or env_output["truncated"].item():
+                episode_rewards.append(env_output["episode_return"].item())
+                episode_steps.append(env_output["episode_step"].item())
+
+        return {
+            "episode_length": np.mean(episode_steps),
+            "episode_reward": np.mean(episode_rewards),
+        }
 
     def save(self) -> None:
         """Save the trained model."""
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
-        torch.save(self._learner.actor, save_dir / "actor.pth")
-        torch.save(self._learner.learner, save_dir / "learner.pth")
+        self._agent.save(path=save_dir)
+        self._logger.info(f"Model saved at: {save_dir}")

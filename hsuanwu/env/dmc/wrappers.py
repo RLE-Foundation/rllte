@@ -1,37 +1,33 @@
 import glob
 import os
+from typing import Dict, Tuple
 
 import numpy as np
 from dm_control import suite
 from dm_env import specs
 from gymnasium import core, spaces
 
-from hsuanwu.common.typing import Dict, Ndarray, Tuple
 from hsuanwu.env.dmc import natural_imgsource
 
+
 # The following DMCWrapper is re-implemented based on: https://github.com/facebookresearch/deep_bisim4control/blob/main/dmc2gym/wrappers.py
-
-
 def _spec_to_box(spec):
-    def extract_min_max(s):
+    mins, maxs = [], []
+    for s in spec:
         assert s.dtype == np.float64 or s.dtype == np.float32
         dim = int(np.prod(s.shape))
         if type(s) == specs.Array:
             bound = np.inf * np.ones(dim, dtype=np.float32)
-            return -bound, bound
+            mn, mx = -bound, bound
         elif type(s) == specs.BoundedArray:
             zeros = np.zeros(dim, dtype=np.float32)
-            return s.minimum + zeros, s.maximum + zeros
-
-    mins, maxs = [], []
-    for s in spec:
-        mn, mx = extract_min_max(s)
+            mn, mx = s.minimum + zeros, s.maximum + zeros
         mins.append(mn)
         maxs.append(mx)
     low = np.concatenate(mins, axis=0)
     high = np.concatenate(maxs, axis=0)
     assert low.shape == high.shape
-    return spaces.Box(low, high, dtype=np.float32)
+    return spaces.Box(np.float32(low), np.float32(high), dtype=np.float32)
 
 
 def _flatten_obs(obs):
@@ -39,7 +35,7 @@ def _flatten_obs(obs):
     for v in obs.values():
         flat = np.array([v]) if np.isscalar(v) else v.ravel()
         obs_pieces.append(flat)
-    return np.concatenate(obs_pieces, axis=0)
+    return np.concatenate(obs_pieces, axis=0, dtype=np.float32)
 
 
 class DMCWrapper(core.Env):
@@ -51,7 +47,7 @@ class DMCWrapper(core.Env):
         img_source,
         total_frames,
         task_kwargs=None,
-        visualize_reward={},
+        visualize_reward={},  # noqa B006
         from_pixels=False,
         height=84,
         width=84,
@@ -59,9 +55,7 @@ class DMCWrapper(core.Env):
         frame_skip=1,
         environment_kwargs=None,
     ):
-        assert (
-            "random" in task_kwargs
-        ), "please specify a seed, for deterministic behaviour"
+        assert "random" in task_kwargs, "please specify a seed, for deterministic behaviour"
         self._from_pixels = from_pixels
         self._height = height
         self._width = width
@@ -80,19 +74,13 @@ class DMCWrapper(core.Env):
 
         # true and normalized action spaces
         self._true_action_space = _spec_to_box([self._env.action_spec()])
-        self._norm_action_space = spaces.Box(
-            low=-1.0, high=1.0, shape=self._true_action_space.shape, dtype=np.float32
-        )
+        self._norm_action_space = spaces.Box(low=-1.0, high=1.0, shape=self._true_action_space.shape, dtype=np.float32)
 
         # create observation space
         if from_pixels:
-            self._observation_space = spaces.Box(
-                low=0, high=255, shape=[3, height, width], dtype=np.uint8
-            )
+            self._observation_space = spaces.Box(low=0, high=255, shape=[3, height, width], dtype=np.uint8)
         else:
-            self._observation_space = _spec_to_box(
-                self._env.observation_spec().values()
-            )
+            self._observation_space = _spec_to_box(self._env.observation_spec().values())
 
         self._internal_state_space = spaces.Box(
             low=-np.inf,
@@ -110,9 +98,7 @@ class DMCWrapper(core.Env):
                 self._bg_source = natural_imgsource.NoiseSource(shape2d)
             else:
                 files = glob.glob(os.path.expanduser(resource_files))
-                assert len(files), "Pattern {} does not match any files".format(
-                    resource_files
-                )
+                assert len(files), f"Pattern {resource_files} does not match any files"
                 if img_source == "images":
                     self._bg_source = natural_imgsource.RandomImageSource(
                         shape2d, files, grayscale=True, total_frames=total_frames
@@ -132,13 +118,9 @@ class DMCWrapper(core.Env):
 
     def _get_obs(self, time_step):
         if self._from_pixels:
-            obs = self.render(
-                height=self._height, width=self._width, camera_id=self._camera_id
-            )
+            obs = self.render(height=self._height, width=self._width, camera_id=self._camera_id)
             if self._img_source is not None:
-                mask = np.logical_and(
-                    (obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0])
-                )  # hardcoded for dmc
+                mask = np.logical_and((obs[:, :, 2] > obs[:, :, 1]), (obs[:, :, 2] > obs[:, :, 0]))  # hardcoded for dmc
                 bg = self._bg_source.get_image()
                 obs[mask] = bg[mask]
             obs = obs.transpose(2, 0, 1).copy()
@@ -193,10 +175,10 @@ class DMCWrapper(core.Env):
         else:
             truncated = False
 
-        terminated = done
+        terminated = truncated
         return obs, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> Tuple[Ndarray, Dict]:
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         time_step = self._env.reset()
         obs = self._get_obs(time_step)
         return obs, {}

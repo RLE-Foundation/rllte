@@ -13,14 +13,14 @@ Thank you for using and contributing to Hsuanwu project!!!👋👋👋 Before yo
 Once you implement and test your feature or bug-fix, please submit a Pull Request to [https://github.com/RLE-Foundation/Hsuanwu](https://github.com/RLE-Foundation/Hsuanwu).
 
 ## Get Hsuanwu
-Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) witg `git`:
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) with `git`:
 ``` sh
 git clone https://github.com/RLE-Foundation/Hsuanwu.git
 cd Hsuanwu/
 ```
 After that, run the following command to install package and dependencies:
 ``` sh
-pip install -e .
+pip install -e .[all]
 ```
 
 ## Codestyle
@@ -38,8 +38,8 @@ def function_with_types_in_docstring(param1: type1, param2: type2):
     included in the docstring:
 
     Args:
-        param1: The first parameter.
-        param2: The second parameter.
+        param1 (type1): The first parameter.
+        param2 (type2): The second parameter.
 
     Returns:
         bool: The return value. True for success, False otherwise.
@@ -64,7 +64,7 @@ To run tests with `pytest`:
 make pytest
 ```
 
-Type checking with `pytype` and `mypy`:
+Type checking with `pytype`:
 
 ```
 make type

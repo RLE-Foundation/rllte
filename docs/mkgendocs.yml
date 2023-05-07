@@ -1,0 +1,314 @@
+sources_dir: docs/api_docs
+templates_dir:
+repo: https://github.com/RLE-Foundation/Hsuanwu
+version: main
+pages:
+  - page: common/engine/base_policy_trainer.md
+    source: hsuanwu/common/engine/base_policy_trainer.py
+    classes:
+      - BasePolicyTrainer
+  - page: common/engine/distributed_trainer.md
+    source: hsuanwu/common/engine/distributed_trainer.py
+    classes:
+      - DistributedTrainer
+  - page: common/engine/__init__.md
+    source: hsuanwu/common/engine/__init__.py
+    classes:
+      - HsuanwuEngine
+  - page: common/engine/off_policy_trainer.md
+    source: hsuanwu/common/engine/off_policy_trainer.py
+    classes:
+      - OffPolicyTrainer
+  - page: common/engine/on_policy_trainer.md
+    source: hsuanwu/common/engine/on_policy_trainer.py
+    classes:
+      - OnPolicyTrainer
+  - page: common/logger.md
+    source: hsuanwu/common/logger.py
+    classes:
+      - Logger
+  - page: common/timer.md
+    source: hsuanwu/common/timer.py
+    classes:
+      - Timer
+  - page: xploit/encoder/base.md
+    source: hsuanwu/xploit/encoder/base.py
+    classes:
+      - BaseEncoder
+  - page: xploit/encoder/espeholt_residual_encoder.md
+    source: hsuanwu/xploit/encoder/espeholt_residual_encoder.py
+    classes:
+      - EspeholtResidualEncoder
+  - page: xploit/encoder/identity_encoder.md
+    source: hsuanwu/xploit/encoder/identity_encoder.py
+    classes:
+      - IdentityEncoder
+  - page: xploit/encoder/mnih_cnn_encoder.md
+    source: hsuanwu/xploit/encoder/mnih_cnn_encoder.py
+    classes:
+      - MnihCnnEncoder
+  - page: xploit/encoder/tassa_cnn_encoder.md
+    source: hsuanwu/xploit/encoder/tassa_cnn_encoder.py
+    classes:
+      - TassaCnnEncoder
+  - page: xploit/encoder/vanilla_mlp_encoder.md
+    source: hsuanwu/xploit/encoder/vanilla_mlp_encoder.py
+    classes:
+      - VanillaMlpEncoder
+  - page: xploit/agent/base.md
+    source: hsuanwu/xploit/agent/base.py
+    classes:
+      - BaseAgent
+  - page: xploit/agent/daac.md
+    source: hsuanwu/xploit/agent/daac.py
+    classes:
+      - DAAC
+  - page: xploit/agent/drqv2.md
+    source: hsuanwu/xploit/agent/drqv2.py
+    classes:
+      - DrQv2
+  - page: xploit/agent/impala.md
+    source: hsuanwu/xploit/agent/impala.py
+    classes:
+      - IMPALA
+  - page: xploit/agent/ppg.md
+    source: hsuanwu/xploit/agent/ppg.py
+    classes:
+      - PPG
+  - page: xploit/agent/ppo.md
+    source: hsuanwu/xploit/agent/ppo.py
+    classes:
+      - PPO
+  - page: xploit/agent/sac.md
+    source: hsuanwu/xploit/agent/sac.py
+    classes:
+      - SAC
+  - page: xploit/storage/base.md
+    source: hsuanwu/xploit/storage/base.py
+    classes:
+      - BaseStorage
+  - page: xploit/storage/decoupled_rollout_storage.md
+    source: hsuanwu/xploit/storage/decoupled_rollout_storage.py
+    classes:
+      - DecoupledRolloutStorage
+  - page: xploit/storage/distributed_storage.md
+    source: hsuanwu/xploit/storage/distributed_storage.py
+    classes:
+      - DistributedStorage
+  - page: xploit/storage/nstep_replay_storage.md
+    source: hsuanwu/xploit/storage/nstep_replay_storage.py
+    classes:
+      - NStepReplayStorage
+  - page: xploit/storage/prioritized_replay_storage.md
+    source: hsuanwu/xploit/storage/prioritized_replay_storage.py
+    classes:
+      - PrioritizedReplayStorage
+  - page: xploit/storage/vanilla_replay_storage.md
+    source: hsuanwu/xploit/storage/vanilla_replay_storage.py
+    classes:
+      - VanillaReplayStorage
+  - page: xploit/storage/vanilla_rollout_storage.md
+    source: hsuanwu/xploit/storage/vanilla_rollout_storage.py
+    classes:
+      - VanillaRolloutStorage
+  - page: xplore/reward/base.md
+    source: hsuanwu/xplore/reward/base.py
+    classes:
+      - BaseIntrinsicRewardModule
+  - page: xplore/reward/girm.md
+    source: hsuanwu/xplore/reward/girm.py
+    classes:
+      - GIRM
+  - page: xplore/reward/icm.md
+    source: hsuanwu/xplore/reward/icm.py
+    classes:
+      - ICM
+  - page: xplore/reward/ngu.md
+    source: hsuanwu/xplore/reward/ngu.py
+    classes:
+      - NGU
+  - page: xplore/reward/pseudo_counts.md
+    source: hsuanwu/xplore/reward/pseudo_counts.py
+    classes:
+      - PseudoCounts
+  - page: xplore/reward/re3.md
+    source: hsuanwu/xplore/reward/re3.py
+    classes:
+      - RE3
+  - page: xplore/reward/revd.md
+    source: hsuanwu/xplore/reward/revd.py
+    classes:
+      - REVD
+  - page: xplore/reward/ride.md
+    source: hsuanwu/xplore/reward/ride.py
+    classes:
+      - RIDE
+  - page: xplore/reward/rise.md
+    source: hsuanwu/xplore/reward/rise.py
+    classes:
+      - RISE
+  - page: xplore/reward/rnd.md
+    source: hsuanwu/xplore/reward/rnd.py
+    classes:
+      - RND
+  - page: xplore/augmentation/auto_augment.md
+    source: hsuanwu/xplore/augmentation/auto_augment.py
+    classes:
+      - AutoAugment
+  - page: xplore/augmentation/base.md
+    source: hsuanwu/xplore/augmentation/base.py
+    classes:
+      - BaseAugmentation
+  - page: xplore/augmentation/elastic_transform.md
+    source: hsuanwu/xplore/augmentation/elastic_transform.py
+    classes:
+      - ElasticTransform
+  - page: xplore/augmentation/gaussian_noise.md
+    source: hsuanwu/xplore/augmentation/gaussian_noise.py
+    classes:
+      - GaussianNoise
+  - page: xplore/augmentation/grayscale.md
+    source: hsuanwu/xplore/augmentation/grayscale.py
+    classes:
+      - GrayScale
+  - page: xplore/augmentation/random_adjustsharpness.md
+    source: hsuanwu/xplore/augmentation/random_adjustsharpness.py
+    classes:
+      - RandomAdjustSharpness
+  - page: xplore/augmentation/random_amplitude_scaling.md
+    source: hsuanwu/xplore/augmentation/random_amplitude_scaling.py
+    classes:
+      - RandomAmplitudeScaling
+  - page: xplore/augmentation/random_augment.md
+    source: hsuanwu/xplore/augmentation/random_augment.py
+    classes:
+      - RandomAugment
+  - page: xplore/augmentation/random_autocontrast.md
+    source: hsuanwu/xplore/augmentation/random_autocontrast.py
+    classes:
+      - RandomAutocontrast
+  - page: xplore/augmentation/random_colorjitter.md
+    source: hsuanwu/xplore/augmentation/random_colorjitter.py
+    classes:
+      - RandomColorJitter
+  - page: xplore/augmentation/random_convolution.md
+    source: hsuanwu/xplore/augmentation/random_convolution.py
+    classes:
+      - RandomConvolution
+  - page: xplore/augmentation/random_crop.md
+    source: hsuanwu/xplore/augmentation/random_crop.py
+    classes:
+      - RandomCrop
+  - page: xplore/augmentation/random_cutout.md
+    source: hsuanwu/xplore/augmentation/random_cutout.py
+    classes:
+      - RandomCutout
+  - page: xplore/augmentation/random_cutoutcolor.md
+    source: hsuanwu/xplore/augmentation/random_cutoutcolor.py
+    classes:
+      - RandomCutoutColor
+  - page: xplore/augmentation/random_equalize.md
+    source: hsuanwu/xplore/augmentation/random_equalize.py
+    classes:
+      - RandomEqualize
+  - page: xplore/augmentation/random_flip.md
+    source: hsuanwu/xplore/augmentation/random_flip.py
+    classes:
+      - RandomFlip
+  - page: xplore/augmentation/random_invert.md
+    source: hsuanwu/xplore/augmentation/random_invert.py
+    classes:
+      - RandomInvert
+  - page: xplore/augmentation/random_perspective.md
+    source: hsuanwu/xplore/augmentation/random_perspective.py
+    classes:
+      - RandomPerspective
+  - page: xplore/augmentation/random_rotate.md
+    source: hsuanwu/xplore/augmentation/random_rotate.py
+    classes:
+      - RandomRotate
+  - page: xplore/augmentation/random_shift.md
+    source: hsuanwu/xplore/augmentation/random_shift.py
+    classes:
+      - RandomShift
+  - page: xplore/augmentation/random_translate.md
+    source: hsuanwu/xplore/augmentation/random_translate.py
+    classes:
+      - RandomTranslate
+  - page: xplore/distribution/base.md
+    source: hsuanwu/xplore/distribution/base.py
+    classes:
+      - BaseDistribution
+  - page: xplore/distribution/bernoulli.md
+    source: hsuanwu/xplore/distribution/bernoulli.py
+    classes:
+      - Bernoulli
+  - page: xplore/distribution/categorical.md
+    source: hsuanwu/xplore/distribution/categorical.py
+    classes:
+      - Categorical
+  - page: xplore/distribution/diagonal_gaussian.md
+    source: hsuanwu/xplore/distribution/diagonal_gaussian.py
+    classes:
+      - DiagonalGaussian
+  - page: xplore/distribution/normal_noise.md
+    source: hsuanwu/xplore/distribution/normal_noise.py
+    classes:
+      - NormalNoise
+  - page: xplore/distribution/ornstein_uhlenbeck_noise.md
+    source: hsuanwu/xplore/distribution/ornstein_uhlenbeck_noise.py
+    classes:
+      - OrnsteinUhlenbeckNoise
+  - page: xplore/distribution/squashed_normal.md
+    source: hsuanwu/xplore/distribution/squashed_normal.py
+    classes:
+      - SquashedNormal
+  - page: xplore/distribution/truncated_normal_noise.md
+    source: hsuanwu/xplore/distribution/truncated_normal_noise.py
+    classes:
+      - TruncatedNormalNoise
+  - page: xplore/distribution/kl.md
+    source: hsuanwu/xplore/distribution/kl.py
+    functions:
+      - kl_categorical_categorical
+      - kl_diagonal_gaussian_diagonal_gaussian
+  - page: env/utils.md
+    source: hsuanwu/env/utils.py
+    classes:
+      - HsuanwuEnvWrapper
+  - page: env/atari/__init__.md
+    source: hsuanwu/env/atari/__init__.py
+    functions:
+      - make_atari_env
+  - page: env/bullet/__init__.md
+    source: hsuanwu/env/bullet/__init__.py
+    functions:
+      - make_bullet_env
+  - page: env/dmc/__init__.md
+    source: hsuanwu/env/dmc/__init__.py
+    functions:
+      - make_dmc_env
+  - page: env/minigrid/__init__.md
+    source: hsuanwu/env/minigrid/__init__.py
+    functions:
+      - make_minigrid_env
+  - page: env/multibinary/__init__.md
+    source: hsuanwu/env/multibinary/__init__.py
+    functions:
+      - make_multibinary_env
+  - page: env/procgen/__init__.md
+    source: hsuanwu/env/procgen/__init__.py
+    functions:
+      - make_procgen_env
+  - page: evaluation/comparison.md
+    source: hsuanwu/evaluation/comparison.py
+    classes:
+      - Comparison
+  - page: evaluation/performance.md
+    source: hsuanwu/evaluation/performance.py
+    classes:
+      - Performance
+  - page: evaluation/utils.md
+    source: hsuanwu/evaluation/utils.py
+    functions:
+      - min_max_normalize

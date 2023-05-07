@@ -1,28 +1,27 @@
 import threading
+from typing import Any, Dict, Generator, List, Tuple, Union
 
-import torch
+import gymnasium as gym
+import torch as th
+from omegaconf import DictConfig
 
-from hsuanwu.common.typing import (
-    Batch,
-    Device,
-    DictConfig,
-    List,
-    SimpleQueue,
-    Storage,
-    Tuple,
-)
+from hsuanwu.xploit.storage.base import BaseStorage
 
 
-class DistributedStorage:
+class DistributedStorage(BaseStorage):
     """Distributed storage for distributed algorithms like IMPALA.
 
     Args:
-        device (Device): Device (cpu, cuda, ...) on which the code should be run.
-        obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
-        action_type (str): The type of actions, 'cont' or 'dis'.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
+            'action_space' is a 'DictConfig' like
+            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample steps of per rollout.
         num_storages (int): The number of shared-memory storages.
+        batch_size (int): The batch size.
 
     Returns:
         Vanilla rollout storage.
@@ -30,58 +29,72 @@ class DistributedStorage:
 
     def __init__(
         self,
-        device: Device,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_type: str,
+        observation_space: Union[gym.Space, DictConfig],
+        action_space: Union[gym.Space, DictConfig],
+        device: str = "cpu",
         num_steps: int = 100,
         num_storages: int = 80,
         batch_size: int = 32,
     ) -> None:
-        self._obs_shape = obs_shape
-        self._action_shape = action_shape
-        self._device = torch.device(device)
+        super().__init__(observation_space, action_space, device)
         self._num_steps = num_steps
         self._num_storages = num_storages
         self._batch_size = batch_size
 
-        if action_type == "Discrete":
+        if self._action_type == "Discrete":
             self._action_dim = 1
-        elif action_type == "Box":
-            self._action_dim = action_shape[0]
+            policy_outputs_dim = self._action_shape[0]
+
+            specs = dict(
+                obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
+                reward=dict(size=(num_steps + 1,), dtype=th.float32),
+                terminated=dict(size=(num_steps + 1,), dtype=th.bool),
+                truncated=dict(size=(num_steps + 1,), dtype=th.bool),
+                episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
+                episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
+                last_action=dict(size=(num_steps + 1,), dtype=th.int64),
+                policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
+                baseline=dict(size=(num_steps + 1,), dtype=th.float32),
+                action=dict(size=(num_steps + 1,), dtype=th.int64),
+            )
+
+        elif self._action_type == "Box":
+            self._action_dim = self._action_shape[0]
+            policy_outputs_dim = self._action_shape[0] * 2
+
+            specs = dict(
+                obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
+                reward=dict(size=(num_steps + 1,), dtype=th.float32),
+                terminated=dict(size=(num_steps + 1,), dtype=th.bool),
+                truncated=dict(size=(num_steps + 1,), dtype=th.bool),
+                episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
+                episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
+                last_action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+                policy_outputs=dict(size=(num_steps + 1, policy_outputs_dim), dtype=th.float32),
+                baseline=dict(size=(num_steps + 1,), dtype=th.float32),
+                action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+            )
         else:
             raise NotImplementedError
-
-        specs = dict(
-            obs=dict(size=(num_steps + 1, *obs_shape), dtype=torch.uint8),
-            reward=dict(size=(num_steps + 1,), dtype=torch.float32),
-            terminated=dict(size=(num_steps + 1,), dtype=torch.bool),
-            truncated=dict(size=(num_steps + 1,), dtype=torch.bool),
-            episode_return=dict(size=(num_steps + 1,), dtype=torch.float32),
-            episode_step=dict(size=(num_steps + 1,), dtype=torch.int32),
-            last_action=dict(size=(num_steps + 1,), dtype=torch.int64),
-            policy_logits=dict(
-                size=(num_steps + 1, action_shape[0]), dtype=torch.float32
-            ),
-            baseline=dict(size=(num_steps + 1,), dtype=torch.float32),
-            action=dict(size=(num_steps + 1,), dtype=torch.int64),
-        )
 
         self.storages = {key: [] for key in specs}
         for _ in range(num_storages):
             for key in self.storages:
-                self.storages[key].append(torch.empty(**specs[key]).share_memory_())
+                self.storages[key].append(th.empty(**specs[key]).share_memory_())
+
+    def add(self, *args) -> None:
+        """Add sampled transitions into storage."""
 
     @staticmethod
     def sample(
-        device: Device,
+        device: th.device,
         batch_size: int,
-        free_queue: SimpleQueue,
-        full_queue: SimpleQueue,
+        free_queue: th.multiprocessing.SimpleQueue,
+        full_queue: th.multiprocessing.SimpleQueue,
         storages: List,
         init_actor_state_storages: List,
-        lock=threading.Lock(),
-    ) -> Batch:
+        lock=threading.Lock(),  # noqa B008
+    ) -> Tuple[Dict, Generator[Any, Any, None]]:
         """Sample transitions from the storage.
 
         Args:
@@ -98,21 +111,15 @@ class DistributedStorage:
         """
         with lock:
             indices = [full_queue.get() for _ in range(batch_size)]
-        batch = {
-            key: torch.stack([storages[key][i] for i in indices], dim=1)
-            for key in storages
-        }
+        batch = {key: th.stack([storages[key][i] for i in indices], dim=1) for key in storages}
 
-        init_actor_states = (
-            torch.cat(ts, dim=1)
-            for ts in zip(*[init_actor_state_storages[i] for i in indices])
-        )
+        init_actor_states = (th.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices]))
 
         for i in indices:
             free_queue.put(i)
 
-        batch = {
-            key: tensor.to(device=torch.device(device), non_blocking=True)
-            for key, tensor in batch.items()
-        }
+        batch = {key: tensor.to(device=th.device(device), non_blocking=True) for key, tensor in batch.items()}
         return batch, init_actor_states
+
+    def update(self, *args) -> None:
+        """Update the storage"""

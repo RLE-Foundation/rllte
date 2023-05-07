@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-LINT_PATHS=hsuanwu/ tests
+LINT_PATHS=hsuanwu/
 
 pytest: 
 	sh ./scripts/run_tests.sh
@@ -7,15 +7,12 @@ pytest:
 pytype:
 	pytype -j auto ${LINT_PATHS}
 
-mypy:
-	mypy ${LINT_PATHS}
-
-type: pytype mypy
+type: pytype
 
 lint:
 	# stop the build if there are Python syntax errors or undefined names
 	# see https://www.flake8rules.com/
-	ruff ${LINT_PATHS} --select=E9,F63,F7,F82 --show-source
+	ruff ${LINT_PATHS} --select=E9,F63,F7,F82 --show-source --fix
 	# exit-zero treats all errors as warnings.
 	ruff ${LINT_PATHS} --exit-zero
 
@@ -25,13 +22,19 @@ format:
 	# Reformat using black
 	black ${LINT_PATHS}
 
+check-codestyle:
+	# Sort imports
+	isort --check ${LINT_PATHS}
+	# Reformat using black
+	black --check ${LINT_PATHS}
+
 commit-checks: format type lint
 
 build:
-	python3 -m build
+	python -m build
 
 twine:
-	python3 -m twine upload --repository pypi dist/*
+	python -m twine upload --repository pypi dist/*
 
 gendocs:
-	gendocs --config mkgendocs.yml
+	gendocs --config docs/mkgendocs.yml

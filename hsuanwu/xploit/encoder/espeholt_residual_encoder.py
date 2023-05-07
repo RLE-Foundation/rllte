@@ -1,8 +1,11 @@
-import numpy as np
+from typing import List, Tuple, Union
+
+import gymnasium as gym
+import torch as th
+from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.typing import List, Space, Tensor, Tuple
 from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
 
 
@@ -10,19 +13,15 @@ class ResidualBlock(nn.Module):
     """Residual block taken from https://github.com/AIcrowd/neurips2020-procgen-starter-kit/blob/142d09586d2272a17f44481a115c4bd817cf6a94/models/impala_cnn_torch.py
 
     Args:
-        channels: Channels of inputs.
+        channels (int): Channels of inputs.
     """
 
-    def __init__(self, channels: List) -> None:
+    def __init__(self, channels: int) -> None:
         super().__init__()
-        self.conv0 = nn.Conv2d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
-        self.conv1 = nn.Conv2d(
-            in_channels=channels, out_channels=channels, kernel_size=3, padding=1
-        )
+        self.conv0 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, padding=1)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: th.Tensor) -> th.Tensor:
         inputs = x
         x = F.relu(x)
         x = self.conv0(x)
@@ -36,8 +35,8 @@ class ResidualLayer(nn.Module):
     """Single residual layer for building ResNet encoder.
 
     Args:
-        input_shape: Data shape of the inputs.
-        out_channels: Channels of outputs.
+        input_shape (Tuple): Data shape of the inputs.
+        out_channels (int): Channels of outputs.
     """
 
     def __init__(self, input_shape: Tuple, out_channels: int):
@@ -67,13 +66,14 @@ class ResidualLayer(nn.Module):
 
 
 class EspeholtResidualEncoder(BaseEncoder):
-    """
-    ResNet-like encoder for processing image-based observations.
-    Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
-    Target task: Atari games and Procgen games.
+    """ResNet-like encoder for processing image-based observations.
+        Proposed by Espeholt L, Soyer H, Munos R, et al. Impala: Scalable distributed deep-rl with importance
+        weighted actor-learner architectures[C]//International conference on machine learning. PMLR, 2018: 1407-1416.
+        Target task: Atari games and Procgen games.
 
     Args:
-        observation_space (Space): Observation space of the environment.
+        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
+            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         feature_dim (int): Number of features extracted.
         net_arch (List): Architecture of the network.
             It represents the out channels of each residual layer.
@@ -85,9 +85,9 @@ class EspeholtResidualEncoder(BaseEncoder):
 
     def __init__(
         self,
-        observation_space: Space,
+        observation_space: Union[gym.Space, DictConfig],
         feature_dim: int = 0,
-        net_arch: List[int] = [16, 32, 32],
+        net_arch: List[int] = [16, 32, 32],  # noqa B008
     ) -> None:
         super().__init__(observation_space, feature_dim)
         assert len(net_arch) >= 1, "At least one Residual layer!"
@@ -102,15 +102,13 @@ class EspeholtResidualEncoder(BaseEncoder):
             shape = layer.get_output_shape()
             modules.append(layer)
         modules.append(nn.Flatten())
-
+        modules.append(nn.Linear(in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim))
+        modules.append(nn.ReLU())
         self.trunk = nn.Sequential(*modules)
-        self.linear = nn.Linear(
-            in_features=shape[0] * shape[1] * shape[2], out_features=feature_dim
-        )
 
         self.apply(network_init)
 
-    def forward(self, obs: Tensor) -> Tensor:
+    def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0
         h = self.trunk(obs)
-        return self.linear(h)
+        return h
