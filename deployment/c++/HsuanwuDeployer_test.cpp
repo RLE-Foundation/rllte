@@ -7,38 +7,39 @@ int main(int argc, char** argv)
     options.deviceIndex = 0;
     options.doesSupportDynamicBatchSize = false;
     options.maxWorkspaceSize = 4000000000;
-    options.precision = Precision::FP32;
+    options.precision = Precision::INT8;
     HsuanwuDeployer hsuanwuDeployer(options);
     if (!hsuanwuDeployer.build("/home/jakeluo/Documents/Hsuanwu/deployment/python/encoder.onnx", "/home/jakeluo/Documents/Hsuanwu/deployment/c++/"))
     {
         throw std::runtime_error("Unable to build plane.");
     }
 
-    if (!hsuanwuDeployer.loadPlane("/home/jakeluo/Documents/Hsuanwu/deployment/c++/engine_NVIDIA_GeForce_GTX_1080_Ti_fp32_1_1_4000000000.plane"))
+    if (!hsuanwuDeployer.loadPlan("/home/jakeluo/Documents/Hsuanwu/deployment/c++/engine_NVIDIA_GeForce_GTX_1080_Ti_int8_1_1_4000000000.plan"))
     {
         throw std::runtime_error("Unable to load plane.");
     }
-    std::vector<float*> input;
-    float* input_tmp, *output_tmp;
+    std::vector<uint8_t*> input;
+    uint8_t* input_tmp, *output_tmp;
     input.emplace_back(input_tmp);
     for(int i = 0; i < input.size(); i++)
     {
-        input[i] = new float[9*84*84];
-        std::fill_n(input[i], 9*84*84, 1.0f);
+        input[i] = new uint8_t[9*84*84];
+        std::fill_n(input[i], 9*84*84, 3);
     }
-    std::vector<float*> output;
+    std::vector<uint8_t*> output;
     output.emplace_back(output_tmp);
     for(int i = 0; i < output.size(); i++)
     {
-        output[i] = new float[50];
+        output[i] = new uint8_t[50];
     }
-    for(int i = 0; i < 10000; i++)
+    
+    for(int i = 0; i < 2; i++)
     {
-        hsuanwuDeployer.infer(input, output, 1);
+        hsuanwuDeployer.infer<uint8_t>(input, output, 1);
         std::cout<< i <<" infer end."<<std::endl;
         for(int i = 0; i < output.size(); i++)
         {
-            for(int j = 0; j< 50; j++)std::cout<<output[i][j]<<" ";
+            for(int j = 0; j< 50; j++)std::cout<<(float)output[i][j]<<" ";
             std::cout<<"\n";
         }
     }

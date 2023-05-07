@@ -60,14 +60,17 @@ void HsuanwuDeployer::setEngineName()
     if (m_options.precision == Precision::FP16) 
     {
         engineName += "_fp16";
-    }else 
+    }else if(m_options.precision == Precision::INT8)
+    {
+        engineName += "_int8";
+    }else
     {
         engineName += "_fp32";
     }
     engineName += "_" + std::to_string(m_options.maxBatchSize);
     engineName += "_" + std::to_string(m_options.optBatchSize);
     engineName += "_" + std::to_string(m_options.maxWorkspaceSize);
-    engineName += ".plane";
+    engineName += ".plan";
     std::replace(engineName.begin(), engineName.end(), ' ', '_');
     m_engineName = engineName;
 }
@@ -76,100 +79,6 @@ bool HsuanwuDeployer::checkFile(const std::string &filepath)
 {
     std::ifstream f(filepath.c_str());
     return f.good();
-}
-
-bool HsuanwuDeployer::build(const std::string & onnxModelPath) 
-{
-    std::cout << "Searching for engine file: " << m_engineName << std::endl;
-
-    if(checkFile(m_engineName))
-    {
-        std::cout << "Found, skip building." << std::endl;
-        return true;
-    }
-
-    if(checkFile(onnxModelPath) == false) 
-    {
-        throw std::runtime_error("No onnx model at path: " + onnxModelPath);
-    }
-
-    std::cout << "No engine but onnx, building..." << std::endl;
-
-    auto builder = std::unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(m_logger));
-    if (!builder) {
-        return false;
-    }
-
-    builder->setMaxBatchSize(m_options.maxBatchSize);
-
-    auto explicitBatch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-    auto network = std::unique_ptr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
-    if (!network) {
-        return false;
-    }
-
-    auto parser = std::unique_ptr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, m_logger));
-    if (!parser) {
-        return false;
-    }
-
-    std::ifstream file(onnxModelPath, std::ios::binary | std::ios::ate);
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> buffer(size);
-    if (!file.read(buffer.data(), size)) {
-        throw std::runtime_error("Unable to read engine file");
-    }
-    file.close();
-    auto parsed = parser->parse(buffer.data(), buffer.size());
-    if (!parsed) {
-        return false;
-    }
-
-    auto config = std::unique_ptr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
-    if (!config) {
-        return false;
-    }
-
-    const auto input = network->getInput(0);
-    const auto inputName = input->getName();
-    const auto inputDims = input->getDimensions();
-    int32_t inputC = inputDims.d[1];
-    int32_t inputH = inputDims.d[2];
-    int32_t inputW = inputDims.d[3];
-
-    IOptimizationProfile *optProfile = builder->createOptimizationProfile();
-    optProfile->setDimensions(inputName, OptProfileSelector::kMIN, Dims4(1, inputC, inputH, inputW));
-    optProfile->setDimensions(inputName, OptProfileSelector::kOPT, Dims4(m_options.optBatchSize, inputC, inputH, inputW));
-    optProfile->setDimensions(inputName, OptProfileSelector::kMAX, Dims4(m_options.maxBatchSize, inputC, inputH, inputW));
-    config->addOptimizationProfile(optProfile);
-
-    config->setMaxWorkspaceSize(m_options.maxWorkspaceSize);
-
-    if (m_options.precision == Precision::FP16) {
-        config->setFlag(BuilderFlag::kFP16);
-    }
-
-    cudaStream_t profileStream;
-    checkCudaErrorCode(cudaStreamCreate(&profileStream));
-    config->setProfileStream(profileStream);
-
-    std::unique_ptr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
-    if (!plan) {
-        return false;
-    }
-    plan->destroy();
-    config->destroy();
-    network->destroy();
-    parser->destroy();
-    builder->destroy();
-    std::ofstream outfile(m_engineName, std::ofstream::binary);
-    outfile.write(reinterpret_cast<const char*>(plan->data()), plan->size());
-    outfile.close();
-    std::cout << "Success, saved engine to " << m_engineName << std::endl;
-    checkCudaErrorCode(cudaStreamDestroy(profileStream));
-    return true;
 }
 
 bool HsuanwuDeployer::build(const std::string & onnxModelPath, const std::string & engineSavePath) 
@@ -226,24 +135,54 @@ bool HsuanwuDeployer::build(const std::string & onnxModelPath, const std::string
         return false;
     }
 
-    const auto input = network->getInput(0);
-    const auto inputName = input->getName();
-    const auto inputDims = input->getDimensions();
-    int32_t inputC = inputDims.d[1];
-    int32_t inputH = inputDims.d[2];
-    int32_t inputW = inputDims.d[3];
+    if (m_options.precision == Precision::FP16) {
+        config->setFlag(BuilderFlag::kFP16);
+    }else if(m_options.precision == Precision::INT8)
+    {
+        config->setFlag(BuilderFlag::kINT8);
+        samplesCommon::setAllDynamicRanges(network.get(), 127.0f, 128.0f);
+    }
 
     IOptimizationProfile *optProfile = builder->createOptimizationProfile();
-    optProfile->setDimensions(inputName, OptProfileSelector::kMIN, Dims4(1, inputC, inputH, inputW));
-    optProfile->setDimensions(inputName, OptProfileSelector::kOPT, Dims4(m_options.optBatchSize, inputC, inputH, inputW));
-    optProfile->setDimensions(inputName, OptProfileSelector::kMAX, Dims4(m_options.maxBatchSize, inputC, inputH, inputW));
+
+    int numofinputs = network->getNbInputs();
+    for(int i = 0; i<numofinputs; i++)
+    {
+        const auto input = network->getInput(i);
+        if (m_options.precision == Precision::FP16) {
+            input->setType(DataType::kHALF);
+        }else if(m_options.precision == Precision::INT8)
+        {
+            input->setType(DataType::kINT8);
+        }
+        const auto inputName = input->getName();
+        const auto inputDims = input->getDimensions();
+        int32_t inputC = inputDims.d[1];
+        int32_t inputH = inputDims.d[2];
+        int32_t inputW = inputDims.d[3];
+
+        optProfile->setDimensions(inputName, OptProfileSelector::kMIN, Dims4(1, inputC, inputH, inputW));
+        optProfile->setDimensions(inputName, OptProfileSelector::kOPT, Dims4(m_options.optBatchSize, inputC, inputH, inputW));
+        optProfile->setDimensions(inputName, OptProfileSelector::kMAX, Dims4(m_options.maxBatchSize, inputC, inputH, inputW));
+    }
+
+    int numofoutputs = network->getNbOutputs();
+    for(int i = 0; i<numofoutputs; i++)
+    {
+        const auto output = network->getOutput(i);
+        if (m_options.precision == Precision::FP16) {
+            output->setType(DataType::kHALF);
+        }else if(m_options.precision == Precision::INT8)
+        {
+            output->setType(DataType::kINT8);
+        }
+    }
+
     config->addOptimizationProfile(optProfile);
 
     config->setMaxWorkspaceSize(m_options.maxWorkspaceSize);
 
-    if (m_options.precision == Precision::FP16) {
-        config->setFlag(BuilderFlag::kFP16);
-    }
+
 
     cudaStream_t profileStream;
     checkCudaErrorCode(cudaStreamCreate(&profileStream));
@@ -253,11 +192,6 @@ bool HsuanwuDeployer::build(const std::string & onnxModelPath, const std::string
     if (!plan) {
         return false;
     }
-    plan->destroy();
-    config->destroy();
-    network->destroy();
-    parser->destroy();
-    builder->destroy();
     std::ofstream outfile(engineSavePath+"/"+m_engineName, std::ofstream::binary);
     outfile.write(reinterpret_cast<const char*>(plan->data()), plan->size());
     outfile.close();
@@ -266,15 +200,19 @@ bool HsuanwuDeployer::build(const std::string & onnxModelPath, const std::string
     return true;
 }
 
-bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
+bool HsuanwuDeployer::loadPlan(const std::string &planFile)
 {
-    std::ifstream file(planeFile, std::ios::binary | std::ios::ate);
+    if(!checkFile(planFile))
+    {
+        throw std::runtime_error("Unable to read plan file");
+    }
+    std::ifstream file(planFile, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
 
     std::vector<char> buffer(size);
     if (!file.read(buffer.data(), size)) {
-        throw std::runtime_error("Unable to read plane file");
+        throw std::runtime_error("Unable to read plan file");
     }
     file.close();
     m_runtime.reset(nvinfer1::createInferRuntime(m_logger));
@@ -312,7 +250,7 @@ bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
                 tmp_size *= m_engine->getBindingDimensions(i).d[d];
                 printf("%d,", m_engine->getBindingDimensions(i).d[d]);
             }
-            m_input_byte_sizes.emplace_back(tmp_size*sizeof(float));
+            m_input_T_sizes.emplace_back(tmp_size);
             printf("\n");
         }else{
             m_output_indexs.emplace_back(i);
@@ -325,19 +263,20 @@ bool HsuanwuDeployer::loadPlane(const std::string &planeFile)
                 tmp_size *= m_engine->getBindingDimensions(i).d[d];
                 printf("%d,", m_engine->getBindingDimensions(i).d[d]);
             }
-            m_output_byte_sizes.emplace_back(tmp_size*sizeof(float));
+            m_output_T_sizes.emplace_back(tmp_size);
             printf("\n");
         }
     }
     return true;
 }
 
-bool HsuanwuDeployer::infer(std::vector<float*> input, std::vector<float*> output, int batchSize)
+template<class T>
+bool HsuanwuDeployer::infer(std::vector<T*> input, std::vector<T*> output, int batchSize)
 {
     samplesCommon::BufferManager buffers(m_engine);
     for(int i = 0; i<m_input_names.size();i++)
     {
-        memcpy(buffers.getHostBuffer(m_input_names[i]), input[i], m_input_byte_sizes[i]*batchSize);
+        memcpy(buffers.getHostBuffer(m_input_names[i]), input[i], m_input_T_sizes[i]*batchSize*sizeof(T));
     }
     buffers.copyInputToDevice();
     bool status = m_context->executeV2(buffers.getDeviceBindings().data());
@@ -348,7 +287,11 @@ bool HsuanwuDeployer::infer(std::vector<float*> input, std::vector<float*> outpu
     buffers.copyOutputToHost();
     for(int i = 0; i<m_output_names.size();i++)
     {
-        memcpy(output[i], buffers.getHostBuffer(m_output_names[i]), m_output_byte_sizes[i]*batchSize);
+        memcpy(output[i], buffers.getHostBuffer(m_output_names[i]), m_output_T_sizes[i]*batchSize*sizeof(T));
     }
     return true;
 }
+
+template bool HsuanwuDeployer::infer<float>(std::vector<float*> input, std::vector<float*> output, int batchSize);
+template bool HsuanwuDeployer::infer<float16_t>(std::vector<float16_t*> input, std::vector<float16_t*> output, int batchSize);
+template bool HsuanwuDeployer::infer<uint8_t>(std::vector<uint8_t*> input, std::vector<uint8_t*> output, int batchSize);

@@ -11,10 +11,14 @@
 #include <chrono>
 #include <thread>
 #include "common/buffers.h"
+#include "cuda_fp16.h"
+
+typedef half float16_t;
 
 enum class Precision {
     FP32,
-    FP16
+    FP16,
+    INT8
 };
 
 struct Options {
@@ -35,10 +39,10 @@ class HsuanwuDeployer{
 public:
     HsuanwuDeployer(const Options& options);
     ~HsuanwuDeployer();
-    bool build(const std::string & onnxModelPath);
     bool build(const std::string & onnxModelPath, const std::string & engineSavePath);
-    bool loadPlane(const std::string & planeFile);
-    bool infer(std::vector<float*> input, std::vector<float*> output, int batchSize);
+    bool loadPlan(const std::string &planFile);
+    template<class T>
+    bool infer(std::vector<T*> input, std::vector<T*> output, int batchSize);
 
 private:
     void setEngineName();
@@ -60,8 +64,8 @@ private:
     std::vector<nvinfer1::Dims> m_output_dims;
     std::vector<std::string> m_input_names;
     std::vector<std::string> m_output_names;
-    std::vector<int> m_input_byte_sizes;
-    std::vector<int> m_output_byte_sizes;
+    std::vector<int> m_input_T_sizes;
+    std::vector<int> m_output_T_sizes;
     std::vector<int> m_input_indexs;
     std::vector<int> m_output_indexs;
 
