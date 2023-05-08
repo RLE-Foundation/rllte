@@ -6,6 +6,7 @@ from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
 import torch as th
+import numpy as np
 from omegaconf import DictConfig
 from torch import nn
 
@@ -84,6 +85,7 @@ class DAAC(BaseAgent):
 
         hidden_dim (int): The size of the hidden layers.
         clip_range (float): Clipping parameter.
+        clip_range_vf (float): Clipping parameter for the value function.
         policy_epochs (int): Times of updating the policy network.
         value_freq (int): Update frequency of the value network.
         value_epochs (int): Times of updating the value network.
@@ -108,6 +110,7 @@ class DAAC(BaseAgent):
         eps: float,
         hidden_dim: int,
         clip_range: float,
+        clip_range_vf: float,
         policy_epochs: int,
         value_freq: int,
         value_epochs: int,
@@ -124,6 +127,7 @@ class DAAC(BaseAgent):
         self.value_freq = value_freq
         self.value_epochs = value_epochs
         self.clip_range = clip_range
+        self.clip_range_vf = clip_range_vf
         self.num_mini_batch = num_mini_batch
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
@@ -221,11 +225,11 @@ class DAAC(BaseAgent):
         Returns:
             Training metrics such as actor loss, critic_loss, etc.
         """
-        total_actor_loss = 0.0
-        total_adv_loss = 0.0
-        total_critic_loss = 0.0
-        total_entropy_loss = 0.0
-        total_aug_loss = 0.0
+        total_actor_loss = []
+        total_adv_loss = []
+        total_critic_loss = []
+        total_entropy_loss = []
+        total_aug_loss = []
         num_steps, num_envs = rollout_storage.actions.size()[:2]
 
         if self.irs is not None:
@@ -285,16 +289,10 @@ class DAAC(BaseAgent):
                 nn.utils.clip_grad_norm_(self.actor_params, self.max_grad_norm)
                 self.actor_opt.step()
 
-                total_actor_loss += actor_loss.item()
-                total_adv_loss += adv_loss.item()
-                total_entropy_loss += entropy.item()
-                total_aug_loss += aug_loss.item()
-
-        num_actor_updates = self.policy_epochs * self.num_mini_batch
-
-        total_actor_loss /= num_actor_updates
-        total_entropy_loss /= num_actor_updates
-        total_aug_loss /= num_actor_updates
+                total_actor_loss.append(actor_loss.item())
+                total_adv_loss.append(adv_loss.item())
+                total_entropy_loss.append(entropy.item())
+                total_aug_loss.append(aug_loss.item())
 
         if self.num_policy_updates % self.value_freq == 0:
             for _ in range(self.value_epochs):
@@ -319,20 +317,21 @@ class DAAC(BaseAgent):
                     )
 
                     # critic loss part
-                    values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range, self.clip_range)
-                    values_losses = (values.flatten() - batch_returns).pow(2)
-                    values_losses_clipped = (values_clipped - batch_returns).pow(2)
-                    critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
+                    if self.clip_range_vf is None:
+                        critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+                    else:
+                        values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                        values_losses = (values.flatten() - batch_returns).pow(2)
+                        values_losses_clipped = (values_clipped - batch_returns).pow(2)
+                        critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                     self.critic_opt.zero_grad(set_to_none=True)
                     critic_loss.backward()
                     nn.utils.clip_grad_norm_(self.critic_params, self.max_grad_norm)
                     self.critic_opt.step()
 
-                    total_critic_loss += critic_loss.item()
+                    total_critic_loss.append(critic_loss.item())
 
-            num_critic_updates = self.value_epochs * self.num_mini_batch
-            total_critic_loss /= num_critic_updates
             self.prev_total_critic_loss = total_critic_loss
         else:
             total_critic_loss = self.prev_total_critic_loss
@@ -340,10 +339,10 @@ class DAAC(BaseAgent):
         self.num_policy_updates += 1
 
         return {
-            "actor_loss": total_actor_loss,
-            "critic_loss": total_critic_loss,
-            "entropy": total_entropy_loss,
-            "aug_loss": total_aug_loss,
+            "actor_loss": np.mean(total_actor_loss),
+            "critic_loss": np.mean(total_critic_loss),
+            "entropy": np.mean(total_entropy_loss),
+            "aug_loss": np.mean(total_aug_loss),
         }
 
     def save(self, path: Path) -> None:

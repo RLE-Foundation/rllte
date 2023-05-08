@@ -23,4 +23,4 @@ class GaussianNoise(BaseAugmentation):
         assert len(x.size()) == 2, "GaussianNoise only supports state-based observations!"
         z = self.dist.sample(x.size())
 
-        return z + x
+        return z.to(x.device) + x
