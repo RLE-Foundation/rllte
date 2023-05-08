@@ -4,6 +4,7 @@ from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
 import torch as th
+import numpy as np
 from omegaconf import DictConfig
 from torch import nn
 
@@ -24,7 +25,7 @@ DEFAULT_CFGS = {
     "device": "cpu",
     "seed": 1,
     "num_train_steps": 25000000,
-    "num_steps": 256,  # The sample length of per rollout.
+    "num_steps": 512,  # The sample length of per rollout.
     ## TODO: Test setup
     "test_every_episodes": 10,  # only for on-policy algorithms
     "num_test_episodes": 10,
@@ -42,10 +43,9 @@ DEFAULT_CFGS = {
         "feature_dim": int,
         "lr": 1e-4,
         "eps": 0.00008,
-        "hidden_dim": 256,
+        "hidden_dim": 512,
         "clip_range": 0.2,
         "n_epochs": 3,
-        "num_mini_batch": 8,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
         "aug_coef": 0.1,
@@ -78,8 +78,8 @@ class PPO(BaseAgent):
 
         hidden_dim (int): The size of the hidden layers.
         clip_range (float): Clipping parameter.
+        clip_range_vf (float): Clipping parameter for the value function.
         n_epochs (int): Times of updating the policy.
-        num_mini_batch (int): Number of mini-batches.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
@@ -99,8 +99,8 @@ class PPO(BaseAgent):
         eps: float,
         hidden_dim: int,
         clip_range: float,
+        clip_range_vf: float,
         n_epochs: int,
-        num_mini_batch: int,
         vf_coef: float,
         ent_coef: float,
         aug_coef: float,
@@ -110,7 +110,7 @@ class PPO(BaseAgent):
 
         self.n_epochs = n_epochs
         self.clip_range = clip_range
-        self.num_mini_batch = num_mini_batch
+        self.clip_range_vf = clip_range_vf
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.aug_coef = aug_coef
@@ -175,11 +175,11 @@ class PPO(BaseAgent):
         """
         if training:
             actions, values, log_probs, entropy = self.ac.get_action_and_value(obs)
-            return {"actions": actions.clamp(*self.action_range), "values": values, "log_probs": log_probs}
+            return {"actions": actions, "values": values, "log_probs": log_probs}
         else:
             actions = self.ac.get_det_action(obs)
-            return actions.clamp(*self.action_range)
-
+            return actions
+        
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
@@ -190,10 +190,10 @@ class PPO(BaseAgent):
         Returns:
             Training metrics such as actor loss, critic_loss, etc.
         """
-        total_actor_loss = 0.0
-        total_critic_loss = 0.0
-        total_entropy_loss = 0.0
-        total_aug_loss = 0.0
+        total_actor_loss = []
+        total_critic_loss = []
+        total_entropy_loss = []
+        total_aug_loss = []
         num_steps, num_envs = rollout_storage.actions.size()[:2]
 
         if self.irs is not None:
@@ -208,7 +208,7 @@ class PPO(BaseAgent):
             rollout_storage.rewards += intrinsic_reward.to(self.device)
 
         for _ in range(self.n_epochs):
-            generator = rollout_storage.sample(self.num_mini_batch)
+            generator = rollout_storage.sample()
 
             for batch in generator:
                 (
@@ -224,18 +224,21 @@ class PPO(BaseAgent):
 
                 # evaluate sampled actions
                 _, values, log_probs, entropy = self.ac.get_action_and_value(obs=batch_obs, actions=batch_actions)
-
+                
                 # actor loss part
                 ratio = th.exp(log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-                actor_loss = -th.min(surr1, surr2).mean()
+                actor_loss = - th.min(surr1, surr2).mean()
 
                 # critic loss part
-                values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range, self.clip_range)
-                values_losses = (batch_values - batch_returns).pow(2)
-                values_losses_clipped = (values_clipped - batch_returns).pow(2)
-                critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
+                if self.clip_range_vf is None:
+                    critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+                else:
+                    values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                    values_losses = (values.flatten() - batch_returns).pow(2)
+                    values_losses_clipped = (values_clipped - batch_returns).pow(2)
+                    critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                 if self.aug is not None:
                     # augmentation loss part
@@ -245,35 +248,29 @@ class PPO(BaseAgent):
                     _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
                         obs=batch_obs_aug, actions=new_batch_actions
                     )
-                    action_loss_aug = -log_probs_aug.mean()
+                    action_loss_aug = - log_probs_aug.mean()
                     value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
                 else:
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
                 # update
+                loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
                 self.ac_opt.zero_grad(set_to_none=True)
-                (critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss).backward()
+                loss.backward()
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()
 
-                total_actor_loss += actor_loss.item()
-                total_critic_loss += critic_loss.item()
-                total_entropy_loss += entropy.item()
-                total_aug_loss += aug_loss.item()
-
-        num_updates = self.n_epochs * self.num_mini_batch
-
-        total_actor_loss /= num_updates
-        total_critic_loss /= num_updates
-        total_entropy_loss /= num_updates
-        total_aug_loss /= num_updates
+                total_actor_loss.append(actor_loss.item())
+                total_critic_loss.append(critic_loss.item())
+                total_entropy_loss.append(entropy.item())
+                total_aug_loss.append(aug_loss.item())
 
         return {
-            "actor_loss": total_actor_loss,
-            "critic_loss": total_critic_loss,
-            "entropy": total_entropy_loss,
-            "aug_loss": total_aug_loss,
+            "actor_loss": np.mean(total_actor_loss),
+            "critic_loss": np.mean(total_critic_loss),
+            "entropy": np.mean(total_entropy_loss),
+            "aug_loss": np.mean(total_aug_loss),
         }
 
     def save(self, path: Path) -> None:

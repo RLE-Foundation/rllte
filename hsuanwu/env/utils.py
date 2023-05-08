@@ -21,7 +21,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
 
     def __init__(self, env: VectorEnv, device: str) -> None:
         super().__init__(env)
-        self._device = th.device(device)
+        self.device = th.device(device)
 
         # TODO: Transform the original 'Box' space into Hydra supported type.
         self.observation_space = OmegaConf.create({"shape": env.single_observation_space.shape})
@@ -44,7 +44,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
             )
         else:
             raise NotImplementedError("Unsupported action type!")
-        self.num_envs = len(env.envs)
+        self.num_envs = env.num_envs
 
     def reset(
         self,
@@ -61,7 +61,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
             A batch of observations and info from the vectorized environment.
         """
         obs, info = self.env.reset(seed=seed, options=options)
-        obs = th.as_tensor(obs, device=self._device)
+        obs = th.as_tensor(obs, device=self.device)
         return obs, info
 
     def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
@@ -74,17 +74,17 @@ class HsuanwuEnvWrapper(gym.Wrapper):
             Batch of (observations, rewards, terminations, truncations, infos)
         """
         obs, reward, terminated, truncated, info = self.env.step(actions.cpu().numpy())
-        obs = th.as_tensor(obs, device=self._device)
-        reward = th.as_tensor(reward, dtype=th.float32, device=self._device)
+        obs = th.as_tensor(obs, device=self.device)
+        reward = th.as_tensor(reward, dtype=th.float32, device=self.device)
         terminated = th.as_tensor(
             [1.0 if _ else 0.0 for _ in terminated],
             dtype=th.float32,
-            device=self._device,
+            device=self.device,
         )
         truncated = th.as_tensor(
             [1.0 if _ else 0.0 for _ in truncated],
             dtype=th.float32,
-            device=self._device,
+            device=self.device,
         )
 
         return obs, reward, terminated, truncated, info

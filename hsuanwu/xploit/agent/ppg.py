@@ -81,6 +81,7 @@ class PPG(BaseAgent):
 
         hidden_dim (int): The size of the hidden layers.
         clip_range (float): Clipping parameter.
+        clip_range_vf (float): Clipping parameter for the value function.
         num_policy_mini_batch (int): Number of mini-batches in policy phase.
         num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
         vf_coef (float): Weighting coefficient of value loss.
@@ -106,6 +107,7 @@ class PPG(BaseAgent):
         eps: float = 1e-5,
         hidden_dim: int = 256,
         clip_range: float = 0.2,
+        clip_range_vf: float = None,
         num_policy_mini_batch: int = 8,
         num_aux_mini_batch: int = 4,
         vf_coef: float = 0.5,
@@ -120,6 +122,7 @@ class PPG(BaseAgent):
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.clip_range = clip_range
+        self.clip_range_vf = clip_range_vf
         self.num_policy_mini_batch = num_policy_mini_batch
         self.num_aux_mini_batch = num_aux_mini_batch
         self.vf_coef = vf_coef
@@ -303,10 +306,13 @@ class PPG(BaseAgent):
             actor_loss = -th.min(surr1, surr2).mean()
 
             # critic loss part
-            values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range, self.clip_range)
-            values_losses = (batch_values - batch_returns).pow(2)
-            values_losses_clipped = (values_clipped - batch_returns).pow(2)
-            critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
+            if self.clip_range_vf is None:
+                critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+            else:
+                values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                values_losses = (values.flatten() - batch_returns).pow(2)
+                values_losses_clipped = (values_clipped - batch_returns).pow(2)
+                critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
             if self.aug is not None:
                 # augmentation loss part

@@ -30,7 +30,7 @@ class AdapterEnv(gym.Wrapper):
         )
         self.single_action_space = env.action_space
         self.is_vector_env = True
-        self.envs = [0] * num_envs
+        self.num_envs = num_envs
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         obs, reward, done, info = self.env.step(action)

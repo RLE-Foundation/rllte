@@ -2,10 +2,17 @@ from typing import Callable
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.vector import SyncVectorEnv
-from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
+from gymnasium.vector import AsyncVectorEnv
+from gymnasium.wrappers import (FrameStack, 
+                                GrayScaleObservation, 
+                                RecordEpisodeStatistics, 
+                                ResizeObservation, 
+                                TransformReward)
 
-from hsuanwu.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
+from hsuanwu.env.atari.wrappers import (EpisodicLifeEnv, 
+                                        FireResetEnv, 
+                                        MaxAndSkipEnv, 
+                                        NoopResetEnv)
 from hsuanwu.env.utils import HsuanwuEnvWrapper
 
 
@@ -38,7 +45,6 @@ def make_atari_env(
             if "FIRE" in env.unwrapped.get_action_meanings():
                 env = FireResetEnv(env)
 
-            env = TransformReward(env, lambda reward: np.sign(reward))
             env = ResizeObservation(env, shape=(84, 84))
             env = GrayScaleObservation(env)
             env = FrameStack(env, frame_stack)
@@ -53,7 +59,8 @@ def make_atari_env(
     if "NoFrameskip-v4" not in env_id:
         env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = SyncVectorEnv(envs)
+    envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
+    envs = TransformReward(envs, lambda reward: np.sign(reward))
 
     return HsuanwuEnvWrapper(envs, device)

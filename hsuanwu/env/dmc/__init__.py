@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, Optional
 import gymnasium as gym
 from gymnasium.envs import registry
 from gymnasium.envs.registration import register
-from gymnasium.vector import SyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 from hsuanwu.env.utils import FrameStack, HsuanwuEnvWrapper
@@ -92,7 +92,7 @@ def make_dmc_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = SyncVectorEnv(envs)
+    envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
     return HsuanwuEnvWrapper(envs, device)

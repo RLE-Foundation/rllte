@@ -319,8 +319,8 @@ class DAAC(BaseAgent):
                     )
 
                     # critic loss part
-                    values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range, self.clip_range)
-                    values_losses = (batch_values - batch_returns).pow(2)
+                    values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range, self.clip_range)
+                    values_losses = (values.flatten() - batch_returns).pow(2)
                     values_losses_clipped = (values_clipped - batch_returns).pow(2)
                     critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 

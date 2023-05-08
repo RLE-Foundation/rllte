@@ -1,9 +1,9 @@
 from typing import Callable, Dict, Tuple
-
+import pybullet_envs
 import gym as old_gym
 import gymnasium as gym
 import numpy as np
-from gymnasium.vector import SyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 from hsuanwu.env.utils import HsuanwuEnvWrapper
@@ -72,7 +72,7 @@ def make_bullet_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = SyncVectorEnv(envs)
+    envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
     return HsuanwuEnvWrapper(envs, device)

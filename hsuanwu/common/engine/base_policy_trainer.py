@@ -170,6 +170,7 @@ class BasePolicyTrainer(ABC):
             self._train_env.observation_space,
             self._train_env.action_space,
         )
+        self._action_range = action_space.range
 
         new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space

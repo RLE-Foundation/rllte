@@ -25,18 +25,16 @@ class VanillaMlpEncoder(BaseEncoder):
         self,
         observation_space: Union[gym.Space, DictConfig],
         feature_dim: int = 64,
-        hidden_dim: int = 256,
+        hidden_dim: int = 64,
     ) -> None:
         super().__init__(observation_space, feature_dim)
 
         input_dim = observation_space.shape[0]
         self.trunk = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(hidden_dim, feature_dim),
-            nn.ReLU(),
+            nn.Tanh()
         )
 
         self.apply(network_init)

@@ -220,7 +220,7 @@ class OnPolicySharedActorCritic(nn.Module):
         def __init__(self, action_shape, hidden_dim) -> None:
             super().__init__()
             self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
-            self.actor_logstd = nn.Parameter(th.zeros(1, action_shape[0]))
+            self.actor_logstd = nn.Parameter(th.ones(1, action_shape[0]))
 
         def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
             mu = self.actor_mu(obs)
@@ -255,7 +255,6 @@ class OnPolicySharedActorCritic(nn.Module):
         aux_critic: bool = False,
     ) -> None:
         super().__init__()
-
         if action_type == "Discrete":
             self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=feature_dim)
         elif action_type == "Box":
@@ -265,6 +264,11 @@ class OnPolicySharedActorCritic(nn.Module):
         else:
             raise NotImplementedError("Unsupported action type!")
 
+        # self.critic = nn.Sequential(
+        #     nn.Linear(28, 64), nn.Tanh(),
+        #     nn.Linear(64, 64), nn.Tanh(),
+        #     nn.Linear(hidden_dim, 1)
+        # )
         self.critic = nn.Linear(hidden_dim, 1)
         if aux_critic:
             self.aux_critic = nn.Linear(hidden_dim, 1)
@@ -296,6 +300,7 @@ class OnPolicySharedActorCritic(nn.Module):
             Estimated values.
         """
         return self.critic(self.encoder(obs))
+        # return self.critic(obs)
 
     def get_det_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
@@ -331,6 +336,7 @@ class OnPolicySharedActorCritic(nn.Module):
         entropy = dist.entropy().mean()
 
         return actions, self.critic(h), log_probs, entropy
+        # return actions, self.critic(obs), log_probs, entropy
 
     def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Get probs and auxiliary estimated values for auxiliary phase update.

@@ -21,11 +21,12 @@ class DecoupledRolloutStorage(BaseStorage):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
+        batch_size (int): Batch size of samples.
         discount (float): discount factor.
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
-        Vanilla rollout storage.
+        Decoupled rollout storage.
     """
 
     def __init__(
@@ -35,12 +36,14 @@ class DecoupledRolloutStorage(BaseStorage):
         device: str = "cpu",
         num_steps: int = 256,
         num_envs: int = 8,
+        batch_size: int = 64,
         discount: float = 0.99,
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device)
         self._num_steps = num_steps
         self._num_envs = num_envs
+        self._batch_size = batch_size
         self._discount = discount
         self._gae_lambda = gae_lambda
 
@@ -123,8 +126,8 @@ class DecoupledRolloutStorage(BaseStorage):
         self.truncateds[self._global_step + 1].copy_(truncateds)
         self.obs[self._global_step + 1].copy_(next_obs)
         self.log_probs[self._global_step].copy_(log_probs)
-        self.values[self._global_step].copy_(values[:, 0])
-        self.adv_preds[self._global_step].copy_(adv_preds[:, 0])
+        self.values[self._global_step].copy_(values.flatten())
+        self.adv_preds[self._global_step].copy_(adv_preds.flatten())
 
         self._global_step = (self._global_step + 1) % self._num_steps
 
@@ -159,37 +162,23 @@ class DecoupledRolloutStorage(BaseStorage):
         self.returns = self.advantages + self.values
         self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
-    def sample(self, num_mini_batch: int = 8) -> Generator:
+    def sample(self) -> Generator:
         """Sample data from storage.
-
-        Args:
-            num_mini_batch (int): Number of mini-batches
-
-        Returns:
-            Batch data.
         """
-        batch_size = self._num_envs * self._num_steps
-
-        assert batch_size >= num_mini_batch, (
-            "PPO requires the number of processes ({}) "
-            "* number of steps ({}) = {} "
-            "to be greater than or equal to the number of PPO mini batches ({})."
-            "".format(self._num_envs, self._num_steps, batch_size, num_mini_batch)
-        )
-        mini_batch_size = batch_size // num_mini_batch
-
-        sampler = BatchSampler(SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(self._num_envs * self._num_steps)), self._batch_size, drop_last=True)
 
         for indices in sampler:
             batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]
             batch_actions = self.actions.view(-1, self._action_dim)[indices]
-            batch_values = self.values.view(-1, 1)[indices]
-            batch_adv_preds = self.adv_preds.view(-1, 1)[indices]
-            batch_returns = self.returns.view(-1, 1)[indices]
-            batch_terminateds = self.terminateds[:-1].view(-1, 1)[indices]
-            batch_truncateds = self.truncateds[:-1].view(-1, 1)[indices]
-            batch_old_log_probs = self.log_probs.view(-1, 1)[indices]
-            adv_targ = self.advantages.view(-1, 1)[indices]
+            batch_values = self.values.view(-1)[indices]
+            batch_adv_preds = self.adv_preds.view(-1)[indices]
+            batch_returns = self.returns.view(-1)[indices]
+            batch_terminateds = self.terminateds[:-1].view(-1)[indices]
+            batch_truncateds = self.truncateds[:-1].view(-1)[indices]
+            batch_old_log_probs = self.log_probs.view(-1)[indices]
+            adv_targ = self.advantages.view(-1)[indices]
+
+            adv_targ = (adv_targ - adv_targ.mean()) / (adv_targ.std() + 1e-8)
 
             yield (
                 batch_obs,

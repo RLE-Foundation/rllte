@@ -76,13 +76,14 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 # sample actions
                 with th.no_grad(), eval_mode(self._agent):
                     agent_outputs = self._agent.act(obs, training=True, step=self._global_step)
+
                 (
                     next_obs,
                     rewards,
                     terminateds,
                     truncateds,
                     infos,
-                ) = self._train_env.step(agent_outputs["actions"])
+                ) = self._train_env.step(agent_outputs["actions"].clamp(*self._action_range))
 
                 agent_outputs.update(
                     {
@@ -114,12 +115,12 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            self._agent.update(self._rollout_storage, episode=self._global_episode)
+            metrics = self._agent.update(self._rollout_storage, episode=self._global_episode)
 
             # update and reset buffer
             self._rollout_storage.update()
 
-            self._global_episode += 1
+            self._global_episode += self._num_envs
             self._global_step += self._num_envs * self._num_steps
             episode_time, total_time = self._timer.reset()
 
@@ -147,10 +148,10 @@ class OnPolicyTrainer(BasePolicyTrainer):
         while len(episode_rewards) < self._num_test_episodes:
             with th.no_grad(), eval_mode(self._agent):
                 actions = self._agent.act(obs, training=False, step=self._global_step)
-            obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions)
+            obs, rewards, terminateds, truncateds, infos = self._test_env.step(actions.clamp(*self._action_range))
 
             if "episode" in infos:
-                indices = np.nonzero(infos["episode"]["r"])
+                indices = np.nonzero(infos["episode"]["l"])
                 episode_rewards.extend(infos["episode"]["r"][indices].tolist())
                 episode_steps.extend(infos["episode"]["l"][indices].tolist())
 

@@ -30,6 +30,9 @@ theme:
     - navigation.tabs.sticky
     - navigation.top
     - navigation.tracking
+    - content.code.select
+    - content.code.copy
+    - content.code.select
 
 extra_css:
   - assets/stylesheets/extra.css
