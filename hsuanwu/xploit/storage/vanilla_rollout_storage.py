@@ -54,7 +54,7 @@ class VanillaRolloutStorage(BaseStorage):
             device=self._device,
         )
         if self._action_type == "Discrete":
-            self._action_dim = 1
+            self._action_dim = ()
             self.actions = th.empty(
                 size=(num_steps, num_envs),
                 dtype=th.float32,
@@ -165,7 +165,7 @@ class VanillaRolloutStorage(BaseStorage):
 
         for indices in sampler:
             batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]
-            batch_actions = self.actions.view(-1, self._action_dim)[indices]
+            batch_actions = self.actions.view((-1, ) + (self._action_dim, ))[indices]
             batch_values = self.values.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]
             batch_terminateds = self.terminateds[:-1].view(-1)[indices]

@@ -45,6 +45,7 @@ DEFAULT_CFGS = {
         "eps": 0.00008,
         "hidden_dim": 512,
         "clip_range": 0.2,
+        "clip_range_vf": 0.2,
         "n_epochs": 3,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
@@ -118,6 +119,7 @@ class PPO(BaseAgent):
 
         # create models
         self.ac = OnPolicySharedActorCritic(
+            obs_shape=self.obs_shape,
             action_shape=self.action_shape,
             action_type=self.action_type,
             feature_dim=feature_dim,
@@ -235,7 +237,7 @@ class PPO(BaseAgent):
                 if self.clip_range_vf is None:
                     critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
                 else:
-                    values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                    values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
                     values_losses = (values.flatten() - batch_returns).pow(2)
                     values_losses_clipped = (values_clipped - batch_returns).pow(2)
                     critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
@@ -255,8 +257,8 @@ class PPO(BaseAgent):
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
                 # update
-                loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
                 self.ac_opt.zero_grad(set_to_none=True)
+                loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()

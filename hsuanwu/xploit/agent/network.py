@@ -189,6 +189,7 @@ class OnPolicySharedActorCritic(nn.Module):
     """Actor-Critic network using a shared encoder for on-policy algorithms.
 
     Args:
+        obs_shape (Tuple): The data shape of observations.
         action_shape (Tuple): The data shape of actions.
         action_type (str): The action type like 'Discrete' or 'Box', etc.
         feature_dim (int): Number of features accepted.
@@ -198,13 +199,20 @@ class OnPolicySharedActorCritic(nn.Module):
     Returns:
         Actor-Critic instance.
     """
-
     class DiscreteActor(nn.Module):
         """Actor for 'Discrete' tasks."""
 
-        def __init__(self, action_shape, hidden_dim) -> None:
+        def __init__(self, obs_shape, action_shape, feature_dim, hidden_dim) -> None:
             super().__init__()
-            self.actor = nn.Linear(hidden_dim, action_shape[0])
+            if len(obs_shape) > 1:
+                self.actor = nn.Linear(feature_dim, action_shape[0])
+            else:
+                # for state-based observations
+                self.actor = nn.Sequential(
+                    nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, action_shape[0])
+                )
 
         def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
             logits = self.actor(obs)
@@ -217,9 +225,17 @@ class OnPolicySharedActorCritic(nn.Module):
     class BoxActor(nn.Module):
         """Actor for 'Box' tasks."""
 
-        def __init__(self, action_shape, hidden_dim) -> None:
+        def __init__(self, obs_shape, action_shape, feature_dim, hidden_dim) -> None:
             super().__init__()
-            self.actor_mu = nn.Linear(hidden_dim, action_shape[0])
+            if len(obs_shape) > 1:
+                self.actor_mu = nn.Linear(feature_dim, action_shape[0])
+            else:
+                # for state-based observations
+                self.actor_mu = nn.Sequential(
+                    nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, action_shape[0])
+                )
             self.actor_logstd = nn.Parameter(th.ones(1, action_shape[0]))
 
         def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
@@ -234,9 +250,17 @@ class OnPolicySharedActorCritic(nn.Module):
     class MultiBinaryActor(nn.Module):
         """Actor for 'MultiBinary' tasks."""
 
-        def __init__(self, action_shape, hidden_dim) -> None:
+        def __init__(self, obs_shape, action_shape, feature_dim, hidden_dim) -> None:
             super().__init__()
-            self.actor = nn.Linear(hidden_dim, action_shape[0])
+            if len(obs_shape) > 1:
+                self.actor = nn.Linear(feature_dim, action_shape[0])
+            else:
+                # for state-based observations
+                self.actor = nn.Sequential(
+                    nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, action_shape[0])
+                )
 
         def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
             logits = self.actor(obs)
@@ -248,6 +272,7 @@ class OnPolicySharedActorCritic(nn.Module):
 
     def __init__(
         self,
+        obs_shape: Tuple,
         action_shape: Tuple,
         action_type: str,
         feature_dim: int,
@@ -256,22 +281,40 @@ class OnPolicySharedActorCritic(nn.Module):
     ) -> None:
         super().__init__()
         if action_type == "Discrete":
-            self.actor = self.DiscreteActor(action_shape=action_shape, hidden_dim=feature_dim)
+            self.actor = self.DiscreteActor(obs_shape=obs_shape, 
+                                            action_shape=action_shape, 
+                                            feature_dim=feature_dim,
+                                            hidden_dim=hidden_dim)
         elif action_type == "Box":
-            self.actor = self.BoxActor(action_shape=action_shape, hidden_dim=feature_dim)
+            self.actor = self.BoxActor(obs_shape=obs_shape, 
+                                       action_shape=action_shape, 
+                                       feature_dim=feature_dim,
+                                       hidden_dim=hidden_dim)
         elif action_type == "MultiBinary":
-            self.actor = self.MultiBinaryActor(action_shape=action_shape, hidden_dim=feature_dim)
+            self.actor = self.MultiBinaryActor(obs_shape=obs_shape, 
+                                               action_shape=action_shape, 
+                                               feature_dim=feature_dim,
+                                               hidden_dim=hidden_dim)
         else:
             raise NotImplementedError("Unsupported action type!")
 
-        # self.critic = nn.Sequential(
-        #     nn.Linear(28, 64), nn.Tanh(),
-        #     nn.Linear(64, 64), nn.Tanh(),
-        #     nn.Linear(hidden_dim, 1)
-        # )
-        self.critic = nn.Linear(hidden_dim, 1)
-        if aux_critic:
-            self.aux_critic = nn.Linear(hidden_dim, 1)
+        if len(obs_shape) > 1:
+            self.critic = nn.Linear(feature_dim, 1)
+            if aux_critic:
+                self.aux_critic = nn.Linear(feature_dim, 1)
+        else:
+            # for state-based observations
+            self.critic = nn.Sequential(
+                nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
+                nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                nn.Linear(hidden_dim, 1)
+            )
+            if aux_critic:
+                self.aux_critic = nn.Sequential(
+                    nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                    nn.Linear(hidden_dim, 1)
+                )
 
         # placeholder for distribution
         self.encoder = None
@@ -300,7 +343,6 @@ class OnPolicySharedActorCritic(nn.Module):
             Estimated values.
         """
         return self.critic(self.encoder(obs))
-        # return self.critic(obs)
 
     def get_det_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
@@ -336,7 +378,6 @@ class OnPolicySharedActorCritic(nn.Module):
         entropy = dist.entropy().mean()
 
         return actions, self.critic(h), log_probs, entropy
-        # return actions, self.critic(obs), log_probs, entropy
 
     def get_probs_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Get probs and auxiliary estimated values for auxiliary phase update.

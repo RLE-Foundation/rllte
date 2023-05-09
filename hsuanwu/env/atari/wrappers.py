@@ -32,7 +32,7 @@ class NoopResetEnv(gym.Wrapper):
             noops = self.unwrapped.np_random.integers(1, self.noop_max + 1)
         assert noops > 0
         obs = np.zeros(0)
-        info = {}
+        info: Dict = {}
         for _ in range(noops):
             obs, _, terminated, truncated, info = self.env.step(self.noop_action)
             if terminated or truncated:
@@ -84,10 +84,10 @@ class EpisodicLifeEnv(gym.Wrapper):
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
         obs, reward, terminated, truncated, info = self.env.step(action)
-        self.was_real_done = terminated
+        self.was_real_done = terminated or truncated
         # check current lives, make loss of life terminal,
         # then update lives to handle bonus lives
-        lives = self.env.unwrapped.ale.lives()
+        lives = self.env.unwrapped.ale.lives()  # type: ignore[attr-defined]
         if 0 < lives < self.lives:
             # for Qbert sometimes we stay in lives == 0 condition for a few frames
             # so its important to keep lives > 0, so that we only reset once
@@ -101,14 +101,14 @@ class EpisodicLifeEnv(gym.Wrapper):
             obs, info = self.env.reset(**kwargs)
         else:
             # no-op step to advance from terminal/lost life state
-            obs, _, terminated, _, info = self.env.step(0)
+            obs, _, terminated, truncated, info = self.env.step(0)
 
             # The no-op step can lead to a game over, so we need to check it again
             # to see if we should reset the environment and avoid the
             # monitor.py `RuntimeError: Tried to step environment that needs reset`
-            if terminated:
+            if terminated or truncated:
                 obs, info = self.env.reset(**kwargs)
-        self.lives = self.env.unwrapped.ale.lives()
+        self.lives = self.env.unwrapped.ale.lives()  # type: ignore[attr-defined]
         return obs, info
 
 

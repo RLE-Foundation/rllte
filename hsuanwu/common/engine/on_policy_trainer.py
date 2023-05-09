@@ -60,8 +60,8 @@ class OnPolicyTrainer(BasePolicyTrainer):
 
     def train(self) -> None:
         """Training function."""
-        episode_rewards = deque(maxlen=100)
-        episode_steps = deque(maxlen=100)
+        episode_rewards = deque(maxlen=10)
+        episode_steps = deque(maxlen=10)
         obs, info = self._train_env.reset(seed=self._seed)
         # Number of updates
         num_updates = self._num_train_steps // self._num_envs // self._num_steps
@@ -98,7 +98,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
                 )
 
                 if "episode" in infos:
-                    indices = np.nonzero(infos["episode"]["r"])
+                    indices = np.nonzero(infos["episode"]["l"])
                     episode_rewards.extend(infos["episode"]["r"][indices].tolist())
                     episode_steps.extend(infos["episode"]["l"][indices].tolist())
 

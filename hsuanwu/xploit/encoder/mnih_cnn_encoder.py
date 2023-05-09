@@ -34,7 +34,7 @@ class MnihCnnEncoder(BaseEncoder):
             nn.ReLU(),
             nn.Conv2d(32, 64, 4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(64, 64, 3, stride=1),
+            nn.Conv2d(64, 32, 3, stride=1),
             nn.ReLU(),
             nn.Flatten(),
         )
@@ -44,10 +44,8 @@ class MnihCnnEncoder(BaseEncoder):
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.trunk.extend([nn.Linear(n_flatten, feature_dim), nn.ReLU()])
-        # self.apply(network_init)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
-        obs = obs / 255.0
-        h = self.trunk(obs)
+        h = self.trunk(obs / 255.0)
 
         return h.view(h.size()[0], -1)

@@ -45,8 +45,8 @@ def make_atari_env(
             if "FIRE" in env.unwrapped.get_action_meanings():
                 env = FireResetEnv(env)
 
-            env = ResizeObservation(env, shape=(84, 84))
             env = GrayScaleObservation(env)
+            env = ResizeObservation(env, shape=(84, 84))
             env = FrameStack(env, frame_stack)
 
             env.action_space.seed(seed)
