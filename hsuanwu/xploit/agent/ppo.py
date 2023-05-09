@@ -258,7 +258,7 @@ class PPO(BaseAgent):
 
                 # update
                 self.ac_opt.zero_grad(set_to_none=True)
-                loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef
+                loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                 self.ac_opt.step()
