@@ -17,14 +17,14 @@ class Encoder(nn.Module):
 
     Args:
         obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -48,7 +48,7 @@ class Encoder(nn.Module):
             self.linear = nn.Linear(256, latent_dim)
 
         # TODO: output actions
-        self.policy = nn.Linear(latent_dim * 2, action_shape[0])
+        self.policy = nn.Linear(latent_dim * 2, action_dim)
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         """Forward function for outputing predicted actions.
@@ -87,7 +87,7 @@ class NGU(BaseIntrinsicRewardModule):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
@@ -128,8 +128,8 @@ class NGU(BaseIntrinsicRewardModule):
         super().__init__(observation_space, action_space, device, beta, kappa)
 
         self.encoder = Encoder(
-            obs_shape=observation_space.shape,
-            action_shape=action_space.shape,
+            obs_shape=self._obs_shape,
+            action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
         self.episodic_memory = deque(maxlen=capacity)
@@ -148,19 +148,18 @@ class NGU(BaseIntrinsicRewardModule):
 
         # life-long part
         self.predictor = Encoder(
-            obs_shape=observation_space.shape,
-            action_shape=action_space.shape,
+            obs_shape=self._obs_shape,
+            action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
 
         self.target = Encoder(
-            obs_shape=observation_space.shape,
-            action_shape=action_space.shape,
+            obs_shape=self._obs_shape,
+            action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
 
         self.life_long_opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
-        self.batch_size = batch_size
 
         # freeze the network parameters
         for p in self.target.parameters():
@@ -261,9 +260,9 @@ class NGU(BaseIntrinsicRewardModule):
 
         if self._action_type == "Discrete":
             actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
         else:
-            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_dim)).to(self._device)
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)

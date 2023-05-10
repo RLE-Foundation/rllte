@@ -16,7 +16,7 @@ class VanillaReplayStorage(BaseStorage):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the buffer.
@@ -44,7 +44,7 @@ class VanillaReplayStorage(BaseStorage):
         self.obs = np.empty((storage_size, *self._obs_shape), dtype=obs_dtype)
 
         if self._action_type == "Discrete":
-            self.actions = self.actions = np.empty((storage_size, 1), dtype=np.float32)
+            self.actions = np.empty((storage_size, 1), dtype=np.float32)
         if self._action_type == "Box":
             self.actions = np.empty((storage_size, self._action_shape[0]), dtype=np.float32)
 

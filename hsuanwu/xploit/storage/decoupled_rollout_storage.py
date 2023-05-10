@@ -16,7 +16,7 @@ class DecoupledRolloutStorage(BaseStorage):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
@@ -54,23 +54,20 @@ class DecoupledRolloutStorage(BaseStorage):
             device=self._device,
         )
         if self._action_type == "Discrete":
-            self._action_dim = 1
             self.actions = th.empty(
                 size=(num_steps, num_envs),
                 dtype=th.float32,
                 device=self._device,
             )
         elif self._action_type == "Box":
-            self._action_dim = self._action_shape[0]
             self.actions = th.empty(
-                size=(num_steps, num_envs, self._action_dim),
+                size=(num_steps, num_envs, self._action_shape[0]),
                 dtype=th.float32,
                 device=self._device,
             )
         elif self._action_type == "MultiBinary":
-            self._action_dim = self._action_shape[0]
             self.actions = th.empty(
-                size=(num_steps, num_envs, self._action_dim),
+                size=(num_steps, num_envs, self._action_shape[0]),
                 dtype=th.float32,
                 device=self._device,
             )
@@ -169,7 +166,7 @@ class DecoupledRolloutStorage(BaseStorage):
 
         for indices in sampler:
             batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]
-            batch_actions = self.actions.view(-1, self._action_dim)[indices]
+            batch_actions = self.actions.view(-1, *self._action_shape)[indices]
             batch_values = self.values.view(-1)[indices]
             batch_adv_preds = self.adv_preds.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]

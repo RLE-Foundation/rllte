@@ -28,7 +28,8 @@ dependencies = [
   "tensorboardX",
   "termcolor",
   "scipy>= 1.7.0",
-  "arch==5.3.0"
+  "arch==5.3.0",
+  "pynvml==11.5.0"
 ]
 
 [project.optional-dependencies]

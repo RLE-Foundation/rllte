@@ -17,14 +17,14 @@ class Encoder(nn.Module):
 
     Args:
         obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -81,18 +81,18 @@ class Decoder(nn.Module):
     """Decoder of VAE.
 
     Args:
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         Predicted next-observations.
     """
 
-    def __init__(self, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, action_dim: int, latent_dim: int) -> None:
         super().__init__()
 
         self.trunk = nn.Sequential(
-            nn.Linear(action_shape[0] + latent_dim, 256),
+            nn.Linear(action_dim + latent_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 256),
             nn.ReLU(),
@@ -109,20 +109,20 @@ class VAE(nn.Module):
     Args:
         device (Device): Device (cpu, cuda, ...) on which the code should be run.
         obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         VAE instance.
     """
 
-    def __init__(self, device: th.device, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, device: th.device, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super().__init__()
-        self.encoder = Encoder(obs_shape=obs_shape, action_shape=action_shape, latent_dim=latent_dim)
-        self.decoder = Decoder(action_shape=action_shape, latent_dim=latent_dim)
+        self.encoder = Encoder(obs_shape=obs_shape, action_dim=action_dim, latent_dim=latent_dim)
+        self.decoder = Decoder(action_dim=action_dim, latent_dim=latent_dim)
 
-        self.mu = nn.Linear(latent_dim, action_shape[0])
-        self.logvar = nn.Linear(latent_dim, action_shape[0])
+        self.mu = nn.Linear(latent_dim, action_dim)
+        self.logvar = nn.Linear(latent_dim, action_dim)
 
         self._device = device
         self.latent_dim = latent_dim
@@ -175,7 +175,7 @@ class GIRM(BaseIntrinsicRewardModule):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
@@ -217,7 +217,7 @@ class GIRM(BaseIntrinsicRewardModule):
 
         self.vae = VAE(
             device=self._device,
-            action_shape=self._action_shape,
+            action_dim=self._action_dim,
             obs_shape=self._obs_shape,
             latent_dim=latent_dim,
         )
@@ -268,7 +268,7 @@ class GIRM(BaseIntrinsicRewardModule):
         obs_tensor = samples["obs"].to(self._device)
         actions_tensor = samples["actions"].to(self._device)
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
             actions_tensor = actions_tensor.to(self._device)
         next_obs_tensor = samples["next_obs"].to(self._device)
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
@@ -316,9 +316,9 @@ class GIRM(BaseIntrinsicRewardModule):
 
         if self._action_type == "Discrete":
             actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
         else:
-            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_dim)).to(self._device)
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 

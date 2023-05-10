@@ -16,14 +16,14 @@ class Encoder(nn.Module):
 
     Args:
         obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -129,7 +129,7 @@ class ICM(BaseIntrinsicRewardModule):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
@@ -155,18 +155,18 @@ class ICM(BaseIntrinsicRewardModule):
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         self.encoder = Encoder(
-            obs_shape=observation_space.shape,
-            action_shape=action_space.shape,
+            obs_shape=self._obs_shape,
+            action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
 
-        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
-        if self._action_shape == "Discrete":
+        self.im = InverseDynamicsModel(latent_dim=latent_dim, action_dim=self._action_dim).to(self._device)
+        if self._action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
             self.im_loss = nn.MSELoss()
 
-        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_shape[0]).to(self._device)
+        self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_dim).to(self._device)
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
@@ -194,7 +194,7 @@ class ICM(BaseIntrinsicRewardModule):
         obs_tensor = samples["obs"].to(self._device)
         actions_tensor = samples["actions"].to(self._device)
         if self._action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
         next_obs_tensor = samples["next_obs"].to(self._device)
 
         intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
@@ -231,9 +231,9 @@ class ICM(BaseIntrinsicRewardModule):
 
         if self._action_type == "Discrete":
             actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_shape[0]).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
         else:
-            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_shape[0])).to(self._device)
+            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_dim)).to(self._device)
 
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size)

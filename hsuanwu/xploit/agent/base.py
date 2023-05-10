@@ -15,7 +15,7 @@ class BaseAgent(ABC):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -38,11 +38,13 @@ class BaseAgent(ABC):
         if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
             self.obs_shape = observation_space.shape
             if action_space.__class__.__name__ == "Discrete":
-                self.action_shape = (int(action_space.n),)
+                self.action_shape = action_space.shape
+                self.action_dim = int(action_space.n)
                 self.action_type = "Discrete"
                 self.action_range = [0, int(action_space.n) - 1]
             elif action_space.__class__.__name__ == "Box":
                 self.action_shape = action_space.shape
+                self.action_dim = action_space.shape[0]
                 self.action_type = "Box"
                 self.action_range = [
                     float(action_space.low[0]),
@@ -50,6 +52,7 @@ class BaseAgent(ABC):
                 ]
             elif action_space.__class__.__name__ == "MultiBinary":
                 self.action_shape = action_space.shape
+                self.action_dim = action_space.shape[0]
                 self.action_type = "MultiBinary"
                 self.action_range = [0, 1]
             else:
@@ -58,6 +61,7 @@ class BaseAgent(ABC):
             # by DictConfig
             self.obs_shape = observation_space.shape
             self.action_shape = action_space.shape
+            self.action_dim = action_space.dim
             self.action_type = action_space.type
             self.action_range = action_space.range
         else:

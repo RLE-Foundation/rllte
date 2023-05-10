@@ -14,14 +14,14 @@ class Encoder(nn.Module):
 
     Args:
         obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
+        action_dim (int): The dimension of actions.
         latent_dim (int): The dimension of encoding vectors.
 
     Returns:
         Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, action_shape: Tuple, latent_dim: int) -> None:
+    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
         super().__init__()
 
         # visual
@@ -93,8 +93,8 @@ class REVD(BaseIntrinsicRewardModule):
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         self.random_encoder = Encoder(
-            obs_shape=observation_space.shape,
-            action_shape=action_space.shape,
+            obs_shape=self._obs_shape,
+            action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
 

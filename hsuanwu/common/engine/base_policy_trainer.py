@@ -7,6 +7,8 @@ from typing import Dict, Optional
 import gymnasium as gym
 import numpy as np
 import omegaconf
+import pynvml
+pynvml.nvmlInit()
 import torch as th
 from omegaconf import OmegaConf
 
@@ -73,11 +75,23 @@ class BasePolicyTrainer(ABC):
             th.cuda.manual_seed_all(cfgs.seed)
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
+        if "cuda" in cfgs.device:
+            try:
+                device_id = int(cfgs.device[-1])
+            except:
+                device_id = 0
+            handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
+            device_name = pynvml.nvmlDeviceGetName(handle)
+            self._logger.info(f"Running on {device_name}...")
+        elif "npu" in cfgs.device:
+            self._logger.info(f"Running on HUAWEI NPU...")
+        else:
+            self._logger.info(f"Running on CPU...")
         # debug
         if hasattr(cfgs, "experiment"):
-            self._logger.info(f"Experiment: {cfgs.experiment}")
+            self._logger.info(f"Experiment Tag: {cfgs.experiment}")
         else:
-            self._logger.info("Experiment: Default")
+            self._logger.info("Experiment Tag: Default")
         self._logger.info("Invoking Hsuanwu Engine...")
         # preprocess the cfgs
         processed_cfgs = self._process_cfgs(cfgs)

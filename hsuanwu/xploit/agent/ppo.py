@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import OnPolicySharedActorCritic
+from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -70,7 +70,7 @@ class PPO(BaseAgent):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -120,7 +120,7 @@ class PPO(BaseAgent):
         # create models
         self.ac = OnPolicySharedActorCritic(
             obs_shape=self.obs_shape,
-            action_shape=self.action_shape,
+            action_dim=self.action_dim,
             action_type=self.action_type,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
@@ -141,13 +141,18 @@ class PPO(BaseAgent):
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
         self.dist = kwargs["dist"]
+        # set encoder and distribution
         self.ac.encoder = kwargs["encoder"]
         self.ac.dist = kwargs["dist"]
+        # network initialization
+        self.ac.apply(network_init)
         # to device
         self.ac.to(self.device)
         # create optimizers
         self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=self.lr, eps=self.eps)
+        # set training mode
         self.train()
+        # set augmentation and intrinsic reward
         if kwargs["aug"] is not None:
             self.aug = kwargs["aug"]
         if kwargs["irs"] is not None:
@@ -176,7 +181,7 @@ class PPO(BaseAgent):
             Sampled actions.
         """
         if training:
-            actions, values, log_probs, entropy = self.ac.get_action_and_value(obs)
+            actions, values, log_probs = self.ac.get_action_and_value(obs)
             return {"actions": actions, "values": values, "log_probs": log_probs}
         else:
             actions = self.ac.get_det_action(obs)
@@ -225,33 +230,33 @@ class PPO(BaseAgent):
                 ) = batch
 
                 # evaluate sampled actions
-                _, values, log_probs, entropy = self.ac.get_action_and_value(obs=batch_obs, actions=batch_actions)
+                new_values, new_log_probs, entropy = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
                 
                 # actor loss part
-                ratio = th.exp(log_probs - batch_old_log_probs)
+                ratio = th.exp(new_log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
                 actor_loss = - th.min(surr1, surr2).mean()
 
                 # critic loss part
                 if self.clip_range_vf is None:
-                    critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+                    critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
                 else:
-                    values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
-                    values_losses = (values.flatten() - batch_returns).pow(2)
+                    values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                    values_losses = (new_values.flatten() - batch_returns).pow(2)
                     values_losses_clipped = (values_clipped - batch_returns).pow(2)
                     critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
-                    new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
+                    new_batch_actions, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                    _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(
+                    values_aug, log_probs_aug, _ = self.ac.evaluate_actions(
                         obs=batch_obs_aug, actions=new_batch_actions
                     )
                     action_loss_aug = - log_probs_aug.mean()
-                    value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
+                    value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
                 else:
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
