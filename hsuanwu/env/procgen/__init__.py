@@ -44,17 +44,20 @@ class AdapterEnv(gym.Wrapper):
 def make_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
+    device: str = "cpu",
+    seed: int = 1,
     gamma: float = 0.99,
     num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
-    device: str = "cpu",
 ) -> gym.Env:
     """Build Prcogen environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of parallel environments.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.
             Set to 0 to use unlimited levels.
@@ -62,7 +65,6 @@ def make_procgen_env(
             'start_level' and 'num_levels' fully specify the set of possible levels.
         distribution_mode (str): What variant of the levels to use, the options are "easy",
             "hard", "extreme", "memory", "exploration".
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
         Environments instance.
@@ -73,6 +75,7 @@ def make_procgen_env(
         num_levels=num_levels,
         start_level=start_level,
         distribution_mode=distribution_mode,
+        rand_seed=seed,
     )
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))

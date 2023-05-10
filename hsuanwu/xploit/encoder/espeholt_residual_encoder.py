@@ -53,6 +53,7 @@ class Conv2d_tf(nn.Conv2d):
             groups=self.groups,
         )
 
+
 class ResidualBlock(nn.Module):
     """Residual block based on 
         https://github.com/AIcrowd/neurips2020-procgen-starter-kit/blob/142d09586d2272a17f44481a115c4bd817cf6a94/models/impala_cnn_torch.py
