@@ -116,7 +116,6 @@ nav:
 
       - storage:
         - BaseStorage: api_docs/xploit/storage/base.md
-        - DecoupledRolloutStorage: api_docs/xploit/storage/decoupled_rollout_storage.md
         - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md

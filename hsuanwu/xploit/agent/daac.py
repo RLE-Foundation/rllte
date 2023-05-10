@@ -12,7 +12,7 @@ from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
 from hsuanwu.xploit.agent.networks import OnPolicyDecoupledActorCritic, get_network_init
-from hsuanwu.xploit.storage import DecoupledRolloutStorage as Storage
+from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",

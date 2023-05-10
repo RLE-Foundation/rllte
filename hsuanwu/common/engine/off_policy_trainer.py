@@ -77,7 +77,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
                 # TODO: Initial exploration
                 if self._global_step < self._num_init_steps:
                     action.uniform_(-1.0, 1.0)
-            next_obs, reward, terminated, truncated, info = self._train_env.step(action)
+            next_obs, reward, terminated, truncated, info = self._train_env.step(action.clamp(*self._action_range))
             episode_reward += reward[0].cpu().numpy()
             episode_step += 1
             self._global_step += 1
@@ -136,7 +136,7 @@ class OffPolicyTrainer(BasePolicyTrainer):
             with th.no_grad(), eval_mode(self._agent):
                 action = self._agent.act(obs, training=False, step=self._global_step)
 
-            next_obs, reward, terminated, truncated, info = self._test_env.step(action)
+            next_obs, reward, terminated, truncated, info = self._test_env.step(action.clamp(*self._action_range))
             total_reward += reward[0].cpu().numpy()
             step += 1
 

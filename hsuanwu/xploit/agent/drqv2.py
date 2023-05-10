@@ -169,7 +169,7 @@ class DrQv2(BaseAgent):
         else:
             action = dist.sample()
 
-        return action.clamp(*self.action_range)
+        return action
 
     def update(self, replay_storage, step: int = 0) -> Dict[str, float]:
         """Update the agent.

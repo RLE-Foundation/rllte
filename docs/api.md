@@ -49,7 +49,6 @@
 
 |Module|Remark|
 |:-|:-|
-|DecoupledRolloutStorage|On-Policy RL|
 |VanillaRolloutStorage|On-Policy RL|
 |VanillaReplayStorage|Off-Policy RL|
 |NStepReplayStorage|Off-Policy RL|
