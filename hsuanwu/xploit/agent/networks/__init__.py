@@ -1,2 +1,3 @@
 from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic
-from .utils import network_init as network_init
+from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
+from .utils import get_network_init as get_network_init

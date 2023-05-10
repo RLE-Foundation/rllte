@@ -164,8 +164,8 @@ class MultiBinaryActor(nn.Module):
         """
         return self.actor(obs)
 
-class OnPolicySharedActorCritic(nn.Module):
-    """Actor-Critic network using a shared encoder for on-policy algorithms like `PPO` and `PPG`.
+class OnPolicyDecoupledActorCritic(nn.Module):
+    """Actor-Critic network using using separate encoders for on-policy algorithms like `DAAC`.
 
     Args:
         obs_shape (Tuple): The data shape of observations.
@@ -173,7 +173,6 @@ class OnPolicySharedActorCritic(nn.Module):
         action_type (str): The action type like 'Discrete' or 'Box', etc.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
-        aux_critic (bool): Use auxiliary critic or not, for `PPG` agent.
 
     Returns:
         Actor-Critic network instance.
@@ -185,9 +184,10 @@ class OnPolicySharedActorCritic(nn.Module):
         action_type: str,
         feature_dim: int,
         hidden_dim: int,
-        aux_critic: bool = False,
     ) -> None:
         super().__init__()
+        self.action_dim = action_dim
+        self.action_type = action_type
         if action_type == "Discrete":
             self.actor = DiscreteActor(obs_shape=obs_shape, 
                                        action_dim=action_dim, 
@@ -208,25 +208,24 @@ class OnPolicySharedActorCritic(nn.Module):
             raise NotImplementedError("Unsupported action type!")
         
         if len(obs_shape) > 1:
+            self.gae = nn.Linear(feature_dim + action_dim, 1)
             self.critic = nn.Linear(feature_dim, 1)
-            if aux_critic:
-                self.aux_critic = nn.Linear(feature_dim, 1)
         else:
             # for state-based observations and `IdentityEncoder`
+            self.gae = nn.Sequential(
+                nn.Linear(feature_dim + action_dim, hidden_dim), nn.Tanh(),
+                nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+                nn.Linear(hidden_dim, 1)
+            )
             self.critic = nn.Sequential(
                 nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
                 nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
                 nn.Linear(hidden_dim, 1)
             )
-            if aux_critic:
-                self.aux_critic = nn.Sequential(
-                    nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
-                    nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
-                    nn.Linear(hidden_dim, 1)
-                )
 
         # placeholder for distribution
-        self.encoder = None
+        self.actor_encoder = None
+        self.critic_encoder = None
         self.dist = None
     
     def forward(self, obs: th.Tensor) -> th.Tensor:
@@ -238,7 +237,7 @@ class OnPolicySharedActorCritic(nn.Module):
         Returns:
             Deterministic actions.
         """
-        return self.actor(self.encoder(obs))
+        return self.actor(self.actor_encoder(obs))
 
     def get_action_and_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Get actions and estimated values for observations.
@@ -249,29 +248,19 @@ class OnPolicySharedActorCritic(nn.Module):
         Returns:
             Sampled actions, Estimated values, log of the probability evaluated at `actions`.
         """
-        h = self.encoder(obs)
+        h = self.actor_encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
 
         actions = dist.sample()
         log_probs = dist.log_prob(actions)
+        if self.action_type == "Discrete":
+            encoded_actions = F.one_hot(actions.long(), self.action_dim).to(h.device)
+        else:
+            encoded_actions = actions
+        gae = self.gae(th.cat([h, encoded_actions], dim=1))
 
-        return actions, self.critic(h), log_probs
-    
-    def get_dist_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
-        """Get probs and auxiliary estimated values for auxiliary phase update.
-
-        Args:
-            obs: Sampled observations.
-
-        Returns:
-            Sample distribution, estimated values, auxiliary estimated values.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        dist = self.dist(*policy_outputs)
-
-        return dist, self.critic(h.detach()), self.aux_critic(h)
+        return actions, gae, self.critic(self.critic_encoder(obs)), log_probs
     
     def get_det_action(self, obs: th.Tensor) -> th.Tensor:
         """Get deterministic actions for observations.
@@ -282,7 +271,7 @@ class OnPolicySharedActorCritic(nn.Module):
         Returns:
             Deterministic actions.
         """
-        policy_outputs = self.actor.get_policy_outputs(self.encoder(obs))
+        policy_outputs = self.actor.get_policy_outputs(self.actor_encoder(obs))
         dist = self.dist(*policy_outputs)
 
         return dist.mean
@@ -296,7 +285,7 @@ class OnPolicySharedActorCritic(nn.Module):
         Returns:
             Estimated values.
         """
-        return self.critic(self.encoder(obs))
+        return self.critic(self.critic_encoder(obs))
     
     def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
         """Get actions and estimated values for observations.
@@ -308,24 +297,17 @@ class OnPolicySharedActorCritic(nn.Module):
         Returns:
             Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
         """
-        h = self.encoder(obs)
+        h = self.actor_encoder(obs)
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
 
+        if self.action_type == "Discrete":
+            encoded_actions = F.one_hot(actions.long(), self.action_dim).to(h.device)
+        else:
+            encoded_actions = actions
+
         log_probs = dist.log_prob(actions)
+        gae = self.gae(th.cat([h, encoded_actions], dim=1))
         entropy = dist.entropy().mean()
 
-        return self.critic(h), log_probs, entropy
-
-    def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
-        """Get policy outputs for training.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Policy outputs like unnormalized probabilities for `Discrete` tasks.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        return th.cat(policy_outputs, dim=1)
+        return gae, self.critic(self.critic_encoder(obs)), log_probs, entropy

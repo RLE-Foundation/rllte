@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, network_init
+from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -24,16 +24,16 @@ DEFAULT_CFGS = {
     ## TODO: Train setup
     "device": "cpu",
     "seed": 1,
-    "num_train_steps": 25000000,
-    "num_steps": 512,  # The sample length of per rollout.
+    "num_train_steps": 10000000,
+    "num_steps": 128,  # The sample length of per rollout.
     ## TODO: Test setup
     "test_every_episodes": 10,  # only for on-policy algorithms
     "num_test_episodes": 10,
     ## TODO: xploit part
     "encoder": {
-        "name": "EspeholtResidualEncoder",
+        "name": "MnihCnnEncoder",
         "observation_space": dict(),
-        "feature_dim": 256,
+        "feature_dim": 512,
     },
     "agent": {
         "name": "PPO",
@@ -41,16 +41,17 @@ DEFAULT_CFGS = {
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
-        "lr": 1e-4,
-        "eps": 0.00008,
+        "lr": 2.5e-4,
+        "eps": 0.00001,
         "hidden_dim": 512,
-        "clip_range": 0.2,
-        "clip_range_vf": 0.2,
-        "n_epochs": 3,
+        "clip_range": 0.1,
+        "clip_range_vf": 0.1,
+        "n_epochs": 4,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
         "aug_coef": 0.1,
         "max_grad_norm": 0.5,
+        "network_init_method": "orthogonal"
     },
     "storage": {"name": "VanillaRolloutStorage"},
     ## TODO: xplore part
@@ -85,6 +86,7 @@ class PPO(BaseAgent):
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
         max_grad_norm (float): Maximum norm of gradients.
+        network_init_method (str): Network initialization method name.
 
     Returns:
         PPO learner instance.
@@ -106,6 +108,7 @@ class PPO(BaseAgent):
         ent_coef: float,
         aug_coef: float,
         max_grad_norm: float,
+        network_init_method: str
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -116,6 +119,7 @@ class PPO(BaseAgent):
         self.ent_coef = ent_coef
         self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
+        self.network_init_method = network_init_method
 
         # create models
         self.ac = OnPolicySharedActorCritic(
@@ -140,12 +144,12 @@ class PPO(BaseAgent):
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
-        self.dist = kwargs["dist"]
         # set encoder and distribution
+        self.dist = kwargs["dist"]
         self.ac.encoder = kwargs["encoder"]
         self.ac.dist = kwargs["dist"]
         # network initialization
-        self.ac.apply(network_init)
+        self.ac.apply(get_network_init(self.network_init_method))
         # to device
         self.ac.to(self.device)
         # create optimizers

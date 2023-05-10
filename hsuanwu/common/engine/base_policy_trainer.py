@@ -84,7 +84,7 @@ class BasePolicyTrainer(ABC):
             device_name = pynvml.nvmlDeviceGetName(handle)
             self._logger.info(f"Running on {device_name}...")
         elif "npu" in cfgs.device:
-            self._logger.info(f"Running on HUAWEI NPU...")
+            self._logger.info(f"Running on HUAWEI Ascend NPU...")
         else:
             self._logger.info(f"Running on CPU...")
         # debug

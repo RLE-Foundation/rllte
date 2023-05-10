@@ -124,6 +124,8 @@ class OffPolicyTrainer(BasePolicyTrainer):
         # save model
         self._logger.info("Training Accomplished!")
         self.save()
+        self._train_env.close()
+        self._test_env.close()
 
     def test(self) -> Dict[str, float]:
         """Testing function."""

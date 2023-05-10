@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import OnPolicySharedActorCritic
+from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 MATCH_KEYS = {
@@ -45,10 +45,10 @@ DEFAULT_CFGS = {
         "eps": 1e-5,
         "hidden_dim": 256,
         "clip_range": 0.2,
-        "num_policy_mini_batch": 8,
-        "num_aux_mini_batch": 4,
+        "clip_range_vf": 0.2,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
+        "aug_coef": 0.1,
         "max_grad_norm": 0.5,
         "policy_epochs": 32,
         "aux_epochs": 6,
@@ -72,7 +72,7 @@ class PPG(BaseAgent):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -82,8 +82,6 @@ class PPG(BaseAgent):
         hidden_dim (int): The size of the hidden layers.
         clip_range (float): Clipping parameter.
         clip_range_vf (float): Clipping parameter for the value function.
-        num_policy_mini_batch (int): Number of mini-batches in policy phase.
-        num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
@@ -92,6 +90,7 @@ class PPG(BaseAgent):
         aux_epochs (int): Number of iterations in the auxiliary phase.
         kl_coef (float): Weighting coefficient of divergence loss.
         num_aux_grad_accum (int): Number of gradient accumulation for auxiliary phase update.
+        network_init_method (str): Network initialization method name.
 
     Returns:
         PPG agent instance.
@@ -102,29 +101,26 @@ class PPG(BaseAgent):
         observation_space: Union[gym.Space, DictConfig],
         action_space: Union[gym.Space, DictConfig],
         device: str,
-        feature_dim: int = 256,
-        lr: float = 5e-4,
-        eps: float = 1e-5,
-        hidden_dim: int = 256,
-        clip_range: float = 0.2,
-        clip_range_vf: float = None,
-        num_policy_mini_batch: int = 8,
-        num_aux_mini_batch: int = 4,
-        vf_coef: float = 0.5,
-        ent_coef: float = 0.01,
-        aug_coef: float = 0.1,
-        max_grad_norm: float = 0.5,
-        policy_epochs: int = 32,
-        aux_epochs: int = 6,
-        kl_coef: float = 1.0,
-        num_aux_grad_accum: int = 1,
+        feature_dim: int,
+        lr: float,
+        eps: float,
+        hidden_dim: int,
+        clip_range: float,
+        clip_range_vf: float,
+        vf_coef: float,
+        ent_coef: float,
+        aug_coef: float,
+        max_grad_norm: float,
+        policy_epochs: int,
+        aux_epochs: int,
+        kl_coef: float,
+        num_aux_grad_accum: int,
+        network_init_method: str
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
         self.clip_range = clip_range
         self.clip_range_vf = clip_range_vf
-        self.num_policy_mini_batch = num_policy_mini_batch
-        self.num_aux_mini_batch = num_aux_mini_batch
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.aug_coef = aug_coef
@@ -133,6 +129,7 @@ class PPG(BaseAgent):
         self.aux_epochs = aux_epochs
         self.kl_coef = kl_coef
         self.num_aux_grad_accum = num_aux_grad_accum
+        self.network_init_method = network_init_method
 
         # auxiliary storage
         self.aux_obs = None
@@ -144,7 +141,8 @@ class PPG(BaseAgent):
         self.encoder = None
         # create models
         self.ac = OnPolicySharedActorCritic(
-            action_shape=self.action_shape,
+            obs_shape=self.obs_shape,
+            action_dim=self.action_dim,
             action_type=self.action_type,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
@@ -165,14 +163,19 @@ class PPG(BaseAgent):
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
+        # set encoder and distribution
         self.dist = kwargs["dist"]
         self.ac.encoder = kwargs["encoder"]
         self.ac.dist = kwargs["dist"]
+        # network initialization
+        self.ac.apply(get_network_init(self.network_init_method))
         # to device
         self.ac.to(self.device)
         # create optimizers
         self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=self.lr, eps=self.eps)
+        # set training mode
         self.train()
+        # set augmentation and intrinsic reward
         if kwargs["aug"] is not None:
             self.aug = kwargs["aug"]
         if kwargs["irs"] is not None:
@@ -201,11 +204,11 @@ class PPG(BaseAgent):
             Sampled actions.
         """
         if training:
-            actions, values, log_probs, entropy = self.ac.get_action_and_value(obs)
-            return {"actions": actions.clamp(*self.action_range), "values": values, "log_probs": log_probs}
+            actions, values, log_probs = self.ac.get_action_and_value(obs)
+            return {"actions": actions, "values": values, "log_probs": log_probs}
         else:
             actions = self.ac.get_det_action(obs)
-            return actions.clamp(*self.action_range)
+            return actions
 
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:  # noqa: c901
         """Update the agent.
@@ -266,12 +269,12 @@ class PPG(BaseAgent):
         self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(rollout_storage.returns.clone())
 
         # TODO: Policy phase
-        total_actor_loss = 0.0
-        total_critic_loss = 0.0
-        total_entropy_loss = 0.0
-        num_updates = 0
+        total_actor_loss = []
+        total_critic_loss = []
+        total_entropy_loss = []
+        total_aug_loss = []
 
-        generator = rollout_storage.sample(self.num_policy_mini_batch)
+        generator = rollout_storage.sample()
 
         if self.irs is not None:
             intrinsic_reward = self.irs.compute_irs(
@@ -297,31 +300,33 @@ class PPG(BaseAgent):
             ) = batch
 
             # evaluate sampled actions
-            _, values, log_probs, entropy = self.ac.get_action_and_value(obs=batch_obs, actions=batch_actions)
+            new_values, new_log_probs, entropy = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
 
             # actor loss part
-            ratio = th.exp(log_probs - batch_old_log_probs)
+            ratio = th.exp(new_log_probs - batch_old_log_probs)
             surr1 = ratio * adv_targ
             surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-            actor_loss = -th.min(surr1, surr2).mean()
+            actor_loss = - th.min(surr1, surr2).mean()
 
             # critic loss part
             if self.clip_range_vf is None:
-                critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+                critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
             else:
-                values_clipped = batch_values + (values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
-                values_losses = (values.flatten() - batch_returns).pow(2)
+                values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                values_losses = (new_values.flatten() - batch_returns).pow(2)
                 values_losses_clipped = (values_clipped - batch_returns).pow(2)
                 critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
             if self.aug is not None:
                 # augmentation loss part
                 batch_obs_aug = self.aug(batch_obs)
-                new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
+                new_batch_actions, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                _, values_aug, log_probs_aug, _ = self.ac.get_action_and_value(obs=batch_obs_aug, actions=new_batch_actions)
-                action_loss_aug = -log_probs_aug.mean()
-                value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
+                values_aug, log_probs_aug, _ = self.ac.evaluate_actions(
+                    obs=batch_obs_aug, actions=new_batch_actions
+                )
+                action_loss_aug = - log_probs_aug.mean()
+                value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                 aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
             else:
                 aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
@@ -332,21 +337,17 @@ class PPG(BaseAgent):
             nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
             self.ac_opt.step()
 
-            total_actor_loss += actor_loss.item()
-            total_critic_loss += critic_loss.item()
-            total_entropy_loss += entropy.item()
-            num_updates += 1
-
-        total_actor_loss /= num_updates
-        total_critic_loss /= num_updates
-        total_entropy_loss /= num_updates
+            total_actor_loss.append(actor_loss.item())
+            total_critic_loss.append(critic_loss.item())
+            total_entropy_loss.append(entropy.item())
+            total_aug_loss.append(aug_loss.item())
 
         if (episode + 1) % self.policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
             return {
-                "actor_loss": total_actor_loss,
-                "critic_loss": total_critic_loss,
-                "entropy_loss": total_entropy_loss,
+                "actor_loss": np.mean(total_actor_loss),
+                "critic_loss": np.mean(total_critic_loss),
+                "entropy_loss": np.mean(total_entropy_loss),
             }
 
         # TODO: Auxiliary phase
@@ -363,8 +364,8 @@ class PPG(BaseAgent):
                     self.num_steps, self.num_envs, self.aux_policy_outputs.size()[2]
                 )
 
-        total_aux_value_loss = 0.0
-        total_kl_loss = 0.0
+        total_aux_value_loss = []
+        total_kl_loss = []
 
         for e in range(self.aux_epochs):
             print("Auxiliary Phase", e)
@@ -380,7 +381,7 @@ class PPG(BaseAgent):
                     self.aux_policy_outputs[:, batch_inds].reshape(-1, *self.aux_policy_outputs.size()[2:]).to(self.device)
                 )
 
-                new_dist, new_values, new_aux_values = self.ac.get_probs_and_aux_value(batch_aux_obs)
+                new_dist, new_values, new_aux_values = self.ac.get_dist_and_aux_value(batch_aux_obs)
 
                 new_values = new_values.view(-1)
                 new_aux_values = new_aux_values.view(-1)
@@ -403,11 +404,11 @@ class PPG(BaseAgent):
                     nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
                     self.ac_opt.step()
 
-                total_aux_value_loss += value_loss.item()
-                total_aux_value_loss += aux_value_loss.item()
-                total_kl_loss += kl_loss.item()
+                total_aux_value_loss.append(value_loss.item())
+                total_aux_value_loss.append(aux_value_loss.item())
+                total_kl_loss.append(kl_loss.item())
 
-        return {"aux_value_loss": total_aux_value_loss / self.aux_epochs, "kl_loss": total_kl_loss / self.aux_epochs}
+        return {"aux_value_loss": np.mean(total_aux_value_loss), "kl_loss": np.mean(total_kl_loss)}
 
     def save(self, path: Path) -> None:
         """Save models.

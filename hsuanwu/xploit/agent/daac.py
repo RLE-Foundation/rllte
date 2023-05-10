@@ -11,12 +11,12 @@ from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import OnPolicyDecoupledActorCritic
+from hsuanwu.xploit.agent.networks import OnPolicyDecoupledActorCritic, get_network_init
 from hsuanwu.xploit.storage import DecoupledRolloutStorage as Storage
 
 MATCH_KEYS = {
     "trainer": "OnPolicyTrainer",
-    "storage": ["DecoupledRolloutStorage"],
+    "storage": ["VanillaRolloutStorage"],
     "distribution": ["Categorical", "DiagonalGaussian", "Bernoulli"],
     "augmentation": [],
     "reward": [],
@@ -43,21 +43,21 @@ DEFAULT_CFGS = {
         "action_space": dict(),
         "device": str,
         "feature_dim": int,
-        "lr": 1e-4,
-        "eps": 0.00008,
+        "lr": 5e-4,
+        "eps": 0.00001,
         "hidden_dim": 256,
         "clip_range": 0.2,
-        "policy_epochs": 3,
+        "clip_range_vf": 0.2,
+        "policy_epochs": 1,
         "value_freq": 1,
         "value_epochs": 9,
-        "num_mini_batch": 8,
         "vf_coef": 0.5,
         "ent_coef": 0.01,
         "adv_coef": 0.25,
         "aug_coef": 0.1,
         "max_grad_norm": 0.5,
     },
-    "storage": {"name": "DecoupledRolloutStorage"},
+    "storage": {"name": "VanillaRolloutStorage"},
     ## TODO: xplore part
     "distribution": {"name": "Categorical"},
     "augmentation": {"name": None},
@@ -76,7 +76,7 @@ class DAAC(BaseAgent):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -89,12 +89,12 @@ class DAAC(BaseAgent):
         policy_epochs (int): Times of updating the policy network.
         value_freq (int): Update frequency of the value network.
         value_epochs (int): Times of updating the value network.
-        num_mini_batch (int): Number of mini-batches.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
         adv_ceof (float): Weighting coefficient of advantage loss.
         max_grad_norm (float): Maximum norm of gradients.
+        network_init_method (str): Network initialization method name.
 
     Returns:
         DAAC learner instance.
@@ -114,12 +114,12 @@ class DAAC(BaseAgent):
         policy_epochs: int,
         value_freq: int,
         value_epochs: int,
-        num_mini_batch: int,
         vf_coef: float,
         ent_coef: float,
         aug_coef: float,
         adv_coef: float,
         max_grad_norm: float,
+        network_init_method: str
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -128,16 +128,17 @@ class DAAC(BaseAgent):
         self.value_epochs = value_epochs
         self.clip_range = clip_range
         self.clip_range_vf = clip_range_vf
-        self.num_mini_batch = num_mini_batch
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.aug_coef = aug_coef
         self.adv_coef = adv_coef
         self.max_grad_norm = max_grad_norm
+        self.network_init_method = network_init_method
 
         # create models
         self.ac = OnPolicyDecoupledActorCritic(
-            action_shape=self.action_shape,
+            obs_shape=self.obs_shape,
+            action_dim=self.action_dim,
             action_type=self.action_type,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
@@ -160,22 +161,28 @@ class DAAC(BaseAgent):
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
+        # set encoder and distribution
         self.dist = kwargs["dist"]
         self.ac.actor_encoder = kwargs["encoder"]
         self.ac.critic_encoder = deepcopy(kwargs["encoder"])
         self.ac.dist = kwargs["dist"]
+        # network initialization
+        self.ac.apply(get_network_init(self.network_init_method))
         # to device
         self.ac.to(self.device)
         # create optimizers
-
         self.actor_params = itertools.chain(
-            self.ac.actor_encoder.parameters(), self.ac.actor.parameters(), self.ac.gae.parameters()
-        )
-        self.critic_params = itertools.chain(self.ac.critic_encoder.parameters(), self.ac.critic.parameters())
+            self.ac.actor_encoder.parameters(), 
+            self.ac.actor.parameters(), 
+            self.ac.gae.parameters())
+        self.critic_params = itertools.chain(
+            self.ac.critic_encoder.parameters(),
+            self.ac.critic.parameters())
         self.actor_opt = th.optim.Adam(self.actor_params, lr=self.lr, eps=self.eps)
         self.critic_opt = th.optim.Adam(self.critic_params, lr=self.lr, eps=self.eps)
-
+        # set training mode
         self.train()
+        # set augmentation and intrinsic reward
         if kwargs["aug"] is not None:
             self.aug = kwargs["aug"]
         if kwargs["irs"] is not None:
@@ -204,16 +211,15 @@ class DAAC(BaseAgent):
             Sampled actions.
         """
         if training:
-            actions, values, adv_preds, log_probs, entropy = self.ac.get_action_and_value(obs)
+            actions, adv_preds, values, log_probs = self.ac.get_action_and_value(obs)
             return {
-                "actions": actions.clamp(*self.action_range),
+                "actions": actions,
                 "values": values,
-                "adv_preds": adv_preds,
                 "log_probs": log_probs,
             }
         else:
             actions = self.ac.get_det_action(obs)
-            return actions.clamp(*self.action_range)
+            return actions
 
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
@@ -244,7 +250,7 @@ class DAAC(BaseAgent):
             rollout_storage.rewards += intrinsic_reward.to(self.device)
 
         for _ in range(self.policy_epochs):
-            generator = rollout_storage.sample(self.num_mini_batch)
+            generator = rollout_storage.sample()
 
             for batch in generator:
                 (
@@ -252,7 +258,6 @@ class DAAC(BaseAgent):
                     batch_actions,
                     batch_values,
                     batch_returns,
-                    batch_adv_preds,
                     batch_terminateds,
                     batch_truncateds,
                     batch_old_log_probs,
@@ -260,26 +265,25 @@ class DAAC(BaseAgent):
                 ) = batch
 
                 # evaluate sampled actions
-                _, values, adv_preds, log_probs, entropy = self.ac.get_action_and_value(obs=batch_obs, actions=batch_actions)
+                new_adv_preds, _, new_log_probs, entropy = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
 
                 # actor loss part
-                ratio = th.exp(log_probs - batch_old_log_probs)
+                ratio = th.exp(new_log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-                actor_loss = -th.min(surr1, surr2).mean()
-                adv_loss = (adv_preds - adv_targ).pow(2).mean()
+                actor_loss = - th.min(surr1, surr2).mean()
+                adv_loss = (new_adv_preds.flatten() - adv_targ).pow(2).mean()
 
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
-                    new_batch_actions, _, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
+                    new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                    _, values_aug, _, log_probs_aug, _ = self.ac.get_action_and_value(
+                    _, _, log_probs_aug, _ = self.ac.evaluate_actions(
                         obs=batch_obs_aug, actions=new_batch_actions
                     )
-                    action_loss_aug = -log_probs_aug.mean()
-                    value_loss_aug = 0.5 * (th.detach(values) - values_aug).pow(2).mean()
-                    aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
+                    action_loss_aug = - log_probs_aug.mean()
+                    aug_loss = self.aug_coef * action_loss_aug
                 else:
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=adv_loss.device)
 
@@ -296,7 +300,7 @@ class DAAC(BaseAgent):
 
         if self.num_policy_updates % self.value_freq == 0:
             for _ in range(self.value_epochs):
-                generator = rollout_storage.sample(self.num_mini_batch)
+                generator = rollout_storage.sample()
 
                 for batch in generator:
                     (
@@ -304,7 +308,6 @@ class DAAC(BaseAgent):
                         batch_actions,
                         batch_values,
                         batch_returns,
-                        batch_adv_preds,
                         batch_terminateds,
                         batch_truncateds,
                         batch_old_log_probs,
@@ -312,21 +315,32 @@ class DAAC(BaseAgent):
                     ) = batch
 
                     # evaluate sampled actions
-                    _, values, adv_preds, log_probs, entropy = self.ac.get_action_and_value(
-                        obs=batch_obs, actions=batch_actions
-                    )
+                    _, new_values, _, _ = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
 
                     # critic loss part
                     if self.clip_range_vf is None:
-                        critic_loss = 0.5 * (values.flatten() - batch_returns).pow(2).mean()
+                        critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
                     else:
-                        values_clipped = batch_values + (values - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
-                        values_losses = (values.flatten() - batch_returns).pow(2)
+                        values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                        values_losses = (new_values.flatten() - batch_returns).pow(2)
                         values_losses_clipped = (values_clipped - batch_returns).pow(2)
                         critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
+                    
+                    if self.aug is not None:
+                        # augmentation loss part
+                        batch_obs_aug = self.aug(batch_obs)
+                        new_batch_actions, _, new_values, _ = self.ac.get_action_and_value(obs=batch_obs)
+
+                        _, values_aug, _, _ = self.ac.evaluate_actions(
+                            obs=batch_obs_aug, actions=new_batch_actions
+                        )
+                        value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
+                        aug_loss = self.aug_coef * value_loss_aug
+                    else:
+                        aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=adv_loss.device)
 
                     self.critic_opt.zero_grad(set_to_none=True)
-                    critic_loss.backward()
+                    (critic_loss + aug_loss).backward()
                     nn.utils.clip_grad_norm_(self.critic_params, self.max_grad_norm)
                     self.critic_opt.step()
 
