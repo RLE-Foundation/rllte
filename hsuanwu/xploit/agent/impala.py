@@ -12,7 +12,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import DistributedActorCritic
+from hsuanwu.xploit.agent.networks import (DistributedActorCritic, 
+                                           get_network_init)
 
 MATCH_KEYS = {
     "trainer": "DistributedTrainer",
@@ -52,6 +53,7 @@ DEFAULT_CFGS = {
         "baseline_coef": 0.5,
         "max_grad_norm": 40,
         "discount": 0.99,
+        "network_init_method": "identity"
     },
     "storage": {"name": "DistributedStorage", "num_storages": 60, "batch_size": 4},
     ## TODO: xplore part
@@ -130,7 +132,7 @@ class IMPALA(BaseAgent):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -139,9 +141,11 @@ class IMPALA(BaseAgent):
 
         use_lstm (bool): Use LSTM in the policy network or not.
         ent_coef (float): Weighting coefficient of entropy bonus.
-        baseline_coef(float): .
+        baseline_coef(float): Weighting coefficient of baseline value loss.
         max_grad_norm (float): Maximum norm of gradients.
         discount (float): Discount factor.
+        network_init_method (str): Network initialization method name.
+
     Returns:
         IMPALA distance.
     """
@@ -159,6 +163,7 @@ class IMPALA(BaseAgent):
         baseline_coef: float,
         max_grad_norm: float,
         discount: float,
+        network_init_method: str
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -166,16 +171,21 @@ class IMPALA(BaseAgent):
         self.baseline_coef = baseline_coef
         self.max_grad_norm = max_grad_norm
         self.discount = discount
+        self.network_init_method = network_init_method
 
         self.actor = DistributedActorCritic(
+            obs_shape=self.action_type,
             action_shape=self.action_shape,
+            action_dim=self.action_dim,
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=feature_dim,
             use_lstm=use_lstm,
         )
         self.learner = DistributedActorCritic(
+            obs_shape=self.action_type,
             action_shape=self.action_shape,
+            action_dim=self.action_dim,
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=feature_dim,
@@ -197,19 +207,26 @@ class IMPALA(BaseAgent):
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
+        # set encoder and distribution
         self.actor.encoder = kwargs["encoder"]
         self.learner.encoder = deepcopy(kwargs["encoder"])
         self.actor.dist = kwargs["dist"]
         self.learner.dist = kwargs["dist"]
         self.dist = kwargs["dist"]
+        # network initialization
+        self.actor.apply(get_network_init(self.network_init_method))
+        self.learner.apply(get_network_init(self.network_init_method))
+        # share memory
         self.actor.share_memory()
+        # to device
         self.learner.to(self.device)
+        # create optimizers
         self.opt = th.optim.RMSprop(
             self.learner.parameters(),
             lr=self.lr,
             eps=self.eps,
         )
-
+        # set lr scheduler
         self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, kwargs["lr_lambda"])
 
     def act(self, *kwargs):
@@ -296,8 +313,7 @@ class IMPALA(BaseAgent):
         Returns:
             None.
         """
-        th.save(self.actor, path / "actor.pth")
-        th.save(self.learner, path / "learner.pth")
+        th.save(self.learner, path / "agent.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.

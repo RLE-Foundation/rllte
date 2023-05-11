@@ -29,21 +29,34 @@ class BaseStorage(ABC):
         device: str = "cpu",
     ) -> None:
         if isinstance(observation_space, gym.Space) and isinstance(action_space, gym.Space):
-            assert action_space.__class__.__name__ in \
-                ["Discrete", "Box", "MultiBinary"], "Unsupported action type!"
-            
             self._obs_shape = observation_space.shape
-            self._action_shape = action_space.shape
-            self._action_type = action_space.__class__.__name__
-
+            if action_space.__class__.__name__ == "Discrete":
+                self._action_shape = action_space.shape
+                self._action_dim = int(action_space.n)
+                self._action_type = "Discrete"
+                self._action_range = [0, int(action_space.n) - 1]
+            elif action_space.__class__.__name__ == "Box":
+                self._action_shape = action_space.shape
+                self._action_dim = action_space.shape[0]
+                self._action_type = "Box"
+                self._action_range = [
+                    float(action_space.low[0]),
+                    float(action_space.high[0]),
+                ]
+            elif action_space.__class__.__name__ == "MultiBinary":
+                self._action_shape = action_space.shape
+                self._action_dim = action_space.shape[0]
+                self._action_type = "MultiBinary"
+                self._action_range = [0, 1]
+            else:
+                raise NotImplementedError("Unsupported action type!")
         elif isinstance(observation_space, DictConfig) and isinstance(action_space, DictConfig):
             # by DictConfig
-            assert action_space.type in \
-                ["Discrete", "Box", "MultiBinary"], "Unsupported action type!"
-            
             self._obs_shape = observation_space.shape
             self._action_shape = action_space.shape
+            self._action_dim = action_space.dim
             self._action_type = action_space.type
+            self._action_range = action_space.range
         else:
             raise NotImplementedError("Unsupported observation and action spaces!")
 

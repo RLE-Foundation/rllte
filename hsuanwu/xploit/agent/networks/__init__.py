@@ -1,3 +1,4 @@
+from .distributed_actor_critic import DistributedActorCritic as DistributedActorCritic
 from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic
 from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
 from .off_policy_stochastic_actor import OffPolicyStochasticActor as OffPolicyStochasticActor

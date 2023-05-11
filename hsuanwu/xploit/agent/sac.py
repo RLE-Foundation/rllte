@@ -145,10 +145,8 @@ class SAC(BaseAgent):
             hidden_dim=hidden_dim,
         ).to(self.device)
 
-        self.critic_target.load_state_dict(self.critic.state_dict())
-
         # target entropy
-        self.target_entropy = -np.prod(action_space.shape)
+        self.target_entropy = - self.action_dim
         self.log_alpha = th.tensor(np.log(temperature), 
                                    device=self.device, 
                                    requires_grad=True)
