@@ -2,10 +2,10 @@ from typing import Any, Callable, Dict, Optional, SupportsFloat, Tuple
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.vector import SyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import HsuanwuEnvWrapper
+from hsuanwu.env.utils import TorchVecEnvWrapper
 
 
 class StateEnv(gym.Env):
@@ -62,7 +62,7 @@ def make_multibinary_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
 
@@ -83,7 +83,7 @@ def make_multibinary_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = SyncVectorEnv(envs)
+    envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return HsuanwuEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

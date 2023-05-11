@@ -6,7 +6,7 @@ from gymnasium.spaces.box import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from hsuanwu.env.utils import HsuanwuEnvWrapper
+from hsuanwu.env.utils import TorchVecEnvWrapper
 
 
 class AdapterEnv(gym.Wrapper):
@@ -14,7 +14,7 @@ class AdapterEnv(gym.Wrapper):
 
     Args:
         env (Env): Environment to wrap.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
 
     Returns:
         AdapterEnv instance.
@@ -55,7 +55,7 @@ def make_procgen_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         gamma (float): A discount factor.
@@ -83,4 +83,4 @@ def make_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return HsuanwuEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

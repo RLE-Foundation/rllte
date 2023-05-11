@@ -6,7 +6,7 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import HsuanwuEnvWrapper
+from hsuanwu.env.utils import TorchVecEnvWrapper
 
 
 class AdapterEnv(gym.Wrapper):
@@ -53,7 +53,7 @@ def make_bullet_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
 
@@ -75,4 +75,4 @@ def make_bullet_env(
     envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return HsuanwuEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

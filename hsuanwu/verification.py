@@ -13,11 +13,6 @@ def make_env():
 
     return _thunk
 
-
-gym_env = SyncVectorEnv([make_env() for _ in range(1)])
-gym_env = gym.wrappers.RecordEpisodeStatistics(gym_env)
-train_env = HsuanwuEnvWrapper(gym_env, device="cpu")
-
 cfgs = {
     "experiment": "Verification",
     "device": "cpu",
@@ -29,6 +24,7 @@ cfgs = {
 cfgs = OmegaConf.create(cfgs)
 
 if __name__ == "__main__":
+    train_env = HsuanwuEnvWrapper(make_env, num_envs=1, device="cpu")
     engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env)
     try:
         engine.invoke()

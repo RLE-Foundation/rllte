@@ -1,22 +1,50 @@
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable
 
 import gymnasium as gym
+from gymnasium.wrappers import RecordEpisodeStatistics
 import numpy as np
 import torch as th
-from gymnasium.vector.vector_env import VectorEnv
+from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from omegaconf import OmegaConf
-
 
 class HsuanwuEnvWrapper(gym.Wrapper):
     """Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.
+
+    Args:
+        env_fn (Callable): Function that creates the environments.
+        num_envs (int): Number of environments.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
+
+    Returns:
+        HsuanwuEnvWrapper instance.
+    """
+    def __init__(self, 
+                 env_fn: Callable,
+                 num_envs: int = 1,
+                 device: str = 'cpu',
+                 parallel: bool = True,
+                 ) -> None:
+        env_fns = [env_fn() for _ in range(num_envs)]
+        if parallel:
+            env = AsyncVectorEnv(env_fns)
+        else:
+            env = SyncVectorEnv(env_fns)
+
+        env = RecordEpisodeStatistics(env)
+        env = TorchVecEnvWrapper(env=env, device=device)
+        super().__init__(env)
+
+class TorchVecEnvWrapper(gym.Wrapper):
+    """Env wrapper for outputting torch tensors.
 
     Args:
         env (VectorEnv): The vectorized environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
-        HsuanwuEnvWrapper instance.
+        TorchVecEnvWrapper instance.
     """
 
     def __init__(self, env: VectorEnv, device: str) -> None:
@@ -65,7 +93,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         seed: Optional[Union[int, List[int]]] = None,
         options: Optional[dict] = None,
     ) -> Tuple[th.Tensor, Dict]:
-        """Reset all parallel environments and return a batch of initial observations and info.
+        """Reset all environments and return a batch of initial observations and info.
 
         Args:
             seed (int): The environment reset seeds.
@@ -79,7 +107,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         return obs, info
 
     def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
-        """Take an action for each parallel environment.
+        """Take an action for each environment.
 
         Args:
             actions (Tensor): element of :attr:`action_space` Batch of actions.

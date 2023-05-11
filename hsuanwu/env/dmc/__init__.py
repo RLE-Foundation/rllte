@@ -6,7 +6,7 @@ from gymnasium.envs.registration import register
 from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import FrameStack, HsuanwuEnvWrapper
+from hsuanwu.env.utils import FrameStack, TorchVecEnvWrapper
 
 
 def make_dmc_env(
@@ -31,7 +31,7 @@ def make_dmc_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         resource_files (Optional[List]): File path of the resource files.
         img_source (Optional[str]): Type of the background distractor, supported values: ['color', 'noise', 'images', 'video'].
@@ -95,4 +95,4 @@ def make_dmc_env(
     envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return HsuanwuEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

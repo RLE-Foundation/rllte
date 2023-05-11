@@ -13,7 +13,7 @@ from hsuanwu.env.atari.wrappers import (EpisodicLifeEnv,
                                         FireResetEnv, 
                                         MaxAndSkipEnv, 
                                         NoopResetEnv)
-from hsuanwu.env.utils import HsuanwuEnvWrapper
+from hsuanwu.env.utils import TorchVecEnvWrapper
 
 
 def make_atari_env(
@@ -27,7 +27,7 @@ def make_atari_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
@@ -63,4 +63,4 @@ def make_atari_env(
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return HsuanwuEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

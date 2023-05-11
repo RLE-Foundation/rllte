@@ -4,7 +4,7 @@ from gymnasium.vector import AsyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
 
-from hsuanwu.env.utils import FrameStack, HsuanwuEnvWrapper
+from hsuanwu.env.utils import FrameStack, TorchVecEnvWrapper
 
 
 class Minigrid2Image(gym.ObservationWrapper):
@@ -35,7 +35,7 @@ def make_minigrid_env(
 
     Args:
         env_id (str): Name of environment.
-        num_envs (int): Number of parallel environments.
+        num_envs (int): Number of environments.
         fully_observable (bool): 'True' for using fully observable RGB image as observation.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
@@ -67,4 +67,4 @@ def make_minigrid_env(
     envs = AsyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return HsuanwuEnvWrapper(envs, device=device)
+    return TorchVecEnvWrapper(envs, device=device)

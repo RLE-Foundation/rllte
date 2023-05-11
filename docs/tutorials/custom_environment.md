@@ -8,16 +8,11 @@ def make_env():
     return _thunk
 ```
 
-
 ## Use `HsuanwuEnvWrapper`
-In Hsuanwu, the environments are assumed to be ***vectorized*** and a `HsuanwuEnvWrapper` is
+In Hsuanwu, the environments are assumed to be ***vectorized*** and a `HsuanwuEnvWrapper` is used to warp the environments:
 ``` py title="example.py"
 from hsuanwu.env.utils import HsuanwuEnvWrapper
 # create vectorized environments
-num_envs = 7
-gym_env = gym.vector.SyncVectorEnv([make_env() for _ in range(num_envs)])
-gym_env = gym.wrappers.RecordEpisodeStatistics(gym_env)
-# wrap the environments
-train_env = HsuanwuEnvWrapper(gym_env, device='cpu')
+train_env = HsuanwuEnvWrapper(env_fn=make_env, num_envs=7, device='cpu')
 ```
 After that, you can use the custom environment in application directly.
