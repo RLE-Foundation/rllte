@@ -5,7 +5,7 @@ import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
+from hsuanwu.xploit.encoder.base import BaseEncoder
 
 
 class VanillaMlpEncoder(BaseEncoder):
@@ -36,8 +36,6 @@ class VanillaMlpEncoder(BaseEncoder):
             nn.Linear(hidden_dim, feature_dim),
             nn.Tanh()
         )
-
-        self.apply(network_init)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)

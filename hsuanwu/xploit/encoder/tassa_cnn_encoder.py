@@ -5,8 +5,7 @@ import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.xploit.encoder.base import BaseEncoder, network_init
-
+from hsuanwu.xploit.encoder.base import BaseEncoder
 
 class TassaCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.
@@ -45,8 +44,6 @@ class TassaCnnEncoder(BaseEncoder):
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
         self.trunk.append(nn.Linear(n_flatten, feature_dim))
-
-        self.apply(network_init)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         obs = obs / 255.0 - 0.5

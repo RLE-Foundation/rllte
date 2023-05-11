@@ -10,7 +10,10 @@ from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.network import OffPolicyDoubleCritic, OffPolicyStochasticActor
+from hsuanwu.xploit.agent.networks import (OffPolicyDoubleCritic, 
+                                           OffPolicyStochasticActor,
+                                           get_network_init,
+                                           ExportModel)
 
 MATCH_KEYS = {
     "trainer": "OffPolicyTrainer",
@@ -74,7 +77,7 @@ class SAC(BaseAgent):
             'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
         action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
             'action_space' is a 'DictConfig' like
-            {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
             {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         feature_dim (int): Number of features extracted by the encoder.
@@ -89,6 +92,7 @@ class SAC(BaseAgent):
         temperature (float): Initial temperature coefficient.
         fixed_temperature (bool): Fixed temperature or not.
         discount (float): Discount factor.
+        network_init_method (str): Network initialization method name.
 
     Returns:
         Soft Actor-Critic learner instance.
@@ -110,6 +114,7 @@ class SAC(BaseAgent):
         temperature: float,
         fixed_temperature: bool,
         discount: float,
+        network_init_method: str
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -117,33 +122,36 @@ class SAC(BaseAgent):
         self.update_every_steps = update_every_steps
         self.fixed_temperature = fixed_temperature
         self.discount = discount
+        self.betas = betas
+        self.network_init_method = network_init_method
 
         # create models
         self.actor = OffPolicyStochasticActor(
-            action_space=action_space,
+            action_dim=self.action_dim,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
             log_std_range=log_std_range,
         ).to(self.device)
-        self.critic = OffPolicyDoubleCritic(action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
-            self.device
-        )
-        self.critic_target = OffPolicyDoubleCritic(
-            action_space=action_space, feature_dim=feature_dim, hidden_dim=hidden_dim
+
+        self.critic = OffPolicyDoubleCritic(
+            action_dim=self.action_dim, 
+            feature_dim=feature_dim, 
+            hidden_dim=hidden_dim,
         ).to(self.device)
+
+        self.critic_target = OffPolicyDoubleCritic(
+            action_dim=self.action_dim, 
+            feature_dim=feature_dim, 
+            hidden_dim=hidden_dim,
+        ).to(self.device)
+
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # target entropy
         self.target_entropy = -np.prod(action_space.shape)
-        self.log_alpha = th.tensor(np.log(temperature), device=self.device, requires_grad=True)
-
-        # create optimizers
-        self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr, betas=betas)
-        self.critic_opt = th.optim.Adam(self.critic.parameters(), lr=self.lr, betas=betas)
-        self.log_alpha_opt = th.optim.Adam([self.log_alpha], lr=self.lr, betas=betas)
-
-        self.train()
-        self.critic_target.train()
+        self.log_alpha = th.tensor(np.log(temperature), 
+                                   device=self.device, 
+                                   requires_grad=True)
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.
@@ -157,16 +165,28 @@ class SAC(BaseAgent):
         self.training = training
         self.actor.train(training)
         self.critic.train(training)
-        if self.encoder is not None:
-            self.encoder.train(training)
+        self.critic_target.train(training)
 
     def integrate(self, **kwargs) -> None:
         """Integrate agent and other modules (encoder, reward, ...) together"""
+        # set encoder and distribution
         self.encoder = kwargs["encoder"]
-        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
-        self.encoder.train()
         self.dist = kwargs["dist"]
         self.actor.dist = kwargs["dist"]
+        # network initialization
+        self.encoder.apply(get_network_init(self.network_init_method))
+        self.actor.apply(get_network_init(self.network_init_method))
+        self.critic.apply(get_network_init(self.network_init_method))
+        # synchronize critic and target critic
+        self.critic_target.load_state_dict(self.critic.state_dict())
+        # create optimizers
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
+        self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr, eps=self.eps)
+        self.critic_opt = th.optim.Adam(self.critic.parameters(), lr=self.lr, eps=self.eps)
+        self.log_alpha_opt = th.optim.Adam([self.log_alpha], lr=self.lr, betas=self.betas)
+        # set training mode
+        self.train()
+        # set augmentation and intrinsic reward
         if kwargs["aug"] is not None:
             self.aug = kwargs["aug"]
         if kwargs["irs"] is not None:
@@ -196,7 +216,7 @@ class SAC(BaseAgent):
         else:
             action = dist.sample()
 
-        return action.clamp(*self.action_range)
+        return action
 
     def update(self, replay_storage, step: int = 0) -> Dict[str, float]:
         """Update the learner.
@@ -402,9 +422,8 @@ class SAC(BaseAgent):
             th.save(self.actor.state_dict(), path / "actor.pth")
             th.save(self.critic.state_dict(), path / "critic.pth")
         else:
-            th.save(self.encoder, path / "encoder.pth")
-            th.save(self.actor, path / "actor.pth")
-            th.save(self.critic, path / "critic.pth")
+            export_model = ExportModel(encoder=self.encoder, actor=self.actor)
+            th.save(export_model, path / "agent.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.
@@ -421,3 +440,4 @@ class SAC(BaseAgent):
         self.encoder.load_state_dict(encoder_params)
         self.actor.load_state_dict(actor_params)
         self.critic.load_state_dict(critic_params)
+        self.critic_target.load_state_dict(critic_params)

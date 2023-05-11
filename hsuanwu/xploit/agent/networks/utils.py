@@ -1,5 +1,6 @@
 from typing import Callable
 from torch import nn
+import torch as th
 
 def get_network_init(method: str = "orthogonal") -> Callable:
     """Returns a network initialization function.
@@ -56,3 +57,31 @@ def get_network_init(method: str = "orthogonal") -> Callable:
         return _xavier_uniform
     else:
         return _identity
+    
+
+class ExportModel(nn.Module):
+    """Module for model export in off-policy algorithms.
+
+    Args:
+        encoder (nn.Module): Encoder network.
+        actor (nn.Module): Actor network.
+
+    Returns:
+        Export model format.
+    """
+    def __init__(self, encoder: nn.Module, actor: nn.Module) -> None:
+        super().__init__()
+
+        self.encoder = encoder
+        self.actor = actor
+
+    def forward(self, obs: th.Tensor) -> th.Tensor:
+        """Only for model inference.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Deterministic actions.
+        """
+        return self.actor(self.encoder(obs))

@@ -65,16 +65,15 @@ job:
 ```
 
 ## Load the Trained Model
-Once the training is finished, you can find `encoder.pth` and `actor.pth` in the subfolder `model` of the specified working directory.
+Once the training is finished, you can find `agent.pth` in the subfolder `model` of the specified working directory.
 
 ``` py title="play.py"
 import torch as th
 
 # load the model and specify the map location
-encoder = th.load("encoder.pth", map_location=th.device('cpu'))
-actor = th.load("actor.pth", map_location=th.device('cpu'))
+agent = th.load("agent.pth", map_location=th.device('cpu'))
 obs = th.zeros(size=(1, 9, 84, 84))
-action = actor(encoder(obs))
+action = agent(obs)
 print(action)
 
 # Output: tensor([[-1.0000]], grad_fn=<TanhBackward0>)
