@@ -371,8 +371,8 @@ class DAAC(BaseAgent):
         if "pretrained" in str(path):  # pretraining
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
-            del self.ac.critic, self.ac.gae, self.ac.critic_encoder
-            th.save(self.ac, path / "actor.pth")
+            del self.ac.critic, self.ac.critic_encoder, self.ac.dist, self.ac.gae
+            th.save(self.ac, path / "agent.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.

@@ -53,7 +53,9 @@ DEFAULT_CFGS = {
         "policy_epochs": 32,
         "aux_epochs": 6,
         "kl_coef": 1.0,
+        "num_aux_mini_batch": 4,
         "num_aux_grad_accum": 1,
+        "network_init_method": "xavier_uniform"
     },
     "storage": {"name": "VanillaRolloutStorage"},
     ## TODO: xplore part
@@ -89,6 +91,7 @@ class PPG(BaseAgent):
         policy_epochs (int): Number of iterations in the policy phase.
         aux_epochs (int): Number of iterations in the auxiliary phase.
         kl_coef (float): Weighting coefficient of divergence loss.
+        num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
         num_aux_grad_accum (int): Number of gradient accumulation for auxiliary phase update.
         network_init_method (str): Network initialization method name.
 
@@ -114,6 +117,7 @@ class PPG(BaseAgent):
         policy_epochs: int,
         aux_epochs: int,
         kl_coef: float,
+        num_aux_mini_batch: int,
         num_aux_grad_accum: int,
         network_init_method: str
     ) -> None:
@@ -129,6 +133,7 @@ class PPG(BaseAgent):
         self.aux_epochs = aux_epochs
         self.kl_coef = kl_coef
         self.num_aux_grad_accum = num_aux_grad_accum
+        self.num_aux_mini_batch = num_aux_mini_batch
         self.network_init_method = network_init_method
 
         # auxiliary storage
@@ -243,7 +248,7 @@ class PPG(BaseAgent):
                     size=(
                         num_steps,
                         num_envs * self.policy_epochs,
-                        self.action_shape[0],
+                        self.action_dim,
                     ),
                     device="cpu",
                     dtype=th.float32,
@@ -333,7 +338,8 @@ class PPG(BaseAgent):
 
             # update
             self.ac_opt.zero_grad(set_to_none=True)
-            (critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss).backward()
+            loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss
+            loss.backward()
             nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
             self.ac_opt.step()
 
@@ -341,7 +347,7 @@ class PPG(BaseAgent):
             total_critic_loss.append(critic_loss.item())
             total_entropy_loss.append(entropy.item())
             total_aug_loss.append(aug_loss.item())
-
+        
         if (episode + 1) % self.policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
             return {
@@ -368,7 +374,6 @@ class PPG(BaseAgent):
         total_kl_loss = []
 
         for e in range(self.aux_epochs):
-            print("Auxiliary Phase", e)
             aux_inds = np.arange(self.num_aux_rollouts)
             np.random.shuffle(aux_inds)
 
@@ -422,8 +427,8 @@ class PPG(BaseAgent):
         if "pretrained" in str(path):  # pretraining
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
-            del self.ac.critic
-            th.save(self.ac, path / "actor.pth")
+            del self.ac.critic, self.ac.aux_critic, self.ac.dist
+            th.save(self.ac, path / "agent.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.

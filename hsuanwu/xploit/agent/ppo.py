@@ -296,8 +296,8 @@ class PPO(BaseAgent):
         if "pretrained" in str(path):  # pretraining
             th.save(self.ac.state_dict(), path / "actor_critic.pth")
         else:
-            del self.ac.critic
-            th.save(self.ac, path / "actor.pth")
+            del self.ac.critic, self.ac.dist
+            th.save(self.ac, path / "agent.pth")
 
     def load(self, path: str) -> None:
         """Load initial parameters.

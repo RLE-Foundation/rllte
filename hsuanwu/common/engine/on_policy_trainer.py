@@ -120,14 +120,14 @@ class OnPolicyTrainer(BasePolicyTrainer):
             # update and reset buffer
             self._rollout_storage.update()
 
-            self._global_episode += self._num_envs
+            self._global_episode += 1
             self._global_step += self._num_envs * self._num_steps
             episode_time, total_time = self._timer.reset()
 
             if len(episode_rewards) > 1:
                 train_metrics = {
                     "step": self._global_step,
-                    "episode": self._global_episode,
+                    "episode": self._global_episode * self._num_envs,
                     "episode_length": np.mean(episode_steps),
                     "episode_reward": np.mean(episode_rewards),
                     "fps": self._num_steps * self._num_envs / episode_time,
