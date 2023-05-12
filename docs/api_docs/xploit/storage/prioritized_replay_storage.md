@@ -22,7 +22,7 @@ Prioritized replay storage with proportional prioritization for off-policy algor
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **storage_size** (int) : Max number of element in the buffer.

@@ -2,13 +2,14 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L62)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L16)
 ```python 
 PPO(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int, lr: float, eps: float,
-   hidden_dim: int, clip_range: float, n_epochs: int, num_mini_batch: int,
-   vf_coef: float, ent_coef: float, aug_coef: float, max_grad_norm: float
+   DictConfig], device: str, feature_dim: int, lr: float = 0.00025, eps: float = 1e-05,
+   hidden_dim: int = 512, clip_range: float = 0.1, clip_range_vf: float = 0.1,
+   n_epochs: int = 4, vf_coef: float = 0.5, ent_coef: float = 0.01, aug_coef: float = 0.1,
+   max_grad_norm: float = 0.5, network_init_method: str = 'orthogonal'
 )
 ```
 
@@ -25,7 +26,7 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **feature_dim** (int) : Number of features extracted by the encoder.
@@ -33,12 +34,13 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 * **eps** (float) : Term added to the denominator to improve numerical stability.
 * **hidden_dim** (int) : The size of the hidden layers.
 * **clip_range** (float) : Clipping parameter.
+* **clip_range_vf** (float) : Clipping parameter for the value function.
 * **n_epochs** (int) : Times of updating the policy.
-* **num_mini_batch** (int) : Number of mini-batches.
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **aug_coef** (float) : Weighting coefficient of augmentation loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
+* **network_init_method** (str) : Network initialization method name.
 
 
 
@@ -51,7 +53,7 @@ PPO learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L127)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L85)
 ```python
 .train(
    training: bool = True
@@ -72,7 +74,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L139)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L97)
 ```python
 .integrate(
    **kwargs
@@ -83,7 +85,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L154)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L117)
 ```python
 .get_value(
    obs: th.Tensor
@@ -104,7 +106,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L165)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L128)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -127,7 +129,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L187)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L146)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -149,7 +151,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L285)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L239)
 ```python
 .save(
    path: Path
@@ -170,7 +172,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L300)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L254)
 ```python
 .load(
    path: str

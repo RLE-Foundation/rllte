@@ -23,7 +23,7 @@ See paper: https://arxiv.org/pdf/1810.12894.pdf
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.

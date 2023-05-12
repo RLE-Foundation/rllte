@@ -2,7 +2,7 @@
 
 
 ## EspeholtResidualEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L68)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L111)
 ```python 
 EspeholtResidualEncoder(
    observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0,
@@ -37,7 +37,7 @@ ResNet-like encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L111)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L157)
 ```python
 .forward(
    obs: th.Tensor

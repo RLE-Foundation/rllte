@@ -22,7 +22,7 @@ Distributed storage for distributed algorithms like IMPALA.
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **num_steps** (int) : The sample steps of per rollout.
@@ -39,7 +39,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L85)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L79)
 ```python
 .add(
    *args
@@ -50,7 +50,7 @@ Vanilla rollout storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L89)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L83)
 ```python
 .sample(
    device: th.device, batch_size: int, free_queue: th.multiprocessing.SimpleQueue,
@@ -79,7 +79,7 @@ Sample transitions from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L124)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/distributed_storage.py/#L118)
 ```python
 .update(
    *args

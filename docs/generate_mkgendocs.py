@@ -1,4 +1,5 @@
 import os
+from omegaconf import OmegaConf
 import sys
 
 curren_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -28,7 +29,7 @@ for module in [engine, common, encoder, agent, storage,
     last_file = None
     save_old = False
     for name, item in inspect.getmembers(module):
-        if inspect.isclass(item):
+        if inspect.isclass(item) and item not in [OmegaConf, os]:
             file = inspect.getfile(item).split('hsuanwu')[1]
             file = file.lstrip(file[0])
             page = {

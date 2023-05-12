@@ -17,6 +17,8 @@
 - 💾 Large number of reusable bechmarks ([See HsuanwuHub](https://hub.hsuanwu.dev/));
 - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
+Hsuanwu ([Xuanwu, 玄武](https://en.wikipedia.org/wiki/Xuanwu_(god))) is one of the Four Symbols of the Chinese constellations, representing the north and the winter season. It is usually depicted as a turtle entwined together with a snake. Since turtles are very long-lived, we use this name to symbolize the long-term and influential development of the project.
+
 See the project structure below:
 <div align=center>
 <img src='./assets/images/structure.svg' style="width: 100%">

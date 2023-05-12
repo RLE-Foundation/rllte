@@ -16,6 +16,8 @@
 - 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
 - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
 
+Hsuanwu ([Xuanwu, 玄武](https://en.wikipedia.org/wiki/Xuanwu_(god))) is one of the Four Symbols of the Chinese constellations, representing the north and the winter season. It is usually depicted as a turtle entwined together with a snake. Since turtles are very long-lived, we use this name to symbolize the long-term and influential development of the project.
+
 Join the developer community for issues and discussions:
 |Slack|QQ|GitHub|
 |:-:|:-:|:-:|
@@ -118,6 +120,19 @@ Run `train.py` and you will see the following output:
 <div align=center>
 <img src='./docs/assets/images/rl_training.png'>
 </div>
+
+Alternatively, you can use `HsuanwuHub` to realize fast training, in which we preset a large number of RL applications. Install `HsuanwuHub` 
+with `pip`:
+``` sh
+pip install hsuanwuhub
+```
+Then run the following command to perform training directly:
+``` sh
+python -m hsuanwuhub.train \
+    task=drqv2_dmc_pixel \
+    device=cuda:0 \
+    num_train_steps=50000
+```
 
 For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
 

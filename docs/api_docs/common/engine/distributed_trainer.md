@@ -70,7 +70,7 @@ None.
 Training function
 
 ### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/distributed_trainer.py/#L362)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/distributed_trainer.py/#L361)
 ```python
 .test()
 ```
@@ -79,7 +79,7 @@ Training function
 Testing function.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/distributed_trainer.py/#L383)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/common/engine/distributed_trainer.py/#L382)
 ```python
 .save()
 ```

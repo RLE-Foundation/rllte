@@ -7,7 +7,7 @@
 VanillaRolloutStorage(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
    DictConfig], device: str = 'cpu', num_steps: int = 256, num_envs: int = 8,
-   discount: float = 0.99, gae_lambda: float = 0.95
+   batch_size: int = 64, discount: float = 0.99, gae_lambda: float = 0.95
 )
 ```
 
@@ -22,11 +22,12 @@ Vanilla rollout storage for on-policy algorithms.
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **num_steps** (int) : The sample length of per rollout.
 * **num_envs** (int) : The number of parallel environments.
+* **batch_size** (int) : Batch size of samples.
 * **discount** (float) : discount factor.
 * **gae_lambda** (float) : Weighting coefficient for generalized advantage estimation (GAE).
 
@@ -104,20 +105,8 @@ None.
 ### .sample
 [source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_rollout_storage.py/#L158)
 ```python
-.sample(
-   num_mini_batch: int = 8
-)
+.sample()
 ```
 
 ---
 Sample data from storage.
-
-
-**Args**
-
-* **num_mini_batch** (int) : Number of mini-batches
-
-
-**Returns**
-
-Batch data.

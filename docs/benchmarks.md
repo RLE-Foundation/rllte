@@ -18,6 +18,16 @@ print(procgen_scores['PPO'].shape)
 ```
 For each algorithm, this will return a `NdArray` of size (`10` x `16`) where scores[n][m] represent the score on run `n` of task `m`.
 
+## Fast Training
+In `HsuanwuHub`, we preset a large number of RL applications to realize fast training. For example, 
+we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control). Then we can run the following command to perform training directly:
+``` sh
+python -m hsuanwuhub.train \
+    task=drqv2_dmc_pixel \
+    device=cuda:0 \
+    num_train_steps=50000
+```
+
 ## Support List
 |Benchmark|Training Steps|Scores|Curves|Models|
 |:-|:-|:-|:-|:-|

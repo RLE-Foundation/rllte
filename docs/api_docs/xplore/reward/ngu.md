@@ -25,7 +25,7 @@ See paper: https://arxiv.org/pdf/2002.06038
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
@@ -51,7 +51,7 @@ Instance of NGU.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L171)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L170)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -72,7 +72,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L198)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L197)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -98,7 +98,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L244)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L243)
 ```python
 .update(
    samples: Dict

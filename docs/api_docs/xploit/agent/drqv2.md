@@ -2,12 +2,13 @@
 
 
 ## DrQv2
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L65)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L15)
 ```python 
 DrQv2(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int, lr: float, eps: float,
-   hidden_dim: int, critic_target_tau: float, update_every_steps: int
+   DictConfig], device: str, feature_dim: int, lr: float = 0.0001, eps: float = 1e-08,
+   hidden_dim: int = 1024, critic_target_tau: float = 0.01, update_every_steps: int = 2,
+   network_init_method: str = 'orthogonal'
 )
 ```
 
@@ -25,7 +26,7 @@ Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **feature_dim** (int) : Number of features extracted by the encoder.
@@ -34,6 +35,7 @@ Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
 * **hidden_dim** (int) : The size of the hidden layers.
 * **critic_target_tau**  : The critic Q-function soft-update rate.
 * **update_every_steps** (int) : The agent update frequency.
+* **network_init_method** (str) : Network initialization method name.
 
 
 
@@ -46,7 +48,7 @@ DrQv2 agent instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L124)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L74)
 ```python
 .train(
    training: bool = True
@@ -67,7 +69,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L139)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L89)
 ```python
 .integrate(
    **kwargs
@@ -78,7 +80,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L151)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L113)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -101,7 +103,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L172)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L134)
 ```python
 .update(
    replay_storage, step: int = 0
@@ -123,7 +125,7 @@ Update the agent.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L226)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L188)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
@@ -150,7 +152,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L275)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L237)
 ```python
 .update_actor(
    obs: th.Tensor, step: int
@@ -172,7 +174,7 @@ Update the actor network.
 Actor loss metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L301)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L263)
 ```python
 .save(
    path: Path
@@ -193,7 +195,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L319)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L280)
 ```python
 .load(
    path: str

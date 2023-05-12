@@ -2,7 +2,7 @@
 
 
 ## BaseEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L20)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L8)
 ```python 
 BaseEncoder(
    observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0
@@ -30,7 +30,7 @@ The base encoder class
 
 
 ### .feature_dim
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L39)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/base.py/#L27)
 ```python
 .feature_dim()
 ```

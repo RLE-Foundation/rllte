@@ -21,7 +21,7 @@ Base class of agent.
     'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
 * **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
     'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
+    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
     {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **feature_dim** (int) : Number of features extracted by the encoder.
@@ -38,7 +38,7 @@ Base agent instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L78)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L82)
 ```python
 .train(
    training: bool = True
@@ -59,7 +59,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L90)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L94)
 ```python
 .integrate(
    **kwargs
@@ -70,7 +70,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L94)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L98)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -93,7 +93,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L107)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L111)
 ```python
 .update(
    **kwargs
@@ -104,7 +104,7 @@ Sampled actions.
 Update agent and return training metrics such as loss functions.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L111)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L115)
 ```python
 .save(
    path: Path
@@ -125,10 +125,10 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L122)
+[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L126)
 ```python
 .load(
-   path: Path
+   path: str
 )
 ```
 

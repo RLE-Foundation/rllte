@@ -31,6 +31,19 @@ if __name__ == '__main__':
     main()
 ```
 
+Alternatively, you can use `HsuanwuHub` to realize fast training, in which we preset a large number of RL applications. Install `HsuanwuHub` 
+with `pip`:
+``` sh
+pip install hsuanwuhub
+```
+Then run the following command to perform training directly:
+``` sh
+python -m hsuanwuhub.train \
+    task=drqv2_dmc_pixel \
+    device=cuda:0 \
+    num_train_steps=50000
+```
+
 ## Start Training
 
 Run `train.py` and you will see the following output:
