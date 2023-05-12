@@ -12,54 +12,6 @@ from hsuanwu.xploit.agent.base import BaseAgent
 from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
-MATCH_KEYS = {
-    "trainer": "OnPolicyTrainer",
-    "storage": ["VanillaRolloutStorage"],
-    "distribution": ["Categorical", "DiagonalGaussian", "Bernoulli"],
-    "augmentation": [],
-    "reward": [],
-}
-
-DEFAULT_CFGS = {
-    ## TODO: Train setup
-    "device": "cpu",
-    "seed": 1,
-    "num_train_steps": 10000000,
-    "num_steps": 128,  # The sample length of per rollout.
-    ## TODO: Test setup
-    "test_every_episodes": 10,  # only for on-policy algorithms
-    "num_test_episodes": 10,
-    ## TODO: xploit part
-    "encoder": {
-        "name": "MnihCnnEncoder",
-        "observation_space": dict(),
-        "feature_dim": 512,
-    },
-    "agent": {
-        "name": "PPO",
-        "observation_space": dict(),
-        "action_space": dict(),
-        "device": str,
-        "feature_dim": int,
-        "lr": 2.5e-4,
-        "eps": 0.00001,
-        "hidden_dim": 512,
-        "clip_range": 0.1,
-        "clip_range_vf": 0.1,
-        "n_epochs": 4,
-        "vf_coef": 0.5,
-        "ent_coef": 0.01,
-        "aug_coef": 0.1,
-        "max_grad_norm": 0.5,
-        "network_init_method": "orthogonal"
-    },
-    "storage": {"name": "VanillaRolloutStorage"},
-    ## TODO: xplore part
-    "distribution": {"name": "Categorical"},
-    "augmentation": {"name": None},
-    "reward": {"name": None},
-}
-
 
 class PPO(BaseAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -98,17 +50,17 @@ class PPO(BaseAgent):
         action_space: Union[gym.Space, DictConfig],
         device: str,
         feature_dim: int,
-        lr: float,
-        eps: float,
-        hidden_dim: int,
-        clip_range: float,
-        clip_range_vf: float,
-        n_epochs: int,
-        vf_coef: float,
-        ent_coef: float,
-        aug_coef: float,
-        max_grad_norm: float,
-        network_init_method: str
+        lr: float = 2.5e-4,
+        eps: float = 1e-5,
+        hidden_dim: int = 512,
+        clip_range: float = 0.1,
+        clip_range_vf: float = 0.1,
+        n_epochs: int = 4,
+        vf_coef: float = 0.5,
+        ent_coef: float = 0.01,
+        aug_coef: float = 0.1,
+        max_grad_norm: float = 0.5,
+        network_init_method: str = "orthogonal"
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 

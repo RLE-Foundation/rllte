@@ -67,10 +67,9 @@ def make_atari_env(
 
     if distributed:
         envs = SyncVectorEnv(envs)
-        return TorchVecEnvWrapper(envs, device)
     else:
         envs = AsyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
         envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-        return TorchVecEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device)

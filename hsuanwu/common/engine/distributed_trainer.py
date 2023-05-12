@@ -258,7 +258,6 @@ class DistributedTrainer(BasePolicyTrainer):
                     init_actor_state_storages=init_actor_state_storages,
                 )
                 metrics = self._agent.update(
-                    cfgs=self._cfgs,
                     actor_model=self._agent.actor,
                     learner_model=self._agent.learner,
                     batch=batch,

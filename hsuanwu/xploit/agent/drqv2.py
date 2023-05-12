@@ -14,57 +14,6 @@ from hsuanwu.xploit.agent.networks import (OffPolicyDeterministicActor,
                                            get_network_init,
                                            ExportModel)
 
-MATCH_KEYS = {
-    "trainer": "OffPolicyTrainer",
-    "storage": ["NStepReplayStorage"],
-    "distribution": [
-        "OrnsteinUhlenbeckNoise",
-        "TruncatedNormalNoise",
-        "NormalNoise",
-    ],
-    "augmentation": [],
-    "reward": [],
-}
-
-DEFAULT_CFGS = {
-    ## TODO: Train setup
-    "device": "cpu",
-    "seed": 1,
-    "num_train_steps": 500000,
-    "num_init_steps": 2000,  # only for off-policy algorithms
-    ## TODO: Test setup
-    "test_every_steps": 5000,  # only for off-policy algorithms
-    "num_test_episodes": 10,
-    ## TODO: xploit part
-    "encoder": {
-        "name": "TassaCnnEncoder",
-        "observation_space": dict(),
-        "feature_dim": 50,
-    },
-    "agent": {
-        "name": "DrQv2",
-        "observation_space": dict(),
-        "action_space": dict(),
-        "device": str,
-        "feature_dim": int,
-        "lr": 1e-4,
-        "eps": 0.00008,
-        "hidden_dim": 1024,
-        "critic_target_tau": 0.01,
-        "update_every_steps": 2,
-        "network_init_method": "orthogonal"
-    },
-    "storage": {
-        "name": "NStepReplayStorage",
-        "storage_size": 500000,
-        "batch_size": 256,
-    },
-    ## TODO: xplore part
-    "distribution": {"name": "TruncatedNormalNoise"},
-    "augmentation": {"name": "RandomShift"},
-    "reward": {"name": None},
-}
-
 
 class DrQv2(BaseAgent):
     """Data Regularized-Q v2 (DrQ-v2).
@@ -99,12 +48,12 @@ class DrQv2(BaseAgent):
         action_space: Union[gym.Space, DictConfig],
         device: str,
         feature_dim: int,
-        lr: float,
-        eps: float,
-        hidden_dim: int,
-        critic_target_tau: float,
-        update_every_steps: int,
-        network_init_method: str
+        lr: float = 1e-4,
+        eps: float = 1e-8,
+        hidden_dim: int = 1024,
+        critic_target_tau: float = 0.01,
+        update_every_steps: int = 2,
+        network_init_method: str = "orthogonal"
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 

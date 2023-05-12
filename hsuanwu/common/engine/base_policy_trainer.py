@@ -14,11 +14,11 @@ from omegaconf import OmegaConf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
-from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS
 
 os.environ["HYDRA_FULL_ERROR"] = "1"
 
-_DEFAULT_CFGS = {
+_MANDATORY_CFGS = {
     # Mandatory parameters
     ## TODO: Train setup
     "device": "cpu",
@@ -125,12 +125,29 @@ class BasePolicyTrainer(ABC):
         Returns:
             Processed configs.
         """
-        new_cfgs = OmegaConf.create(_DEFAULT_CFGS)
+        new_cfgs = OmegaConf.create(_MANDATORY_CFGS)
         # TODO: load the default configs of agent
-        agent_default_cfgs = ALL_DEFAULT_CFGS[cfgs.agent.name]
+        agent_default_cfgs = ALL_DEFAULT_CFGS[cfgs.agent.name]["DEFAULT_CFGS"]
+
+        observation_space, action_space = (
+            self._train_env.observation_space,
+            self._train_env.action_space,
+        )
+        self._action_range = action_space.range
+        new_cfgs.num_envs = self._train_env.num_envs
 
         for key in agent_default_cfgs.keys():
-            new_cfgs[key] = agent_default_cfgs[key]
+            if key == "encoder":
+                if len(observation_space.shape) == 1:
+                    new_cfgs.encoder = agent_default_cfgs.encoder["state"]
+                elif len(observation_space.shape) == 3:
+                    new_cfgs.encoder = agent_default_cfgs.encoder["image"]
+                else:
+                    raise NotImplementedError("Unsupported observation data shape!")
+            elif key == "distribution":
+                new_cfgs.distribution = agent_default_cfgs.distribution[action_space.type]
+            else:
+                new_cfgs[key] = agent_default_cfgs[key]
 
         # TODO: try to load self-defined configs
         for part in cfgs.keys():
@@ -180,13 +197,6 @@ class BasePolicyTrainer(ABC):
         else:
             new_cfgs.use_irs = False
 
-        observation_space, action_space = (
-            self._train_env.observation_space,
-            self._train_env.action_space,
-        )
-        self._action_range = action_space.range
-
-        new_cfgs.num_envs = self._train_env.num_envs
         new_cfgs.observation_space = observation_space
         new_cfgs.action_space = action_space
 
@@ -236,12 +246,12 @@ class BasePolicyTrainer(ABC):
         self._logger.debug(f"Selected Agent: {cfgs.agent._target_}")
         # Check the compatibility
         assert (
-            cfgs.storage._target_ in ALL_MATCH_KEYS[cfgs.agent._target_]["storage"]
+            cfgs.storage._target_ in ALL_DEFAULT_CFGS[cfgs.agent._target_]["MATCH_KEYS"]["storage"]
         ), f"{cfgs.storage._target_} is incompatible with {cfgs.agent._target_}! See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Storage: {cfgs.storage._target_}")
 
         assert (
-            cfgs.distribution._target_ in ALL_MATCH_KEYS[cfgs.agent._target_]["distribution"]
+            cfgs.distribution._target_ in ALL_DEFAULT_CFGS[cfgs.agent._target_]["MATCH_KEYS"]["distribution"]
         ), f"{cfgs.distribution._target_} is incompatible with {cfgs.agent._target_}! See https://docs.hsuanwu.dev/."
         self._logger.debug(f"Selected Distribution: {cfgs.distribution._target_}")
 

@@ -1,6 +1,6 @@
 import gymnasium as gym
 import numpy as np
-from gymnasium.vector import AsyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
 
@@ -30,6 +30,7 @@ def make_minigrid_env(
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
+    distributed: bool = False
 ) -> gym.Env:
     """Build MiniGrid environments.
 
@@ -40,6 +41,8 @@ def make_minigrid_env(
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
+        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
+            and reward clip will be used before environment vectorization.
 
     Returns:
         Environments instance.
@@ -64,7 +67,10 @@ def make_minigrid_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = AsyncVectorEnv(envs)
-    envs = RecordEpisodeStatistics(envs)
+    if distributed:
+        envs = SyncVectorEnv(envs)
+    else:
+        envs = AsyncVectorEnv(envs)
+        envs = RecordEpisodeStatistics(envs)
 
     return TorchVecEnvWrapper(envs, device=device)

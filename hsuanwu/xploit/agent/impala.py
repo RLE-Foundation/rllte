@@ -15,53 +15,6 @@ from hsuanwu.xploit.agent.base import BaseAgent
 from hsuanwu.xploit.agent.networks import (DistributedActorCritic, 
                                            get_network_init)
 
-MATCH_KEYS = {
-    "trainer": "DistributedTrainer",
-    "storage": ["DistributedStorage"],
-    "distribution": ["Categorical", "DiagonalGaussian"],
-    "augmentation": [],
-    "reward": [],
-}
-
-DEFAULT_CFGS = {
-    ## TODO: Train setup
-    "device": "cpu",
-    "seed": 1,
-    "num_train_steps": 30000000,
-    "num_actors": 45,
-    "num_learners": 4,
-    "num_steps": 80,  # The sample length of per rollout.
-    ## TODO: Test setup
-    "test_every_steps": 5000,  # only for off-policy algorithms
-    "num_test_episodes": 10,
-    ## TODO: xploit part
-    "encoder": {
-        "name": "MnihCnnEncoder",
-        "observation_space": dict(),
-        "feature_dim": 512,
-    },
-    "agent": {
-        "name": "IMPALA",
-        "observation_space": dict(),
-        "action_space": dict(),
-        "device": str,
-        "feature_dim": int,
-        "lr": 0.0004,
-        "eps": 0.01,
-        "use_lstm": False,
-        "ent_coef": 0.01,
-        "baseline_coef": 0.5,
-        "max_grad_norm": 40,
-        "discount": 0.99,
-        "network_init_method": "identity"
-    },
-    "storage": {"name": "DistributedStorage", "num_storages": 60, "batch_size": 4},
-    ## TODO: xplore part
-    "distribution": {"name": "Categorical"},
-    "augmentation": {"name": None},
-    "reward": {"name": None},
-}
-
 
 class VTraceLoss:
     def __init__(
@@ -156,14 +109,14 @@ class IMPALA(BaseAgent):
         action_space: Union[gym.Space, DictConfig],
         device: str,
         feature_dim: int,
-        lr: float,
-        eps: float,
-        use_lstm: bool,
-        ent_coef: float,
-        baseline_coef: float,
-        max_grad_norm: float,
-        discount: float,
-        network_init_method: str
+        lr: float = 4e-4,
+        eps: float = 0.01,
+        use_lstm: bool = False,
+        ent_coef: float = 0.01,
+        baseline_coef: float = 0.5,
+        max_grad_norm: float = 40,
+        discount: float = 0.99,
+        network_init_method: str = "identity"
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -233,9 +186,8 @@ class IMPALA(BaseAgent):
         """Sample actions based on observations."""
         return None
 
-    @staticmethod
     def update(
-        cfgs: omegaconf.DictConfig,
+        self,
         actor_model: nn.Module,
         learner_model: nn.Module,
         batch: Dict,
@@ -248,7 +200,6 @@ class IMPALA(BaseAgent):
         Update the learner model.
 
         Args:
-            cfgs (DictConfig): Training configs.
             actor_model (NNMoudle): Actor network.
             learner_model (NNMoudle): Learner network.
             batch (Batch): Batch samples.
@@ -270,7 +221,7 @@ class IMPALA(BaseAgent):
             batch = {key: tensor[1:] for key, tensor in batch.items()}
             learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
-            discounts = (~batch["terminated"]).float() * cfgs.agent.discount
+            discounts = (~batch["terminated"]).float() * self.discount
 
             batch.update(
                 {
@@ -283,14 +234,14 @@ class IMPALA(BaseAgent):
             )
 
             pg_loss, baseline_loss, entropy_loss = VTraceLoss()(batch)
-            total_loss = pg_loss + cfgs.agent.baseline_coef * baseline_loss - cfgs.agent.ent_coef * entropy_loss
+            total_loss = pg_loss + self.baseline_coef * baseline_loss - self.ent_coef * entropy_loss
 
             episode_returns = batch["episode_return"][batch["terminated"]]
             episode_steps = batch["episode_step"][batch["terminated"]]
 
             optimizer.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(learner_model.parameters(), cfgs.agent.max_grad_norm)
+            nn.utils.clip_grad_norm_(learner_model.parameters(), self.max_grad_norm)
             optimizer.step()
             lr_scheduler.step()
 

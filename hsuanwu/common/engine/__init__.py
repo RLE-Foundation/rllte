@@ -1,7 +1,7 @@
 import gymnasium as gym
 import omegaconf
 
-from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS, ALL_MATCH_KEYS
+from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS
 
 from .base_policy_trainer import BasePolicyTrainer as BasePolicyTrainer
 from .distributed_trainer import DistributedTrainer as DistributedTrainer
@@ -27,11 +27,11 @@ class HsuanwuEngine:
         if cfgs.agent.name not in ALL_DEFAULT_CFGS.keys():
             raise NotImplementedError(f"Unsupported agent {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/.")
 
-        if ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OnPolicyTrainer":
+        if ALL_DEFAULT_CFGS[cfgs.agent.name]["MATCH_KEYS"]["trainer"] == "OnPolicyTrainer":
             self.trainer = OnPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "OffPolicyTrainer":
+        elif ALL_DEFAULT_CFGS[cfgs.agent.name]["MATCH_KEYS"]["trainer"] == "OffPolicyTrainer":
             self.trainer = OffPolicyTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
-        elif ALL_MATCH_KEYS[cfgs.agent.name]["trainer"] == "DistributedTrainer":
+        elif ALL_DEFAULT_CFGS[cfgs.agent.name]["MATCH_KEYS"]["trainer"] == "DistributedTrainer":
             self.trainer = DistributedTrainer(cfgs=cfgs, train_env=train_env, test_env=test_env)
         else:
             raise NotImplementedError(f"Unsupported trainer {cfgs.agent.name}, see https://docs.hsuanwu.dev/overview/api/.")

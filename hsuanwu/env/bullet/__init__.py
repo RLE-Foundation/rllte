@@ -3,7 +3,7 @@ import pybullet_envs
 import gym as old_gym
 import gymnasium as gym
 import numpy as np
-from gymnasium.vector import AsyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 from hsuanwu.env.utils import TorchVecEnvWrapper
@@ -48,6 +48,7 @@ def make_bullet_env(
     num_envs: int = 1,
     device: str = "cpu",
     seed: int = 0,
+    distributed: bool = False
 ) -> gym.Env:
     """Build PyBullet robotics environments.
 
@@ -56,6 +57,8 @@ def make_bullet_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
+        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
+            and reward clip will be used before environment vectorization.
 
     Returns:
         Environments instance.
@@ -72,7 +75,10 @@ def make_bullet_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = AsyncVectorEnv(envs)
-    envs = RecordEpisodeStatistics(envs)
+    if distributed:
+        envs = SyncVectorEnv(envs)
+    else:
+        envs = AsyncVectorEnv(envs)
+        envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device)
+    return TorchVecEnvWrapper(envs, device=device)

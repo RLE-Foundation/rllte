@@ -15,57 +15,6 @@ from hsuanwu.xploit.agent.networks import (OffPolicyDoubleCritic,
                                            get_network_init,
                                            ExportModel)
 
-MATCH_KEYS = {
-    "trainer": "OffPolicyTrainer",
-    "storage": ["VanillaReplayStorage", "PrioritizedReplayStorage"],
-    "distribution": ["SquashedNormal"],
-    "augmentation": [],
-    "reward": [],
-}
-
-DEFAULT_CFGS = {
-    ## TODO: Train setup
-    "device": "cpu",
-    "seed": 1,
-    "num_train_steps": 1000000,
-    "num_init_steps": 5000,  # only for off-policy algorithms
-    ## TODO: Test setup
-    "test_every_steps": 5000,  # only for off-policy algorithms
-    "num_test_episodes": 10,
-    ## TODO: xploit part
-    "encoder": {
-        "name": "IdentityEncoder",
-        "observation_space": dict(),
-        "feature_dim": 5,
-    },
-    "agent": {
-        "name": "SAC",
-        "observation_space": dict(),
-        "action_space": dict(),
-        "device": str,
-        "feature_dim": int,
-        "lr": 1e-4,
-        "eps": 0.00008,
-        "hidden_dim": 1024,
-        "critic_target_tau": 0.005,
-        "update_every_steps": 2,
-        "log_std_range": (-5.0, 2),
-        "betas": (0.9, 0.999),
-        "temperature": 0.1,
-        "fixed_temperature": False,
-        "discount": 0.99,
-    },
-    "storage": {
-        "name": "VanillaReplayStorage",
-        "storage_size": 1000000,
-        "batch_size": 1024,
-    },
-    ## TODO: xplore part
-    "distribution": {"name": "SquashedNormal"},
-    "augmentation": {"name": None},
-    "reward": {"name": None},
-}
-
 
 class SAC(BaseAgent):
     """Soft Actor-Critic (SAC) agent.
@@ -104,17 +53,17 @@ class SAC(BaseAgent):
         action_space: Union[gym.Space, DictConfig],
         device: str,
         feature_dim: int,
-        lr: float,
-        eps: float,
-        hidden_dim: int,
-        critic_target_tau: float,
-        update_every_steps: int,
-        log_std_range: Tuple[float],
-        betas: Tuple[float],
-        temperature: float,
-        fixed_temperature: bool,
-        discount: float,
-        network_init_method: str
+        lr: float = 1e-4,
+        eps: float = 1e-8,
+        hidden_dim: int = 1024,
+        critic_target_tau: float = 0.005,
+        update_every_steps: int = 2,
+        log_std_range: Tuple[float] = (-5.0, 2),
+        betas: Tuple[float] = (0.9, 0.999),
+        temperature: float = 0.1,
+        fixed_temperature: bool = False,
+        discount: float = 0.99,
+        network_init_method: str = "orthogonal"
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 

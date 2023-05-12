@@ -158,10 +158,10 @@ class DistributedActorCritic(nn.Module):
             self.policy_reshape_dim = self.action_dim
 
         elif action_type == "Box":
-            self.actor = self.BoxActor(obs_shape=obs_shape, 
-                                       action_dim=action_dim, 
-                                       feature_dim=lstm_output_size,
-                                       hidden_dim=hidden_dim)
+            self.actor = BoxActor(obs_shape=obs_shape, 
+                                  action_dim=action_dim, 
+                                  feature_dim=lstm_output_size,
+                                  hidden_dim=hidden_dim)
             self.policy_reshape_dim = self.action_dim * 2
         else:
             raise NotImplementedError("Unsupported action type!")

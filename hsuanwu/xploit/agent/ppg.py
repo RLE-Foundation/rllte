@@ -12,58 +12,6 @@ from hsuanwu.xploit.agent.base import BaseAgent
 from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
-MATCH_KEYS = {
-    "trainer": "OnPolicyTrainer",
-    "storage": ["VanillaRolloutStorage"],
-    "distribution": ["Categorical", "DiagonalGaussian"],
-    "augmentation": [],
-    "reward": [],
-}
-
-DEFAULT_CFGS = {
-    ## TODO: Train setup
-    "device": "cpu",
-    "seed": 1,
-    "num_train_steps": 25000000,
-    "num_steps": 256,  # The sample length of per rollout.
-    ## TODO: Test setup
-    "test_every_episodes": 10,  # only for on-policy algorithms
-    "num_test_episodes": 10,
-    ## TODO: xploit part
-    "encoder": {
-        "name": "EspeholtResidualEncoder",
-        "observation_space": dict(),
-        "feature_dim": 256,
-    },
-    "agent": {
-        "name": "PPG",
-        "observation_space": dict(),
-        "action_space": dict(),
-        "device": str,
-        "feature_dim": int,
-        "lr": 5e-4,
-        "eps": 1e-5,
-        "hidden_dim": 256,
-        "clip_range": 0.2,
-        "clip_range_vf": 0.2,
-        "vf_coef": 0.5,
-        "ent_coef": 0.01,
-        "aug_coef": 0.1,
-        "max_grad_norm": 0.5,
-        "policy_epochs": 32,
-        "aux_epochs": 6,
-        "kl_coef": 1.0,
-        "num_aux_mini_batch": 4,
-        "num_aux_grad_accum": 1,
-        "network_init_method": "xavier_uniform"
-    },
-    "storage": {"name": "VanillaRolloutStorage"},
-    ## TODO: xplore part
-    "distribution": {"name": "Categorical"},
-    "augmentation": {"name": None},
-    "reward": {"name": None},
-}
-
 
 class PPG(BaseAgent):
     """Phasic Policy Gradient (PPG) agent.
@@ -105,21 +53,21 @@ class PPG(BaseAgent):
         action_space: Union[gym.Space, DictConfig],
         device: str,
         feature_dim: int,
-        lr: float,
-        eps: float,
-        hidden_dim: int,
-        clip_range: float,
-        clip_range_vf: float,
-        vf_coef: float,
-        ent_coef: float,
-        aug_coef: float,
-        max_grad_norm: float,
-        policy_epochs: int,
-        aux_epochs: int,
-        kl_coef: float,
-        num_aux_mini_batch: int,
-        num_aux_grad_accum: int,
-        network_init_method: str
+        lr: float = 5e-4,
+        eps: float = 1e-5,
+        hidden_dim: int = 256,
+        clip_range: float = 0.2,
+        clip_range_vf: float = 0.2,
+        vf_coef: float = 0.5,
+        ent_coef: float = 0.01,
+        aug_coef: float = 0.1,
+        max_grad_norm: float = 0.5,
+        policy_epochs: int = 32,
+        aux_epochs: int = 6,
+        kl_coef: float = 1.0,
+        num_aux_mini_batch: int = 4,
+        num_aux_grad_accum: int = 1,
+        network_init_method: str = "xavier_uniform"
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 

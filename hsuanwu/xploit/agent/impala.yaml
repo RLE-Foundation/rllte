@@ -1,0 +1,42 @@
+MATCH_KEYS:
+  trainer: DistributedTrainer
+  storage: [DistributedStorage]
+  distribution: [Categorical, DiagonalGaussian]
+
+DEFAULT_CFGS:
+  ####### Train setup
+  device: cpu                      # Device (cpu, cuda, ...) on which the code should be run.
+  seed: 1                          # Random seed for reproduction.
+  pretraining: false               # Turn on the pre-training mode.
+  init_model_path:                 # Path of initial model parameters.
+  num_train_steps: 30000000        # Number of training steps.
+  num_actors: 45                   # Number of actors.
+  num_learners: 4                  # Number of learners.
+  num_steps: 80                    # Number of the sample length of per rollout.
+  ####### Test setup
+  test_every_episodes: 10          # Testing interval, only for `on-policy` agents.
+  num_test_episodes: 10            # Number of testing episodes.
+  ####### Xploit part
+  encoder:
+    image:
+      name: MnihCnnEncoder
+      feature_dim: 512
+    state:
+      name: IdentityEncoder
+      feature_dim:
+  agent:
+    name: IMPALA
+  storage:
+    name: DistributedStorage
+    num_storages: 60
+    batch_size: 4
+  ####### Xplore part
+  distribution:
+    Discrete: 
+      name: Categorical
+    Box: 
+      name: DiagonalGaussian
+  augmentation:
+    name:
+  reward:
+    name:
