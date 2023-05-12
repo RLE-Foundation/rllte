@@ -7,6 +7,7 @@ from torch import nn
 
 from hsuanwu.xploit.encoder.base import BaseEncoder
 
+
 class TassaCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.
     Proposed by Tassa Y, Doron Y, Muldal A, et al. Deepmind control suite[J].

@@ -5,14 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
-import torch as th
 import numpy as np
+import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.networks import (OnPolicyDecoupledActorCritic, 
-                                           get_network_init)
+from hsuanwu.xploit.agent.networks import OnPolicyDecoupledActorCritic, get_network_init
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
 
 
@@ -70,7 +69,7 @@ class DAAC(BaseAgent):
         aug_coef: float = 0.1,
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
-        network_init_method: str = 'xavier_uniform'
+        network_init_method: str = "xavier_uniform",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -123,12 +122,9 @@ class DAAC(BaseAgent):
         self.ac.to(self.device)
         # create optimizers
         self.actor_params = itertools.chain(
-            self.ac.actor_encoder.parameters(), 
-            self.ac.actor.parameters(), 
-            self.ac.gae.parameters())
-        self.critic_params = itertools.chain(
-            self.ac.critic_encoder.parameters(),
-            self.ac.critic.parameters())
+            self.ac.actor_encoder.parameters(), self.ac.actor.parameters(), self.ac.gae.parameters()
+        )
+        self.critic_params = itertools.chain(self.ac.critic_encoder.parameters(), self.ac.critic.parameters())
         self.actor_opt = th.optim.Adam(self.actor_params, lr=self.lr, eps=self.eps)
         self.critic_opt = th.optim.Adam(self.critic_params, lr=self.lr, eps=self.eps)
         # set training mode
@@ -222,7 +218,7 @@ class DAAC(BaseAgent):
                 ratio = th.exp(new_log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-                actor_loss = - th.min(surr1, surr2).mean()
+                actor_loss = -th.min(surr1, surr2).mean()
                 adv_loss = (new_adv_preds.flatten() - adv_targ).pow(2).mean()
 
                 if self.aug is not None:
@@ -230,10 +226,8 @@ class DAAC(BaseAgent):
                     batch_obs_aug = self.aug(batch_obs)
                     new_batch_actions, _, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                    _, _, log_probs_aug, _ = self.ac.evaluate_actions(
-                        obs=batch_obs_aug, actions=new_batch_actions
-                    )
-                    action_loss_aug = - log_probs_aug.mean()
+                    _, _, log_probs_aug, _ = self.ac.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                    action_loss_aug = -log_probs_aug.mean()
                     aug_loss = self.aug_coef * action_loss_aug
                 else:
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=adv_loss.device)
@@ -272,19 +266,19 @@ class DAAC(BaseAgent):
                     if self.clip_range_vf is None:
                         critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
                     else:
-                        values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                        values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(
+                            -self.clip_range_vf, self.clip_range_vf
+                        )
                         values_losses = (new_values.flatten() - batch_returns).pow(2)
                         values_losses_clipped = (values_clipped - batch_returns).pow(2)
                         critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
-                    
+
                     if self.aug is not None:
                         # augmentation loss part
                         batch_obs_aug = self.aug(batch_obs)
                         new_batch_actions, _, new_values, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                        _, values_aug, _, _ = self.ac.evaluate_actions(
-                            obs=batch_obs_aug, actions=new_batch_actions
-                        )
+                        _, values_aug, _, _ = self.ac.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                         value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                         aug_loss = self.aug_coef * value_loss_aug
                     else:

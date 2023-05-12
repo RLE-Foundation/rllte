@@ -1,8 +1,10 @@
 from typing import Callable
-from torch import nn
-import torch as th
 
-def get_network_init(method: str = "orthogonal") -> Callable:
+import torch as th
+from torch import nn
+
+
+def get_network_init(method: str = "orthogonal") -> Callable:  # noqa: c901
     """Returns a network initialization function.
 
     Args:
@@ -11,6 +13,7 @@ def get_network_init(method: str = "orthogonal") -> Callable:
     Returns:
         Initialization function.
     """
+
     def _identity(m):
         """Identity initialization."""
         pass
@@ -26,7 +29,7 @@ def get_network_init(method: str = "orthogonal") -> Callable:
             nn.init.orthogonal_(m.weight.data, gain)
             if hasattr(m.bias, "data"):
                 m.bias.data.fill_(0.0)
-    
+
     def _xavier_uniform(m):
         """Xavier uniform initialization."""
         if isinstance(m, nn.Linear):
@@ -37,7 +40,7 @@ def get_network_init(method: str = "orthogonal") -> Callable:
             nn.init.xavier_uniform_(m.weight.data)
             if hasattr(m.bias, "data"):
                 m.bias.data.fill_(0.0)
-    
+
     def _xavier_normal(m):
         """Xavier normal initialization."""
         if isinstance(m, nn.Linear):
@@ -57,7 +60,7 @@ def get_network_init(method: str = "orthogonal") -> Callable:
         return _xavier_uniform
     else:
         return _identity
-    
+
 
 class ExportModel(nn.Module):
     """Module for model export in off-policy algorithms.
@@ -69,6 +72,7 @@ class ExportModel(nn.Module):
     Returns:
         Export model format.
     """
+
     def __init__(self, encoder: nn.Module, actor: nn.Module) -> None:
         super().__init__()
 

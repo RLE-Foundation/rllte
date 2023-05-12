@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Union
 
 import gymnasium as gym
 import torch as th
@@ -8,11 +8,12 @@ from torch.nn import functional as F
 
 from hsuanwu.xploit.encoder.base import BaseEncoder
 
+
 class Conv2d_tf(nn.Conv2d):
-    """Conv2d with the padding behavior from TF.
-    """
+    """Conv2d with the padding behavior from TF."""
+
     def __init__(self, *args, **kwargs):
-        super(Conv2d_tf, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.padding = kwargs.get("padding", "SAME")
 
     def _compute_padding(self, input, dim):
@@ -20,9 +21,7 @@ class Conv2d_tf(nn.Conv2d):
         filter_size = self.weight.size(dim + 2)
         effective_filter_size = (filter_size - 1) * self.dilation[dim] + 1
         out_size = (input_size + self.stride[dim] - 1) // self.stride[dim]
-        total_padding = max(
-            0, (out_size - 1) * self.stride[dim] + effective_filter_size - input_size
-        )
+        total_padding = max(0, (out_size - 1) * self.stride[dim] + effective_filter_size - input_size)
         additional_padding = int(total_padding % 2 != 0)
 
         return additional_padding, total_padding
@@ -55,12 +54,12 @@ class Conv2d_tf(nn.Conv2d):
 
 
 class ResidualBlock(nn.Module):
-    """Residual block based on 
+    """Residual block based on
         https://github.com/AIcrowd/neurips2020-procgen-starter-kit/blob/142d09586d2272a17f44481a115c4bd817cf6a94/models/impala_cnn_torch.py
 
     Args:
         n_channels (int): Channels of inputs.
-    
+
     Returns:
         Single residual block.
     """
@@ -68,9 +67,9 @@ class ResidualBlock(nn.Module):
     def __init__(self, n_channels, stride=1):
         super().__init__()
 
-        self.conv1 = Conv2d_tf(n_channels, n_channels, kernel_size=3, stride=1, padding=(1,1))
+        self.conv1 = Conv2d_tf(n_channels, n_channels, kernel_size=3, stride=1, padding=(1, 1))
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = Conv2d_tf(n_channels, n_channels, kernel_size=3, stride=1, padding=(1,1))
+        self.conv2 = Conv2d_tf(n_channels, n_channels, kernel_size=3, stride=1, padding=(1, 1))
         self.stride = stride
 
     def forward(self, x):
@@ -146,7 +145,7 @@ class EspeholtResidualEncoder(BaseEncoder):
             layer = ResidualLayer(in_channels, out_channels)
             modules.append(layer)
             in_channels = out_channels
-            
+
         modules.append(nn.Flatten())
         self.trunk = nn.Sequential(*modules)
         with th.no_grad():

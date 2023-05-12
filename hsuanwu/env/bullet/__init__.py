@@ -1,8 +1,9 @@
 from typing import Callable, Dict, Tuple
-import pybullet_envs
+
 import gym as old_gym
 import gymnasium as gym
 import numpy as np
+import pybullet_envs as pybullet_envs
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
@@ -44,11 +45,7 @@ class AdapterEnv(gym.Wrapper):
 
 
 def make_bullet_env(
-    env_id: str = "AntBulletEnv-v0",
-    num_envs: int = 1,
-    device: str = "cpu",
-    seed: int = 0,
-    distributed: bool = False
+    env_id: str = "AntBulletEnv-v0", num_envs: int = 1, device: str = "cpu", seed: int = 0, distributed: bool = False
 ) -> gym.Env:
     """Build PyBullet robotics environments.
 

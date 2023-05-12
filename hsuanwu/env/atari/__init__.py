@@ -3,16 +3,9 @@ from typing import Callable
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
-from gymnasium.wrappers import (FrameStack, 
-                                GrayScaleObservation, 
-                                RecordEpisodeStatistics, 
-                                ResizeObservation, 
-                                TransformReward)
+from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
 
-from hsuanwu.env.atari.wrappers import (EpisodicLifeEnv, 
-                                        FireResetEnv, 
-                                        MaxAndSkipEnv, 
-                                        NoopResetEnv)
+from hsuanwu.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
 from hsuanwu.env.utils import TorchVecEnvWrapper
 
 
@@ -22,7 +15,7 @@ def make_atari_env(
     device: str = "cpu",
     seed: int = 1,
     frame_stack: int = 4,
-    distributed: bool = False
+    distributed: bool = False,
 ) -> gym.Env:
     """Build Atari environments.
 

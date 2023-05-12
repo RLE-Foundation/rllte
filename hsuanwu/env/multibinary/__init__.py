@@ -53,11 +53,7 @@ class PixelEnv(gym.Env):
 
 
 def make_multibinary_env(
-    env_id: str = "multibinary_state",
-    num_envs: int = 1,
-    device: str = "cpu",
-    seed: int = 0,
-    distributed: bool = False
+    env_id: str = "multibinary_state", num_envs: int = 1, device: str = "cpu", seed: int = 0, distributed: bool = False
 ) -> gym.Env:
     """Build environments with `MultiBinary` action space for testing.
 

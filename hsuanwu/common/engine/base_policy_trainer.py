@@ -8,13 +8,14 @@ import gymnasium as gym
 import numpy as np
 import omegaconf
 import pynvml
-pynvml.nvmlInit()
 import torch as th
 from omegaconf import OmegaConf
 
 from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS
+
+pynvml.nvmlInit()
 
 os.environ["HYDRA_FULL_ERROR"] = "1"
 
@@ -78,15 +79,15 @@ class BasePolicyTrainer(ABC):
         if "cuda" in cfgs.device:
             try:
                 device_id = int(cfgs.device[-1])
-            except:
+            except Exception:
                 device_id = 0
             handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
             device_name = pynvml.nvmlDeviceGetName(handle)
             self._logger.info(f"Running on {device_name}...")
         elif "npu" in cfgs.device:
-            self._logger.info(f"Running on HUAWEI Ascend NPU...")
+            self._logger.info("Running on HUAWEI Ascend NPU...")
         else:
-            self._logger.info(f"Running on CPU...")
+            self._logger.info("Running on CPU...")
         # debug
         if hasattr(cfgs, "experiment"):
             self._logger.info(f"Experiment Tag: {cfgs.experiment}")

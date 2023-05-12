@@ -4,6 +4,7 @@ import torch as th
 from torch import nn
 from torch.distributions import Distribution
 
+
 class OffPolicyStochasticActor(nn.Module):
     """Stochastic actor network for SAC. Here the 'self.dist' refers to an sampling distribution instance.
 

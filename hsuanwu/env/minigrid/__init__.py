@@ -30,7 +30,7 @@ def make_minigrid_env(
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
-    distributed: bool = False
+    distributed: bool = False,
 ) -> gym.Env:
     """Build MiniGrid environments.
 

@@ -5,15 +5,13 @@ from pathlib import Path
 from typing import Dict, Tuple, Union
 
 import gymnasium as gym
-import omegaconf
 import torch as th
 from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.networks import (DistributedActorCritic, 
-                                           get_network_init)
+from hsuanwu.xploit.agent.networks import DistributedActorCritic, get_network_init
 
 
 class VTraceLoss:
@@ -116,7 +114,7 @@ class IMPALA(BaseAgent):
         baseline_coef: float = 0.5,
         max_grad_norm: float = 40,
         discount: float = 0.99,
-        network_init_method: str = "identity"
+        network_init_method: str = "identity",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 

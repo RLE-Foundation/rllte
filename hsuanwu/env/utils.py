@@ -1,12 +1,13 @@
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
-from gymnasium.wrappers import RecordEpisodeStatistics
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
+from gymnasium.wrappers import RecordEpisodeStatistics
 from omegaconf import OmegaConf
+
 
 class HsuanwuEnvWrapper(gym.Wrapper):
     """Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.
@@ -20,12 +21,14 @@ class HsuanwuEnvWrapper(gym.Wrapper):
     Returns:
         HsuanwuEnvWrapper instance.
     """
-    def __init__(self, 
-                 env_fn: Callable,
-                 num_envs: int = 1,
-                 device: str = 'cpu',
-                 parallel: bool = True,
-                 ) -> None:
+
+    def __init__(
+        self,
+        env_fn: Callable,
+        num_envs: int = 1,
+        device: str = "cpu",
+        parallel: bool = True,
+    ) -> None:
         env_fns = [env_fn() for _ in range(num_envs)]
         if parallel:
             env = AsyncVectorEnv(env_fns)
@@ -35,6 +38,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         env = RecordEpisodeStatistics(env)
         env = TorchVecEnvWrapper(env=env, device=device)
         super().__init__(env)
+
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Env wrapper for outputting torch tensors.
@@ -57,13 +61,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         if env.single_action_space.__class__.__name__ == "Discrete":
             n = int(env.single_action_space.n)
             self.action_space = OmegaConf.create(
-                {
-                    "shape": env.single_action_space.shape,
-                    "dim": n,
-                    "n": n,
-                    "type": "Discrete", 
-                    "range": [0, n - 1]
-                }
+                {"shape": env.single_action_space.shape, "dim": n, "n": n, "type": "Discrete", "range": [0, n - 1]}
             )
         elif env.single_action_space.__class__.__name__ == "Box":
             low, high = float(env.single_action_space.low[0]), float(env.single_action_space.high[0])
@@ -78,10 +76,10 @@ class TorchVecEnvWrapper(gym.Wrapper):
         elif env.single_action_space.__class__.__name__ == "MultiBinary":
             self.action_space = OmegaConf.create(
                 {
-                    "shape": env.single_action_space.shape, 
+                    "shape": env.single_action_space.shape,
                     "dim": env.single_action_space.shape[0],
-                    "type": "MultiBinary", 
-                    "range": [0, 1]
+                    "type": "MultiBinary",
+                    "range": [0, 1],
                 }
             )
         else:

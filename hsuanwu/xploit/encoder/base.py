@@ -4,6 +4,7 @@ import gymnasium as gym
 from omegaconf import DictConfig
 from torch import nn
 
+
 class BaseEncoder(nn.Module):
     """Base class that represents a features extractor.
 

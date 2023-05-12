@@ -156,8 +156,7 @@ class VanillaRolloutStorage(BaseStorage):
         self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self) -> Generator:
-        """Sample data from storage.
-        """
+        """Sample data from storage."""
         sampler = BatchSampler(SubsetRandomSampler(range(self._num_envs * self._num_steps)), self._batch_size, drop_last=True)
 
         for indices in sampler:

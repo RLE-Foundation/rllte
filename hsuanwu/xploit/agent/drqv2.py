@@ -9,10 +9,7 @@ from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.networks import (OffPolicyDeterministicActor, 
-                                           OffPolicyDoubleCritic, 
-                                           get_network_init,
-                                           ExportModel)
+from hsuanwu.xploit.agent.networks import ExportModel, OffPolicyDeterministicActor, OffPolicyDoubleCritic, get_network_init
 
 
 class DrQv2(BaseAgent):
@@ -53,7 +50,7 @@ class DrQv2(BaseAgent):
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.01,
         update_every_steps: int = 2,
-        network_init_method: str = "orthogonal"
+        network_init_method: str = "orthogonal",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -63,19 +60,16 @@ class DrQv2(BaseAgent):
 
         # create models
         self.actor = OffPolicyDeterministicActor(
-            action_dim=self.action_dim, 
-            feature_dim=feature_dim, 
-            hidden_dim=hidden_dim).to(self.device)
-        
-        self.critic = OffPolicyDoubleCritic(
-            action_dim=self.action_dim, 
-            feature_dim=feature_dim, 
-            hidden_dim=hidden_dim).to(self.device)
-        
+            action_dim=self.action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
+
+        self.critic = OffPolicyDoubleCritic(action_dim=self.action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim).to(
+            self.device
+        )
+
         self.critic_target = OffPolicyDoubleCritic(
-            action_dim=self.action_dim,
-            feature_dim=feature_dim, 
-            hidden_dim=hidden_dim).to(self.device)
+            action_dim=self.action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim
+        ).to(self.device)
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.

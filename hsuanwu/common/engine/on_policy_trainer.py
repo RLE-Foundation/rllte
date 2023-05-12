@@ -115,7 +115,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             self._rollout_storage.compute_returns_and_advantages(last_values)
 
             # policy update
-            metrics = self._agent.update(self._rollout_storage, episode=self._global_episode)
+            self._agent.update(self._rollout_storage, episode=self._global_episode)
 
             # update and reset buffer
             self._rollout_storage.update()

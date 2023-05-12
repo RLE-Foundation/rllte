@@ -5,6 +5,7 @@ from torch import nn
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
+
 class DiscreteActor(nn.Module):
     """Actor for `Discrete` tasks.
 
@@ -17,21 +18,25 @@ class DiscreteActor(nn.Module):
     Returns:
         Actor network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple,
-                 action_dim: int,
-                 feature_dim: int,
-                 hidden_dim: int,
-        ) -> None:
+
+    def __init__(
+        self,
+        obs_shape: Tuple,
+        action_dim: int,
+        feature_dim: int,
+        hidden_dim: int,
+    ) -> None:
         super().__init__()
         if len(obs_shape) > 1:
             self.actor = nn.Linear(feature_dim, action_dim)
         else:
             # for state-based observations and `IdentityEncoder`
             self.actor = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim)
+                nn.Linear(feature_dim, hidden_dim),
+                nn.Tanh(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.Tanh(),
+                nn.Linear(hidden_dim, action_dim),
             )
 
     def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
@@ -48,7 +53,7 @@ class DiscreteActor(nn.Module):
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference.
-        
+
         Args:
             obs (Tensor): Observations.
 
@@ -57,9 +62,10 @@ class DiscreteActor(nn.Module):
         """
         return self.actor(obs)
 
+
 class BoxActor(nn.Module):
     """Actor for `Box` tasks.
-    
+
     Args:
         obs_shape (Tuple): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
@@ -69,21 +75,25 @@ class BoxActor(nn.Module):
     Returns:
         Actor network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple,
-                 action_dim: int,
-                 feature_dim: int,
-                 hidden_dim: int,
-        ) -> None:
+
+    def __init__(
+        self,
+        obs_shape: Tuple,
+        action_dim: int,
+        feature_dim: int,
+        hidden_dim: int,
+    ) -> None:
         super().__init__()
         if len(obs_shape) > 1:
             self.actor_mu = nn.Linear(feature_dim, action_dim)
         else:
             # for state-based observations and `IdentityEncoder`
             self.actor_mu = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim), nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim)
+                nn.Linear(feature_dim, hidden_dim),
+                nn.Tanh(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.Tanh(),
+                nn.Linear(hidden_dim, action_dim),
             )
         self.actor_logstd = nn.Parameter(th.ones(1, action_dim))
 
@@ -102,7 +112,7 @@ class BoxActor(nn.Module):
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference.
-        
+
         Args:
             obs (Tensor): Observations.
 
@@ -110,6 +120,7 @@ class BoxActor(nn.Module):
             Deterministic actions.
         """
         return self.actor_mu(obs)
+
 
 class DistributedActorCritic(nn.Module):
     """Actor network for IMPALA that supports LSTM module.
@@ -126,6 +137,7 @@ class DistributedActorCritic(nn.Module):
     Returns:
         Actor network instance.
     """
+
     def __init__(
         self,
         obs_shape: Tuple,
@@ -151,17 +163,15 @@ class DistributedActorCritic(nn.Module):
             self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
 
         if action_type == "Discrete":
-            self.actor = DiscreteActor(obs_shape=obs_shape, 
-                                       action_dim=action_dim, 
-                                       feature_dim=lstm_output_size,
-                                       hidden_dim=hidden_dim)
+            self.actor = DiscreteActor(
+                obs_shape=obs_shape, action_dim=action_dim, feature_dim=lstm_output_size, hidden_dim=hidden_dim
+            )
             self.policy_reshape_dim = self.action_dim
 
         elif action_type == "Box":
-            self.actor = BoxActor(obs_shape=obs_shape, 
-                                  action_dim=action_dim, 
-                                  feature_dim=lstm_output_size,
-                                  hidden_dim=hidden_dim)
+            self.actor = BoxActor(
+                obs_shape=obs_shape, action_dim=action_dim, feature_dim=lstm_output_size, hidden_dim=hidden_dim
+            )
             self.policy_reshape_dim = self.action_dim * 2
         else:
             raise NotImplementedError("Unsupported action type!")

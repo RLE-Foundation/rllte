@@ -67,7 +67,7 @@ class PPG(BaseAgent):
         kl_coef: float = 1.0,
         num_aux_mini_batch: int = 4,
         num_aux_grad_accum: int = 1,
-        network_init_method: str = "xavier_uniform"
+        network_init_method: str = "xavier_uniform",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -259,13 +259,15 @@ class PPG(BaseAgent):
             ratio = th.exp(new_log_probs - batch_old_log_probs)
             surr1 = ratio * adv_targ
             surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-            actor_loss = - th.min(surr1, surr2).mean()
+            actor_loss = -th.min(surr1, surr2).mean()
 
             # critic loss part
             if self.clip_range_vf is None:
                 critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
             else:
-                values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(
+                    -self.clip_range_vf, self.clip_range_vf
+                )
                 values_losses = (new_values.flatten() - batch_returns).pow(2)
                 values_losses_clipped = (values_clipped - batch_returns).pow(2)
                 critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
@@ -275,10 +277,8 @@ class PPG(BaseAgent):
                 batch_obs_aug = self.aug(batch_obs)
                 new_batch_actions, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                values_aug, log_probs_aug, _ = self.ac.evaluate_actions(
-                    obs=batch_obs_aug, actions=new_batch_actions
-                )
-                action_loss_aug = - log_probs_aug.mean()
+                values_aug, log_probs_aug, _ = self.ac.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                action_loss_aug = -log_probs_aug.mean()
                 value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                 aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
             else:
@@ -295,7 +295,7 @@ class PPG(BaseAgent):
             total_critic_loss.append(critic_loss.item())
             total_entropy_loss.append(entropy.item())
             total_aug_loss.append(aug_loss.item())
-        
+
         if (episode + 1) % self.policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
             return {
@@ -321,7 +321,7 @@ class PPG(BaseAgent):
         total_aux_value_loss = []
         total_kl_loss = []
 
-        for e in range(self.aux_epochs):
+        for _e in range(self.aux_epochs):
             aux_inds = np.arange(self.num_aux_rollouts)
             np.random.shuffle(aux_inds)
 

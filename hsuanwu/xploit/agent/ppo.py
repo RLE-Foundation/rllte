@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
 import gymnasium as gym
-import torch as th
 import numpy as np
+import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
@@ -60,7 +60,7 @@ class PPO(BaseAgent):
         ent_coef: float = 0.01,
         aug_coef: float = 0.1,
         max_grad_norm: float = 0.5,
-        network_init_method: str = "orthogonal"
+        network_init_method: str = "orthogonal",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -142,7 +142,7 @@ class PPO(BaseAgent):
         else:
             actions = self.ac.get_det_action(obs)
             return actions
-        
+
     def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:
         """Update the learner.
 
@@ -187,18 +187,20 @@ class PPO(BaseAgent):
 
                 # evaluate sampled actions
                 new_values, new_log_probs, entropy = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
-                
+
                 # actor loss part
                 ratio = th.exp(new_log_probs - batch_old_log_probs)
                 surr1 = ratio * adv_targ
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_targ
-                actor_loss = - th.min(surr1, surr2).mean()
+                actor_loss = -th.min(surr1, surr2).mean()
 
                 # critic loss part
                 if self.clip_range_vf is None:
                     critic_loss = 0.5 * (new_values.flatten() - batch_returns).pow(2).mean()
                 else:
-                    values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(-self.clip_range_vf, self.clip_range_vf)
+                    values_clipped = batch_values + (new_values.flatten() - batch_values).clamp(
+                        -self.clip_range_vf, self.clip_range_vf
+                    )
                     values_losses = (new_values.flatten() - batch_returns).pow(2)
                     values_losses_clipped = (values_clipped - batch_returns).pow(2)
                     critic_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
@@ -208,10 +210,8 @@ class PPO(BaseAgent):
                     batch_obs_aug = self.aug(batch_obs)
                     new_batch_actions, _, _ = self.ac.get_action_and_value(obs=batch_obs)
 
-                    values_aug, log_probs_aug, _ = self.ac.evaluate_actions(
-                        obs=batch_obs_aug, actions=new_batch_actions
-                    )
-                    action_loss_aug = - log_probs_aug.mean()
+                    values_aug, log_probs_aug, _ = self.ac.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                    action_loss_aug = -log_probs_aug.mean()
                     value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
                 else:

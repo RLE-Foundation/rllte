@@ -30,12 +30,7 @@ class VanillaMlpEncoder(BaseEncoder):
         super().__init__(observation_space, feature_dim)
 
         input_dim = observation_space.shape[0]
-        self.trunk = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, feature_dim),
-            nn.Tanh()
-        )
+        self.trunk = nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, feature_dim), nn.Tanh())
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         return self.trunk(obs)

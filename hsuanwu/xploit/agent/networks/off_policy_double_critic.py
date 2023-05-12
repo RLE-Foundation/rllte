@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
+
 
 class OffPolicyDoubleCritic(nn.Module):
     """Double critic network for DrQv2 and SAC.
@@ -16,10 +16,7 @@ class OffPolicyDoubleCritic(nn.Module):
         Critic network instance.
     """
 
-    def __init__(self, 
-                 action_dim: int,
-                 feature_dim: int = 64, 
-                 hidden_dim: int = 1024) -> None:
+    def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
 
         self.Q1 = nn.Sequential(

@@ -10,10 +10,7 @@ from torch.nn import functional as F
 
 from hsuanwu.xploit.agent import utils
 from hsuanwu.xploit.agent.base import BaseAgent
-from hsuanwu.xploit.agent.networks import (OffPolicyDoubleCritic, 
-                                           OffPolicyStochasticActor,
-                                           get_network_init,
-                                           ExportModel)
+from hsuanwu.xploit.agent.networks import ExportModel, OffPolicyDoubleCritic, OffPolicyStochasticActor, get_network_init
 
 
 class SAC(BaseAgent):
@@ -58,12 +55,12 @@ class SAC(BaseAgent):
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.005,
         update_every_steps: int = 2,
-        log_std_range: Tuple[float] = (-5.0, 2),
-        betas: Tuple[float] = (0.9, 0.999),
+        log_std_range: Tuple[float, ...] = (-5.0, 2),
+        betas: Tuple[float, ...] = (0.9, 0.999),
         temperature: float = 0.1,
         fixed_temperature: bool = False,
         discount: float = 0.99,
-        network_init_method: str = "orthogonal"
+        network_init_method: str = "orthogonal",
     ) -> None:
         super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
 
@@ -83,22 +80,20 @@ class SAC(BaseAgent):
         ).to(self.device)
 
         self.critic = OffPolicyDoubleCritic(
-            action_dim=self.action_dim, 
-            feature_dim=feature_dim, 
+            action_dim=self.action_dim,
+            feature_dim=feature_dim,
             hidden_dim=hidden_dim,
         ).to(self.device)
 
         self.critic_target = OffPolicyDoubleCritic(
-            action_dim=self.action_dim, 
-            feature_dim=feature_dim, 
+            action_dim=self.action_dim,
+            feature_dim=feature_dim,
             hidden_dim=hidden_dim,
         ).to(self.device)
 
         # target entropy
-        self.target_entropy = - self.action_dim
-        self.log_alpha = th.tensor(np.log(temperature), 
-                                   device=self.device, 
-                                   requires_grad=True)
+        self.target_entropy = -self.action_dim
+        self.log_alpha = th.tensor(np.log(temperature), device=self.device, requires_grad=True)
 
     def train(self, training: bool = True) -> None:
         """Set the train mode.

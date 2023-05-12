@@ -1,5 +1,4 @@
 import gymnasium as gym
-from gym.vector import SyncVectorEnv
 from omegaconf import OmegaConf
 from termcolor import colored
 
@@ -12,6 +11,7 @@ def make_env():
         return gym.make("Acrobot-v1")
 
     return _thunk
+
 
 cfgs = {
     "experiment": "Verification",

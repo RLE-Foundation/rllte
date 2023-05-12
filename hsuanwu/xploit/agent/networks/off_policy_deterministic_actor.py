@@ -1,8 +1,7 @@
-from typing import Tuple
-
 import torch as th
 from torch import nn
 from torch.distributions import Distribution
+
 
 class OffPolicyDeterministicActor(nn.Module):
     """Deterministic actor network for DrQv2. Here the 'self.dist' refers to an action noise instance.
@@ -16,10 +15,7 @@ class OffPolicyDeterministicActor(nn.Module):
         Actor network instance.
     """
 
-    def __init__(self, 
-                 action_dim: int,
-                 feature_dim: int = 64, 
-                 hidden_dim: int = 1024) -> None:
+    def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
         self.policy = nn.Sequential(
             nn.LayerNorm(feature_dim),
