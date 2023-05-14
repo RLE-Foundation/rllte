@@ -15,8 +15,6 @@ from hsuanwu.common.logger import Logger
 from hsuanwu.common.timer import Timer
 from hsuanwu.xploit.agent import ALL_DEFAULT_CFGS
 
-pynvml.nvmlInit()
-
 os.environ["HYDRA_FULL_ERROR"] = "1"
 
 _MANDATORY_CFGS = {
@@ -76,16 +74,19 @@ class BasePolicyTrainer(ABC):
             th.cuda.manual_seed_all(cfgs.seed)
         np.random.seed(cfgs.seed)
         random.seed(cfgs.seed)
+        # device
         if "cuda" in cfgs.device:
             try:
                 device_id = int(cfgs.device[-1])
             except Exception:
                 device_id = 0
+            pynvml.nvmlInit()
             handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
             device_name = pynvml.nvmlDeviceGetName(handle)
             self._logger.info(f"Running on {device_name}...")
         elif "npu" in cfgs.device:
-            self._logger.info("Running on HUAWEI Ascend NPU...")
+            npu_name = self.get_npu_name()
+            self._logger.info(f"Running on HUAWEI Ascend {npu_name}...")
         else:
             self._logger.info("Running on CPU...")
         # debug
@@ -106,6 +107,19 @@ class BasePolicyTrainer(ABC):
         self._test_every_episodes = self._cfgs.test_every_episodes  # only for on-policy algorithms
         self._global_step = 0
         self._global_episode = 0
+    
+    def get_npu_name(self) -> str:
+        """Get NPU name."""
+        str_command = "npu-smi info"
+        out = os.popen(str_command)
+        text_content = out.read()
+        out.close()
+        lines = text_content.split("\n")
+        npu_name_line = lines[6]
+        name_part = npu_name_line.split("|")[1]
+        npu_name = name_part.split()[-1]
+
+        return npu_name
 
     @property
     def global_step(self) -> int:
@@ -187,6 +201,10 @@ class BasePolicyTrainer(ABC):
                 new_cfgs[part]["_target_"] = new_cfgs[part]["name"]
                 new_cfgs[part].pop("name")
 
+        ## TODO: invoke the agent of `NPU` version
+        if "npu" in new_cfgs.device:
+            new_cfgs["agent"]._target_ = "Npu" + new_cfgs["agent"]._target_
+
         ## TODO: set flag for 'augmentation' and 'reward'
         if new_cfgs.augmentation._target_ is not None:
             new_cfgs.use_aug = True
@@ -215,7 +233,11 @@ class BasePolicyTrainer(ABC):
         ## for storage
         new_cfgs.storage.observation_space = observation_space
         new_cfgs.storage.action_space = action_space
-        new_cfgs.storage.device = new_cfgs.device
+        if "npu" in new_cfgs.device:
+            # TODO: NPU device doesn't support data reshaping
+            new_cfgs.storage.device = "cpu"
+        else:
+            new_cfgs.storage.device = new_cfgs.device
 
         if "Rollout" in new_cfgs.storage._target_:
             new_cfgs.storage.num_steps = new_cfgs.num_steps

@@ -8,6 +8,12 @@ from .distributed_trainer import DistributedTrainer as DistributedTrainer
 from .off_policy_trainer import OffPolicyTrainer as OffPolicyTrainer
 from .on_policy_trainer import OnPolicyTrainer as OnPolicyTrainer
 
+# try to load torch_npu
+try:
+    import torch_npu
+    from torch_npu.contrib import transfer_to_npu
+except Exception:
+    pass
 
 class HsuanwuEngine:
     """Hsuanwu RL engine.

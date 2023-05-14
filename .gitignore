@@ -25,6 +25,7 @@ _build/
 /examples
 /logs
 /dist
+/experimental
 /outputs
 /test.py
 /train.py
