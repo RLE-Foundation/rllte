@@ -52,7 +52,7 @@ Join the developer community for issues and discussions:
 ## Installation
 - Prerequisites
 
-Currently, Hsuanwu requires `Python>=3.8`, user can create an virtual environment by
+Currently, Hsuanwu recommends `Python>=3.8`, user can create an virtual environment by
 ``` sh
 conda create -n hsuanwu python=3.8
 ```

@@ -10,10 +10,12 @@ authors = [
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 keywords = ["Reinforcement Learning", "Algorithm", "Evolution", "Baseline"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
