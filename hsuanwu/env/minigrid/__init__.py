@@ -24,7 +24,7 @@ class Minigrid2Image(gym.ObservationWrapper):
 
 
 def make_minigrid_env(
-    env_id: str = "Alien-v5",
+    env_id: str = "MiniGrid-DoorKey-5x5-v0",
     num_envs: int = 8,
     fully_observable: bool = True,
     seed: int = 0,

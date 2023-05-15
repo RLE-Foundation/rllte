@@ -1,4 +1,5 @@
 from .utils import HsuanwuEnvWrapper as HsuanwuEnvWrapper
+from .utils import TorchVecEnvWrapper as TorchVecEnvWrapper
 
 try:
     from .atari import make_atari_env as make_atari_env
