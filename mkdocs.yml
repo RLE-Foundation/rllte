@@ -173,9 +173,10 @@ nav:
       - make_atari_env: api_docs/env/atari/__init__.md
       - make_bullet_env: api_docs/env/bullet/__init__.md
       - make_dmc_env: api_docs/env/dmc/__init__.md
-      - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_minigrid_env: api_docs/env/minigrid/__init__.md
       - make_multibinary_env: api_docs/env/multibinary/__init__.md
+      - make_procgen_env: api_docs/env/procgen/__init__.md
+      - make_robosuite_env: api_docs/env/robosuite/__init__.md
       - utils:
         - HsuanwuEnvWrapper: api_docs/env/utils.md
     

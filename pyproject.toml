@@ -49,6 +49,7 @@ tests = [
 envs = [
   "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
   "ale-py==0.8.1",
+  "robosuite==1.4.0",
   "gymnasium[accept-rom-license]",
   "dm-control==1.0.11",
   "procgen==0.10.7",

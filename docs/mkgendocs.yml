@@ -296,6 +296,10 @@ pages:
     source: hsuanwu/env/procgen/__init__.py
     functions:
       - make_procgen_env
+  - page: env/robosuite/__init__.md
+    source: hsuanwu/env/robosuite/__init__.py
+    functions:
+      - make_robosuite_env
   - page: evaluation/comparison.md
     source: hsuanwu/evaluation/comparison.py
     classes:
