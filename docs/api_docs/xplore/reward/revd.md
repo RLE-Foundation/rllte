@@ -2,7 +2,7 @@
 
 
 ## REVD
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L59)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/revd.py\#L59)
 ```python 
 REVD(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -43,7 +43,7 @@ Instance of REVD.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L112)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/revd.py\#L112)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -69,7 +69,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/revd.py/#L167)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/revd.py\#L167)
 ```python
 .update(
    samples: Dict

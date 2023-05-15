@@ -2,7 +2,7 @@
 
 
 ## DAAC
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L18)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L18)
 ```python 
 DAAC(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -58,7 +58,7 @@ DAAC learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L100)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L100)
 ```python
 .train(
    training: bool = True
@@ -79,7 +79,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L112)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L112)
 ```python
 .integrate(
    **kwargs
@@ -90,7 +90,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L138)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L138)
 ```python
 .get_value(
    obs: th.Tensor
@@ -111,7 +111,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L149)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L149)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -134,7 +134,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L171)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L171)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -156,7 +156,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L307)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L307)
 ```python
 .save(
    path: Path
@@ -177,7 +177,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/daac.py/#L322)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/daac.py\#L322)
 ```python
 .load(
    path: str

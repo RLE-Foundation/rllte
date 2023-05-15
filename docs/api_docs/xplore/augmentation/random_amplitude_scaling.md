@@ -2,7 +2,7 @@
 
 
 ## RandomAmplitudeScaling
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_amplitude_scaling.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_amplitude_scaling.py\#L7)
 ```python 
 RandomAmplitudeScaling(
    low: float = 0.6, high: float = 1.2
@@ -29,7 +29,7 @@ Augmented states.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_amplitude_scaling.py/#L22)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_amplitude_scaling.py\#L22)
 ```python
 .forward(
    x: th.Tensor

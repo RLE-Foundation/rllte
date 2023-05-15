@@ -2,7 +2,7 @@
 
 
 ## ElasticTransform
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/elastic_transform.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/elastic_transform.py\#L7)
 ```python 
 ElasticTransform(
    alpha: float = 50.0, sigma: float = 5.0, interpolation: int = 0, fill = 0
@@ -31,7 +31,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/elastic_transform.py/#L39)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/elastic_transform.py\#L39)
 ```python
 .forward(
    x: th.Tensor

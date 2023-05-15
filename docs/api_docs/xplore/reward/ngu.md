@@ -2,7 +2,7 @@
 
 
 ## NGU
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L81)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L81)
 ```python 
 NGU(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -51,7 +51,7 @@ Instance of NGU.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L170)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L170)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -72,7 +72,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L197)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L197)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -98,7 +98,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/ngu.py/#L243)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/ngu.py\#L243)
 ```python
 .update(
    samples: Dict

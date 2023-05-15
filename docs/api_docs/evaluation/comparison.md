@@ -2,7 +2,7 @@
 
 
 ## Comparison
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/comparison.py\#L10)
 ```python 
 Comparison(
    scores_x: np.ndarray, scores_y: np.ndarray, get_ci: bool = False,
@@ -40,7 +40,7 @@ Comparer instance.
 
 
 ### .compute_poi
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L49)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/comparison.py\#L49)
 ```python
 .compute_poi()
 ```
@@ -49,7 +49,7 @@ Comparer instance.
 Compute the overall probability of imporvement of algorithm `X` over `Y`.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L78)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/comparison.py\#L78)
 ```python
 .get_interval_estimates(
    scores_x: np.ndarray, scores_y: np.ndarray, metric: Callable

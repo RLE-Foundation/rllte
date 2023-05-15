@@ -2,7 +2,7 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L16)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L16)
 ```python 
 PPO(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -53,7 +53,7 @@ PPO learner instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L85)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L85)
 ```python
 .train(
    training: bool = True
@@ -74,7 +74,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L97)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L97)
 ```python
 .integrate(
    **kwargs
@@ -85,7 +85,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L117)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L117)
 ```python
 .get_value(
    obs: th.Tensor
@@ -106,7 +106,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L128)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L128)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -129,7 +129,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L146)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L146)
 ```python
 .update(
    rollout_storage: Storage, episode: int = 0
@@ -151,7 +151,7 @@ Update the learner.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L239)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L239)
 ```python
 .save(
    path: Path
@@ -172,7 +172,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/ppo.py/#L254)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L254)
 ```python
 .load(
    path: str

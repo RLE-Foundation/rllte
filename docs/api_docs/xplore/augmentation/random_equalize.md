@@ -2,7 +2,7 @@
 
 
 ## RandomEqualize
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_equalize.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_equalize.py\#L7)
 ```python 
 RandomEqualize(
    p: float = 0.5
@@ -28,7 +28,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_equalize.py/#L25)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_equalize.py\#L25)
 ```python
 .forward(
    x: th.Tensor

@@ -2,7 +2,7 @@
 
 
 ## AutoAugment
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/auto_augment.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/auto_augment.py\#L7)
 ```python 
 AutoAugment(
    augment_policy: str = T.AutoAugmentPolicy.IMAGENET
@@ -28,7 +28,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/auto_augment.py/#L24)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/auto_augment.py\#L24)
 ```python
 .forward(
    x: th.Tensor

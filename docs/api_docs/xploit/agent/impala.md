@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L78)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L78)
 ```python 
 IMPALA(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -48,7 +48,7 @@ IMPALA distance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L146)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L146)
 ```python
 .train(
    training: bool = True
@@ -69,7 +69,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L159)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L159)
 ```python
 .integrate(
    **kwargs
@@ -80,7 +80,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L183)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L183)
 ```python
 .act(
    *kwargs
@@ -91,7 +91,7 @@ Integrate agent and other modules (encoder, reward, ...) together
 Sample actions based on observations.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L187)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L187)
 ```python
 .update(
    actor_model: nn.Module, learner_model: nn.Module, batch: Dict,
@@ -120,7 +120,7 @@ Update the learner model.
 Training metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L256)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L256)
 ```python
 .save(
    path: Path
@@ -141,7 +141,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L267)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/impala.py\#L267)
 ```python
 .load(
    path: str

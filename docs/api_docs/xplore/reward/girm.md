@@ -2,7 +2,7 @@
 
 
 ## GIRM
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L169)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/girm.py\#L169)
 ```python 
 GIRM(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -47,7 +47,7 @@ Instance of GIRM.
 
 
 ### .get_vae_loss
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L233)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/girm.py\#L233)
 ```python
 .get_vae_loss(
    recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor
@@ -71,7 +71,7 @@ Compute the vae loss.
 Loss values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L250)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/girm.py\#L250)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -97,7 +97,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/girm.py/#L299)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/girm.py\#L299)
 ```python
 .update(
    samples: Dict

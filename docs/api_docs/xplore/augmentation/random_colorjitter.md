@@ -2,7 +2,7 @@
 
 
 ## RandomColorJitter
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_colorjitter.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_colorjitter.py\#L7)
 ```python 
 RandomColorJitter(
    brightness: float = 0.4, contrast: float = 0.4, saturation: float = 0.4,
@@ -32,7 +32,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_colorjitter.py/#L30)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_colorjitter.py\#L30)
 ```python
 .forward(
    x: th.Tensor

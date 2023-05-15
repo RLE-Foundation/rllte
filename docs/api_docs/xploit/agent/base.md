@@ -2,7 +2,7 @@
 
 
 ## BaseAgent
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L10)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L10)
 ```python 
 BaseAgent(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -38,7 +38,7 @@ Base agent instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L82)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L82)
 ```python
 .train(
    training: bool = True
@@ -59,7 +59,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L94)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L94)
 ```python
 .integrate(
    **kwargs
@@ -70,7 +70,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L98)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L98)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -93,7 +93,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L111)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L111)
 ```python
 .update(
    **kwargs
@@ -104,7 +104,7 @@ Sampled actions.
 Update agent and return training metrics such as loss functions.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L115)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L115)
 ```python
 .save(
    path: Path
@@ -125,7 +125,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/base.py/#L126)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/base.py\#L126)
 ```python
 .load(
    path: str

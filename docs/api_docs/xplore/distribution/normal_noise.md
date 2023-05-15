@@ -2,7 +2,7 @@
 
 
 ## NormalNoise
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L8)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L8)
 ```python 
 NormalNoise(
    loc: float = 0.0, scale: float = 1.0, stddev_schedule: str = 'linear(1.0, 0.1,
@@ -31,7 +31,7 @@ Gaussian action noise instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L35)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L35)
 ```python
 .sample(
    clip: bool = False, sample_shape: th.Size = th.Size()
@@ -54,7 +54,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L54)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L54)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -76,7 +76,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L66)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L66)
 ```python
 .log_prob(
    value: th.Tensor
@@ -97,7 +97,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L77)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L77)
 ```python
 .entropy()
 ```
@@ -106,7 +106,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L81)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L81)
 ```python
 .reset(
    noiseless_action: th.Tensor, step: int = 0
@@ -128,7 +128,7 @@ Reset the noise instance.
 None.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L97)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L97)
 ```python
 .mean()
 ```
@@ -137,7 +137,7 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L102)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L102)
 ```python
 .mode()
 ```
@@ -146,7 +146,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L107)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L107)
 ```python
 .stddev()
 ```
@@ -155,7 +155,7 @@ Returns the mode of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/normal_noise.py/#L112)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/normal_noise.py\#L112)
 ```python
 .variance()
 ```

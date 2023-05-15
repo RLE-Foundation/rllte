@@ -2,7 +2,7 @@
 
 
 ## RandomInvert
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_invert.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_invert.py\#L7)
 ```python 
 RandomInvert(
    p: float = 0.5
@@ -27,7 +27,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_invert.py/#L23)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_invert.py\#L23)
 ```python
 .forward(
    x: th.Tensor

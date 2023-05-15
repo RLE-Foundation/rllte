@@ -2,7 +2,7 @@
 
 
 ## DrQv2
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L15)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L18)
 ```python 
 DrQv2(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -48,7 +48,7 @@ DrQv2 agent instance.
 
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L74)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L77)
 ```python
 .train(
    training: bool = True
@@ -69,7 +69,7 @@ Set the train mode.
 None.
 
 ### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L89)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L92)
 ```python
 .integrate(
    **kwargs
@@ -80,7 +80,7 @@ None.
 Integrate agent and other modules (encoder, reward, ...) together
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L113)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L116)
 ```python
 .act(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -103,7 +103,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L134)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L137)
 ```python
 .update(
    replay_storage, step: int = 0
@@ -125,7 +125,7 @@ Update the agent.
 Training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L188)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L191)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
@@ -152,7 +152,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L237)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L240)
 ```python
 .update_actor(
    obs: th.Tensor, step: int
@@ -174,7 +174,7 @@ Update the actor network.
 Actor loss metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L263)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L266)
 ```python
 .save(
    path: Path
@@ -195,7 +195,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L280)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/drqv2.py\#L283)
 ```python
 .load(
    path: str

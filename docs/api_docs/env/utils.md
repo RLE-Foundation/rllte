@@ -2,7 +2,7 @@
 
 
 ## HsuanwuEnvWrapper
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/env/utils.py/#L12)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L12)
 ```python 
 HsuanwuEnvWrapper(
    env_fn: Callable, num_envs: int = 1, device: str = 'cpu', parallel: bool = True

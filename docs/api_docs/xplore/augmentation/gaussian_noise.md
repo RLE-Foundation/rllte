@@ -2,7 +2,7 @@
 
 
 ## GaussianNoise
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/gaussian_noise.py/#L7)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/gaussian_noise.py\#L7)
 ```python 
 GaussianNoise(
    mu: float = 0, sigma: float = 1.0
@@ -29,7 +29,7 @@ Augmented states.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/gaussian_noise.py/#L22)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/gaussian_noise.py\#L22)
 ```python
 .forward(
    x: th.Tensor

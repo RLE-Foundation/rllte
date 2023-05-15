@@ -2,7 +2,7 @@
 
 
 ## PrioritizedReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L12)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L12)
 ```python 
 PrioritizedReplayStorage(
    observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
@@ -40,7 +40,7 @@ Prioritized replay storage.
 
 
 ### .annealing_beta
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L55)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L55)
 ```python
 .annealing_beta(
    step: int
@@ -61,7 +61,7 @@ Linearly increases beta from the initial value to 1 over global training steps.
 Beta value.
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L66)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L66)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -87,7 +87,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L94)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L94)
 ```python
 .sample(
    step: int
@@ -108,7 +108,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L133)
+[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/prioritized_replay_storage.py\#L133)
 ```python
 .update(
    metrics: Dict
