@@ -8,11 +8,11 @@ from torch import nn
 from hsuanwu.xploit.encoder.base import BaseEncoder
 
 
-class MnihCnnEncoder(BaseEncoder):
+class RaileanuCnnEncoder(BaseEncoder):
     """Convolutional neural network (CNN)-based encoder for processing image-based observations.
-        Proposed by Mnih V, Kavukcuoglu K, Silver D, et al. Playing atari with
-        deep reinforcement learning[J]. arXiv preprint arXiv:1312.5602, 2013.
-        Target task: Atari games.
+        Proposed by Raileanu R, Rocktäschel T. Ride: Rewarding impact-driven exploration for 
+        procedurally-generated environments[J]. arXiv preprint arXiv:2002.12292, 2020.
+        Target task: MiniGrid games.
 
     Args:
         observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
@@ -30,12 +30,16 @@ class MnihCnnEncoder(BaseEncoder):
         assert len(obs_shape) == 3
 
         self.trunk = nn.Sequential(
-            nn.Conv2d(obs_shape[0], 32, 8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, 4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 32, 3, stride=1),
-            nn.ReLU(),
+            nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
             nn.Flatten(),
         )
 

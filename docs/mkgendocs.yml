@@ -51,6 +51,10 @@ pages:
     source: hsuanwu/xploit/encoder/tassa_cnn_encoder.py
     classes:
       - TassaCnnEncoder
+  - page: xploit/encoder/raileanu_cnn_encoder.md
+    source: hsuanwu/xploit/encoder/raileanu_cnn_encoder.py
+    classes:
+      - RaileanuCnnEncoder
   - page: xploit/encoder/vanilla_mlp_encoder.md
     source: hsuanwu/xploit/encoder/vanilla_mlp_encoder.py
     classes:

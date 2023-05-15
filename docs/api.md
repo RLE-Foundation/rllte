@@ -38,6 +38,7 @@
 |IdentityEncoder|States|N/A|DeepMind Control Suite: state|
 |MnihCnnEncoder|Images|[Playing Atari with Deep Reinforcement Learning](https://arxiv.org/pdf/1312.5602.pdf?source=post_page---------------------------)|Atari games.|
 |TassaCnnEncoder|Images|[DeepMind Control Suite](https://arxiv.org/pdf/1801.00690)|DeepMind Control Suite: pixel|
+|RaileanuCnnEncoder|Images|[RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments](https://arxiv.org/pdf/2002.12292)|MiniGrid games: pixel|
 |VanillaMlpEncoder|States|N/A|DeepMind Control Suite: state|
 
 !!! tip "Tips of Encoder"
