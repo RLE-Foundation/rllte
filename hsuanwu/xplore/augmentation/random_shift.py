@@ -2,7 +2,7 @@ import torch as th
 from torch.nn import functional as F
 
 from hsuanwu.xplore.augmentation.base import BaseAugmentation
-
+import numpy as np
 
 class RandomShift(BaseAugmentation):
     """Random shift operation for processing image-based observations.
@@ -29,7 +29,8 @@ class RandomShift(BaseAugmentation):
         base_grid = th.cat([arange, arange.transpose(1, 0)], dim=2)
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
 
-        shift = th.randint(0, 2 * self._pad + 1, size=(n, 1, 1, 2), device=x.device, dtype=x.dtype)
+        # shift = th.randint(0, 2 * self._pad + 1, size=(n, 1, 1, 2), device=x.device, dtype=x.dtype)
+        shift = th.randint(0, 2 * self._pad + 1, size=(n, 1, 1, 2), dtype=x.dtype).to(x.device) # for npu device
         shift *= 2.0 / (h + 2 * self._pad)
 
         grid = base_grid + shift

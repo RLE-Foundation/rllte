@@ -7,7 +7,10 @@ from dm_control import suite
 from dm_env import specs
 from gymnasium import core, spaces
 
-from hsuanwu.env.dmc import natural_imgsource
+try:
+    from hsuanwu.env.dmc import natural_imgsource
+except Exception:
+    pass
 
 
 # The following DMCWrapper is re-implemented based on: https://github.com/facebookresearch/deep_bisim4control/blob/main/dmc2gym/wrappers.py

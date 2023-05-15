@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hsuanwu"
-version = "0.0.1.beta06"
+version = "0.0.1.beta07"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="hsuanwudev@gmail.com" },
 ]
@@ -47,7 +47,7 @@ tests = [
   "black"
 ]
 envs = [
-  "gym==0.21.0", # for Procgen games
+  "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
   "ale-py==0.8.1",
   "gymnasium[accept-rom-license]",
   "dm-control==1.0.11",

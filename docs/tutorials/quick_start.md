@@ -48,7 +48,7 @@ python -m hsuanwuhub.train \
 
 Run `train.py` and you will see the following output:
 <div align=center>
-<img src='../../assets/images/rl_training.png'>
+<img src='../../assets/images/rl_training_gpu.png'>
 </div>
 
 !!! info "Read the logs"

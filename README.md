@@ -38,6 +38,8 @@ Join the developer community for issues and discussions:
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Build your first Hsuanwu application](#build-your-first-hsuanwu-application)
+    - [On NVIDIA GPU](#on-nvidia-gpu)
+    - [On HUAWEI NPU](#on-huawei-npu)
 - [Implemented Modules](#implemented-modules)
   - [Roadmap](#roadmap)
   - [Project Structure](#project-structure)
@@ -84,6 +86,7 @@ pip install -e .[all] # install all the dependencies
 For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
 
 ## Build your first Hsuanwu application
+### On NVIDIA GPU
 For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we only need the following two steps:
 
 1. Write a `config.yaml` file in your working directory like:
@@ -118,7 +121,7 @@ if __name__ == '__main__':
 Run `train.py` and you will see the following output:
 
 <div align=center>
-<img src='./docs/assets/images/rl_training.png'>
+<img src='./docs/assets/images/rl_training_gpu.png'>
 </div>
 
 Alternatively, you can use `HsuanwuHub` to realize fast training, in which we preset a large number of RL applications. Install `HsuanwuHub` 
@@ -133,6 +136,18 @@ python -m hsuanwuhub.train \
     device=cuda:0 \
     num_train_steps=50000
 ```
+
+### On HUAWEI NPU
+Similarly, if we want to train an agent on HUAWEI NPU, it suffices to override the training command like:
+``` sh
+python train.py device=npu:0
+```
+Then you will see the following output:
+<div align=center>
+<img src='./docs/assets/images/rl_training_npu.png'>
+</div>
+
+> Please refer to [Implemented Modules](#implemented-modules) for the compatibility of NPU.
 
 For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
 
@@ -180,8 +195,8 @@ For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/ap
 |:-|:-|:-|:-|:-|:-|:-|:-|:-|
 |SAC|❌| ✔️ |❌|❌|❌|🐌 | [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
 |DrQ|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/2004.13649) |433⭐|
-|DDPG|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------) |11819⭐|
-|DrQ-v2|❌| ✔️ |❌|❌|❌|🐌 | [Link](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |100⭐|
+|DDPG|❌| ✔️ |❌|❌|❌|✔️ | [Link](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------) |11819⭐|
+|DrQ-v2|❌| ✔️ |❌|❌|❌|✔️ | [Link](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |100⭐|
 |PPO|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://arxiv.org/pdf/1707.06347) |11155⭐|
 |DrAC|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) |29⭐|
 |DAAC|❌| ✔️ |✔️|✔️|✔️|🐌 | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |56⭐|

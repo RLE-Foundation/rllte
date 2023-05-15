@@ -123,14 +123,22 @@ class NStepReplayDataset(IterableDataset):
             early_eps_fn = self._worker_eps_fn_pool.pop(0)
             early_eps = self._worker_eps_pool.pop(early_eps_fn)
             self._worker_size -= episode_len(early_eps)
-            early_eps_fn.unlink(missing_ok=True)
+            try:
+                early_eps_fn.unlink(missing_ok=True)
+            except:
+                if early_eps_fn.exists(): # for py37
+                    early_eps_fn.unlink()
         self._worker_eps_fn_pool.append(eps_fn)
         self._worker_eps_fn_pool.sort()
         self._worker_eps_pool[eps_fn] = episode
         self._worker_size += eps_len
 
         if not self._save_snapshot:
-            eps_fn.unlink(missing_ok=True)
+            try:
+                eps_fn.unlink(missing_ok=True)
+            except:
+                if eps_fn.exists():  # for py37
+                    eps_fn.unlink()
         return True
 
     def _try_fetch(self) -> None:

@@ -10,13 +10,13 @@ from torch.nn import functional as F
 from hsuanwu.xploit.agent import utils
 from hsuanwu.xploit.agent.base import BaseAgent
 from hsuanwu.xploit.agent.networks import (ExportModel, 
-                                           OffPolicyDeterministicActor, 
+                                           NpuOffPolicyDeterministicActor, 
                                            OffPolicyDoubleCritic, 
                                            get_network_init)
 
 
-class DrQv2(BaseAgent):
-    """Data Regularized-Q v2 (DrQ-v2).
+class NpuDrQv2(BaseAgent):
+    """Data Regularized-Q v2 (DrQ-v2) for `NPU` device.
         When 'augmentation' module is deprecated, this agent will transform into
             Deep Deterministic Policy Gradient (DDPG) agent.
         Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
@@ -62,7 +62,7 @@ class DrQv2(BaseAgent):
         self.network_init_method = network_init_method
 
         # create models
-        self.actor = OffPolicyDeterministicActor(
+        self.actor = NpuOffPolicyDeterministicActor(
             action_dim=self.action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim
         ).to(self.device)
 
@@ -216,7 +216,7 @@ class DrQv2(BaseAgent):
             dist = self.actor.get_dist(next_obs, step=step)
 
             next_action = dist.sample(clip=True)
-            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+            target_Q1, target_Q2 = self.critic_target(next_obs, next_action.to(self.device))
             target_V = th.min(target_Q1, target_Q2)
             target_Q = reward + (discount * target_V)
 
@@ -251,7 +251,7 @@ class DrQv2(BaseAgent):
         dist = self.actor.get_dist(obs, step=step)
         action = dist.sample(clip=True)
 
-        Q1, Q2 = self.critic(obs, action)
+        Q1, Q2 = self.critic(obs, action.to(self.device))
         Q = th.min(Q1, Q2)
 
         actor_loss = -Q.mean()
