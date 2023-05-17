@@ -257,7 +257,7 @@ class RIDE(BaseIntrinsicRewardModule):
                 self.episodic_memory.extend(encoded_next_obs.split(1))
                 n_eps = self.pseudo_counts(e=encoded_next_obs)
 
-                dist = F.mse_loss(encoded_next_obs, encoded_obs, reduction="none").sum(dim=1)
+                dist = th.linalg.vector_norm(encoded_next_obs - encoded_obs, ord=2, dim=1)
                 intrinsic_rewards[:, i] = dist.cpu() * n_eps
 
         self.update(samples)

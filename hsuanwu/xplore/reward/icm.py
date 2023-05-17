@@ -29,13 +29,15 @@ class Encoder(nn.Module):
         # visual
         if len(obs_shape) == 3:
             self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, 8, 4),
-                nn.ReLU(),
-                nn.Conv2d(32, 64, 4, 2),
-                nn.ReLU(),
-                nn.Conv2d(64, 64, 3, 1),
-                nn.ReLU(),
-                nn.Flatten(),
+                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Flatten()
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -204,7 +206,7 @@ class ICM(BaseIntrinsicRewardModule):
                 encoded_obs = self.encoder(obs_tensor[:, i])
                 encoded_next_obs = self.encoder(next_obs_tensor[:, i])
                 pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
-                dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
+                dist = th.linalg.vector_norm(encoded_next_obs - pred_next_obs, ord=2, dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
 
         self.update(samples)

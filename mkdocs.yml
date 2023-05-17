@@ -111,7 +111,7 @@ nav:
         - EspeholtResidualEncoder: api_docs/xploit/encoder/espeholt_residual_encoder.md
         - MnihCnnEncoder: api_docs/xploit/encoder/mnih_cnn_encoder.md
         - TassaCnnEncoder: api_docs/xploit/encoder/tassa_cnn_encoder.md
-        - RaileanuCnnEncoder: api_docs/xploit/encoder/raileanu_cnn_encoder.md
+        - PathakCnnEncoder: api_docs/xploit/encoder/pathak_cnn_encoder.md
         - VanillaMlpEncoder: api_docs/xploit/encoder/vanilla_mlp_encoder.md
         - IdentityEncoder: api_docs/xploit/encoder/identity_encoder.md
 
