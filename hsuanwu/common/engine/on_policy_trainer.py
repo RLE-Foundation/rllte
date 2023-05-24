@@ -113,7 +113,7 @@ class OnPolicyTrainer(BasePolicyTrainer):
             
             # compute intrinsic rewards
             if self._agent.irs is not None:
-                intrinsic_rewards = self.irs.compute_irs(
+                intrinsic_rewards = self._agent.irs.compute_irs(
                     samples={
                         "obs": self._rollout_storage.obs[:-1],
                         "actions": self._rollout_storage.actions,
