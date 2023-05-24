@@ -229,17 +229,6 @@ class PPG(BaseAgent):
 
         generator = rollout_storage.sample()
 
-        if self.irs is not None:
-            intrinsic_reward = self.irs.compute_irs(
-                samples={
-                    "obs": rollout_storage.obs[:-1],
-                    "actions": rollout_storage.actions,
-                    "next_obs": rollout_storage.obs[1:],
-                },
-                step=episode * self.num_envs * self.num_steps,
-            )
-            rollout_storage.rewards += intrinsic_reward.to(self.device)
-
         for batch in generator:
             (
                 batch_obs,

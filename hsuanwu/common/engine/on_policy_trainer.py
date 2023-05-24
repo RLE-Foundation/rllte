@@ -110,6 +110,18 @@ class OnPolicyTrainer(BasePolicyTrainer):
             # get the value estimation of the last step
             with th.no_grad():
                 last_values = self._agent.get_value(next_obs).detach()
+            
+            # compute intrinsic rewards
+            if self._agent.irs is not None:
+                intrinsic_rewards = self.irs.compute_irs(
+                    samples={
+                        "obs": self._rollout_storage.obs[:-1],
+                        "actions": self._rollout_storage.actions,
+                        "next_obs": self._rollout_storage.obs[1:],
+                    },
+                    step=self._global_episode * self._num_envs * self._num_steps,
+                )
+                self._rollout_storage.rewards += intrinsic_rewards.to(self._device)
 
             # perform return and advantage estimation
             self._rollout_storage.compute_returns_and_advantages(last_values)

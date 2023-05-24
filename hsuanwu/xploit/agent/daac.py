@@ -183,18 +183,6 @@ class DAAC(BaseAgent):
         total_critic_loss = []
         total_entropy_loss = []
         total_aug_loss = []
-        num_steps, num_envs = rollout_storage.actions.size()[:2]
-
-        if self.irs is not None:
-            intrinsic_reward = self.irs.compute_irs(
-                samples={
-                    "obs": rollout_storage.obs[:-1],
-                    "actions": rollout_storage.actions,
-                    "next_obs": rollout_storage.obs[1:],
-                },
-                step=episode * num_envs * num_steps,
-            )
-            rollout_storage.rewards += intrinsic_reward.to(self.device)
 
         for _ in range(self.policy_epochs):
             generator = rollout_storage.sample()
