@@ -14,7 +14,7 @@
 - 🖥️ Support for multiple computing devices like GPU and NPU;
 - 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
 - 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
-- 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/).
+<!-- - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/). -->
 
 Hsuanwu ([Xuanwu, 玄武](https://en.wikipedia.org/wiki/Xuanwu_(god))) is one of the Four Symbols of the Chinese constellations, representing the north and the winter season. It is usually depicted as a turtle entwined together with a snake. Since turtles are very long-lived, we use this name to symbolize the long-term and influential development of the project.
 
@@ -65,8 +65,6 @@ Open up a terminal and install **Hsuanwu** with `pip`:
 ``` shell
 pip install hsuanwu # basic installation
 pip install hsuanwu[envs] # for pre-defined environments
-pip install hsuanwu[tests] # for project tests
-pip install hsuanwu[all] # install all the dependencies
 ```
 
 - with git
@@ -79,44 +77,31 @@ After that, run the following command to install package and dependencies:
 ``` sh
 pip install -e . # basic installation
 pip install -e .[envs] # for pre-defined environments
-pip install -e .[tests] # for project tests
-pip install -e .[all] # install all the dependencies
 ```
 
 For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
 
 ## Build your first Hsuanwu application
 ### On NVIDIA GPU
-For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and we only need the following two steps:
+For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
 
-1. Write a `config.yaml` file in your working directory like:
-``` yaml
-experiment: drqv2_dmc     # Experiment ID.
-device: cuda:0            # Device (cpu, cuda, ...) on which the code should be run.
-seed: 1                   # Random seed for reproduction.
-num_train_steps: 250000   # Number of training steps.
-
-agent:
-  name: DrQv2             # The agent name.
-```
-
-2. Write a `train.py` file like:
 ``` python
-import hydra # Use Hydra to manage experiments
+# Import `env` and `agent` api
+from hsuanwu.env import make_dmc_env 
+from hsuanwu.xploit.agent import DrQv2
 
-from hsuanwu.env import make_dmc_env # Import DeepMind Control Suite
-from hsuanwu.common.engine import HsuanwuEngine # Import Hsuanwu engine
-
-train_env = make_dmc_env(env_id='cartpole_balance') # Create train env
-test_env = make_dmc_env(env_id='cartpole_balance') # Create test env
-
-@hydra.main(version_base=None, config_path='./', config_name='config')
-def main(cfgs):
-    engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env) # Initialize engine
-    engine.invoke() # Start training
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    device = "cuda"
+    # Create env, `eval_env` is optional
+    env = make_dmc_env(env_id="cartpole_balance", device=device)
+    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
+    # create agent
+    agent = DrQv2(env=env, 
+                  eval_env=eval_env, 
+                  device='cuda',
+                  tag="drqv2_dmc_pixel")
+    # start training
+    agent.train(num_train_steps=5000)
 ```
 Run `train.py` and you will see the following output:
 
