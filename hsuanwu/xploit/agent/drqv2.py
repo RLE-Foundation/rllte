@@ -115,7 +115,8 @@ class DrQv2(OffPolicyAgent):
         self.critic = OffPolicyDoubleCritic(
             action_dim=self.action_dim, 
             feature_dim=self.feature_dim, 
-            hidden_dim=hidden_dim)
+            hidden_dim=hidden_dim
+        )
 
         self.critic_target = OffPolicyDoubleCritic(
             action_dim=self.action_dim, 
