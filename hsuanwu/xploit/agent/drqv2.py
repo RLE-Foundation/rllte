@@ -43,7 +43,7 @@ class DrQv2(OffPolicyAgent):
         network_init_method (str): Network initialization method name.
 
     Returns:
-        PPO agent instance.
+        DrQv2 agent instance.
     """
 
     def __init__(

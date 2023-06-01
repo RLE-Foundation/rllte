@@ -114,7 +114,7 @@ class IMPALA(DistributedAgent):
         network_init_method (str): Network initialization method name.
 
     Returns:
-        PPO agent instance.
+        IMPALA agent instance.
     """
 
     def __init__(
