@@ -91,7 +91,7 @@ from hsuanwu.env import make_dmc_env
 from hsuanwu.xploit.agent import DrQv2
 
 if __name__ == "__main__":
-    device = "cuda"
+    device = "cuda:0"
     # Create env, `eval_env` is optional
     env = make_dmc_env(env_id="cartpole_balance", device=device)
     eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
@@ -109,23 +109,25 @@ Run `train.py` and you will see the following output:
 <img src='./docs/assets/images/rl_training_gpu.png'>
 </div>
 
-Alternatively, you can use `HsuanwuHub` to realize fast training, in which we preset a large number of RL applications. Install `HsuanwuHub` 
-with `pip`:
-``` sh
-pip install hsuanwuhub
-```
-Then run the following command to perform training directly:
-``` sh
-python -m hsuanwuhub.train \
-    task=drqv2_dmc_pixel \
-    device=cuda:0 \
-    num_train_steps=50000
-```
-
 ### On HUAWEI NPU
-Similarly, if we want to train an agent on HUAWEI NPU, it suffices to override the training command like:
-``` sh
-python train.py device=npu:0
+Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
+``` python
+# Import `env` and `agent` api
+from hsuanwu.env import make_dmc_env 
+from hsuanwu.xploit.agent import NpuDrQv2
+
+if __name__ == "__main__":
+    device = "npu:0"
+    # Create env, `eval_env` is optional
+    env = make_dmc_env(env_id="cartpole_balance", device=device)
+    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
+    # create agent
+    agent = NpuDrQv2(env=env, 
+                  eval_env=eval_env, 
+                  device='cuda',
+                  tag="drqv2_dmc_pixel")
+    # start training
+    agent.train(num_train_steps=5000)
 ```
 Then you will see the following output:
 <div align=center>
