@@ -1,7 +1,7 @@
 import torch as th
 import torch.distributions as pyd
 
-from hsuanwu.xplore.distribution import BaseDistribution
+from hsuanwu.common.base_distribution import BaseDistribution
 
 
 class Bernoulli(BaseDistribution):

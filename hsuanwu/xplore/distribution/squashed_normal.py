@@ -4,7 +4,7 @@ import torch as th
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from hsuanwu.xplore.distribution.base import BaseDistribution
+from hsuanwu.common.base_distribution import BaseDistribution
 
 
 class TanhTransform(pyd.transforms.Transform):

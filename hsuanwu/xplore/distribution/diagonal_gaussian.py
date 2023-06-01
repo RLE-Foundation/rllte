@@ -1,7 +1,7 @@
 import torch as th
 from torch import distributions as pyd
 
-from hsuanwu.xplore.distribution.base import BaseDistribution
+from hsuanwu.common.base_distribution import BaseDistribution
 
 
 class DiagonalGaussian(BaseDistribution):

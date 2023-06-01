@@ -1,6 +1,6 @@
 import torch as th
 
-from hsuanwu.xplore.augmentation.base import BaseAugmentation
+from hsuanwu.common.base_augmentation import BaseAugmentation
 
 
 class RandomFlip(BaseAugmentation):

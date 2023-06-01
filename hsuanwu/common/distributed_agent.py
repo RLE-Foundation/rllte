@@ -4,7 +4,7 @@ import time
 import traceback
 from collections import deque
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import gymnasium as gym
 import hydra
@@ -14,17 +14,17 @@ import torch as th
 from torch import multiprocessing as mp
 from torch import nn
 
-from hsuanwu.common.engine.base_policy_trainer import BasePolicyTrainer
-from hsuanwu.common.logger import Logger
+import gymnasium as gym
+import numpy as np
+import torch as th
 
-os.environ["OMP_NUM_THREADS"] = "1"
-
+from hsuanwu.common.base_agent import BaseAgent
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.
 
     Args:
-        env (env): A Gym-like env.
+        env (Env): A Gym-like env.
 
     Returns:
         Processed env.
@@ -122,122 +122,76 @@ class Environment:
         obs = th.from_numpy(np.array(obs))
         return obs.view((1, 1, *obs.shape))
 
-
-class DistributedTrainer(BasePolicyTrainer):
+class DistributedAgent(BaseAgent):
     """Trainer for distributed algorithms.
 
     Args:
-        train_env (Env): A list of Gym-like environments for training.
-        test_env (Env): A Gym-like environment for testing.
-        cfgs (DictConfig): Dict config for configuring RL algorithms.
+        env (Env): A Gym-like environment for training.
+        eval_env (Env): A Gym-like environment for evaluation.
+        tag (str): An experiment tag.
+        seed (int): Random seed for reproduction.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        pretraining (bool): Turn on pre-training model or not.
+        num_steps (int): The sample length of per rollout.
+        num_actors (int): Number of actors.
+        num_learners (int): Number of learners.
+        num_storages (int): Number of storages.
+        batch_size (int): Number of samples per batch to load.
 
     Returns:
-        Distributed trainer instance.
+        Distributed agent instance.
     """
+    def __init__(self, 
+                 env: gym.Env,
+                 eval_env: Optional[gym.Env] = None,
+                 tag: str = "default",
+                 seed: int = 1,
+                 device: str = "cpu",
+                 num_steps: int = 80,
+                 num_actors: int = 45,
+                 num_learners: int = 4,
+                 num_storages: int = 60,
+                 batch_size: int = 4
+                 ) -> None:
+        super().__init__(env=env,
+                         eval_env=eval_env,
+                         tag=tag,
+                         seed=seed,
+                         device=device,
+                         pretraining=False
+                         )
+        self.num_actors = num_actors
+        self.num_learners = num_learners
+        self.num_steps = num_steps
+        self.num_storages = num_storages
+        self.batch_size = batch_size
+        # get separate environments
+        self.env = self.env.envs
 
-    def __init__(self, cfgs: omegaconf.DictConfig, train_env: gym.Env, test_env: gym.Env = None) -> None:
-        super().__init__(cfgs, train_env, test_env)
-        self._logger.info("Deploying DistributedTrainer...")
-        # xploit part
-        self._agent = hydra.utils.instantiate(self._cfgs.agent)
-        encoder = hydra.utils.instantiate(self._cfgs.encoder)
-
-        ## TODO: build storage
-        self._shared_storages = hydra.utils.instantiate(self._cfgs.storage)
-        self._train_env = self._train_env.envs
-
-        # xplore part
-        ## TODO: build distribution
-        if "Noise" in self._cfgs.distribution._target_:
-            dist = hydra.utils.instantiate(self._cfgs.distribution)
-        else:
-            dist = hydra.utils.get_class(self._cfgs.distribution._target_)
-
-        def lr_lambda(epoch):
-            return (
-                1.0
-                - min(
-                    epoch * self._cfgs.num_steps * self._cfgs.num_learners,
-                    self._cfgs.num_train_steps,
-                )
-                / self._cfgs.num_train_steps
-            )
-
-        # TODO: Integrate agent and modules
-        self._agent.integrate(encoder=encoder, dist=dist, lr_lambda=lr_lambda)
-
-    @staticmethod
-    def act(  # noqa: C901
-        cfgs: omegaconf.DictConfig,
-        logger: Logger,
-        gym_env: gym.Env,
-        actor_idx: int,
-        actor_model: nn.Module,
-        free_queue: mp.SimpleQueue,
-        full_queue: mp.SimpleQueue,
-        storages: Dict[str, List],
-        init_actor_state_storages: List[th.Tensor],
-    ) -> None:
-        """Sampling function for each actor.
-
+    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None:
+        """Training function.
+        
         Args:
-            cfgs (DictConfig): Training configs.
-            logger (Logger): Hsuanwu logger.
-            gym_env (Env): A Gym-like environment.
-            actor_idx (int): The index of actor.
-            actor_model (NNMoudle): Actor network.
-            free_queue (Queue): Free queue for communication.
-            full_queue (Queue): Full queue for communication.
-            storages (List[Storage]): A list of shared storages.
-            init_actor_state_storages (List[Tensor]): Initial states for LSTM.
+            num_train_steps (int): Number of training steps.
+            init_model_path (Optional[str]): Path of Iinitial model parameters.
 
         Returns:
             None.
         """
-        try:
-            logger.info(f"Actor {actor_idx} started!")
+        # freeze the structure of the agent
+        self.freeze()
+        # final check
+        self.check()
+        # load initial model parameters 
+        if init_model_path is not None:
+            self.load(init_model_path)
+        
+        def lr_lambda(epoch):
+            return (
+                1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
+            )
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, lr_lambda)
 
-            env = Environment(gym_env)
-            seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
-            env_output = env.reset(seed)
-
-            actor_state = actor_model.init_state(batch_size=1)
-            actor_output, _ = actor_model.get_action(env_output, actor_state)
-
-            while True:
-                idx = free_queue.get()
-                if idx is None:
-                    break
-
-                # Write old rollout end.
-                for key in env_output:
-                    storages[key][idx][0, ...] = env_output[key]
-                for key in actor_output:
-                    storages[key][idx][0, ...] = actor_output[key]
-                for i, tensor in enumerate(actor_state):
-                    init_actor_state_storages[idx][i][...] = tensor
-
-                # Do new rollout.
-                for t in range(cfgs.num_steps):
-                    with th.no_grad():
-                        actor_output, actor_state = actor_model.get_action(env_output, actor_state)
-                    env_output = env.step(actor_output["action"])
-
-                    for key in env_output:
-                        storages[key][idx][t + 1, ...] = env_output[key]
-                    for key in actor_output:
-                        storages[key][idx][t + 1, ...] = actor_output[key]
-
-                full_queue.put(idx)
-
-        except KeyboardInterrupt:
-            pass  # Return silently.
-        except Exception as e:
-            logger.error(f"Exception in worker process {actor_idx}!")
-            traceback.print_exc()
-            raise e
-
-    def train(self) -> None:  # noqa: C901
         """Training function"""
         global_step = 0
         global_episode = 0
@@ -248,31 +202,28 @@ class DistributedTrainer(BasePolicyTrainer):
         def sample_and_update(i, lock=threading.Lock()):  # noqa: B008
             """Thread target for the learning process."""
             nonlocal global_step, global_episode, metrics
-            while global_step < self._cfgs.num_train_steps:
-                batch, actor_states = self._shared_storages.sample(
-                    device=self._cfgs.device,
-                    batch_size=self._cfgs.storage.batch_size,
+            while global_step < num_train_steps:
+                batch, actor_states = self.storage.sample(
+                    device=self.device,
+                    batch_size=self.batch_size,
                     free_queue=free_queue,
                     full_queue=full_queue,
-                    storages=self._shared_storages.storages,
+                    storages=self.storage.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
-                metrics = self._agent.update(
-                    actor_model=self._agent.actor,
-                    learner_model=self._agent.learner,
+                metrics = self.update(
                     batch=batch,
                     init_actor_states=actor_states,
-                    optimizer=self._agent.opt,
-                    lr_scheduler=self._agent.lr_scheduler,
+                    lr_scheduler=self.lr_scheduler,
                 )
                 with lock:
-                    global_step += self._cfgs.num_steps * self._cfgs.storage.batch_size
-                    global_episode += self._cfgs.storage.batch_size
+                    global_step += self.num_steps * self.batch_size
+                    global_episode += self.batch_size
 
         # TODO: Add initial RNN state.
         init_actor_state_storages = []
-        for _ in range(self._cfgs.storage.num_storages):
-            state = self._agent.actor.init_state(batch_size=1)
+        for _ in range(self.num_storages):
+            state = self.actor.init_state(batch_size=1)
             for t in state:
                 t.share_memory_()
             init_actor_state_storages.append(state)
@@ -282,37 +233,34 @@ class DistributedTrainer(BasePolicyTrainer):
         free_queue = ctx.SimpleQueue()
         full_queue = ctx.SimpleQueue()
 
-        for actor_idx in range(self._cfgs.num_actors):
+        for actor_idx in range(self.num_actors):
             actor = ctx.Process(
                 target=self.act,
                 kwargs={
-                    "cfgs": self._cfgs,
-                    "logger": self._logger,
-                    "gym_env": self._train_env[actor_idx],
+                    "env": Environment(self.env[actor_idx]),
                     "actor_idx": actor_idx,
-                    "actor_model": self._agent.actor,
                     "free_queue": free_queue,
                     "full_queue": full_queue,
-                    "storages": self._shared_storages.storages,
                     "init_actor_state_storages": init_actor_state_storages,
                 },
             )
             actor.start()
             actor_pool.append(actor)
+        self.logger.info(f"{self.num_actors} actors started!")
 
-        for m in range(self._cfgs.storage.num_storages):
+        for m in range(self.num_storages):
             free_queue.put(m)
 
         threads = []
-        for i in range(self._cfgs.num_learners):
+        for i in range(self.num_learners):
             thread = threading.Thread(target=sample_and_update, name="sample-and-update-%d" % i, args=(i,))
             thread.start()
-            self._logger.info(f"Learner {i} started!")
             threads.append(thread)
+        self.logger.info(f"{self.num_learners} learners started!")
 
         try:
             log_times = 0
-            while global_step < self._cfgs.num_train_steps:
+            while global_step < num_train_steps:
                 start_step = global_step
                 time.sleep(5)
 
@@ -321,7 +269,7 @@ class DistributedTrainer(BasePolicyTrainer):
                     episode_steps.extend(metrics["episode_steps"])
 
                 if len(episode_rewards) > 0:
-                    episode_time, total_time = self._timer.reset()
+                    episode_time, total_time = self.timer.reset()
                     train_metrics = {
                         "step": global_step,
                         "episode": global_episode,
@@ -330,18 +278,18 @@ class DistributedTrainer(BasePolicyTrainer):
                         "fps": (global_step - start_step) / episode_time,
                         "total_time": total_time,
                     }
-                    self._logger.train(msg=train_metrics)
+                    self.logger.train(msg=train_metrics)
                     log_times += 1
 
                 # if log_times % 50 == 0:
-                #     episode_time, total_time = self._timer.reset()
+                #     episode_time, total_time = self.timer.reset()
                 #     test_metrics = self.test()
                 #     test_metrics.update({
                 #         "step": global_step,
                 #         "episode": global_episode,
                 #         "total_time": total_time,
                 #         })
-                #     self._logger.test(msg=test_metrics)
+                #     self.logger.test(msg=test_metrics)
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
@@ -349,26 +297,26 @@ class DistributedTrainer(BasePolicyTrainer):
         else:
             for thread in threads:
                 thread.join()
-            self._logger.info("Training Accomplished!")
+            self.logger.info("Training Accomplished!")
             # save model
             self.save()
         finally:
-            for _ in range(self._cfgs.num_actors):
+            for _ in range(self.num_actors):
                 free_queue.put(None)
             for actor in actor_pool:
                 actor.join(timeout=1)
 
-    def test(self) -> Dict[str, float]:
-        """Testing function."""
-        env = Environment(self._test_env.envs[0])
-        seed = self._cfgs.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
+    def eval(self) -> Dict[str, float]:
+        """Evaluation function."""
+        env = Environment(self.eval_env.envs[0])
+        seed = self.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
         env_output = env.reset(seed)
 
         episode_rewards = list()
         episode_steps = list()
-        while len(episode_rewards) < self._cfgs.num_test_episodes:
+        while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad():
-                actor_output, _ = self._agent.actor.get_action(env_output, training=False)
+                actor_output, _ = self.actor.get_action(env_output, training=False)
             env_output = env.step(actor_output["action"])
             if env_output["terminated"].item() or env_output["truncated"].item():
                 episode_rewards.append(env_output["episode_return"].item())
@@ -378,10 +326,3 @@ class DistributedTrainer(BasePolicyTrainer):
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),
         }
-
-    def save(self) -> None:
-        """Save the trained model."""
-        save_dir = Path.cwd() / "model"
-        save_dir.mkdir(exist_ok=True)
-        self._agent.save(path=save_dir)
-        self._logger.info(f"Model saved at: {save_dir}")

@@ -14,7 +14,7 @@ TRAIN_MSG_FORMAT = [
     ("total_time", "T", "time"),
 ]
 
-TEST_MSG_FORMAT = [
+EVAL_MSG_FORMAT = [
     ("step", "S", "int"),
     ("episode", "E", "int"),
     ("episode_length", "L", "int"),
@@ -37,9 +37,9 @@ class Logger:
         self._log_dir = log_dir
 
         self._train_file = self._log_dir / "train.log"
-        self._test_file = self._log_dir / "test.log"
+        self._eval_file = self._log_dir / "eval.log"
         self._train_file_write_header = True
-        self._test_file_write_header = True
+        self._eval_file_write_header = True
 
     def _format(self, key: str, value: Any, ty: str):
         if ty == "int":
@@ -60,9 +60,9 @@ class Logger:
             pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
-    def parse_test_msg(self, msg: Any) -> str:
+    def parse_eval_msg(self, msg: Any) -> str:
         pieces = []
-        for key, disp_key, ty in TEST_MSG_FORMAT:
+        for key, disp_key, ty in EVAL_MSG_FORMAT:
             value = msg.get(key, 0)
             pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
@@ -123,8 +123,8 @@ class Logger:
         self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
         self._train_file_write_header = False
 
-    def test(self, msg: Dict) -> None:
-        """Output msg with 'test' level.
+    def eval(self, msg: Dict) -> None:
+        """Output msg with 'eval' level.
 
         Args:
             msg (str): Message to be printed.
@@ -132,11 +132,11 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU TEST".ljust(13, " "), "green", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + self.parse_test_msg(msg))
+        prefix = "[" + colored("HSUANWU EVAL.".ljust(13, " "), "green", attrs=["bold"]) + "] - "
+        print(self.time_stamp + prefix + self.parse_eval_msg(msg))
         # save data
-        self._dump_to_csv(self._test_file, msg, self._test_file_write_header)
-        self._test_file_write_header = False
+        self._dump_to_csv(self._eval_file, msg, self._eval_file_write_header)
+        self._eval_file_write_header = False
 
     def _dump_to_csv(self, file: Path, data: Dict, write_header: bool) -> None:
         csv_file = file.open("a")

@@ -1,6 +1,5 @@
 class eval_mode:
     """Set the evaluation mode."""
-
     def __init__(self, *models):
         self.models = models
 
@@ -8,9 +7,9 @@ class eval_mode:
         self.prev_states = []
         for model in self.models:
             self.prev_states.append(model.training)
-            model.train(False)
+            model.mode(False)
 
     def __exit__(self, *args):
         for model, state in zip(self.models, self.prev_states):
-            model.train(state)
+            model.mode(state)
         return False

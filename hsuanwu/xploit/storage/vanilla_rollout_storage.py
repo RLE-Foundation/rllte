@@ -5,19 +5,15 @@ import torch as th
 from omegaconf import DictConfig
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from hsuanwu.xploit.storage.base import BaseStorage
+from hsuanwu.common.base_storage import BaseStorage
 
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
-            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like
-            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        observation_space (Space): The observation space of environment.
+        action_space (Space): The action space of environment. 
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
@@ -31,8 +27,8 @@ class VanillaRolloutStorage(BaseStorage):
 
     def __init__(
         self,
-        observation_space: Union[gym.Space, DictConfig],
-        action_space: Union[gym.Space, DictConfig],
+        observation_space: gym.Space,
+        action_space: gym.Space,
         device: str = "cpu",
         num_steps: int = 256,
         num_envs: int = 8,

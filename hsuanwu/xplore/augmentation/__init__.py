@@ -1,4 +1,3 @@
-from .base import BaseAugmentation as BaseAugmentation
 from .gaussian_noise import GaussianNoise as GaussianNoise
 from .grayscale import GrayScale as GrayScale
 from .random_amplitude_scaling import RandomAmplitudeScaling as RandomAmplitudeScaling

@@ -1,26 +1,38 @@
 import os
 import threading
+import traceback
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Any, Dict, Tuple, List, Optional
 
 import gymnasium as gym
+import numpy as np
 import torch as th
-from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
+from torch import multiprocessing as mp
 
-from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.common.distributed_agent import DistributedAgent, Environment
 from hsuanwu.xploit.agent.networks import DistributedActorCritic, get_network_init
-
+from hsuanwu.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from hsuanwu.xploit.storage import DistributedStorage as Storage
+from hsuanwu.xplore.distribution import Categorical, DiagonalGaussian
 
 class VTraceLoss:
+    """V-trace loss function.
+
+    Args:
+        clip_rho_threshold (float): Clipping coefficient of `rho`.
+        clip_pg_rho_threshold (float): Clipping coefficient of policy gradient `rho`.
+
+    Returns:
+        V-trace loss instance.
+    """
     def __init__(
         self,
-        clip_rho_threshold=1.0,
-        clip_pg_rho_threshold=1.0,
+        clip_rho_threshold: float = 1.0,
+        clip_pg_rho_threshold: float = 1.0,
     ) -> None:
-        self.dist = None
         self.clip_rho_threshold = clip_rho_threshold
         self.clip_pg_rho_threshold = clip_pg_rho_threshold
 
@@ -74,22 +86,26 @@ class VTraceLoss:
 
         return pg_loss, baseline_loss, entropy_loss
 
-
-class IMPALA(BaseAgent):
+class IMPALA(DistributedAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
+        Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
-            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like
-            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        env (Env): A Gym-like environment for training.
+        eval_env (Env): A Gym-like environment for evaluation.
+        tag (str): An experiment tag.
+        seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
+
+        num_steps (int): The sample length of per rollout.
+        num_actors (int): Number of actors.
+        num_learners (int): Number of learners.
+        num_storages (int): Number of storages.
         feature_dim (int): Number of features extracted by the encoder.
+        batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
-
+        hidden_dim (int): The size of the hidden layers.
         use_lstm (bool): Use LSTM in the policy network or not.
         ent_coef (float): Weighting coefficient of entropy bonus.
         baseline_coef(float): Weighting coefficient of baseline value loss.
@@ -98,15 +114,22 @@ class IMPALA(BaseAgent):
         network_init_method (str): Network initialization method name.
 
     Returns:
-        IMPALA distance.
+        PPO agent instance.
     """
 
     def __init__(
         self,
-        observation_space: Union[gym.Space, DictConfig],
-        action_space: Union[gym.Space, DictConfig],
-        device: str,
-        feature_dim: int,
+        env: gym.Env, 
+        eval_env: Optional[gym.Env] = None,
+        tag: str = "default",
+        seed: int = 1,
+        device: str = "cpu",
+        num_steps: int = 80,
+        num_actors: int = 45,
+        num_learners: int = 4,
+        num_storages: int = 60,
+        feature_dim: int = 512,
+        batch_size: int = 4,
         lr: float = 4e-4,
         eps: float = 0.01,
         use_lstm: bool = False,
@@ -116,14 +139,57 @@ class IMPALA(BaseAgent):
         discount: float = 0.99,
         network_init_method: str = "identity",
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
-
+        super().__init__(env=env,
+                         eval_env=eval_env,
+                         tag=tag,
+                         seed=seed,
+                         device=device,
+                         num_steps=num_steps,
+                         num_actors=num_actors,
+                         num_learners=num_learners,
+                         batch_size=batch_size
+                         )
+        self.feature_dim = feature_dim
+        self.lr = lr
+        self.eps = eps
         self.ent_coef = ent_coef
         self.baseline_coef = baseline_coef
         self.max_grad_norm = max_grad_norm
         self.discount = discount
         self.network_init_method = network_init_method
 
+        # build encoder
+        if len(self.obs_shape) == 3:
+            self.encoder = MnihCnnEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+        elif len(self.obs_shape) == 1:
+            self.encoder = IdentityEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+            self.feature_dim = self.obs_shape[0]
+
+        # build storage
+        self.storage = Storage(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            num_steps=self.num_steps,
+            num_storages=num_storages,
+            batch_size=batch_size
+        )
+
+        # build distribution
+        if self.action_type == "Discrete":
+            self.dist = Categorical
+        elif self.action_type == "Box":
+            self.dist = DiagonalGaussian
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
+        # create models
         self.actor = DistributedActorCritic(
             obs_shape=self.action_type,
             action_shape=self.action_shape,
@@ -142,9 +208,9 @@ class IMPALA(BaseAgent):
             feature_dim=feature_dim,
             use_lstm=use_lstm,
         )
-
-    def train(self, training: bool = True) -> None:
-        """Set the train mode.
+        
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
 
         Args:
             training (bool): True (training) or False (testing).
@@ -156,14 +222,43 @@ class IMPALA(BaseAgent):
         self.actor.train(training)
         self.learner.train(training)
 
-    def integrate(self, **kwargs) -> None:
-        """Integrate agent and other modules (encoder, reward, ...) together"""
+    def set(self, 
+            encoder: Optional[Any] = None,
+            storage: Optional[Any] = None,
+            distribution: Optional[Any] = None,
+            augmentation: Optional[Any] = None,
+            reward: Optional[Any] = None,
+            ) -> None:
+        """Set a module for the agent.
+
+        Args:
+            encoder (Optional[Any]): An encoder of `hsuanwu.xploit.encoder` or a custom encoder.
+            storage (Optional[Any]): A storage of `hsuanwu.xploit.storage` or a custom storage.
+            distribution (Optional[Any]): A distribution of `hsuanwu.xplore.distribution` or a custom distribution.
+            augmentation (Optional[Any]): An augmentation of `hsuanwu.xplore.augmentation` or a custom augmentation.
+            reward (Optional[Any]): A reward of `hsuanwu.xplore.reward` or a custom reward.
+
+        Returns:
+            None.
+        """
+        super().set(
+            encoder=encoder,
+            storage=storage,
+            distribution=distribution,
+            augmentation=augmentation,
+            reward=reward
+        )
+        if encoder is not None:
+            self.encoder = encoder
+            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
+    
+    def freeze(self) -> None:
+        """Freeze the structure of the agent."""
         # set encoder and distribution
-        self.actor.encoder = kwargs["encoder"]
-        self.learner.encoder = deepcopy(kwargs["encoder"])
-        self.actor.dist = kwargs["dist"]
-        self.learner.dist = kwargs["dist"]
-        self.dist = kwargs["dist"]
+        self.actor.encoder = self.encoder
+        self.learner.encoder = deepcopy(self.encoder)
+        self.actor.dist = self.dist
+        self.learner.dist = self.dist
         # network initialization
         self.actor.apply(get_network_init(self.network_init_method))
         self.learner.apply(get_network_init(self.network_init_method))
@@ -177,20 +272,73 @@ class IMPALA(BaseAgent):
             lr=self.lr,
             eps=self.eps,
         )
-        # set lr scheduler
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, kwargs["lr_lambda"])
+        # set the training mode
+        self.mode(training=True)
 
-    def act(self, *kwargs):
-        """Sample actions based on observations."""
-        return None
+    def act(
+        self,
+        env: Environment,
+        actor_idx: int,
+        free_queue: mp.SimpleQueue,
+        full_queue: mp.SimpleQueue,
+        init_actor_state_storages: List[th.Tensor],
+    ) -> None:
+        """Sampling function for each actor.
 
+        Args:
+            env (Environment): A Gym-like environment wrapped by `Environment`.
+            actor_idx (int): The index of actor.
+            free_queue (Queue): Free queue for communication.
+            full_queue (Queue): Full queue for communication.
+            init_actor_state_storages (List[Tensor]): Initial states for LSTM.
+
+        Returns:
+            None.
+        """
+        try:
+            seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
+            env_output = env.reset(seed)
+
+            actor_state = self.actor.init_state(batch_size=1)
+            actor_output, _ = self.actor.get_action(env_output, actor_state)
+
+            while True:
+                idx = free_queue.get()
+                if idx is None:
+                    break
+
+                # Write old rollout end.
+                for key in env_output:
+                    self.storage.storages[key][idx][0, ...] = env_output[key]
+                for key in actor_output:
+                    self.storage.storages[key][idx][0, ...] = actor_output[key]
+                for i, tensor in enumerate(actor_state):
+                    init_actor_state_storages[idx][i][...] = tensor
+
+                # Do new rollout.
+                for t in range(self.num_steps):
+                    with th.no_grad():
+                        actor_output, actor_state = self.actor.get_action(env_output, actor_state)
+                    env_output = env.step(actor_output["action"])
+
+                    for key in env_output:
+                        self.storage.storages[key][idx][t + 1, ...] = env_output[key]
+                    for key in actor_output:
+                        self.storage.storages[key][idx][t + 1, ...] = actor_output[key]
+
+                full_queue.put(idx)
+
+        except KeyboardInterrupt:
+            pass  # Return silently.
+        except Exception as e:
+            self.logger.error(f"Exception in worker process {actor_idx}!")
+            traceback.print_exc()
+            raise e
+        
     def update(
         self,
-        actor_model: nn.Module,
-        learner_model: nn.Module,
         batch: Dict,
         init_actor_states: Tuple[th.Tensor, ...],
-        optimizer: th.optim.Optimizer,
         lr_scheduler: th.optim.lr_scheduler,
         lock=threading.Lock(),  # noqa B008
     ) -> Dict[str, Tuple]:
@@ -198,11 +346,8 @@ class IMPALA(BaseAgent):
         Update the learner model.
 
         Args:
-            actor_model (NNMoudle): Actor network.
-            learner_model (NNMoudle): Learner network.
             batch (Batch): Batch samples.
             init_actor_states (List[Tensor]): Initial states for LSTM.
-            optimizer (th.optim.Optimizer): Optimizer.
             lr_scheduler (th.optim.lr_scheduler): Learning rate scheduler.
             lock (Lock): Thread lock.
 
@@ -210,7 +355,7 @@ class IMPALA(BaseAgent):
             Training metrics.
         """
         with lock:
-            learner_outputs, _ = learner_model.get_action(batch, init_actor_states)
+            learner_outputs, _ = self.learner.get_action(batch, init_actor_states)
 
             # Take final value function slice for bootstrapping.
             bootstrap_value = learner_outputs["baseline"][-1]
@@ -225,8 +370,8 @@ class IMPALA(BaseAgent):
                 {
                     "discounts": discounts,
                     "bootstrap_value": bootstrap_value,
-                    "target_dist": learner_model.get_dist(learner_outputs["policy_outputs"]),
-                    "behavior_dist": learner_model.get_dist(batch["policy_outputs"]),
+                    "target_dist": self.learner.get_dist(learner_outputs["policy_outputs"]),
+                    "behavior_dist": self.learner.get_dist(batch["policy_outputs"]),
                     "values": learner_outputs["baseline"],
                 }
             )
@@ -237,13 +382,13 @@ class IMPALA(BaseAgent):
             episode_returns = batch["episode_return"][batch["terminated"]]
             episode_steps = batch["episode_step"][batch["terminated"]]
 
-            optimizer.zero_grad()
+            self.opt.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(learner_model.parameters(), self.max_grad_norm)
-            optimizer.step()
+            nn.utils.clip_grad_norm_(self.learner.parameters(), self.max_grad_norm)
+            self.opt.step()
             lr_scheduler.step()
 
-            actor_model.load_state_dict(learner_model.state_dict())
+            self.actor.load_state_dict(self.learner.state_dict())
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
@@ -253,16 +398,13 @@ class IMPALA(BaseAgent):
                 "entropy_loss": entropy_loss.item(),
             }
 
-    def save(self, path: Path) -> None:
-        """Save models.
-
-        Args:
-            path (Path): Storage path.
-
-        Returns:
-            None.
-        """
-        th.save(self.learner, path / "agent.pth")
+    def save(self) -> None:
+        """Save models."""
+        save_dir = Path.cwd() / "model"
+        save_dir.mkdir(exist_ok=True)
+        th.save(self.learner, save_dir / "agent.pth")
+            
+        self.logger.info(f"Model saved at: {save_dir}")
 
     def load(self, path: str) -> None:
         """Load initial parameters.
@@ -273,6 +415,7 @@ class IMPALA(BaseAgent):
         Returns:
             None.
         """
+        self.logger.info(f"Loading Initial Parameters from {path}")
         actor_params = th.load(os.path.join(path, "actor.pth"), map_location=self.device)
         learner_params = th.load(os.path.join(path, "learner.pth"), map_location=self.device)
         self.actor.load_state_dict(actor_params)

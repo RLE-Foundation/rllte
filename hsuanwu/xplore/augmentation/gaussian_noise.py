@@ -1,7 +1,7 @@
 import torch as th
 from torch.distributions import Normal
 
-from hsuanwu.xplore.augmentation.base import BaseAugmentation
+from hsuanwu.common.base_augmentation import BaseAugmentation
 
 
 class GaussianNoise(BaseAugmentation):

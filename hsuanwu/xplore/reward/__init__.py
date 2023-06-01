@@ -1,4 +1,3 @@
-from .base import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
 from .girm import GIRM as GIRM
 from .icm import ICM as ICM
 from .ngu import NGU as NGU

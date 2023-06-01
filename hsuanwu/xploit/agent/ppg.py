@@ -1,34 +1,36 @@
 import os
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union, Optional
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.xploit.agent.base import BaseAgent
+from hsuanwu.common.on_policy_agent import OnPolicyAgent
 from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
+from hsuanwu.xploit.encoder import MnihCnnEncoder, IdentityEncoder
 from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
+from hsuanwu.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
 
-
-class PPG(BaseAgent):
+class PPG(OnPolicyAgent):
     """Phasic Policy Gradient (PPG) agent.
         Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
-            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like
-            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        env (Env): A Gym-like environment for training.
+        eval_env (Env): A Gym-like environment for evaluation.
+        tag (str): An experiment tag.
+        seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
+        pretraining (bool): Turn on the pre-training mode.
+
+        num_steps (int): The sample length of per rollout.
+        eval_every_episodes (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
+        batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
-
         hidden_dim (int): The size of the hidden layers.
         clip_range (float): Clipping parameter.
         clip_range_vf (float): Clipping parameter for the value function.
@@ -49,11 +51,17 @@ class PPG(BaseAgent):
 
     def __init__(
         self,
-        observation_space: Union[gym.Space, DictConfig],
-        action_space: Union[gym.Space, DictConfig],
-        device: str,
-        feature_dim: int,
-        lr: float = 5e-4,
+        env: gym.Env, 
+        eval_env: Optional[gym.Env] = None,
+        tag: str = "default",
+        seed: int = 1,
+        device: str = "cpu",
+        pretraining: bool = False,
+        num_steps: int = 128,
+        eval_every_episodes: int = 10,
+        feature_dim: int = 512,
+        batch_size: int = 256,
+        lr: float = 2.5e-4,
         eps: float = 1e-5,
         hidden_dim: int = 256,
         clip_range: float = 0.2,
@@ -69,8 +77,17 @@ class PPG(BaseAgent):
         num_aux_grad_accum: int = 1,
         network_init_method: str = "xavier_uniform",
     ) -> None:
-        super().__init__(observation_space, action_space, device, feature_dim, lr, eps)
-
+        super().__init__(env=env,
+                         eval_env=eval_env,
+                         tag=tag,
+                         seed=seed,
+                         device=device,
+                         pretraining=pretraining,
+                         num_steps=num_steps,
+                         eval_every_episodes=eval_every_episodes)
+        self.feature_dim = feature_dim
+        self.lr = lr
+        self.eps = eps
         self.clip_range = clip_range
         self.clip_range_vf = clip_range_vf
         self.vf_coef = vf_coef
@@ -84,26 +101,57 @@ class PPG(BaseAgent):
         self.num_aux_mini_batch = num_aux_mini_batch
         self.network_init_method = network_init_method
 
-        # auxiliary storage
-        self.aux_obs = None
-        self.aux_returns = None
-        # self.aux_logits = None
-        self.aux_policy_outputs = None
+        # build encoder
+        if len(self.obs_shape) == 3:
+            self.encoder = MnihCnnEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+        elif len(self.obs_shape) == 1:
+            self.encoder = IdentityEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+            self.feature_dim = self.obs_shape[0]
 
-        # create models
-        self.encoder = None
+        # build storage
+        self.storage = Storage(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            num_steps=self.num_steps,
+            num_envs=self.num_envs,
+            batch_size=batch_size
+        )
+
+        # build distribution
+        if self.action_type == "Discrete":
+            self.dist = Categorical
+        elif self.action_type == "Box":
+            self.dist = DiagonalGaussian
+        elif self.action_type == "MultiBinary":
+            self.dist = Bernoulli
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
         # create models
         self.ac = OnPolicySharedActorCritic(
             obs_shape=self.obs_shape,
             action_dim=self.action_dim,
             action_type=self.action_type,
-            feature_dim=feature_dim,
+            feature_dim=self.feature_dim,
             hidden_dim=hidden_dim,
-            aux_critic=True,
+            aux_critic=True
         )
 
-    def train(self, training: bool = True) -> None:
-        """Set the train mode.
+        # auxiliary storage
+        self.aux_obs = None
+        self.aux_returns = None
+        # self.aux_logits = None
+        self.aux_policy_outputs = None
+        
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
 
         Args:
             training (bool): True (training) or False (testing).
@@ -114,25 +162,49 @@ class PPG(BaseAgent):
         self.training = training
         self.ac.train(training)
 
-    def integrate(self, **kwargs) -> None:
-        """Integrate agent and other modules (encoder, reward, ...) together"""
+    def set(self, 
+            encoder: Optional[Any] = None,
+            storage: Optional[Any] = None,
+            distribution: Optional[Any] = None,
+            augmentation: Optional[Any] = None,
+            reward: Optional[Any] = None,
+            ) -> None:
+        """Set a module for the agent.
+
+        Args:
+            encoder (Optional[Any]): An encoder of `hsuanwu.xploit.encoder` or a custom encoder.
+            storage (Optional[Any]): A storage of `hsuanwu.xploit.storage` or a custom storage.
+            distribution (Optional[Any]): A distribution of `hsuanwu.xplore.distribution` or a custom distribution.
+            augmentation (Optional[Any]): An augmentation of `hsuanwu.xplore.augmentation` or a custom augmentation.
+            reward (Optional[Any]): A reward of `hsuanwu.xplore.reward` or a custom reward.
+
+        Returns:
+            None.
+        """
+        super().set(
+            encoder=encoder,
+            storage=storage,
+            distribution=distribution,
+            augmentation=augmentation,
+            reward=reward
+        )
+        if encoder is not None:
+            self.encoder = encoder
+            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
+    
+    def freeze(self) -> None:
+        """Freeze the structure of the agent."""
         # set encoder and distribution
-        self.dist = kwargs["dist"]
-        self.ac.encoder = kwargs["encoder"]
-        self.ac.dist = kwargs["dist"]
+        self.ac.encoder = self.encoder
+        self.ac.dist = self.dist
         # network initialization
         self.ac.apply(get_network_init(self.network_init_method))
         # to device
         self.ac.to(self.device)
         # create optimizers
         self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=self.lr, eps=self.eps)
-        # set training mode
-        self.train()
-        # set augmentation and intrinsic reward
-        if kwargs["aug"] is not None:
-            self.aug = kwargs["aug"]
-        if kwargs["irs"] is not None:
-            self.irs = kwargs["irs"]
+        # set the training mode
+        self.mode(training=True)
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
@@ -145,13 +217,12 @@ class PPG(BaseAgent):
         """
         return self.ac.get_value(obs)
 
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Union[Tuple[th.Tensor, ...], Dict[str, Any]]:
+    def act(self, obs: th.Tensor, training: bool = True) -> Union[Tuple[th.Tensor, ...], Dict[str, Any]]:
         """Sample actions based on observations.
 
         Args:
-            obs: Observations.
-            training: training mode, True or False.
-            step: Global training step.
+            obs (Tensor): Observations.
+            training (bool): training mode, True or False.
 
         Returns:
             Sampled actions.
@@ -163,20 +234,12 @@ class PPG(BaseAgent):
             actions = self.ac.get_det_action(obs)
             return actions
 
-    def update(self, rollout_storage: Storage, episode: int = 0) -> Dict[str, float]:  # noqa: c901
-        """Update the agent.
-
-        Args:
-            rollout_storage (Storage): Hsuanwu rollout storage.
-            episode (int): Global training episode.
-
-        Returns:
-            Training metrics such as actor loss, critic_loss, etc.
+    def update(self) -> Dict[str, float]:
+        """Update the agent and return training metrics such as actor loss, critic_loss, etc.
         """
-
-        # TODO: Save auxiliary transitions
-        if episode == 0:
-            num_steps, num_envs = rollout_storage.actions.size()[:2]
+        # Save auxiliary transitions
+        if self.global_episode == 0:
+            num_steps, num_envs = self.storage.actions.size()[:2]
             self.aux_obs = th.empty(
                 size=(
                     num_steps,
@@ -217,17 +280,17 @@ class PPG(BaseAgent):
             self.num_envs = num_envs
             self.num_steps = num_steps
 
-        idx = int(episode % self.policy_epochs)
-        self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(rollout_storage.obs[:-1].clone())
-        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(rollout_storage.returns.clone())
+        idx = int(self.global_episode % self.policy_epochs)
+        self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(self.storage.obs[:-1].clone())
+        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(self.storage.returns.clone())
 
-        # TODO: Policy phase
+        # Policy phase
         total_actor_loss = []
         total_critic_loss = []
         total_entropy_loss = []
         total_aug_loss = []
 
-        generator = rollout_storage.sample()
+        generator = self.storage.sample()
 
         for batch in generator:
             (
@@ -285,7 +348,7 @@ class PPG(BaseAgent):
             total_entropy_loss.append(entropy.item())
             total_aug_loss.append(aug_loss.item())
 
-        if (episode + 1) % self.policy_epochs != 0:
+        if (self.global_episode + 1) % self.policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
             return {
                 "actor_loss": np.mean(total_actor_loss),
@@ -293,7 +356,7 @@ class PPG(BaseAgent):
                 "entropy_loss": np.mean(total_entropy_loss),
             }
 
-        # TODO: Auxiliary phase
+        # Auxiliary phase
         for idx in range(self.policy_epochs):
             with th.no_grad():
                 aux_obs = (
@@ -352,20 +415,19 @@ class PPG(BaseAgent):
 
         return {"aux_value_loss": np.mean(total_aux_value_loss), "kl_loss": np.mean(total_kl_loss)}
 
-    def save(self, path: Path) -> None:
-        """Save models.
-
-        Args:
-            path (Path): Storage path.
-
-        Returns:
-            None.
-        """
-        if "pretrained" in str(path):  # pretraining
-            th.save(self.ac.state_dict(), path / "actor_critic.pth")
+    def save(self) -> None:
+        """Save models."""
+        if self.pretraining:  # pretraining
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+            th.save(self.ac.state_dict(), save_dir / "actor_critic.pth")
         else:
-            del self.ac.critic, self.ac.aux_critic, self.ac.dist
-            th.save(self.ac, path / "agent.pth")
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+            del self.ac.critic, self.ac.dist
+            th.save(self.ac, save_dir / "agent.pth")
+            
+        self.logger.info(f"Model saved at: {save_dir}")
 
     def load(self, path: str) -> None:
         """Load initial parameters.
@@ -376,5 +438,6 @@ class PPG(BaseAgent):
         Returns:
             None.
         """
+        self.logger.info(f"Loading Initial Parameters from {path}")
         actor_critic_params = th.load(os.path.join(path, "actor_critic.pth"), map_location=self.device)
         self.ac.load_state_dict(actor_critic_params)

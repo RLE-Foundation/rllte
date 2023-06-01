@@ -6,19 +6,15 @@ import numpy as np
 import torch as th
 from omegaconf import DictConfig
 
-from hsuanwu.xploit.storage.base import BaseStorage
+from hsuanwu.common.base_storage import BaseStorage
 
 
 class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
-            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-        action_space (Space or DictConfig): The action space of environment. When invoked by Hydra,
-            'action_space' is a 'DictConfig' like
-            {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-            {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+        observation_space (Space): The observation space of environment.
+        action_space (Space): The action space of environment. 
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the buffer.
         batch_size (int): Batch size of samples.
@@ -31,8 +27,8 @@ class PrioritizedReplayStorage(BaseStorage):
 
     def __init__(
         self,
-        observation_space: Union[gym.Space, DictConfig],
-        action_space: Union[gym.Space, DictConfig],
+        observation_space: gym.Space,
+        action_space: gym.Space,
         device: str = "cpu",
         storage_size: int = 1000000,
         batch_size: int = 1024,

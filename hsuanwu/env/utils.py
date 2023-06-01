@@ -56,34 +56,8 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self.device = th.device(device)
 
         # TODO: Transform the original 'Box' space into Hydra supported type.
-        self.observation_space = OmegaConf.create({"shape": env.single_observation_space.shape})
-
-        if env.single_action_space.__class__.__name__ == "Discrete":
-            n = int(env.single_action_space.n)
-            self.action_space = OmegaConf.create(
-                {"shape": env.single_action_space.shape, "dim": n, "n": n, "type": "Discrete", "range": [0, n - 1]}
-            )
-        elif env.single_action_space.__class__.__name__ == "Box":
-            low, high = float(env.single_action_space.low[0]), float(env.single_action_space.high[0])
-            self.action_space = OmegaConf.create(
-                {
-                    "shape": env.single_action_space.shape,
-                    "dim": env.single_action_space.shape[0],
-                    "type": "Box",
-                    "range": [low, high],
-                }
-            )
-        elif env.single_action_space.__class__.__name__ == "MultiBinary":
-            self.action_space = OmegaConf.create(
-                {
-                    "shape": env.single_action_space.shape,
-                    "dim": env.single_action_space.shape[0],
-                    "type": "MultiBinary",
-                    "range": [0, 1],
-                }
-            )
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        self.observation_space = env.single_observation_space
+        self.action_space = env.single_action_space
         self.num_envs = env.num_envs
 
     def reset(

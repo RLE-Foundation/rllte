@@ -1,7 +1,7 @@
 import torch as th
 import torchvision.transforms as T
 
-from hsuanwu.xplore.augmentation.base import BaseAugmentation
+from hsuanwu.common.base_augmentation import BaseAugmentation
 
 
 class RandomEqualize(BaseAugmentation):

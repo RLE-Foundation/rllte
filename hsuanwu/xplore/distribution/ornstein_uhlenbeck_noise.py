@@ -3,7 +3,7 @@ import torch as th
 from torch.distributions.utils import _standard_normal
 
 from hsuanwu.xplore.distribution import utils
-from hsuanwu.xplore.distribution.base import BaseDistribution
+from hsuanwu.common.base_distribution import BaseDistribution
 
 
 class OrnsteinUhlenbeckNoise(BaseDistribution):

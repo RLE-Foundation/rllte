@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.xploit.encoder.base import BaseEncoder
+from hsuanwu.common.base_encoder import BaseEncoder
 
 
 class Conv2d_tf(nn.Conv2d):
@@ -115,8 +115,7 @@ class EspeholtResidualEncoder(BaseEncoder):
         Target task: Atari games and Procgen games.
 
     Args:
-        observation_space (Space or DictConfig): The observation space of environment. When invoked by Hydra,
-            'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+        observation_space (Space): The observation space of environment.
         feature_dim (int): Number of features extracted.
         net_arch (List): Architecture of the network.
             It represents the out channels of each residual layer.
@@ -128,7 +127,7 @@ class EspeholtResidualEncoder(BaseEncoder):
 
     def __init__(
         self,
-        observation_space: Union[gym.Space, DictConfig],
+        observation_space: gym.Space,
         feature_dim: int = 0,
         net_arch: List[int] = [16, 32, 32],  # noqa B008
     ) -> None:
