@@ -5,8 +5,8 @@ curren_dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
-from hsuanwu.env import make_atari_env, make_dmc_env
-from hsuanwu.xplore.reward import RE3, ICM
+from rllte.env import make_atari_env, make_dmc_env
+from rllte.xplore.reward import RE3, ICM
 import torch as th
 
 

@@ -9,8 +9,8 @@ import cv2
 import numpy as np
 import torch
 
-from hsuanwu.env.dmc import make_dmc_env
-from hsuanwu.xplore.augmentation import RandomCrop, RandomAmplitudeScaling, GaussianNoise
+from rllte.env.dmc import make_dmc_env
+from rllte.xplore.augmentation import RandomCrop, RandomAmplitudeScaling, GaussianNoise
 
 if __name__ == "__main__":
     env = make_dmc_env(

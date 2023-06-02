@@ -7,7 +7,7 @@ sys.path.append(parent_dir_path)
 
 from pathlib import Path
 
-from hsuanwu.common.logger import *
+from rllte.common.logger import *
 
 work_dir = Path.cwd() / "logs/"
 if not os.path.exists(work_dir):

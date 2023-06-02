@@ -6,8 +6,8 @@ curren_dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
 sys.path.append(parent_dir_path)
 
-from hsuanwu.evaluation.performance import Performance
-from hsuanwu.evaluation.comparison import Comparison
+from rllte.evaluation.performance import Performance
+from rllte.evaluation.comparison import Comparison
 
 scores_x = np.random.rand(10, 5)
 scores_y = np.random.rand(10, 5)

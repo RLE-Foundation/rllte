@@ -7,7 +7,7 @@ sys.path.append(parent_dir_path)
 
 import torch
 
-from hsuanwu.xplore.distribution import (
+from rllte.xplore.distribution import (
     Categorical,
     NormalNoise,
     OrnsteinUhlenbeckNoise,
