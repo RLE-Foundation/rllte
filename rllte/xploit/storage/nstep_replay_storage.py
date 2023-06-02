@@ -11,8 +11,8 @@ import torch as th
 from omegaconf import DictConfig
 from torch.utils.data import IterableDataset
 
-from hsuanwu.common.base_storage import BaseStorage
-from hsuanwu.xploit.storage.utils import dump_episode, episode_len, load_episode, worker_init_fn
+from rllte.common.base_storage import BaseStorage
+from rllte.xploit.storage.utils import dump_episode, episode_len, load_episode, worker_init_fn
 
 
 class ReplayStorage:

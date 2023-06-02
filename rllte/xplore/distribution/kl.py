@@ -1,8 +1,8 @@
 import torch as th
 from torch.distributions import register_kl
 
-from hsuanwu.xplore.distribution.categorical import Categorical
-from hsuanwu.xplore.distribution.diagonal_gaussian import DiagonalGaussian
+from rllte.xplore.distribution.categorical import Categorical
+from rllte.xplore.distribution.diagonal_gaussian import DiagonalGaussian
 
 
 @register_kl(Categorical, Categorical)

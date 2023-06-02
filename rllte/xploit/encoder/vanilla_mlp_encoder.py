@@ -5,7 +5,7 @@ import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.common.base_encoder import BaseEncoder
+from rllte.common.base_encoder import BaseEncoder
 
 
 class VanillaMlpEncoder(BaseEncoder):

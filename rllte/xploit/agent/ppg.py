@@ -7,11 +7,11 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from hsuanwu.common.on_policy_agent import OnPolicyAgent
-from hsuanwu.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
-from hsuanwu.xploit.encoder import MnihCnnEncoder, IdentityEncoder
-from hsuanwu.xploit.storage import VanillaRolloutStorage as Storage
-from hsuanwu.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
+from rllte.common.on_policy_agent import OnPolicyAgent
+from rllte.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
+from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from rllte.xploit.storage import VanillaRolloutStorage as Storage
+from rllte.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
 
 class PPG(OnPolicyAgent):
     """Phasic Policy Gradient (PPG) agent.
@@ -172,11 +172,11 @@ class PPG(OnPolicyAgent):
         """Set a module for the agent.
 
         Args:
-            encoder (Optional[Any]): An encoder of `hsuanwu.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `hsuanwu.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `hsuanwu.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `hsuanwu.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `hsuanwu.xplore.reward` or a custom reward.
+            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
+            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
+            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
+            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
+            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
 
         Returns:
             None.

@@ -6,7 +6,7 @@ import torch as th
 from omegaconf import DictConfig
 from torch import nn
 
-from hsuanwu.common.base_reward import BaseIntrinsicRewardModule
+from rllte.common.base_reward import BaseIntrinsicRewardModule
 
 class Encoder(nn.Module):
     """Encoder for encoding observations.

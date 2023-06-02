@@ -7,16 +7,16 @@ import numpy as np
 import torch as th
 from torch.nn import functional as F
 
-from hsuanwu.common.off_policy_agent import OffPolicyAgent
-from hsuanwu.xploit.agent import utils
-from hsuanwu.xploit.agent.networks import (ExportModel, 
+from rllte.common.off_policy_agent import OffPolicyAgent
+from rllte.xploit.agent import utils
+from rllte.xploit.agent.networks import (ExportModel, 
                                            OffPolicyDeterministicActor, 
                                            OffPolicyDoubleCritic, 
                                            get_network_init)
-from hsuanwu.xploit.encoder import TassaCnnEncoder, IdentityEncoder
-from hsuanwu.xploit.storage import NStepReplayStorage as Storage
-from hsuanwu.xplore.distribution import TruncatedNormalNoise
-from hsuanwu.xplore.augmentation import RandomShift
+from rllte.xploit.encoder import TassaCnnEncoder, IdentityEncoder
+from rllte.xploit.storage import NStepReplayStorage as Storage
+from rllte.xplore.distribution import TruncatedNormalNoise
+from rllte.xplore.augmentation import RandomShift
 
 class DrQv2(OffPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -149,11 +149,11 @@ class DrQv2(OffPolicyAgent):
         """Set a module for the agent.
 
         Args:
-            encoder (Optional[Any]): An encoder of `hsuanwu.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `hsuanwu.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `hsuanwu.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `hsuanwu.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `hsuanwu.xplore.reward` or a custom reward.
+            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
+            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
+            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
+            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
+            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
 
         Returns:
             None.

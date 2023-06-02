@@ -5,7 +5,7 @@ import torch as th
 from omegaconf import DictConfig
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from hsuanwu.common.base_storage import BaseStorage
+from rllte.common.base_storage import BaseStorage
 
 
 class VanillaRolloutStorage(BaseStorage):

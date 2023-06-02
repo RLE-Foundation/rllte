@@ -2,8 +2,8 @@ import numpy as np
 import torch as th
 from torch.distributions.utils import _standard_normal
 
-from hsuanwu.xplore.distribution import utils
-from hsuanwu.common.base_distribution import BaseDistribution
+from rllte.xplore.distribution import utils
+from rllte.common.base_distribution import BaseDistribution
 
 
 class OrnsteinUhlenbeckNoise(BaseDistribution):

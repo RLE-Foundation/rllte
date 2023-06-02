@@ -1,7 +1,7 @@
 import torch as th
 from torch.nn import functional as F
 
-from hsuanwu.common.base_augmentation import BaseAugmentation
+from rllte.common.base_augmentation import BaseAugmentation
 import numpy as np
 
 class RandomShift(BaseAugmentation):

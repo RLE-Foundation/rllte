@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from hsuanwu.common.base_reward import BaseIntrinsicRewardModule
+from rllte.common.base_reward import BaseIntrinsicRewardModule
 
 
 class Encoder(nn.Module):

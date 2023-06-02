@@ -4,7 +4,7 @@ import numpy as np
 from numpy import random
 from scipy import stats as sts
 
-from hsuanwu.evaluation.utils import StratifiedBootstrap
+from rllte.evaluation.utils import StratifiedBootstrap
 
 
 class Performance:

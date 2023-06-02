@@ -1,6 +1,6 @@
 import torch as th
 
-from hsuanwu.common.base_augmentation import BaseAugmentation
+from rllte.common.base_augmentation import BaseAugmentation
 
 
 class RandomRotate(BaseAugmentation):

@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 
-from hsuanwu.common.base_encoder import BaseEncoder
+from rllte.common.base_encoder import BaseEncoder
 
 
 class Conv2d_tf(nn.Conv2d):

@@ -5,7 +5,7 @@ import numpy as np
 import torch as th
 from omegaconf import DictConfig
 
-from hsuanwu.common.base_storage import BaseStorage
+from rllte.common.base_storage import BaseStorage
 
 
 class VanillaReplayStorage(BaseStorage):
