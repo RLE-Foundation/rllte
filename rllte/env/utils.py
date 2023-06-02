@@ -9,7 +9,7 @@ from gymnasium.wrappers import RecordEpisodeStatistics
 from omegaconf import OmegaConf
 
 
-class RllteEnvWrapper(gym.Wrapper):
+class VecEnvWrapper(gym.Wrapper):
     """Env wrapper for adapting to rllte engine and outputting torch tensors.
 
     Args:
@@ -19,7 +19,7 @@ class RllteEnvWrapper(gym.Wrapper):
         parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
 
     Returns:
-        RllteEnvWrapper instance.
+        VecEnvWrapper instance.
     """
 
     def __init__(
