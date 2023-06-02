@@ -1,7 +1,7 @@
 #
 
 
-## RllteEnvWrapper
+## VecEnvWrapper
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L12)
 ```python 
 RllteEnvWrapper(
