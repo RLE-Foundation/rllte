@@ -3,10 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hsuanwu"
+name = "rllte"
 version = "0.0.1.beta07"
 authors = [
-  { name="Reinforcement Learning Evolution Foundation", email="hsuanwudev@gmail.com" },
+  { name="Reinforcement Learning Evolution Foundation", email="rlltedev@gmail.com" },
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
@@ -16,6 +16,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -64,10 +67,10 @@ docs = [
 ]
 
 [project.urls]
-"Code" = "https://github.com/RLE-Foundation/Hsuanwu"
-"Documentation" = "https://docs.hsuanwu.dev/"
-"Benchmark" = "https://hub.hsuanwu.dev/"
-"Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
+"Code" = "https://github.com/RLE-Foundation/rllte"
+"Documentation" = "https://docs.rllte.dev/"
+"Benchmark" = "https://hub.rllte.dev/"
+"Bug Tracker" = "https://github.com/RLE-Foundation/rllte/issues"
 
 [tool.ruff]
 # Same as Black.
@@ -85,8 +88,8 @@ line-length = 127
 [tool.isort]
 profile = "black"
 line_length = 127
-src_paths = ["hsuanwu"]
+src_paths = ["rllte"]
 
 [tool.pytype]
-inputs = ["hsuanwu"]
+inputs = ["rllte"]
 disable = ["pyi-error"]

@@ -1,11 +1,11 @@
 <div align=center>
-<img src='./docs/assets/images/logo.png' style="width: 70%">
+<img src='./docs/assets/images/rllte-logo.png' style="width: 70%">
 </div>
 
 |<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/🤗Benchmark-HuggingFace-%23FFD21E"> <img src="https://img.shields.io/badge/Pytorch-%3E%3D2.0.0-%23EF5739"> <img src="https://img.shields.io/badge/Hydra-1.3.2-%23E88444"> <img src="https://img.shields.io/badge/Gymnasium-%3E%3D0.28.1-brightgreen"> <img src="https://img.shields.io/badge/DMC Suite-1.0.11-blue"> <img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet"> <img src="https://img.shields.io/badge/2.2.1-MiniGrid-%23c8c8c8"> <img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4"> <img src="https://img.shields.io/badge/Robosuite-1.4.0-%23b51800">|
 |:-:|
 
-**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In Hsuanwu, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of Hsuanwu:
+**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In rllte, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of rllte:
 
 - ⏱️ Latest algorithms and tricks;
 - 🧱 Highly modularized design for complete decoupling of RL algorithms;
@@ -17,7 +17,7 @@
 <!-- - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/). -->
 
 
-<!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
+<!-- Please cite the following paper if you use rllte in your work, thank you!
 ```bibtex
 @article{yuan2023rllte,
   title={RLLTE: Long-Term Evolution Project of Reinforcement Learning},
@@ -63,7 +63,7 @@ pip install rllte[envs] # for pre-defined environments
 
 Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
 ``` sh
-git clone https://github.com/RLE-Foundation/Hsuanwu.git
+git clone https://github.com/RLE-Foundation/rllte.git
 ```
 After that, run the following command to install package and dependencies:
 ``` sh
@@ -132,7 +132,7 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 
 # Implemented Modules
 ## Roadmap
-Hsuanwu evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of Hsuanwu:
+rllte evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of rllte:
 
 <div align=center>
 <img src='./docs/assets/images/roadmap.svg'  style="width: 90%">
@@ -146,7 +146,7 @@ See the project structure below:
 </div>
 
 - **[Common](https://docs.rllte.dev/common_index/)**: Auxiliary modules like trainer and logger.
-    + **Engine**: *Engine for building Hsuanwu application.*
+    + **Engine**: *Engine for building rllte application.*
     + **Logger**: *Logger for managing output information.*
 
 - **[Xploit](https://docs.rllte.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
@@ -209,13 +209,13 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 See [Tutorials: Use intrinsic reward and observation augmentation](https://docs.rllte.dev/tutorials/data_augmentation.md) for usage examples.
 
 # Model Zoo
-Hsuanwu provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
+rllte provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
 
 # API Documentation
 View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
 
 # How To Contribute
-Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/CONTRIBUTING.md) for guide first.
+Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/rllte/blob/main/CONTRIBUTING.md) for guide first.
 
 # Acknowledgment
-This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/Hsuanwu/blob/main/.github/FUNDING.yml). Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/ACKNOWLEDGMENT.md).
+This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/rllte/blob/main/.github/FUNDING.yml). Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).

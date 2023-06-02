@@ -6,9 +6,9 @@ theme:
   logo: assets/images/icon.svg
   favicon: assets/images/icon.svg
   palette:
-    - scheme: hsuanwu
-      primary: hsuanwu
-      accent: hsuanwu
+    - scheme: rllte
+      primary: rllte
+      accent: rllte
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
