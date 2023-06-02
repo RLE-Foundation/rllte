@@ -1,4 +1,4 @@
-from .utils import HsuanwuEnvWrapper as HsuanwuEnvWrapper
+from .utils import RllteEnvWrapper as RllteEnvWrapper
 from .utils import TorchVecEnvWrapper as TorchVecEnvWrapper
 
 try:

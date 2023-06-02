@@ -38,7 +38,7 @@ class OffPolicyDeterministicActor(nn.Module):
             step (int): Global training step.
 
         Returns:
-            Hsuanwu distribution.
+            RLLTE distribution.
         """
         mu = self.policy(obs)
 
@@ -93,7 +93,7 @@ class NpuOffPolicyDeterministicActor(nn.Module):
             step (int): Global training step.
 
         Returns:
-            Hsuanwu distribution.
+            RLLTE distribution.
         """
         mu = self.policy(obs)
 

@@ -45,7 +45,7 @@ class OffPolicyStochasticActor(nn.Module):
             step (int): Global training step.
 
         Returns:
-            Hsuanwu distribution.
+            RLLTE distribution.
         """
         mu, log_std = self.policy(obs).chunk(2, dim=-1)
 

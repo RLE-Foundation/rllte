@@ -1,5 +1,5 @@
 site_name: "RLLTE"
-site_url: https://docs.hsuanwu.dev/
+site_url: https://docs.rllte.dev/
 copyright: Copyright &copy; 2023 Reinforcement Learning Evolution Foundation
 theme:
   name: material
@@ -55,17 +55,17 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
 
-repo_url: https://github.com/RLE-Foundation/Hsuanwu
-repo_name: RLE-Foundation/Hsuanwu
+repo_url: https://github.com/RLE-Foundation/rllte
+repo_name: RLE-Foundation/rllte
 
 extra:
   social: 
     - icon: fontawesome/brands/github
-      link: https://github.com/RLE-Foundation/Hsuanwu
+      link: https://github.com/RLE-Foundation/rllte
     - icon: fontawesome/solid/paper-plane
-      link: hsuanwudev@gmail.com
+      link: rlltedev@gmail.com
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/hsuanwu/
+      link: https://pypi.org/project/rllte/
   
 nav:
   - Overview: 
@@ -85,7 +85,7 @@ nav:
     - Overview: api.md
     - Common: 
       - Engine: 
-        - HsuanwuEngine: api_docs/common/engine/__init__.md
+        - rllteEngine: api_docs/common/engine/__init__.md
         - BasePolicyTrainer: api_docs/common/engine/base_policy_trainer.md
         - OnPolicyTrainer: api_docs/common/engine/on_policy_trainer.md
         - OffPolicyTrainer: api_docs/common/engine/off_policy_trainer.md
@@ -179,7 +179,7 @@ nav:
       - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_robosuite_env: api_docs/env/robosuite/__init__.md
       - utils:
-        - HsuanwuEnvWrapper: api_docs/env/utils.md
+        - rllteEnvWrapper: api_docs/env/utils.md
     
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md

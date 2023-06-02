@@ -56,7 +56,7 @@ class BaseAgent(ABC):
         self.num_eval_episodes = 10
         self.global_step = 0
         self.global_episode = 0
-        self.logger.info("Invoking Hsuanwu Engine...")
+        self.logger.info("Invoking RLLTE Engine...")
         self.logger.info(f"Experiment Tag: {tag}")
 
         # env setup

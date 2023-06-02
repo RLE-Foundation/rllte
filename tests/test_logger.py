@@ -14,7 +14,7 @@ if not os.path.exists(work_dir):
     os.mkdir(work_dir)
 logger = Logger(work_dir)
 
-msg_info = "Invoking Hsuanwu Engine..."
+msg_info = "Invoking RLLTE Engine..."
 msg_debug = "Checking Module Compatibility..."
 msg_train = {
     "frame": 12000,
@@ -35,7 +35,7 @@ msg_test = {
 }
 
 print(logger.time_stamp)
-logger.info(msg="Invoking Hsuanwu Engine...")
+logger.info(msg="Invoking RLLTE Engine...")
 logger.debug(msg="Checking Module Compatibility...")
 logger.error(msg="Unsupported function!")
 logger.train(msg=msg_train)

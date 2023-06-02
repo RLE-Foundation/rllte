@@ -9,8 +9,8 @@ from gymnasium.wrappers import RecordEpisodeStatistics
 from omegaconf import OmegaConf
 
 
-class HsuanwuEnvWrapper(gym.Wrapper):
-    """Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.
+class RllteEnvWrapper(gym.Wrapper):
+    """Env wrapper for adapting to rllte engine and outputting torch tensors.
 
     Args:
         env_fn (Callable): Function that creates the environments.
@@ -19,7 +19,7 @@ class HsuanwuEnvWrapper(gym.Wrapper):
         parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
 
     Returns:
-        HsuanwuEnvWrapper instance.
+        RllteEnvWrapper instance.
     """
 
     def __init__(
