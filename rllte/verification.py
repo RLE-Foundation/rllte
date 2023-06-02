@@ -1,8 +1,8 @@
 import gymnasium as gym
 from termcolor import colored
 
-from hsuanwu.env.utils import HsuanwuEnvWrapper
-from hsuanwu.xploit.agent import PPO
+from rllte.env.utils import HsuanwuEnvWrapper
+from rllte.xploit.agent import PPO
 
 def make_env():
     def _thunk():

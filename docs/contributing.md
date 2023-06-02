@@ -1,22 +1,22 @@
-# Contributing to Hsuanwu
+# Contributing to rllte
 
-Thank you for using and contributing to Hsuanwu project!!!👋👋👋 Before you begin writing code, it is important that you share your intention to contribute with the team, based on the type of contribution:
+Thank you for using and contributing to rllte project!!!👋👋👋 Before you begin writing code, it is important that you share your intention to contribute with the team, based on the type of contribution:
 
 1. You want to propose a new feature and implement it:
-    - Post about your intended feature in an [issue](https://github.com/RLE-Foundation/Hsuanwu/issues), and we shall discuss the design and implementation. Once we agree that the plan looks good, go ahead and implement it.
+    - Post about your intended feature in an [issue](https://github.com/RLE-Foundation/rllte/issues), and we shall discuss the design and implementation. Once we agree that the plan looks good, go ahead and implement it.
 
 2. You want to implement a feature or bug-fix for an outstanding issue:
-    - Search for your issue in the [Hsuanwu issue list](https://github.com/RLE-Foundation/Hsuanwu/issues).
+    - Search for your issue in the [rllte issue list](https://github.com/RLE-Foundation/rllte/issues).
     - Pick an issue and comment that you'd like to work on the feature or bug-fix.
     - If you need more context on a particular issue, please ask and we shall provide.
 
-Once you implement and test your feature or bug-fix, please submit a Pull Request to [https://github.com/RLE-Foundation/Hsuanwu](https://github.com/RLE-Foundation/Hsuanwu).
+Once you implement and test your feature or bug-fix, please submit a Pull Request to [https://github.com/RLE-Foundation/rllte](https://github.com/RLE-Foundation/rllte).
 
-## Get Hsuanwu
-Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) with `git`:
+## Get rllte
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
 ``` sh
-git clone https://github.com/RLE-Foundation/Hsuanwu.git
-cd Hsuanwu/
+git clone https://github.com/RLE-Foundation/rllte.git
+cd rllte/
 ```
 After that, run the following command to install package and dependencies:
 ``` sh
@@ -53,7 +53,7 @@ def function_with_types_in_docstring(param1: type1, param2: type2):
 ## Pull Request (PR)
 Before proposing a PR, please open an issue, where the feature will be discussed. This prevent from duplicated PR to be proposed and also ease the code review process. Each PR need to be reviewed and accepted by at least one of the maintainers (@[yuanmingqi](https://github.com/yuanmingqi), @[ShihaoLuo](https://github.com/orgs/RLE-Foundation/people/ShihaoLuo)). A PR must pass the Continuous Integration tests to be merged with the master branch.
 
-See the [Pull Request Template](https://github.com/RLE-Foundation/Hsuanwu/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
+See the [Pull Request Template](https://github.com/RLE-Foundation/rllte/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
 
 ## Tests
 All new features must add tests in the `tests/` folder ensuring that everything works fine. We use [pytest](https://pytest.org/). Also, when a bug fix is proposed, tests should be added to avoid regression.

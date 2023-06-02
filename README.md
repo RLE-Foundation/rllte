@@ -5,7 +5,7 @@
 |<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/🤗Benchmark-HuggingFace-%23FFD21E"> <img src="https://img.shields.io/badge/Pytorch-%3E%3D2.0.0-%23EF5739"> <img src="https://img.shields.io/badge/Hydra-1.3.2-%23E88444"> <img src="https://img.shields.io/badge/Gymnasium-%3E%3D0.28.1-brightgreen"> <img src="https://img.shields.io/badge/DMC Suite-1.0.11-blue"> <img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet"> <img src="https://img.shields.io/badge/2.2.1-MiniGrid-%23c8c8c8"> <img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4"> <img src="https://img.shields.io/badge/Robosuite-1.4.0-%23b51800">|
 |:-:|
 
-**Hsuanwu: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In Hsuanwu, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of Hsuanwu:
+**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In Hsuanwu, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of Hsuanwu:
 
 - ⏱️ Latest algorithms and tricks;
 - 🧱 Highly modularized design for complete decoupling of RL algorithms;
@@ -13,22 +13,14 @@
 - ⚙️ Support for custom environments;
 - 🖥️ Support for multiple computing devices like GPU and NPU;
 - 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
-- 💾 Large number of reusable bechmarks ([See HsuanwuHub](hub.hsuanwu.dev));
+- 💾 Large number of reusable bechmarks ([See rllte-benchmark](benchmark.rllte.dev));
 <!-- - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/). -->
-
-Hsuanwu ([Xuanwu, 玄武](https://en.wikipedia.org/wiki/Xuanwu_(god))) is one of the Four Symbols of the Chinese constellations, representing the north and the winter season. It is usually depicted as a turtle entwined together with a snake. Since turtles are very long-lived, we use this name to symbolize the long-term and influential development of the project.
-
-Join the developer community for issues and discussions:
-|Slack|QQ|GitHub|
-|:-:|:-:|:-:|
-|<a href="https://app.slack.com/client/T054J4NJXP0/C054T78QZ9A"><img src='./docs/assets/images/slack.png' style="width: 50%" ></a>|<img src='./docs/assets/images/qq.jpg' style="width: 65%">|<a href="https://github.com/RLE-Foundation/Hsuanwu/issues"><img src='./docs/assets/images/github_issues.png' style="width: 50%"></a>|
-
 
 
 <!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
-@article{yuan2023hsuanwu,
-  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
+@article{yuan2023rllte,
+  title={RLLTE: Long-Term Evolution Project of Reinforcement Learning},
   author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
   journal={arXiv preprint arXiv:2311.15277},
   year={2023}
@@ -37,7 +29,7 @@ Join the developer community for issues and discussions:
 
 - [Quick Start](#quick-start)
   - [Installation](#installation)
-  - [Build your first Hsuanwu application](#build-your-first-hsuanwu-application)
+  - [Start Training](#start-training)
     - [On NVIDIA GPU](#on-nvidia-gpu)
     - [On HUAWEI NPU](#on-huawei-npu)
 - [Implemented Modules](#implemented-modules)
@@ -54,22 +46,22 @@ Join the developer community for issues and discussions:
 ## Installation
 - Prerequisites
 
-Currently, Hsuanwu recommends `Python>=3.8`, user can create an virtual environment by
+Currently, we recommend `Python>=3.8`, and user can create an virtual environment by
 ``` sh
-conda create -n hsuanwu python=3.8
+conda create -n rllte python=3.8
 ```
 
 - with pip `recommended`
 
-Open up a terminal and install **Hsuanwu** with `pip`:
+Open up a terminal and install **rllte** with `pip`:
 ``` shell
-pip install hsuanwu # basic installation
-pip install hsuanwu[envs] # for pre-defined environments
+pip install rllte # basic installation
+pip install rllte[envs] # for pre-defined environments
 ```
 
 - with git
 
-Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/Hsuanwu) with `git`:
+Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
 ``` sh
 git clone https://github.com/RLE-Foundation/Hsuanwu.git
 ```
@@ -79,16 +71,16 @@ pip install -e . # basic installation
 pip install -e .[envs] # for pre-defined environments
 ```
 
-For more detailed installation instruction, see [https://docs.hsuanwu.dev/getting_started](https://docs.hsuanwu.dev/getting_started).
+For more detailed installation instruction, see [https://docs.rllte.dev/getting_started](https://docs.rllte.dev/getting_started).
 
-## Build your first Hsuanwu application
+## Start Training
 ### On NVIDIA GPU
 For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
 
 ``` python
 # Import `env` and `agent` api
-from hsuanwu.env import make_dmc_env 
-from hsuanwu.xploit.agent import DrQv2
+from rllte.env import make_dmc_env 
+from rllte.xploit.agent import DrQv2
 
 if __name__ == "__main__":
     device = "cuda:0"
@@ -113,8 +105,8 @@ Run `train.py` and you will see the following output:
 Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
 ``` python
 # Import `env` and `agent` api
-from hsuanwu.env import make_dmc_env 
-from hsuanwu.xploit.agent import NpuDrQv2
+from rllte.env import make_dmc_env 
+from rllte.xploit.agent import NpuDrQv2
 
 if __name__ == "__main__":
     device = "npu:0"
@@ -136,7 +128,7 @@ Then you will see the following output:
 
 > Please refer to [Implemented Modules](#implemented-modules) for the compatibility of NPU.
 
-For more detailed tutorials, see [https://docs.hsuanwu.dev/tutorials](https://docs.hsuanwu.dev/tutorials).
+For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs.rllte.dev/tutorials).
 
 # Implemented Modules
 ## Roadmap
@@ -153,29 +145,29 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 90%">
 </div>
 
-- **[Common](https://docs.hsuanwu.dev/common_index/)**: Auxiliary modules like trainer and logger.
+- **[Common](https://docs.rllte.dev/common_index/)**: Auxiliary modules like trainer and logger.
     + **Engine**: *Engine for building Hsuanwu application.*
     + **Logger**: *Logger for managing output information.*
 
-- **[Xploit](https://docs.hsuanwu.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
+- **[Xploit](https://docs.rllte.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
     + **Agent**: *Agent for interacting and learning.*
     + **Storage**: *Storage for storing collected experiences.*
 
-- **[Xplore](https://docs.hsuanwu.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
+- **[Xplore](https://docs.rllte.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
     + **Augmentation**: *PyTorch.nn-like modules for observation augmentation.*
     + **Distribution**: *Distributions for sampling actions.*
     + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
-- **[Evaluation](https://docs.hsuanwu.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
+- **[Evaluation](https://docs.rllte.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
 
-- **[Env](https://docs.hsuanwu.dev/env_index/)**: Packaged environments (e.g., Atari games) for fast invocation.
+- **[Env](https://docs.rllte.dev/env_index/)**: Packaged environments (e.g., Atari games) for fast invocation.
 
-- **[Pre-training](https://docs.hsuanwu.dev/pretraining_index/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
+- **[Pre-training](https://docs.rllte.dev/pretraining_index/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 
-- **[Deployment](https://docs.hsuanwu.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
+- **[Deployment](https://docs.rllte.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
-For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/api](https://docs.hsuanwu.dev/api)
+For more detiled descriptions of these modules, see [https://docs.rllte.dev/api](https://docs.rllte.dev/api)
 
 ## RL Agents
 |Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
@@ -214,13 +206,13 @@ For more detiled descriptions of these modules, see [https://docs.hsuanwu.dev/ap
 > - `Repr.`: The method involves representation learning.
 > - `Visual`: The method works well in visual RL.
 
-See [Tutorials: Use intrinsic reward and observation augmentation](https://docs.hsuanwu.dev/tutorials/data_augmentation.md) for usage examples.
+See [Tutorials: Use intrinsic reward and observation augmentation](https://docs.rllte.dev/tutorials/data_augmentation.md) for usage examples.
 
 # Model Zoo
-Hsuanwu provides a large number of reusable bechmarks, see [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/) and [https://docs.hsuanwu.dev/benchmarks/](https://docs.hsuanwu.dev/benchmarks/)
+Hsuanwu provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
 
 # API Documentation
-View our well-designed documentation: [https://docs.hsuanwu.dev/](https://docs.hsuanwu.dev/)
+View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
 
 # How To Contribute
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/Hsuanwu/blob/main/CONTRIBUTING.md) for guide first.
