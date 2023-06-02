@@ -1,7 +1,6 @@
 Welcome to Hsuanwu tutorials!👋👋👋
 
-- [Quick Start: Build your first Hsuanwu application](./quick_start.md)
-- [Write a configuration file](./configuration.md) 
+- [Quick Start](./quick_start.md)
 - [Use intrinsic reward and observation augmentation](./data_augmentation.md)
 - [Make a custom RL environment](./custom_environment.md)
 - [Use a custom module in Hsuanwu](./custom_module.md)
