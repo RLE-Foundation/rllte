@@ -1,4 +1,7 @@
 from .base_agent import BaseAgent as BaseAgent
+from .on_policy_agent import OnPolicyAgent as OnPolicyAgent
+from .off_policy_agent import OffPolicyAgent as OffPolicyAgent
+from .distributed_agent import DistributedAgent as DistributedAgent
 from .base_encoder import BaseEncoder as BaseEncoder
 from .base_storage import BaseStorage as BaseStorage
 from .base_distribution import BaseDistribution as BaseDistribution

@@ -27,10 +27,22 @@ pages:
     source: rllte/common/base_storage.py
     classes:
       - BaseStorage
+  - page: common/distributed_agent.md
+    source: rllte/common/distributed_agent.py
+    classes:
+      - DistributedAgent
   - page: common/logger.md
     source: rllte/common/logger.py
     classes:
       - Logger
+  - page: common/off_policy_agent.md
+    source: rllte/common/off_policy_agent.py
+    classes:
+      - OffPolicyAgent
+  - page: common/on_policy_agent.md
+    source: rllte/common/on_policy_agent.py
+    classes:
+      - OnPolicyAgent
   - page: common/timer.md
     source: rllte/common/timer.py
     classes:
@@ -232,6 +244,7 @@ pages:
     source: rllte/env/utils.py
     classes:
       - RllteEnvWrapper
+      - TorchVecEnvWrapper
   - page: env/atari/__init__.md
     source: rllte/env/atari/__init__.py
     functions:

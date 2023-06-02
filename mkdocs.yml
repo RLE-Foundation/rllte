@@ -84,18 +84,20 @@ nav:
   - API Documentation:
     - Overview: api.md
     - Common: 
-      - Engine: 
-        - rllteEngine: api_docs/common/engine/__init__.md
-        - BasePolicyTrainer: api_docs/common/engine/base_policy_trainer.md
-        - OnPolicyTrainer: api_docs/common/engine/on_policy_trainer.md
-        - OffPolicyTrainer: api_docs/common/engine/off_policy_trainer.md
-        - DistributedTrainer: api_docs/common/engine/distributed_trainer.md
+      - BaseAgent: api_docs/common/base_agent.md
+      - OnPolicyAgent: api_docs/common/on_policy_agent.md
+      - OffPolicyAgent: api_docs/common/off_policy_agent.md
+      - DistributedAgent: api_docs/common/distributed_agent.md
+      - BaseEncoder: api_docs/common/base_encoder.md
+      - BaseStorage: api_docs/common/base_storage.md
+      - BaseDistribution: api_docs/common/base_distribution.md
+      - BaseAugmentation: api_docs/common/base_augmentation.md
+      - BaseIntrinsicRewardModule: api_docs/common/base_reward.md
       - Logger: api_docs/common/logger.md
       - Timer: api_docs/common/timer.md
 
     - Xploit:
       - agent:
-        - BaseAgent: api_docs/xploit/agent/base.md
         - SAC: api_docs/xploit/agent/sac.md
         - DrQ: api_docs/xploit/agent/sac.md
         - DrQv2: api_docs/xploit/agent/drqv2.md
@@ -107,7 +109,6 @@ nav:
         - IMPALA: api_docs/xploit/agent/impala.md
       
       - encoder:
-        - BaseEncoder: api_docs/xploit/encoder/base.md
         - EspeholtResidualEncoder: api_docs/xploit/encoder/espeholt_residual_encoder.md
         - MnihCnnEncoder: api_docs/xploit/encoder/mnih_cnn_encoder.md
         - TassaCnnEncoder: api_docs/xploit/encoder/tassa_cnn_encoder.md
@@ -116,7 +117,6 @@ nav:
         - IdentityEncoder: api_docs/xploit/encoder/identity_encoder.md
 
       - storage:
-        - BaseStorage: api_docs/xploit/storage/base.md
         - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md
@@ -125,7 +125,6 @@ nav:
 
     - Xplore:
       - reward:
-        - BaseIntrinsicRewardModule: api_docs/xplore/reward/base.md
         - PseudoCounts: api_docs/xplore/reward/pseudo_counts.md
         - ICM: api_docs/xplore/reward/icm.md
         - RND: api_docs/xplore/reward/rnd.md
@@ -137,30 +136,20 @@ nav:
         - REVD: api_docs/xplore/reward/revd.md
 
       - augmentation:
-        - BaseAugmentation: api_docs/xplore/augmentation/base.md
-        - AutoAugment: api_docs/xplore/augmentation/auto_augment.md
-        - ElasticTransform: api_docs/xplore/augmentation/elastic_transform.md
         - GaussianNoise: api_docs/xplore/augmentation/gaussian_noise.md
-        - GrayScale: api_docs/xplore/augmentation/grayscale.md
-        - RandomAdjustSharpness: api_docs/xplore/augmentation/random_adjustsharpness.md
         - RandomAmplitudeScaling: api_docs/xplore/augmentation/random_amplitude_scaling.md
-        - RandomAugment: api_docs/xplore/augmentation/random_augment.md
-        - RandomAutocontrast: api_docs/xplore/augmentation/random_autocontrast.md
+        - GrayScale: api_docs/xplore/augmentation/grayscale.md
         - RandomColorJitter: api_docs/xplore/augmentation/random_colorjitter.md
         - RandomConvolution: api_docs/xplore/augmentation/random_convolution.md
         - RandomCrop: api_docs/xplore/augmentation/random_crop.md
         - RandomCutout: api_docs/xplore/augmentation/random_cutout.md
         - RandomCutoutColor: api_docs/xplore/augmentation/random_cutoutcolor.md
-        - RandomEqualize: api_docs/xplore/augmentation/random_equalize.md
         - RandomFlip: api_docs/xplore/augmentation/random_flip.md
-        - RandomInvert: api_docs/xplore/augmentation/random_invert.md
-        - RandomPerspective: api_docs/xplore/augmentation/random_perspective.md
         - RandomRotate: api_docs/xplore/augmentation/random_rotate.md
         - RandomShift: api_docs/xplore/augmentation/random_shift.md
         - RandomTranslate: api_docs/xplore/augmentation/random_translate.md
 
       - distribution:
-        - BaseDistribution: api_docs/xplore/distribution/base.md
         - Bernoulli: api_docs/xplore/distribution/bernoulli.md
         - Categorical: api_docs/xplore/distribution/categorical.md
         - DiagonalGaussian: api_docs/xplore/distribution/diagonal_gaussian.md
@@ -179,7 +168,7 @@ nav:
       - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_robosuite_env: api_docs/env/robosuite/__init__.md
       - utils:
-        - rllteEnvWrapper: api_docs/env/utils.md
+        - EnvWrapper: api_docs/env/utils.md
     
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md
