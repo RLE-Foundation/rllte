@@ -13,7 +13,7 @@
 - ⚙️ Support for custom environments;
 - 🖥️ Support for multiple computing devices like GPU and NPU;
 - 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
-- 💾 Large number of reusable bechmarks ([See rllte-benchmark](benchmark.rllte.dev));
+- 💾 Large number of reusable bechmarks (See [rllte-benchmark](https://benchmark.rllte.dev));
 <!-- - 📋 Elegant experimental management powered by [Hydra](https://hydra.cc/). -->
 
 
