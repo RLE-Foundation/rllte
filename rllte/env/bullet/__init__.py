@@ -7,7 +7,7 @@ import pybullet_envs as pybullet_envs
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import TorchVecEnvWrapper
 
 
 class AdapterEnv(gym.Wrapper):

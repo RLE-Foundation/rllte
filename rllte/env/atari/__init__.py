@@ -5,8 +5,8 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
 
-from hsuanwu.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from rllte.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
+from rllte.env.utils import TorchVecEnvWrapper
 
 
 def make_atari_env(

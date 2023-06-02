@@ -11,13 +11,13 @@ import inspect
 import pynvml
 import torch as th
 
-from hsuanwu.common.logger import Logger
-from hsuanwu.common.timer import Timer
-from hsuanwu.common.base_encoder import BaseEncoder as Encoder
-from hsuanwu.common.base_storage import BaseStorage as Storage
-from hsuanwu.common.base_distribution import BaseDistribution as Distribution
-from hsuanwu.common.base_augmentation import BaseAugmentation as Augmentation
-from hsuanwu.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
+from rllte.common.logger import Logger
+from rllte.common.timer import Timer
+from rllte.common.base_encoder import BaseEncoder as Encoder
+from rllte.common.base_storage import BaseStorage as Storage
+from rllte.common.base_distribution import BaseDistribution as Distribution
+from rllte.common.base_augmentation import BaseAugmentation as Augmentation
+from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -180,11 +180,11 @@ class BaseAgent(ABC):
         """Set a module for the agent.
 
         Args:
-            encoder (Optional[Any]): An encoder of `hsuanwu.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `hsuanwu.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `hsuanwu.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `hsuanwu.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `hsuanwu.xplore.reward` or a custom reward.
+            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
+            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
+            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
+            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
+            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
 
         Returns:
             None.

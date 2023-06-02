@@ -5,7 +5,7 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import TorchVecEnvWrapper
 
 
 class StateEnv(gym.Env):

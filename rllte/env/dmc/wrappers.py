@@ -8,7 +8,7 @@ from dm_env import specs
 from gymnasium import core, spaces
 
 try:
-    from hsuanwu.env.dmc import natural_imgsource
+    from rllte.env.dmc import natural_imgsource
 except Exception:
     pass
 

@@ -4,7 +4,7 @@ from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
 
-from hsuanwu.env.utils import FrameStack, TorchVecEnvWrapper
+from rllte.env.utils import FrameStack, TorchVecEnvWrapper
 
 
 class Minigrid2Image(gym.ObservationWrapper):

@@ -6,7 +6,7 @@ from gymnasium.envs.registration import register
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from hsuanwu.env.utils import FrameStack, TorchVecEnvWrapper
+from rllte.env.utils import FrameStack, TorchVecEnvWrapper
 
 
 def make_dmc_env(
@@ -65,7 +65,7 @@ def make_dmc_env(
             if _env_id not in registry.values():
                 register(
                     id=env_id,
-                    entry_point="hsuanwu.env.dmc.wrappers:DMCWrapper",
+                    entry_point="rllte.env.dmc.wrappers:DMCWrapper",
                     kwargs={
                         "domain_name": domain_name,
                         "task_name": task_name,

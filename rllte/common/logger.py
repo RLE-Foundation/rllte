@@ -81,7 +81,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU INFO".ljust(13, " "), "cyan", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE INFO".ljust(13, " "), "cyan", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def debug(self, msg: str) -> None:
@@ -93,7 +93,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU DEBUG".ljust(13, " "), "yellow", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE DEBUG".ljust(13, " "), "yellow", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def error(self, msg: str) -> None:
@@ -105,7 +105,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU ERROR".ljust(13, " "), "white", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE ERROR".ljust(13, " "), "white", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def train(self, msg: Dict) -> None:
@@ -117,7 +117,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU TRAIN".ljust(13, " "), "red", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE TRAIN".ljust(13, " "), "red", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + self.parse_train_msg(msg))
         # save data
         self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
@@ -132,7 +132,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("HSUANWU EVAL.".ljust(13, " "), "green", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE EVAL.".ljust(13, " "), "green", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + self.parse_eval_msg(msg))
         # save data
         self._dump_to_csv(self._eval_file, msg, self._eval_file_write_header)

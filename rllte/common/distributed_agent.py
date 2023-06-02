@@ -18,7 +18,7 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from hsuanwu.common.base_agent import BaseAgent
+from rllte.common.base_agent import BaseAgent
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.

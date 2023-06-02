@@ -6,7 +6,7 @@ from gymnasium.spaces.box import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from hsuanwu.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import TorchVecEnvWrapper
 
 
 class AdapterEnv(gym.Wrapper):

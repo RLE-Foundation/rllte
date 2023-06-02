@@ -5,8 +5,8 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from hsuanwu.common.base_agent import BaseAgent
-from hsuanwu.common import utils
+from rllte.common.base_agent import BaseAgent
+from rllte.common import utils
 
 class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
