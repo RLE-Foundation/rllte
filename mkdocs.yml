@@ -107,6 +107,8 @@ nav:
         - PPO: api_docs/xploit/agent/ppo.md
         - DrAC: api_docs/xploit/agent/ppo.md
         - IMPALA: api_docs/xploit/agent/impala.md
+        - NpuDrQv2: api_docs/xploit/agent/npu_drqv2.md
+        - NpuPPO: api_docs/xploit/agent/npu_ppo.md
       
       - encoder:
         - EspeholtResidualEncoder: api_docs/xploit/encoder/espeholt_residual_encoder.md
