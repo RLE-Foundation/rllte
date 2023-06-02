@@ -1,17 +1,17 @@
 #
 
 
-## HsuanwuEnvWrapper
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/utils.py\#L12)
+## RllteEnvWrapper
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L12)
 ```python 
-HsuanwuEnvWrapper(
+RllteEnvWrapper(
    env_fn: Callable, num_envs: int = 1, device: str = 'cpu', parallel: bool = True
 )
 ```
 
 
 ---
-Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.
+Env wrapper for adapting to rllte engine and outputting torch tensors.
 
 
 **Args**
@@ -24,4 +24,4 @@ Env wrapper for adapting to Hsuanwu engine and outputting torch tensors.
 
 **Returns**
 
-HsuanwuEnvWrapper instance.
+RllteEnvWrapper instance.

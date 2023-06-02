@@ -9,38 +9,37 @@ sys.path.append(parent_dir_path)
 import inspect
 import ruamel.yaml
 
-from hsuanwu import common
-from hsuanwu import env
-from hsuanwu import evaluation
-from hsuanwu.common import engine
-from hsuanwu.xploit import encoder, agent, storage
-from hsuanwu.xplore import distribution, reward, augmentation
+from rllte import common
+from rllte import env
+from rllte import evaluation
+from rllte.xploit import encoder, agent, storage
+from rllte.xplore import distribution, reward, augmentation
 
 pages = {
     'sources_dir': 'docs/api_docs',
     'templates_dir': None,
-    'repo': 'https://github.com/RLE-Foundation/Hsuanwu',
+    'repo': 'https://github.com/RLE-Foundation/rllte',
     'version': 'main',
     'pages': []
 }
 
-for module in [engine, common, encoder, agent, storage, 
+for module in [common, encoder, agent, storage, 
            reward, augmentation, distribution, env, evaluation]:
     last_file = None
     save_old = False
     for name, item in inspect.getmembers(module):
         if inspect.isclass(item) and item not in [OmegaConf, os]:
-            file = inspect.getfile(item).split('hsuanwu')[1]
+            file = inspect.getfile(item).split('rllte')[2]
             file = file.lstrip(file[0])
             page = {
                 'page': file.replace('.py', '.md'),
-                'source': 'hsuanwu/' + file,
+                'source': 'rllte/' + file,
                 'classes': [item.__name__]
             }
             pages['pages'].append(page)
 
         if inspect.isfunction(item):
-            file = inspect.getfile(item).split('hsuanwu')[1]
+            file = inspect.getfile(item).split('rllte')[2]
             file = file.lstrip(file[0])
             if file == last_file:
                 page['functions'].append(item.__name__)
@@ -49,7 +48,7 @@ for module in [engine, common, encoder, agent, storage,
                 save_old = True
                 page = {
                     'page': file.replace('.py', '.md'),
-                    'source': 'hsuanwu/' + file,
+                    'source': 'rllte/' + file,
                     'functions': [item.__name__]
                 }
 

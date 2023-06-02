@@ -2,7 +2,7 @@
 
 
 ## BaseDistribution
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L6)
 ```python 
 
 ```
@@ -16,7 +16,7 @@ Abstract base class of distributions.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L14)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L14)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -38,7 +38,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L26)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L26)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -60,7 +60,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L38)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L38)
 ```python
 .log_prob(
    value: th.Tensor
@@ -81,7 +81,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L49)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L49)
 ```python
 .entropy()
 ```
@@ -90,7 +90,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L53)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L53)
 ```python
 .reset()
 ```
@@ -99,7 +99,7 @@ Returns the Shannon entropy of distribution.
 Reset the distribution.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L57)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L57)
 ```python
 .mean()
 ```
@@ -108,7 +108,7 @@ Reset the distribution.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L61)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L61)
 ```python
 .mode()
 ```
@@ -117,7 +117,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L65)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L65)
 ```python
 .stddev()
 ```
@@ -126,7 +126,7 @@ Returns the mode of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/distribution/base.py\#L69)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L69)
 ```python
 .variance()
 ```

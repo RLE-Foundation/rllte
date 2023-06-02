@@ -2,7 +2,7 @@
 
 
 ## GrayScale
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/grayscale.py\#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L6)
 ```python 
 
 ```
@@ -26,7 +26,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/grayscale.py\#L19)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L19)
 ```python
 .forward(
    x: th.Tensor

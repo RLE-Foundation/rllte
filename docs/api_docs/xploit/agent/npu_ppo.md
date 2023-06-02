@@ -1,25 +1,25 @@
 #
 
 
-## PPG
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L16)
+## NpuPPO
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L17)
 ```python 
-PPG(
+NpuPPO(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
-   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 256, clip_range: float = 0.2,
-   clip_range_vf: float = 0.2, vf_coef: float = 0.5, ent_coef: float = 0.01,
-   aug_coef: float = 0.1, max_grad_norm: float = 0.5, policy_epochs: int = 32,
-   aux_epochs: int = 6, kl_coef: float = 1.0, num_aux_mini_batch: int = 4,
-   num_aux_grad_accum: int = 1, network_init_method: str = 'xavier_uniform'
+   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 512, clip_range: float = 0.1,
+   clip_range_vf: float = 0.1, n_epochs: int = 4, vf_coef: float = 0.5,
+   ent_coef: float = 0.01, aug_coef: float = 0.1, max_grad_norm: float = 0.5,
+   network_init_method: str = 'orthogonal'
 )
 ```
 
 
 ---
-Phasic Policy Gradient (PPG) agent.
-Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
+Proximal Policy Optimization (PPO) agent for `NPU` device.
+When the `augmentation` module is invoked, this agent will transform into Data Regularized Actor-Critic (DrAC) agent.
+Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 
 **Args**
@@ -39,29 +39,25 @@ Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 * **hidden_dim** (int) : The size of the hidden layers.
 * **clip_range** (float) : Clipping parameter.
 * **clip_range_vf** (float) : Clipping parameter for the value function.
+* **n_epochs** (int) : Times of updating the policy.
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **aug_coef** (float) : Weighting coefficient of augmentation loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
-* **policy_epochs** (int) : Number of iterations in the policy phase.
-* **aux_epochs** (int) : Number of iterations in the auxiliary phase.
-* **kl_coef** (float) : Weighting coefficient of divergence loss.
-* **num_aux_grad_accum** (int) : Number of gradient accumulation for auxiliary phase update.
 * **network_init_method** (str) : Network initialization method name.
 
-num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
 
 
 **Returns**
 
-PPG agent instance.
+PPO agent instance.
 
 
 **Methods:**
 
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L153)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L136)
 ```python
 .mode(
    training: bool = True
@@ -82,7 +78,7 @@ Set the training mode.
 None.
 
 ### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L165)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L148)
 ```python
 .set(
    encoder: Optional[Any] = None, storage: Optional[Any] = None,
@@ -109,7 +105,7 @@ Set a module for the agent.
 None.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L195)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L178)
 ```python
 .freeze()
 ```
@@ -118,7 +114,7 @@ None.
 Freeze the structure of the agent.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L209)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L192)
 ```python
 .get_value(
    obs: th.Tensor
@@ -139,10 +135,10 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L220)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L203)
 ```python
 .act(
-   obs: th.Tensor, training: bool = True
+   obs: th.Tensor, training: bool = True, step: int = 0
 )
 ```
 
@@ -152,8 +148,9 @@ Sample actions based on observations.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **training** (bool) : training mode, True or False.
+* **obs**  : Observations.
+* **training**  : training mode, True or False.
+* **step**  : Global training step.
 
 
 **Returns**
@@ -161,7 +158,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L237)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L221)
 ```python
 .update()
 ```
@@ -171,7 +168,7 @@ Update the agent and return training metrics such as actor loss, critic_loss, et
 
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L418)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L307)
 ```python
 .save()
 ```
@@ -180,7 +177,7 @@ Update the agent and return training metrics such as actor loss, critic_loss, et
 Save models.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppg.py/#L432)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L321)
 ```python
 .load(
    path: str

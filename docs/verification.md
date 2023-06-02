@@ -1,7 +1,7 @@
 ## Software
 To ensure that PyTorch was installed correctly, we can verify the installation by running a single training script:
 ``` shell
-python -m hsuanwu.verification
+python -m rllte.verification
 ```
 
 ## Hardware

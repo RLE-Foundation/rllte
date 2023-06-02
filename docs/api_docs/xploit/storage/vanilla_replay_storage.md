@@ -2,11 +2,11 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_replay_storage.py\#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L11)
 ```python 
 VanillaReplayStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', storage_size: int = 1000000, batch_size: int = 1024
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   storage_size: int = 1000000, batch_size: int = 1024
 )
 ```
 
@@ -17,12 +17,8 @@ Vanilla replay storage for off-policy algorithms.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **observation_space** (Space) : The observation space of environment.
+* **action_space** (Space) : The action space of environment. 
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **storage_size** (int) : Max number of element in the buffer.
 * **batch_size** (int) : Batch size of samples.
@@ -37,7 +33,7 @@ Vanilla replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_replay_storage.py\#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L56)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -63,7 +59,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_replay_storage.py\#L91)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L87)
 ```python
 .sample(
    step: int
@@ -84,7 +80,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_replay_storage.py\#L115)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L111)
 ```python
 .update(
    *args

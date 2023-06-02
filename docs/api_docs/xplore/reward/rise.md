@@ -2,12 +2,12 @@
 
 
 ## RISE
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L59)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L59)
 ```python 
 RISE(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', beta: float = 0.05, kappa: float = 2.5e-05,
-   latent_dim: int = 128, alpha: float = 0.5, k: int = 5, average_entropy: bool = False
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   beta: float = 0.05, kappa: float = 2.5e-05, latent_dim: int = 128, alpha: float = 0.5,
+   k: int = 5, average_entropy: bool = False
 )
 ```
 
@@ -19,12 +19,8 @@ See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **observation_space** (Space) : The observation space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
 * **kappa** (float) : The decay rate.
@@ -43,7 +39,7 @@ Instance of RISE.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L109)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L105)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -69,7 +65,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/reward/rise.py\#L145)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L141)
 ```python
 .update(
    samples: Dict

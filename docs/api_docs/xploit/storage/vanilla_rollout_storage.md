@@ -2,12 +2,12 @@
 
 
 ## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L11)
 ```python 
 VanillaRolloutStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', num_steps: int = 256, num_envs: int = 8,
-   batch_size: int = 64, discount: float = 0.99, gae_lambda: float = 0.95
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   num_steps: int = 256, num_envs: int = 8, batch_size: int = 64, discount: float = 0.99,
+   gae_lambda: float = 0.95
 )
 ```
 
@@ -18,12 +18,8 @@ Vanilla rollout storage for on-policy algorithms.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **observation_space** (Space) : The observation space of environment.
+* **action_space** (Space) : The action space of environment. 
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **num_steps** (int) : The sample length of per rollout.
 * **num_envs** (int) : The number of parallel environments.
@@ -41,7 +37,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L90)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L86)
 ```python
 .add(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -71,7 +67,7 @@ Add sampled transitions into storage.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L127)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L123)
 ```python
 .update()
 ```
@@ -80,7 +76,7 @@ None.
 Reset the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L132)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L128)
 ```python
 .compute_returns_and_advantages(
    last_values: th.Tensor
@@ -103,7 +99,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/vanilla_rollout_storage.py\#L158)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L154)
 ```python
 .sample()
 ```

@@ -2,7 +2,7 @@
 
 
 ### make_multibinary_env
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/env/multibinary/__init__.py\#L55)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/multibinary/__init__.py/#L55)
 ```python
 .make_multibinary_env(
    env_id: str = 'multibinary_state', num_envs: int = 1, device: str = 'cpu', seed: int = 0,

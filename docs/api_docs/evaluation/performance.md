@@ -2,7 +2,7 @@
 
 
 ## Performance
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L10)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L10)
 ```python 
 Performance(
    scores: np.ndarray, get_ci: bool = False, method: str = 'percentile',
@@ -41,7 +41,7 @@ Performance evaluator.
 
 
 ### .aggregate_mean
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L48)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L48)
 ```python
 .aggregate_mean()
 ```
@@ -50,7 +50,7 @@ Performance evaluator.
 Computes mean of sample mean scores per task.
 
 ### .aggregate_median
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L62)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L62)
 ```python
 .aggregate_median()
 ```
@@ -59,7 +59,7 @@ Computes mean of sample mean scores per task.
 Computes median of sample mean scores per task.
 
 ### .aggregate_og
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L76)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L76)
 ```python
 .aggregate_og(
    gamma: float = 1.0
@@ -81,7 +81,7 @@ to `gamma`.
 Optimality gap at threshold `gamma`.
 
 ### .aggregate_iqm
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L97)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L97)
 ```python
 .aggregate_iqm()
 ```
@@ -90,7 +90,7 @@ Optimality gap at threshold `gamma`.
 Computes the interquartile mean across runs and tasks.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/evaluation/performance.py\#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L110)
 ```python
 .get_interval_estimates(
    scores: np.ndarray, metric: Callable

@@ -2,7 +2,7 @@
 
 
 ## RandomShift
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_shift.py\#L7)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_shift.py/#L7)
 ```python 
 RandomShift(
    pad: int = 4
@@ -28,7 +28,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xplore/augmentation/random_shift.py\#L21)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_shift.py/#L21)
 ```python
 .forward(
    x: th.Tensor

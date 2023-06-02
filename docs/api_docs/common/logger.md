@@ -2,7 +2,7 @@
 
 
 ## Logger
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L26)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L26)
 ```python 
 Logger(
    log_dir: Path
@@ -28,7 +28,7 @@ Logger instance.
 
 
 ### .parse_train_msg
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L56)
 ```python
 .parse_train_msg(
    msg: Any
@@ -36,17 +36,17 @@ Logger instance.
 ```
 
 
-### .parse_test_msg
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L63)
+### .parse_eval_msg
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L63)
 ```python
-.parse_test_msg(
+.parse_eval_msg(
    msg: Any
 )
 ```
 
 
 ### .time_stamp
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L71)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L71)
 ```python
 .time_stamp()
 ```
@@ -55,7 +55,7 @@ Logger instance.
 Return the current time stamp.
 
 ### .info
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L75)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L75)
 ```python
 .info(
    msg: str
@@ -76,7 +76,7 @@ Output msg with 'info' level.
 None.
 
 ### .debug
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L87)
 ```python
 .debug(
    msg: str
@@ -97,7 +97,7 @@ Output msg with 'debug' level.
 None.
 
 ### .error
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L99)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L99)
 ```python
 .error(
    msg: str
@@ -118,7 +118,7 @@ Output msg with 'error' level.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L111)
 ```python
 .train(
    msg: Dict
@@ -138,16 +138,16 @@ Output msg with 'train' level.
 
 None.
 
-### .test
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/common/logger.py\#L126)
+### .eval
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L126)
 ```python
-.test(
+.eval(
    msg: Dict
 )
 ```
 
 ---
-Output msg with 'test' level.
+Output msg with 'eval' level.
 
 
 **Args**

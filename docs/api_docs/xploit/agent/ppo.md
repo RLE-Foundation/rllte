@@ -2,34 +2,38 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L16)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L16)
 ```python 
 PPO(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int, lr: float = 0.00025, eps: float = 1e-05,
-   hidden_dim: int = 512, clip_range: float = 0.1, clip_range_vf: float = 0.1,
-   n_epochs: int = 4, vf_coef: float = 0.5, ent_coef: float = 0.01, aug_coef: float = 0.1,
-   max_grad_norm: float = 0.5, network_init_method: str = 'orthogonal'
+   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
+   eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
+   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 512, clip_range: float = 0.1,
+   clip_range_vf: float = 0.1, n_epochs: int = 4, vf_coef: float = 0.5,
+   ent_coef: float = 0.01, aug_coef: float = 0.1, max_grad_norm: float = 0.5,
+   network_init_method: str = 'orthogonal'
 )
 ```
 
 
 ---
 Proximal Policy Optimization (PPO) agent.
-When 'augmentation' module is invoked, this learner will transform into Data Regularized Actor-Critic (DrAC) agent.
+When the `augmentation` module is invoked, this agent will transform into Data Regularized Actor-Critic (DrAC) agent.
 Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **env** (Env) : A Gym-like environment for training.
+* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **tag** (str) : An experiment tag.
+* **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **pretraining** (bool) : Turn on the pre-training mode.
+* **num_steps** (int) : The sample length of per rollout.
+* **eval_every_episodes** (int) : Evaluation interval.
 * **feature_dim** (int) : Number of features extracted by the encoder.
+* **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
 * **eps** (float) : Term added to the denominator to improve numerical stability.
 * **hidden_dim** (int) : The size of the hidden layers.
@@ -46,22 +50,22 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 **Returns**
 
-PPO learner instance.
+PPO agent instance.
 
 
 **Methods:**
 
 
-### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L85)
+### .mode
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L135)
 ```python
-.train(
+.mode(
    training: bool = True
 )
 ```
 
 ---
-Set the train mode.
+Set the training mode.
 
 
 **Args**
@@ -73,19 +77,44 @@ Set the train mode.
 
 None.
 
-### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L97)
+### .set
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L147)
 ```python
-.integrate(
-   **kwargs
+.set(
+   encoder: Optional[Any] = None, storage: Optional[Any] = None,
+   distribution: Optional[Any] = None, augmentation: Optional[Any] = None,
+   reward: Optional[Any] = None
 )
 ```
 
 ---
-Integrate agent and other modules (encoder, reward, ...) together
+Set a module for the agent.
+
+
+**Args**
+
+* **encoder** (Optional[Any]) : An encoder of `rllte.xploit.encoder` or a custom encoder.
+* **storage** (Optional[Any]) : A storage of `rllte.xploit.storage` or a custom storage.
+* **distribution** (Optional[Any]) : A distribution of `rllte.xplore.distribution` or a custom distribution.
+* **augmentation** (Optional[Any]) : An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
+* **reward** (Optional[Any]) : A reward of `rllte.xplore.reward` or a custom reward.
+
+
+**Returns**
+
+None.
+
+### .freeze
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L177)
+```python
+.freeze()
+```
+
+---
+Freeze the structure of the agent.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L117)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L191)
 ```python
 .get_value(
    obs: th.Tensor
@@ -106,10 +135,10 @@ Get estimated values for observations.
 Estimated values.
 
 ### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L128)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L202)
 ```python
 .act(
-   obs: th.Tensor, training: bool = True, step: int = 0
+   obs: th.Tensor, training: bool = True
 )
 ```
 
@@ -119,9 +148,8 @@ Sample actions based on observations.
 
 **Args**
 
-* **obs**  : Observations.
-* **training**  : training mode, True or False.
-* **step**  : Global training step.
+* **obs** (Tensor) : Observations.
+* **training** (bool) : training mode, True or False.
 
 
 **Returns**
@@ -129,50 +157,26 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L146)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L219)
 ```python
-.update(
-   rollout_storage: Storage, episode: int = 0
-)
+.update()
 ```
 
 ---
-Update the learner.
+Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
-
-**Args**
-
-* **rollout_storage** (Storage) : Hsuanwu rollout storage.
-* **episode** (int) : Global training episode.
-
-
-**Returns**
-
-Training metrics such as actor loss, critic_loss, etc.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L239)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L293)
 ```python
-.save(
-   path: Path
-)
+.save()
 ```
 
 ---
 Save models.
 
-
-**Args**
-
-* **path** (Path) : Storage path.
-
-
-**Returns**
-
-None.
-
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/agent/ppo.py\#L254)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L307)
 ```python
 .load(
    path: str

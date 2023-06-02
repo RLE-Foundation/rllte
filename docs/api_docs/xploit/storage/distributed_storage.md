@@ -2,12 +2,11 @@
 
 
 ## DistributedStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L11)
 ```python 
 DistributedStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', num_steps: int = 100, num_storages: int = 80,
-   batch_size: int = 32
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   num_steps: int = 100, num_storages: int = 80, batch_size: int = 32
 )
 ```
 
@@ -18,12 +17,8 @@ Distributed storage for distributed algorithms like IMPALA.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": action_space.shape, "n": action_space.n, "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **observation_space** (Space) : The observation space of environment.
+* **action_space** (Space) : The action space of environment. 
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **num_steps** (int) : The sample steps of per rollout.
 * **num_storages** (int) : The number of shared-memory storages.
@@ -39,7 +34,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L79)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L75)
 ```python
 .add(
    *args
@@ -50,7 +45,7 @@ Vanilla rollout storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L83)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L79)
 ```python
 .sample(
    device: th.device, batch_size: int, free_queue: th.multiprocessing.SimpleQueue,
@@ -79,7 +74,7 @@ Sample transitions from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/storage/distributed_storage.py\#L118)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L114)
 ```python
 .update(
    *args

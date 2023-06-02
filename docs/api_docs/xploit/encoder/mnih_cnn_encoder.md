@@ -2,10 +2,10 @@
 
 
 ## MnihCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/mnih_cnn_encoder.py\#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L11)
 ```python 
 MnihCnnEncoder(
-   observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0
+   observation_space: gym.Space, feature_dim: int = 0
 )
 ```
 
@@ -19,8 +19,7 @@ Target task: Atari games.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+* **observation_space** (Space) : The observation space of environment.
 * **feature_dim** (int) : Number of features extracted.
 
 
@@ -33,7 +32,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu\blob\main\hsuanwu/xploit/encoder/mnih_cnn_encoder.py\#L48)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L47)
 ```python
 .forward(
    obs: th.Tensor
