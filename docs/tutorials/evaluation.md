@@ -1,4 +1,4 @@
-Hsuanwu provides evaluation methods based on:
+**rllte** provides evaluation methods based on:
 
 > [Agarwal R, Schwarzer M, Castro P S, et al. Deep reinforcement learning at the edge of the statistical precipice[J]. Advances in neural information processing systems, 2021, 34: 29304-29320.](https://proceedings.neurips.cc/paper/2021/file/f514cec81cb148559cf475e7426eed5e-Paper.pdf)
 
@@ -6,14 +6,14 @@ We reconstruct and improve the code of the official repository [rliable](https:/
 
 ## Download Data
 - Suppose we want to evaluate algorithm performance on the [Procgen](https://github.com/openai/procgen) benchmark. First, download the data from 
-[HsuanwuHub](https://hub.hsuanwu.dev/):
+[rllte-benchmark](https://hub.rllte.dev/):
 ``` sh
-pip install hsuanwuhub
+pip install rllte-benchmark
 ```
 - Load data:
 ``` py title="example.py"
-from hsuanwuhub import datasets
-from hsuanwu.evaluation import Performance, Comparison, min_max_normalize
+from rllte import datasets
+from rllte.evaluation import Performance, Comparison, min_max_normalize
 import numpy as np
 
 procgen = datasets.Procgen()
