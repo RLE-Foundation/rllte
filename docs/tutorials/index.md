@@ -1,9 +1,9 @@
 Welcome to Hsuanwu tutorials!👋👋👋
 
 - [Quick Start](./quick_start.md)
-- [Use intrinsic reward and observation augmentation](./data_augmentation.md)
-- [Make a custom RL environment](./custom_environment.md)
-- [Use a custom module in Hsuanwu](./custom_module.md)
-- [Pre-training in Hsuanwu](./pre-training.md)
-- [Evaluate your model](./evaluation.md)
-- [Deploy your model in inference devices](./deployment.md)
+- [Module Replacement](./module_replacement.md)
+- [Use intrinsic Reward and Observation Augmentation](./data_augmentation.md)
+- [Make A Custom Environment](./custom_environment.md)
+- [Pre-training](./pre-training.md)
+- [Evaluate Your Model](./evaluation.md)
+- [Deploy Your Model in Inference Devices](./deployment.md)

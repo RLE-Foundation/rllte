@@ -78,13 +78,13 @@ For more detailed installation instruction, see [https://docs.rllte.dev/getting_
 For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
 
 ``` python
-# Import `env` and `agent` api
+# import `env` and `agent` api
 from rllte.env import make_dmc_env 
 from rllte.xploit.agent import DrQv2
 
 if __name__ == "__main__":
     device = "cuda:0"
-    # Create env, `eval_env` is optional
+    # create env, `eval_env` is optional
     env = make_dmc_env(env_id="cartpole_balance", device=device)
     eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
     # create agent
@@ -104,13 +104,13 @@ Run `train.py` and you will see the following output:
 ### On HUAWEI NPU
 Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
 ``` python
-# Import `env` and `agent` api
+# import `env` and `agent` api
 from rllte.env import make_dmc_env 
 from rllte.xploit.agent import NpuDrQv2
 
 if __name__ == "__main__":
     device = "npu:0"
-    # Create env, `eval_env` is optional
+    # create env, `eval_env` is optional
     env = make_dmc_env(env_id="cartpole_balance", device=device)
     eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
     # create agent
