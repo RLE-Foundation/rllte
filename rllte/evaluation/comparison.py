@@ -69,7 +69,6 @@ class Comparison:
             return PoI
 
         if self.get_ci:
-            print("Computing confidence interval for PoI...")
             CIs = self.get_interval_estimates(scores_x=self.scores_x, scores_y=self.scores_y, metric=_thunk)
             return _thunk(self.scores_x, self.scores_y), CIs
         else:

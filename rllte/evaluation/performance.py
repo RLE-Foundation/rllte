@@ -53,7 +53,6 @@ class Performance:
             return np.mean(mean_task_scores, axis=0)
 
         if self.get_ci:
-            print("Computing confidence interval for aggregate MEAN...")
             CIs = self.get_interval_estimates(scores=self.scores, metric=_thunk)
             return _thunk(self.scores), CIs
         else:
@@ -67,7 +66,6 @@ class Performance:
             return np.median(mean_task_scores, axis=0)
 
         if self.get_ci:
-            print("Computing confidence interval for aggregate MEDIAN...")
             CIs = self.get_interval_estimates(scores=self.scores, metric=_thunk)
             return _thunk(self.scores), CIs
         else:
@@ -88,7 +86,6 @@ class Performance:
             return gamma - np.mean(np.minimum(scores, gamma))
 
         if self.get_ci:
-            print("Computing confidence interval for aggregate OG...")
             CIs = self.get_interval_estimates(scores=self.scores, metric=lambda x: _thunk(x, gamma=gamma))
             return _thunk(self.scores, gamma), CIs
         else:
@@ -101,7 +98,6 @@ class Performance:
             return sts.trim_mean(scores, proportiontocut=0.25, axis=None)
 
         if self.get_ci:
-            print("Computing confidence interval for aggregate IQM...")
             CIs = self.get_interval_estimates(scores=self.scores, metric=_thunk)
             return _thunk(self.scores), CIs
         else:
@@ -134,11 +130,13 @@ class Performance:
         use_score_distribution: bool = True
     ) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Method for calculating performance profilies
+
         Args:
             tau_list (Union[List[float], np.ndarray]): List of 1D numpy array of threshold
                 values on which the profile is evaluated.
             use_score_distribution (bool): Whether to report score distributions or average
                 score distributions.
+                
         Returns:
             Point and interval estimates of profiles evaluated at all thresholds in 'tau_list'
         """
