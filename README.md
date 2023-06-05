@@ -33,7 +33,7 @@ The highlight features of **rllte**:
 - 🖥️ Support for multiple computing devices like GPU and NPU;
 - 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
 - 💾 Large number of reusable bechmarks (See [rllte-hub](https://hub.rllte.dev));
-- 
+
 See the project structure below:
 <div align=center>
 <img src='./docs/assets/images/structure.svg' style="width: 100%">
