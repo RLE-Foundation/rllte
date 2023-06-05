@@ -11,7 +11,7 @@
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Implemented Modules](#implemented-modules)
-- [Model Zoo](#benchmark)
+- [Benchmark](#benchmark)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
