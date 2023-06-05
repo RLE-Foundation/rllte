@@ -206,7 +206,7 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 > - `Repr.`: The method involves representation learning.
 > - `Visual`: The method works well in visual RL.
 
-See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation.md) for usage examples.
+See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation) for usage examples.
 
 # Model Zoo
 rllte provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
