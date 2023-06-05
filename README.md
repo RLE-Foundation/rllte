@@ -8,18 +8,10 @@
 **RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. 
 
 # Contents
-- [Contents](#contents)
 - [Overview](#overview)
 - [Quick Start](#quick-start)
-  - [Installation](#installation)
-  - [Start Training](#start-training)
-    - [On NVIDIA GPU](#on-nvidia-gpu)
-    - [On HUAWEI NPU](#on-huawei-npu)
 - [Implemented Modules](#implemented-modules)
-  - [Roadmap](#roadmap)
-  - [RL Agents](#rl-agents)
-  - [Intrinsic Reward Modules](#intrinsic-reward-modules)
-- [Model Zoo](#model-zoo)
+- [Model Zoo](#benchmark)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
@@ -169,8 +161,9 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 |PPO|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://arxiv.org/pdf/1707.06347) |11155⭐|
 |DrAC|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) |29⭐|
 |DAAC|❌| ✔️ |✔️|✔️|✔️|🐌 | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |56⭐|
-<!-- |PPG|❌| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf) |82⭐| -->
 |IMPALA|✔️| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
+
+<!-- |PPG|❌| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf) |82⭐| -->
 
 > - 🐌: Developing.
 > - `NPU`: Support Neural-network processing unit.
@@ -198,7 +191,7 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 
 See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation) for usage examples.
 
-# Model Zoo
+# Benchmark
 rllte provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
 
 # API Documentation
