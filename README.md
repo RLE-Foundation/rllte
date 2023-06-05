@@ -206,7 +206,7 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 > - `Repr.`: The method involves representation learning.
 > - `Visual`: The method works well in visual RL.
 
-See [Tutorials: Use intrinsic reward and observation augmentation](https://docs.rllte.dev/tutorials/data_augmentation.md) for usage examples.
+See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation.md) for usage examples.
 
 # Model Zoo
 rllte provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
@@ -218,4 +218,4 @@ View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rll
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/rllte/blob/main/CONTRIBUTING.md) for guide first.
 
 # Acknowledgment
-This project is supported by [FUNDING.yml](https://github.com/RLE-Foundation/rllte/blob/main/.github/FUNDING.yml). Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
+This project is supported by [The Hong Kong Polytechnic University](http://www.polyu.edu.hk/), [Eastern Institute for Advanced Study](http://www.eias.ac.cn/), and [FLW-Foundation](FLW-Foundation). [EIAS HPC](https://hpc.eias.ac.cn/) provides a GPU computing platform, and [Ascend Community](https://www.hiascend.com/) provides an NPU computing platform for our testing. Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
