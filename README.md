@@ -127,9 +127,7 @@ rllte evolves based on reinforcement learning algorithms and integrates latest t
 <img src='./docs/assets/images/roadmap.svg'  style="width: 90%">
 </div>
 
-- **[Common](https://docs.rllte.dev/common_index/)**: Auxiliary modules like trainer and logger.
-    + **Engine**: *Engine for building rllte application.*
-    + **Logger**: *Logger for managing output information.*
+- **[Common](https://docs.rllte.dev/common_index/)**: Base classes and auxiliary modules like logger and timer.
 
 - **[Xploit](https://docs.rllte.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoder for processing observations.*
@@ -141,9 +139,11 @@ rllte evolves based on reinforcement learning algorithms and integrates latest t
     + **Distribution**: *Distributions for sampling actions.*
     + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
-- **[Evaluation](https://docs.rllte.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
+- **[Hub]()**: Reusable datasets and models.
 
 - **[Env](https://docs.rllte.dev/env_index/)**: Packaged environments (e.g., Atari games) for fast invocation.
+
+- **[Evaluation](https://docs.rllte.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
 
 - **[Pre-training](https://docs.rllte.dev/pretraining_index/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 
@@ -192,7 +192,7 @@ For more detiled descriptions of these modules, see [https://docs.rllte.dev/api]
 See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation) for usage examples.
 
 # Benchmark
-rllte provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
+**rllte** provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
 
 # API Documentation
 View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
