@@ -421,7 +421,7 @@ def plot_sample_efficiency_curve(
         ticklabelsize: str = 'xx-large',
         **kwargs
         ) -> None:
-        """Plots verious metrics of algorithms with confidence intervals.
+        """Plots an aggregate metric with CIs as a function of environment frames.
             Based on: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
             See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 

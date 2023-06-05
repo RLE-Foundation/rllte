@@ -1,15 +1,12 @@
 # Benchmarks
 
-## HsuanwuHub
-Hsuanwu provides a large number of reusable data and models of representative RL benchmarks. Install `HsuanwuHub` by 
-``` sh
-pip install hsuanwuhub
-```
+## rllte-hub
+**rllte** provides a large number of reusable data and models of representative RL benchmarks. 
 Suppose we want to evaluate algorithm performance on the [Procgen](https://github.com/openai/procgen) benchmark.
 ``` py title="example.py"
-from hsuanwuhub import datasets
+from rllte.hub.datasets import Procgen
 
-procgen = datasets.Procgen()
+procgen = Procgen()
 procgen_scores = procgen.load_scores()
 print(procgen_scores['PPO'].shape)
 
@@ -17,16 +14,6 @@ print(procgen_scores['PPO'].shape)
 # (10, 16)
 ```
 For each algorithm, this will return a `NdArray` of size (`10` x `16`) where scores[n][m] represent the score on run `n` of task `m`.
-
-## Fast Training
-In `HsuanwuHub`, we preset a large number of RL applications to realize fast training. For example, 
-we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control). Then we can run the following command to perform training directly:
-``` sh
-python -m hsuanwuhub.train \
-    task=drqv2_dmc_pixel \
-    device=cuda:0 \
-    num_train_steps=50000
-```
 
 ## Support List
 |Benchmark|Training Steps|Scores|Curves|Models|
@@ -41,6 +28,6 @@ python -m hsuanwuhub.train \
     - **🐌**: Incoming.
     - **Scores**: Available final scores.
     - **Curves**: Available training curves.
-    - **Visual**: Available trained models.
+    - **Model**: Available trained models.
 
-Find all the benchmark results in [https://hub.hsuanwu.dev/](https://hub.hsuanwu.dev/).
+Find all the benchmark results in [https://hub.rllte.dev/](https://hub.rllte.dev/).

@@ -10,7 +10,7 @@ class BaseEncoder(nn.Module):
         feature_dim (int): Number of features extracted.
 
     Returns:
-        The base encoder class
+        The base encoder instance.
     """
 
     def __init__(self, observation_space: gym.Space, feature_dim: int = 0) -> None:

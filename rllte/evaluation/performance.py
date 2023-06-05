@@ -129,7 +129,7 @@ class Performance:
         tau_list: Union[List[float], np.ndarray],
         use_score_distribution: bool = True
     ) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
-        """Method for calculating performance profilies
+        """Method for calculating performance profilies.
 
         Args:
             tau_list (Union[List[float], np.ndarray]): List of 1D numpy array of threshold
@@ -138,7 +138,7 @@ class Performance:
                 score distributions.
                 
         Returns:
-            Point and interval estimates of profiles evaluated at all thresholds in 'tau_list'
+            Point and interval estimates of profiles evaluated at all thresholds in 'tau_list'.
         """
         if use_score_distribution:
             def _thunk(scores, tau):

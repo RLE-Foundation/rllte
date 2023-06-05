@@ -87,7 +87,7 @@
 |SquashedNormal|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
 
 !!! tip "Tips of Distribution"
-  - In Hsuanwu, the action noise is implemented via a `Distribution` manner to realize unification.
+    - In Hsuanwu, the action noise is implemented via a `Distribution` manner to realize unification.
 
 + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
