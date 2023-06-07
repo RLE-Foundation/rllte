@@ -87,7 +87,7 @@ if __name__ == "__main__":
 Run `train.py` and you will see the following output:
 
 <div align=center>
-<img src='./docs/assets/images/rl_training_gpu.png'>
+<img src='./docs/assets/images/rl_training_gpu.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### On HUAWEI NPU
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 ```
 Then you will see the following output:
 <div align=center>
-<img src='./docs/assets/images/rl_training_npu.png'>
+<img src='./docs/assets/images/rl_training_npu.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 > Please refer to [Implemented Modules](#implemented-modules) for the compatibility of NPU.
