@@ -96,3 +96,8 @@ src_paths = ["rllte"]
 [tool.pytype]
 inputs = ["rllte"]
 disable = ["pyi-error"]
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
