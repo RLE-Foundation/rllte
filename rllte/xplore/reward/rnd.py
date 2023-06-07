@@ -29,13 +29,15 @@ class Encoder(nn.Module):
         # visual
         if len(obs_shape) == 3:
             self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, 8, 4),
-                nn.ReLU(),
-                nn.Conv2d(32, 64, 4, 2),
-                nn.ReLU(),
-                nn.Conv2d(64, 64, 3, 1),
-                nn.ReLU(),
-                nn.Flatten(),
+                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                nn.ELU(),
+                nn.Flatten()
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))

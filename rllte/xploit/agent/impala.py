@@ -13,7 +13,8 @@ from torch.nn import functional as F
 from torch import multiprocessing as mp
 
 from rllte.common.distributed_agent import DistributedAgent, Environment
-from rllte.xploit.agent.networks import DistributedActorCritic, get_network_init
+from rllte.common.policies import DistributedActorCritic
+from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
 from rllte.xploit.storage import DistributedStorage as Storage
 from rllte.xplore.distribution import Categorical, DiagonalGaussian

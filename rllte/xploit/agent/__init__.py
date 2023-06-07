@@ -6,3 +6,5 @@ from .sac import SAC as SAC
 from .impala import IMPALA as IMPALA
 from .npu_drqv2 import NpuDrQv2 as NpuDrQv2
 from .npu_ppo import NpuPPO as NpuPPO
+from .npu_daac import NpuDAAC as NpuDAAC
+from .npu_sac import NpuSAC as NpuSAC

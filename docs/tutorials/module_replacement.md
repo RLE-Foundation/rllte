@@ -38,7 +38,7 @@ if __name__ == "__main__":
 ```
 Run `train.py` and you'll see the following output:
 <div align=center>
-<img src='../../assets/images/module_replacement1.png'>
+<img src='../../assets/images/module_replacement1.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 Suppose we want to use a `ResNet-based` encoder, it suffices to replace the encoder module using `.set` function:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 ```
 Run `train.py` and you'll see the old `MnihCnnEncoder` has been replaced by `EspeholtResidualEncoder`:
 <div align=center>
-<img src='../../assets/images/module_replacement2.png'>
+<img src='../../assets/images/module_replacement2.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 For more replaceable modules, please refer to [https://docs.rllte.dev/api/](https://docs.rllte.dev/api/).
 
@@ -140,6 +140,6 @@ if __name__ == "__main__":
 ```
 Run `example.py` and you'll see the old `MnihCnnEncoder` has been replaced by `CustomEncoder`:
 <div align=center>
-<img src='../../assets/images/module_replacement3.png'>
+<img src='../../assets/images/module_replacement3.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 As for customizing modules like `Storage` and `Distribution`, etc., users should consider compatibility with specific algorithms.

@@ -60,12 +60,12 @@ class Categorical(BaseDistribution):
     @property
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
-        return self.dist.mode
+        return self.dist.probs.argmax(axis=-1)
 
     @property
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
-        return self.dist.mode
+        return self.mode
 
     @property
     def stddev(self) -> th.Tensor:

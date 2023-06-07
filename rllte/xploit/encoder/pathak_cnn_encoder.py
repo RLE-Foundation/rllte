@@ -44,7 +44,8 @@ class PathakCnnEncoder(BaseEncoder):
             sample = th.ones(size=tuple(obs_shape)).float()
             n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-        self.trunk.extend([nn.Linear(n_flatten, feature_dim), nn.ReLU()])
+        self.trunk.append(nn.Linear(n_flatten, feature_dim))
+        self.trunk.append(nn.ReLU())
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         h = self.trunk(obs / 255.0)

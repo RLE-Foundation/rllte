@@ -28,6 +28,7 @@ _build/
 /experimental
 /outputs
 /test.py
+/test_npu.py
 /train.py
 
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf

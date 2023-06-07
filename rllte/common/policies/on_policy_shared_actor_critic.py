@@ -405,7 +405,7 @@ class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
         Returns:
             Estimated values.
         """
-        return self.critic(self.encoder(obs))
+        return self.critic(self.encoder(obs)).cpu()
 
     def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
         """Evaluate actions according to the current policy given the observations, for `NPU` device.

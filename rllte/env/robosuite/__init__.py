@@ -54,7 +54,7 @@ def make_robosuite_env(
     has_offscreen_renderer: bool = False,
     use_camera_obs: bool = False,
 ) -> gym.Env:
-    """Build PyBullet robotics environments.
+    """Build Robosuite robotics environments.
 
     Args:
         env_id (str): Name of environment.

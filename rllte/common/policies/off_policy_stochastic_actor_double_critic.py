@@ -177,7 +177,7 @@ class NpuOffPolicyStochasticActorDoubleCritic(OffPolicyStochasticActorDoubleCrit
         Returns:
             RLLTE distribution.
         """
-        mu, log_std = self.policy(obs).chunk(2, dim=-1)
+        mu, log_std = self.actor(obs).chunk(2, dim=-1)
 
         log_std = th.tanh(log_std)
         log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1)

@@ -29,7 +29,7 @@ if __name__ == "__main__":
 ```
 Run `example.py` and you'll see the augmentation module is invoked:
 <div align=center>
-<img src='../../assets/images/data_augmentation1.png'>
+<img src='../../assets/images/data_augmentation1.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ## Using Intrinsic Reward
@@ -70,5 +70,5 @@ if __name__ == "__main__":
 ```
 Run `example.py` and you'll see the intrinsic reward module is invoked:
 <div align=center>
-<img src='../../assets/images/data_augmentation2.png'>
+<img src='../../assets/images/data_augmentation2.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>

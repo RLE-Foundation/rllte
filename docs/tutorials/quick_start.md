@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 Run `train.py` and you will see the following output:
 <div align=center>
-<img src='../../assets/images/rl_training_gpu.png'>
+<img src='../../assets/images/rl_training_gpu.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 !!! info "Read the logs"
@@ -60,6 +60,11 @@ if __name__ == "__main__":
 
 !!! info "Compatibility of NPU"
     Please refer to [https://docs.rllte.dev/api/](https://docs.rllte.dev/api/) for the compatibility of NPU.
+
+Run `train.py` and you will see the following output:
+<div align=center>
+<img src='../../assets/images/rl_training_npu.png' style="filter: drop-shadow(0px 0px 7px #000);">
+</div>
 
 ## Load the Trained Model
 Once the training is finished, you can find `agent.pth` in the subfolder `model` of the specified working directory.

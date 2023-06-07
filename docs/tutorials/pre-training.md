@@ -28,7 +28,7 @@ if __name__ == "__main__":
 ```
 Run `train.py` and you'll see the pre-training mode is on:
 <div align=center>
-<img src='../../assets/images/pre_training1.png'>
+<img src='../../assets/images/pre_training1.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 !!! tip
@@ -60,5 +60,5 @@ if __name__ == "__main__":
 ```
 Run `train.py` and you'll see the pre-trained model parameters are loaded:
 <div align=center>
-<img src='../../assets/images/pre_training2.png'>
+<img src='../../assets/images/pre_training2.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>

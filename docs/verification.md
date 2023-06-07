@@ -5,7 +5,7 @@ python -m rllte.verification
 ```
 If successful, you will see the following output:
 <div align=center>
-<img src='../../assets/images/verification.png'>
+<img src='../../assets/images/verification.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ## Hardware

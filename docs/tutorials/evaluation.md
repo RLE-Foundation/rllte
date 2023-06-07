@@ -111,9 +111,9 @@ fig.savefig('./plot_interval_estimates2.png', format='png', bbox_inches='tight')
 ```
 The output figures are:
 <div align=center>
-<img src='../../assets/images/plot_interval_estimates1.png'>
-<img src='../../assets/images/plot_interval_estimates2.png'>
-<img src='../../assets/images/plot_interval_estimates3.png'>
+<img src='../../assets/images/plot_interval_estimates1.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../assets/images/plot_interval_estimates2.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../assets/images/plot_interval_estimates3.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 
@@ -136,7 +136,7 @@ fig.savefig('./plot_probability_improvement.png', format='png', bbox_inches='tig
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_probability_improvement.png'>
+<img src='../../assets/images/plot_probability_improvement.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### `.plot_performance_profile`
@@ -158,7 +158,7 @@ fig.savefig('./plot_performance_profile.png', format='png', bbox_inches='tight')
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_performance_profile.png'>
+<img src='../../assets/images/plot_performance_profile.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### `.plot_sample_efficiency_curve`
@@ -195,5 +195,5 @@ fig.savefig('./plot_sample_efficiency_curve.png', format='png', bbox_inches='tig
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_sample_efficiency_curve.png'>
+<img src='../../assets/images/plot_sample_efficiency_curve.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>

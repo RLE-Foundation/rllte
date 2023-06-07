@@ -7,9 +7,15 @@ from datetime import datetime
 
 import gymnasium as gym
 import numpy as np
-import inspect
 import pynvml
 import torch as th
+
+# try to load torch_npu
+try:
+    import torch_npu
+    from torch_npu.contrib import transfer_to_npu
+except Exception:
+    pass
 
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer

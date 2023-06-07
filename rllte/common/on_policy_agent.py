@@ -7,12 +7,15 @@ import torch as th
 
 from rllte.common.base_agent import BaseAgent
 from rllte.common import utils
-from rllte.common.policies import OnPolicyDecoupledActorCritic, OnPolicySharedActorCritic
-from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from rllte.common.policies import (OnPolicyDecoupledActorCritic, 
+                                   OnPolicySharedActorCritic, 
+                                   NpuOnPolicySharedActorCritic, 
+                                   NpuOnPolicyDecoupledActorCritic)
+from rllte.xploit.encoder import PathakCnnEncoder, IdentityEncoder
 from rllte.xploit.storage import VanillaRolloutStorage as Storage
 from rllte.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
 
-class OnPolicyAgent(BaseAgent): # noqa
+class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
 
     Args:
@@ -45,6 +48,7 @@ class OnPolicyAgent(BaseAgent): # noqa
         feature_dim = kwargs.pop('feature_dim', 512)
         hidden_dim = kwargs.pop('feature_dim', 256)
         batch_size = kwargs.pop('batch_size', 256)
+        npu = kwargs.pop('npu', False)
         super().__init__(env=env,
                          eval_env=eval_env,
                          tag=tag,
@@ -58,7 +62,7 @@ class OnPolicyAgent(BaseAgent): # noqa
 
         # build encoder
         if len(self.obs_shape) == 3:
-            self.encoder = MnihCnnEncoder(
+            self.encoder = PathakCnnEncoder(
                 observation_space=env.observation_space,
                 feature_dim=self.feature_dim
             )
@@ -73,7 +77,7 @@ class OnPolicyAgent(BaseAgent): # noqa
         self.storage = Storage(
             observation_space=env.observation_space,
             action_space=env.action_space,
-            device=device,
+            device="cpu" if npu else device,
             num_steps=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size
@@ -91,21 +95,39 @@ class OnPolicyAgent(BaseAgent): # noqa
         
         # create policy
         if shared_encoder:
-            self.policy = OnPolicySharedActorCritic(
-                obs_shape=self.obs_shape,
-                action_dim=self.action_dim,
-                action_type=self.action_type,
-                feature_dim=self.feature_dim,
-                hidden_dim=hidden_dim,
-            )
+            if npu:
+                self.policy = NpuOnPolicySharedActorCritic(
+                    obs_shape=self.obs_shape,
+                    action_dim=self.action_dim,
+                    action_type=self.action_type,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim,
+                )
+            else:
+                self.policy = OnPolicySharedActorCritic(
+                    obs_shape=self.obs_shape,
+                    action_dim=self.action_dim,
+                    action_type=self.action_type,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim,
+                )
         else:
-            self.policy = OnPolicyDecoupledActorCritic(
-                obs_shape=self.obs_shape,
-                action_dim=self.action_dim,
-                action_type=self.action_type,
-                feature_dim=self.feature_dim,
-                hidden_dim=hidden_dim,
-            )
+            if npu:
+                self.policy = NpuOnPolicyDecoupledActorCritic(
+                    obs_shape=self.obs_shape,
+                    action_dim=self.action_dim,
+                    action_type=self.action_type,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim,
+                )
+            else:
+                self.policy = OnPolicyDecoupledActorCritic(
+                    obs_shape=self.obs_shape,
+                    action_dim=self.action_dim,
+                    action_type=self.action_type,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim,
+                )
     
     def freeze(self) -> None:
         """Freeze the structure of the agent. Implemented by individual algorithms."""

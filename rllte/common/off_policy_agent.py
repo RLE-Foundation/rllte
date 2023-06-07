@@ -8,7 +8,10 @@ import torch as th
 
 from rllte.common.base_agent import BaseAgent
 from rllte.common import utils
-from rllte.common.policies import OffPolicyDeterministicActorDoubleCritic, OffPolicyStochasticActorDoubleCritic
+from rllte.common.policies import (OffPolicyDeterministicActorDoubleCritic, 
+                                   OffPolicyStochasticActorDoubleCritic,
+                                   NpuOffPolicyDeterministicActorDoubleCritic,
+                                   NpuOffPolicyStochasticActorDoubleCritic)
 from rllte.xploit.encoder import TassaCnnEncoder, IdentityEncoder
 from rllte.xploit.storage import NStepReplayStorage, VanillaReplayStorage
 from rllte.xplore.distribution import TruncatedNormalNoise, SquashedNormal
@@ -45,7 +48,7 @@ class OffPolicyAgent(BaseAgent):
         feature_dim = kwargs.pop('feature_dim', 50)
         hidden_dim = kwargs.pop('feature_dim', 1024)
         batch_size = kwargs.pop('batch_size', 256)
-
+        npu = kwargs.pop('npu', False)
         super().__init__(env=env,
                          eval_env=eval_env,
                          tag=tag,
@@ -72,30 +75,44 @@ class OffPolicyAgent(BaseAgent):
             )
         
         if kwargs['agent_name'] == "DrQv2":
-            self.policy = OffPolicyDeterministicActorDoubleCritic(
-                action_dim=self.action_dim,
-                feature_dim=self.feature_dim,
-                hidden_dim=hidden_dim
-            )
+            if npu:
+                self.policy = NpuOffPolicyDeterministicActorDoubleCritic(
+                    action_dim=self.action_dim,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim
+                )
+            else:
+                self.policy = OffPolicyDeterministicActorDoubleCritic(
+                    action_dim=self.action_dim,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim
+                )
             self.storage = NStepReplayStorage(
                 observation_space=env.observation_space,
                 action_space=env.action_space,
-                device=device,
+                device="cpu" if npu else device,
                 batch_size=batch_size
             )
             self.dist = TruncatedNormalNoise()
             self.aug = RandomShift(pad=4)
 
         if kwargs['agent_name'] == "SAC":
-            self.policy = OffPolicyStochasticActorDoubleCritic(
-                action_dim=self.action_dim,
-                feature_dim=self.feature_dim,
-                hidden_dim=hidden_dim
-            )
+            if npu:
+                self.policy = NpuOffPolicyStochasticActorDoubleCritic(
+                    action_dim=self.action_dim,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim
+                )
+            else:
+                self.policy = OffPolicyStochasticActorDoubleCritic(
+                    action_dim=self.action_dim,
+                    feature_dim=self.feature_dim,
+                    hidden_dim=hidden_dim
+                )
             self.storage = VanillaReplayStorage(
                 observation_space=env.observation_space,
                 action_space=env.action_space,
-                device=device,
+                device="cpu" if npu else device,
                 batch_size=batch_size
             )
 

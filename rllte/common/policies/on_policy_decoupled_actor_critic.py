@@ -30,7 +30,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
         feature_dim: int,
         hidden_dim: int,
     ) -> None:
-        super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim)
+        super().__init__()
         self.action_dim = action_dim
         self.action_type = action_type
         if action_type == "Discrete":
