@@ -13,11 +13,7 @@ from torch.nn import functional as F
 from torch import multiprocessing as mp
 
 from rllte.common.distributed_agent import DistributedAgent, Environment
-from rllte.common.policies import DistributedActorCritic
 from rllte.common.utils import get_network_init
-from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
-from rllte.xploit.storage import DistributedStorage as Storage
-from rllte.xplore.distribution import Categorical, DiagonalGaussian
 
 class VTraceLoss:
     """V-trace loss function.
@@ -148,7 +144,9 @@ class IMPALA(DistributedAgent):
                          num_steps=num_steps,
                          num_actors=num_actors,
                          num_learners=num_learners,
-                         batch_size=batch_size
+                         batch_size=batch_size,
+                         feature_dim=feature_dim,
+                         use_lstm=use_lstm
                          )
         self.feature_dim = feature_dim
         self.lr = lr
@@ -158,100 +156,6 @@ class IMPALA(DistributedAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
         self.network_init_method = network_init_method
-
-        # build encoder
-        if len(self.obs_shape) == 3:
-            self.encoder = MnihCnnEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-        elif len(self.obs_shape) == 1:
-            self.encoder = IdentityEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-            self.feature_dim = self.obs_shape[0]
-
-        # build storage
-        self.storage = Storage(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=device,
-            num_steps=self.num_steps,
-            num_storages=num_storages,
-            batch_size=batch_size
-        )
-
-        # build distribution
-        if self.action_type == "Discrete":
-            self.dist = Categorical
-        elif self.action_type == "Box":
-            self.dist = DiagonalGaussian
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
-        # create models
-        self.actor = DistributedActorCritic(
-            obs_shape=self.action_type,
-            action_shape=self.action_shape,
-            action_dim=self.action_dim,
-            action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm,
-        )
-        self.learner = DistributedActorCritic(
-            obs_shape=self.action_type,
-            action_shape=self.action_shape,
-            action_dim=self.action_dim,
-            action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm,
-        )
-        
-    def mode(self, training: bool = True) -> None:
-        """Set the training mode.
-
-        Args:
-            training (bool): True (training) or False (testing).
-
-        Returns:
-            None.
-        """
-        self.training = training
-        self.actor.train(training)
-        self.learner.train(training)
-
-    def set(self, 
-            encoder: Optional[Any] = None,
-            storage: Optional[Any] = None,
-            distribution: Optional[Any] = None,
-            augmentation: Optional[Any] = None,
-            reward: Optional[Any] = None,
-            ) -> None:
-        """Set a module for the agent.
-
-        Args:
-            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
-
-        Returns:
-            None.
-        """
-        super().set(
-            encoder=encoder,
-            storage=storage,
-            distribution=distribution,
-            augmentation=augmentation,
-            reward=reward
-        )
-        if encoder is not None:
-            self.encoder = encoder
-            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
     
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
@@ -273,6 +177,7 @@ class IMPALA(DistributedAgent):
             lr=self.lr,
             eps=self.eps,
         )
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, self.lr_lambda)
         # set the training mode
         self.mode(training=True)
 
@@ -340,7 +245,6 @@ class IMPALA(DistributedAgent):
         self,
         batch: Dict,
         init_actor_states: Tuple[th.Tensor, ...],
-        lr_scheduler: th.optim.lr_scheduler,
         lock=threading.Lock(),  # noqa B008
     ) -> Dict[str, Tuple]:
         """
@@ -349,7 +253,6 @@ class IMPALA(DistributedAgent):
         Args:
             batch (Batch): Batch samples.
             init_actor_states (List[Tensor]): Initial states for LSTM.
-            lr_scheduler (th.optim.lr_scheduler): Learning rate scheduler.
             lock (Lock): Thread lock.
 
         Returns:
@@ -387,7 +290,7 @@ class IMPALA(DistributedAgent):
             total_loss.backward()
             nn.utils.clip_grad_norm_(self.learner.parameters(), self.max_grad_norm)
             self.opt.step()
-            lr_scheduler.step()
+            self.lr_scheduler.step()
 
             self.actor.load_state_dict(self.learner.state_dict())
             return {

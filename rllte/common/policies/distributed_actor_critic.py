@@ -1,9 +1,11 @@
 from typing import Dict, List, Tuple
-
+from pathlib import Path
+import os
 import torch as th
 from torch import nn
 from torch.distributions import Distribution
 from torch.nn import functional as F
+from rllte.common.utils import ExportModel
 
 
 class DiscreteActor(nn.Module):
@@ -296,3 +298,27 @@ class DistributedActorCritic(nn.Module):
         Returns:
             Actions.
         """
+    
+    def save(self, path: Path) -> None:
+        """Save models.
+
+        Args:
+            path (Path): Save path.
+
+        Returns:
+            None.
+        """
+        export_model = ExportModel(encoder=self.encoder, actor=self.actor)
+        th.save(export_model, path / "agent.pth")
+    
+    def load(self, path: str) -> None:
+        """Load initial parameters.
+
+        Args:
+            path (str): Import path.
+
+        Returns:
+            None.
+        """
+        params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
+        self.load_state_dict(params)

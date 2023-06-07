@@ -11,7 +11,7 @@ def make_env():
     return _thunk
 
 if __name__ == "__main__":
-    env = VecEnvWrapper(make_env, num_envs=1, device="cpu")
+    env = VecEnvWrapper(env_id="Acrobot-v1", num_envs=1, device="cpu")
     agent = PPO(env=env, device="cpu", tag="verification")
     try:
         agent.train(num_train_steps=1000)

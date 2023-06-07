@@ -81,7 +81,7 @@ class DistributedStorage(BaseStorage):
         batch_size: int,
         free_queue: th.multiprocessing.SimpleQueue,
         full_queue: th.multiprocessing.SimpleQueue,
-        storages: List,
+        storages: Dict[str, list],
         init_actor_state_storages: List,
         lock=threading.Lock(),  # noqa B008
     ) -> Tuple[Dict, Generator[Any, Any, None]]:
@@ -92,7 +92,7 @@ class DistributedStorage(BaseStorage):
             batch_size (int): The batch size.
             free_queue (Queue): Free queue for communication.
             full_queue (Queue): Full queue for communication.
-            storages (List[Storage]): A list of shared storages.
+            storages (Dict[str, list]): A Dict of shared storages.
             init_actor_state_storages: (List[Tensor]): Initial states for LSTM.
             lock (Lock): Thread lock.
 

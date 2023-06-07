@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Union
 from pathlib import Path
 from copy import deepcopy
 import os
@@ -238,7 +238,7 @@ class OnPolicySharedActorCritic(nn.Module):
         self.encoder = None
         self.dist = None
 
-    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, ...]:
+    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations.
 
         Args:
@@ -372,7 +372,7 @@ class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
                  ) -> None:
         super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim, aux_critic=aux_critic)
     
-    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, ...]:
+    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations, for `NPU` device.
 
         Args:

@@ -72,7 +72,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
         self.critic_encoder = None
         self.dist = None
     
-    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, ...]:
+    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations.
 
         Args:
@@ -183,7 +183,7 @@ class NpuOnPolicyDecoupledActorCritic(OnPolicyDecoupledActorCritic):
     ) -> None:
         super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim)
     
-    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, ...]:
+    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations, for `NPU` device.
 
         Args:

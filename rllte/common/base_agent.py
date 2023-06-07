@@ -12,8 +12,8 @@ import torch as th
 
 # try to load torch_npu
 try:
-    import torch_npu
-    from torch_npu.contrib import transfer_to_npu
+    import torch_npu # type: ignore
+    from torch_npu.contrib import transfer_to_npu # type: ignore
 except Exception:
     pass
 

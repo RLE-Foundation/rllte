@@ -8,7 +8,7 @@ import torch as th
 from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.xploit.agent.networks import get_network_init
+from rllte.common.utils import get_network_init
 
 
 class NpuPPO(OnPolicyAgent):

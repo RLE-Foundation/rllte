@@ -19,6 +19,10 @@ import numpy as np
 import torch as th
 
 from rllte.common.base_agent import BaseAgent
+from rllte.common.policies import DistributedActorCritic
+from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from rllte.xploit.storage import DistributedStorage as Storage
+from rllte.xplore.distribution import Categorical, DiagonalGaussian
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.
@@ -122,7 +126,7 @@ class Environment:
         obs = th.from_numpy(np.array(obs))
         return obs.view((1, 1, *obs.shape))
 
-class DistributedAgent(BaseAgent):
+class DistributedAgent(BaseAgent): # type: ignore
     """Trainer for distributed algorithms.
 
     Args:
@@ -136,7 +140,7 @@ class DistributedAgent(BaseAgent):
         num_actors (int): Number of actors.
         num_learners (int): Number of learners.
         num_storages (int): Number of storages.
-        batch_size (int): Number of samples per batch to load.
+        **kwargs: Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
     Returns:
         Distributed agent instance.
@@ -151,8 +155,12 @@ class DistributedAgent(BaseAgent):
                  num_actors: int = 45,
                  num_learners: int = 4,
                  num_storages: int = 60,
-                 batch_size: int = 4
-                 ) -> None:
+                 **kwargs) -> None:
+        feature_dim = kwargs.pop('feature_dim', 512)
+        use_lstm = kwargs.pop('use_lstm', 256)
+        batch_size = kwargs.pop('batch_size', 4)
+
+        npu = kwargs.pop('npu', False)
         super().__init__(env=env,
                          eval_env=eval_env,
                          tag=tag,
@@ -165,8 +173,84 @@ class DistributedAgent(BaseAgent):
         self.num_steps = num_steps
         self.num_storages = num_storages
         self.batch_size = batch_size
+
+        # build encoder
+        if len(self.obs_shape) == 3:
+            self.encoder = MnihCnnEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+        elif len(self.obs_shape) == 1:
+            self.encoder = IdentityEncoder(
+                observation_space=env.observation_space,
+                feature_dim=feature_dim
+            )
+            self.feature_dim = self.obs_shape[0]
+
+        # build storage
+        self.storage = Storage(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            num_steps=self.num_steps,
+            num_storages=num_storages,
+            batch_size=batch_size
+        )
+
+        # build distribution
+        if self.action_type == "Discrete":
+            self.dist = Categorical
+        elif self.action_type == "Box":
+            self.dist = DiagonalGaussian
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
+        # create models
+        self.actor = DistributedActorCritic(
+            obs_shape=self.obs_shape,
+            action_shape=self.action_shape,
+            action_dim=self.action_dim,
+            action_type=self.action_type,
+            action_range=self.action_range,
+            feature_dim=feature_dim,
+            use_lstm=use_lstm,
+        )
+        self.learner = DistributedActorCritic(
+            obs_shape=self.obs_shape,
+            action_shape=self.action_shape,
+            action_dim=self.action_dim,
+            action_type=self.action_type,
+            action_range=self.action_range,
+            feature_dim=feature_dim,
+            use_lstm=use_lstm,
+        )
         # get separate environments
         self.env = self.env.envs
+    
+    def act(self) -> None:
+        """Act function of each actor. Implemented by individual algorithms."""
+        raise NotImplementedError
+    
+    def update(self) -> None:
+        """Update function of the learner. Implemented by individual algorithms."""
+        raise NotImplementedError
+    
+    def freeze(self) -> None:
+        """Freeze the structure of the agent. Implemented by individual algorithms."""
+        raise NotImplementedError
+
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
+
+        Args:
+            training (bool): True (training) or False (testing).
+
+        Returns:
+            None.
+        """
+        self.training = training
+        self.actor.train(training)
+        self.learner.train(training)
 
     def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None:
         """Training function.
@@ -178,19 +262,27 @@ class DistributedAgent(BaseAgent):
         Returns:
             None.
         """
+        def lr_lambda(self, epoch: int = 0) -> float:
+            """Function for learning rate scheduler.
+
+            Args:
+                epoch (int): Number of training epochs.
+
+            Returns:
+                Learning rate.
+            """
+            return (1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps)
+
+        self.lr_lambda = lr_lambda
         # freeze the structure of the agent
         self.freeze()
         # final check
         self.check()
         # load initial model parameters 
         if init_model_path is not None:
-            self.load(init_model_path)
-        
-        def lr_lambda(epoch):
-            return (
-                1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
-            )
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, lr_lambda)
+            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
+            self.actor.load(init_model_path)
+            self.learner.load(init_model_path)
 
         """Training function"""
         global_step = 0
@@ -211,10 +303,9 @@ class DistributedAgent(BaseAgent):
                     storages=self.storage.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
-                metrics = self.update(
+                metrics = self.update( # type: ignore
                     batch=batch,
-                    init_actor_states=actor_states,
-                    lr_scheduler=self.lr_scheduler,
+                    init_actor_states=actor_states
                 )
                 with lock:
                     global_step += self.num_steps * self.batch_size
@@ -299,7 +390,10 @@ class DistributedAgent(BaseAgent):
                 thread.join()
             self.logger.info("Training Accomplished!")
             # save model
-            self.save()
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+            self.learner.save(path=save_dir)
+            self.logger.info(f"Model saved at: {save_dir}")
         finally:
             for _ in range(self.num_actors):
                 free_queue.put(None)

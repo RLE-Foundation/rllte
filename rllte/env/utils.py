@@ -13,10 +13,12 @@ class VecEnvWrapper(gym.Wrapper):
     """Env wrapper for adapting to rllte engine and outputting torch tensors.
 
     Args:
-        env_fn (Callable): Function that creates the environments.
+        env_id (Union[str, Callable[..., gym.Env]]): either the env ID, the env class or a callable returning an env
         num_envs (int): Number of environments.
+        seed (int): Random seed.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
+        env_kwargs: Optional keyword argument to pass to the env constructor
 
     Returns:
         VecEnvWrapper instance.
@@ -24,12 +26,36 @@ class VecEnvWrapper(gym.Wrapper):
 
     def __init__(
         self,
-        env_fn: Callable,
+        env_id: Union[str, Callable[..., gym.Env]],
         num_envs: int = 1,
+        seed: int = 1,
         device: str = "cpu",
         parallel: bool = True,
+        env_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
-        env_fns = [env_fn() for _ in range(num_envs)]
+        env_kwargs = env_kwargs or {}
+
+        def make_env(rank: int) -> Callable:
+            def _thunk() -> gym.Env:
+                assert env_kwargs is not None
+                if isinstance(env_id, str):
+                    # if the render mode was not specified, we set it to `rgb_array` as default.
+                    kwargs = {"render_mode": "rgb_array"}
+                    kwargs.update(env_kwargs)
+                    try:
+                        env = gym.make(env_id, **kwargs)  # type: ignore[arg-type]
+                    except:
+                        env = gym.make(env_id, **env_kwargs)
+                else:
+                    env = env_id(**env_kwargs)
+
+                env.action_space.seed(seed + rank)
+
+                return env
+
+            return _thunk
+
+        env_fns = [make_env(rank=i) for i in range(num_envs)]
         if parallel:
             env = AsyncVectorEnv(env_fns)
         else:

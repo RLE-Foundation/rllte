@@ -118,6 +118,14 @@ class OffPolicyAgent(BaseAgent):
 
             # build distribution
             self.dist = SquashedNormal
+    
+    def update(self) -> Dict[str, float]:
+        """Update function of the agent. Implemented by individual algorithms."""
+        raise NotImplementedError
+
+    def freeze(self) -> None:
+        """Freeze the structure of the agent. Implemented by individual algorithms."""
+        raise NotImplementedError
         
     def mode(self, training: bool = True) -> None:
         """Set the training mode.
@@ -148,7 +156,7 @@ class OffPolicyAgent(BaseAgent):
         # load initial model parameters 
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.load(init_model_path)
+            self.policy.load(init_model_path)
         # reset the env
         episode_step, episode_reward = 0, 0
         obs, info = self.env.reset(seed=self.seed)

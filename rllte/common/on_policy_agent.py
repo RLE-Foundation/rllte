@@ -129,8 +129,13 @@ class OnPolicyAgent(BaseAgent):
                     hidden_dim=hidden_dim,
                 )
     
+    def update(self) -> Dict[str, float]:
+        """Update function of the agent. Implemented by individual algorithms."""
+        raise NotImplementedError
+    
     def freeze(self) -> None:
         """Freeze the structure of the agent. Implemented by individual algorithms."""
+        raise NotImplementedError
 
     def mode(self, training: bool = True) -> None:
         """Set the training mode.
