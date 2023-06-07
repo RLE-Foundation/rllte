@@ -1,5 +1,6 @@
 from collections import deque
 from typing import Dict, Optional
+from pathlib import Path
 
 import gymnasium as gym
 import numpy as np
@@ -7,6 +8,11 @@ import torch as th
 
 from rllte.common.base_agent import BaseAgent
 from rllte.common import utils
+from rllte.common.policies import OffPolicyDeterministicActorDoubleCritic, OffPolicyStochasticActorDoubleCritic
+from rllte.xploit.encoder import TassaCnnEncoder, IdentityEncoder
+from rllte.xploit.storage import NStepReplayStorage, VanillaReplayStorage
+from rllte.xplore.distribution import TruncatedNormalNoise, SquashedNormal
+from rllte.xplore.augmentation import RandomShift
 
 class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
@@ -20,6 +26,7 @@ class OffPolicyAgent(BaseAgent):
         pretraining (bool): Turn on pre-training model or not.
         num_init_steps (int): Number of initial exploration steps.
         eval_every_steps (int): Evaluation interval.
+        **kwargs: Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
     Returns:
         Off-policy agent instance.
@@ -33,16 +40,79 @@ class OffPolicyAgent(BaseAgent):
                  pretraining: bool = False,
                  num_init_steps: int = 2000,
                  eval_every_steps: int = 5000,
+                 **kwargs
                  ) -> None:
+        feature_dim = kwargs.pop('feature_dim', 50)
+        hidden_dim = kwargs.pop('feature_dim', 1024)
+        batch_size = kwargs.pop('batch_size', 256)
+
         super().__init__(env=env,
                          eval_env=eval_env,
                          tag=tag,
                          seed=seed,
                          device=device,
-                         pretraining=pretraining
+                         pretraining=pretraining,
+                         feature_dim=feature_dim
                          )
+
         self.eval_every_steps = eval_every_steps
         self.num_init_steps = num_init_steps
+
+        # build encoder
+        if len(self.obs_shape) == 3:
+            self.encoder = TassaCnnEncoder(
+                observation_space=env.observation_space,
+                feature_dim=self.feature_dim
+            )
+        elif len(self.obs_shape) == 1:
+            self.feature_dim = self.obs_shape[0]
+            self.encoder = IdentityEncoder(
+                observation_space=env.observation_space,
+                feature_dim=self.feature_dim
+            )
+        
+        if kwargs['agent_name'] == "DrQv2":
+            self.policy = OffPolicyDeterministicActorDoubleCritic(
+                action_dim=self.action_dim,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim
+            )
+            self.storage = NStepReplayStorage(
+                observation_space=env.observation_space,
+                action_space=env.action_space,
+                device=device,
+                batch_size=batch_size
+            )
+            self.dist = TruncatedNormalNoise()
+            self.aug = RandomShift(pad=4)
+
+        if kwargs['agent_name'] == "SAC":
+            self.policy = OffPolicyStochasticActorDoubleCritic(
+                action_dim=self.action_dim,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim
+            )
+            self.storage = VanillaReplayStorage(
+                observation_space=env.observation_space,
+                action_space=env.action_space,
+                device=device,
+                batch_size=batch_size
+            )
+
+            # build distribution
+            self.dist = SquashedNormal
+        
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
+
+        Args:
+            training (bool): True (training) or False (testing).
+
+        Returns:
+            None.
+        """
+        self.training = training
+        self.policy.train(training)
 
     def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
         """Training function.
@@ -60,6 +130,7 @@ class OffPolicyAgent(BaseAgent):
         self.check()
         # load initial model parameters 
         if init_model_path is not None:
+            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
             self.load(init_model_path)
         # reset the env
         episode_step, episode_reward = 0, 0
@@ -74,7 +145,7 @@ class OffPolicyAgent(BaseAgent):
 
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                action = self.act(obs, training=True)
+                action = self.policy(obs, training=True, step=self.global_step)
                 # Initial exploration
                 if self.global_step < self.num_init_steps:
                     action.uniform_(-1.0, 1.0)
@@ -124,7 +195,16 @@ class OffPolicyAgent(BaseAgent):
 
         # save model
         self.logger.info("Training Accomplished!")
-        self.save()
+        if self.pretraining:  # pretraining
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+        else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+        self.policy.save(path=save_dir, pretraining=self.pretraining)
+        self.logger.info(f"Model saved at: {save_dir}")
+
+        # close env
         self.env.close()
         if self.eval_env is not None:
             self.eval_env.close()
@@ -136,7 +216,7 @@ class OffPolicyAgent(BaseAgent):
 
         while episode <= self.num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                action = self.act(obs, training=False)
+                action = self.policy(obs, training=False, step=self.global_step)
 
             next_obs, reward, terminated, truncated, info = self.eval_env.step(action.clamp(*self.action_range))
             total_reward += reward[0].cpu().numpy()

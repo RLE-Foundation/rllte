@@ -20,7 +20,7 @@ class Atari200M(object):
             atari_200m_scores[key] = np.transpose(val, axes=(1, 2, 0))
         self.atari_200_iters_normalized_scores = atari_200m_scores
 
-    def load_scores(self) -> Dict[str, np.ndarray]:
+    def load_scores(self) -> None:
         """Returns final performance."""
 
     def load_curves(self) -> np.ndarray:

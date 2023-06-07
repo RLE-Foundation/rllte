@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Iterable
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,8 +7,7 @@ import seaborn as sns
 
 
 def _decorate_axis(
-    ax: plt.axes, wrect: float = 10, hrect: float = 10, ticklabelsize: str = 'large'
-) -> plt.axes:
+    ax: plt.axes, wrect: float = 10, hrect: float = 10, ticklabelsize: str = 'large') -> plt.axes:
     """Helper function for decorating plots.
         Borrowed from: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
 
@@ -35,17 +34,16 @@ def _annotate_and_decorate_axis(
     ax: plt.axes,
     labelsize: str = 'x-large',
     ticklabelsize: str = 'x-large',
-    xticks: List[float] = None,
-    xticklabels: List[str] = None,
-    yticks: List[float] = None,
+    xticks: Optional[Iterable] = None,
+    xticklabels: Optional[Iterable] = None,
+    yticks: Optional[Iterable] = None,
     legend: bool = False,
     grid_alpha: float = 0.2,
     legendsize: str = 'x-large',
     xlabel: str = '',
     ylabel: str = '',
     wrect: float = 10,
-    hrect: float = 10
-) -> plt.axes:
+    hrect: float = 10) -> plt.axes:
     """Annotates and decorates the plot.
         Borrowed from: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
 
@@ -122,7 +120,7 @@ def plot_interval_estimates(
         metrics_dict: Dict[str, Dict],
         metric_names: List[str],
         algorithms: List[str],
-        colors: List[str] = None,
+        colors: Optional[List[str]] = None,
         color_palette: str = 'colorblind',
         max_ticks: float = 4,
         subfigure_width: float = 3.4,
@@ -131,7 +129,7 @@ def plot_interval_estimates(
         xlabel_y_coordinate: float = -0.16,
         xlabel: str = 'Normalized Score',
         **kwargs
-        ) -> None:
+        ) -> Tuple[plt.figure, plt.Axes]:
     """Plots verious metrics of algorithms with stratified confidence intervals.
         Based on: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
         See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
@@ -140,7 +138,7 @@ def plot_interval_estimates(
         metrics_dict (Dict[str, Dict]): The dictionary of various metrics of algorithms.
         metric_names (List[str]): Names of the metrics corresponding to `metrics_dict`.
         algorithms (List[str]): List of methods used for plotting.
-        colors (List[str]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
+        colors (Optional[List[str]]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
         color_palette (str): `seaborn.color_palette` object for mapping each method to a color.
         max_ticks (float): Find nice tick locations with no more than `max_ticks`. Passed to `plt.MaxNLocator`.
         subfigure_width (float): Width of each subfigure.
@@ -204,16 +202,16 @@ def plot_interval_estimates(
 def plot_probability_improvement(
         poi_dict: Dict[str, List],
         pair_separator: str = '_',
-        figsize: Tuple[float] = (3.7, 2.1),
+        figsize: Tuple[float, float] = (3.7, 2.1),
         colors: Optional[List[str]] = None,
         color_palette: str = 'colorblind',
         alpha: float = 0.75,
         interval_height: float = 0.6,
-        xticks: Optional[List] = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        xticks: Optional[Iterable] = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         xlabel: str = 'P(X > Y)',
         left_ylabel: str = 'Algorithm X',
         right_ylabel: str = 'Algorithm Y',
-        **kwargs) -> None:
+        **kwargs) -> Tuple[plt.figure, plt.Axes]:
         """Plots probability of improvement with stratified confidence intervals.
             Based on: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
             See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
@@ -223,11 +221,11 @@ def plot_probability_improvement(
             pair_separator (str): Each algorithm pair name in dictionaries above is joined by a string separator. 
                 For example, if the pairs are specified as 'X;Y', then the separator corresponds to ';'. Defaults to ','.
             figsize (Tuple[float]): Size of the figure passed to `matplotlib.subplots`.
-            colors (List[str]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
+            colors (Optional[List[str]]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
             color_palette (str): `seaborn.color_palette` object for mapping each method to a color.
             interval_height (float): Height of confidence intervals.
             alpha (float): Changes the transparency of the shaded regions corresponding to the confidence intervals.
-            xticks (Optional[List]): The list of x-axis tick locations. Passing an empty list removes all xticks.
+            xticks (Optional[Iterable]): The list of x-axis tick locations. Passing an empty list removes all xticks.
             xlabel (str): Label for the x-axis.
             left_ylabel (str): Label for the left y-axis. Defaults to 'Algorithm X'.
             right_ylabel (str): Label for the left y-axis. Defaults to 'Algorithm Y'.
@@ -334,16 +332,16 @@ def plot_performance_profile(
         profile_dict: Dict[str, List],
         tau_list: np.ndarray,
         use_non_linear_scaling: bool = False,
-        figsize: Tuple[float] = (10, 5),
+        figsize: Tuple[float, float] = (10., 5.),
         colors: Optional[List[str]] = None,
         color_palette: str = 'colorblind',
         alpha: float = 0.15,
-        xticks: Optional[List] = None,
-        yticks: Optional[List] = None,
+        xticks: Optional[Iterable] = None,
+        yticks: Optional[Iterable] = None,
         xlabel: Optional[str] = r'Normalized Score ($\tau$)',
         ylabel: Optional[str] = r'Fraction of runs with score $> \tau$',
         linestyles: Optional[str] = None,
-        **kwargs) -> None:
+        **kwargs) -> Tuple[plt.figure, plt.Axes]:
         """Plots performance profiles with stratified confidence intervals.
             Based on: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
             See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
@@ -353,11 +351,11 @@ def plot_performance_profile(
             tau_list (Ndarray): 1D numpy array of threshold values on which the profile is evaluated.
             use_non_linear_scaling (bool): Whether to scale the x-axis in proportion to the number of runs within any specified range.
             figsize (Tuple[float]): Size of the figure passed to `matplotlib.subplots`.
-            colors (List[str]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
+            colors (Optional[List[str]]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
             color_palette (str): `seaborn.color_palette` object for mapping each method to a color.
             alpha (float): Changes the transparency of the shaded regions corresponding to the confidence intervals.
-            xticks (Optional[List]): The list of x-axis tick locations. Passing an empty list removes all xticks.
-            yticks (Optional[List]): The list of y-axis tick locations between 0 and 1. If None, defaults to `[0, 0.25, 0.5, 0.75, 1.0]`.
+            xticks (Optional[Iterable]): The list of x-axis tick locations. Passing an empty list removes all xticks.
+            yticks (Optional[Iterable]): The list of y-axis tick locations between 0 and 1. If None, defaults to `[0, 0.25, 0.5, 0.75, 1.0]`.
             xlabel (str): Label for the x-axis.
             ylabel (str): Label for the y-axis.
             linestyles (str): Maps each method to a linestyle. If None, then the 'solid' linestyle is used for all methods.
@@ -412,15 +410,15 @@ def plot_sample_efficiency_curve(
         sampling_dict: Dict[str, Dict],
         frames: np.ndarray,
         algorithms: List[str],
-        colors: List[str] = None,
+        colors: Optional[List[str]] = None,
         color_palette: str = 'colorblind',
-        figsize: Tuple[float] = (3.7, 2.1),
+        figsize: Tuple[float, float] = (3.7, 2.1),
         xlabel: Optional[str] = r'Number of Frames (in millions)',
         ylabel: Optional[str] = r'Aggregate Human Normalized Score',
         labelsize: str = 'xx-large',
         ticklabelsize: str = 'xx-large',
         **kwargs
-        ) -> None:
+        ) -> Tuple[plt.figure, plt.Axes]:
         """Plots an aggregate metric with CIs as a function of environment frames.
             Based on: https://github.com/google-research/rliable/blob/master/rliable/plot_utils.py
             See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
@@ -429,7 +427,7 @@ def plot_sample_efficiency_curve(
             sampling_dict (Dict[str, Dict]): A dictionary of values with stratified confidence intervals in different frames.
             frames (np.ndarray): Array containing environment frames to mark on the x-axis.
             algorithms (List[str]): List of methods used for plotting.
-            colors (List[str]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
+            colors (Optional[List[str]]): Maps each method to a color. If None, then this mapping is created based on `color_palette`.
             color_palette (str): `seaborn.color_palette` object for mapping each method to a color.
             max_ticks (float): Find nice tick locations with no more than `max_ticks`. Passed to `plt.MaxNLocator`.
             subfigure_width (float): Width of each subfigure.

@@ -25,5 +25,5 @@ class DMC(object):
 
         return scores_dict
 
-    def load_curves(self) -> np.ndarray:
+    def load_curves(self) -> None:
         pass

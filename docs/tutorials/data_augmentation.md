@@ -8,7 +8,7 @@ implemented algorithms.
 ```py title="example.py"
 from rllte.xploit.agent import PPO
 from rllte.env import make_atari_env
-from rllte.xplore.reward import RE3
+from rllte.xplore.augmentation import RandomCrop
 
 if __name__ == "__main__":
     # env setup

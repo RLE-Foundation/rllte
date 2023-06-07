@@ -9,14 +9,7 @@ from torch.nn import functional as F
 
 from rllte.common.off_policy_agent import OffPolicyAgent
 from rllte.xploit.agent import utils
-from rllte.xploit.agent.networks import (ExportModel, 
-                                           OffPolicyDeterministicActor, 
-                                           OffPolicyDoubleCritic, 
-                                           get_network_init)
-from rllte.xploit.encoder import TassaCnnEncoder, IdentityEncoder
-from rllte.xploit.storage import NStepReplayStorage as Storage
-from rllte.xplore.distribution import TruncatedNormalNoise
-from rllte.xplore.augmentation import RandomShift
+from rllte.common.utils import get_network_init
 
 class DrQv2(OffPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -72,145 +65,33 @@ class DrQv2(OffPolicyAgent):
                          device=device,
                          pretraining=pretraining,
                          num_init_steps=num_init_steps,
-                         eval_every_steps=eval_every_steps)
-        self.feature_dim = feature_dim
+                         eval_every_steps=eval_every_steps,
+                         agent_name="DrQv2",
+                         feature_dim=feature_dim,
+                         hidden_dim=hidden_dim,
+                         batch_size=batch_size
+                         )
         self.lr = lr
         self.eps = eps
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
         self.network_init_method = network_init_method
-
-        # build encoder
-        if len(self.obs_shape) == 3:
-            self.encoder = TassaCnnEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-            self.aug = RandomShift(pad=4)
-        elif len(self.obs_shape) == 1:
-            self.encoder = IdentityEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-            self.feature_dim = self.obs_shape[0]
-
-        # build storage
-        self.storage = Storage(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=device,
-            batch_size=batch_size
-        )
-
-        # build distribution
-        self.dist = TruncatedNormalNoise()
-
-        # create models
-        self.actor = OffPolicyDeterministicActor(
-            action_dim=self.action_dim, 
-            feature_dim=self.feature_dim, 
-            hidden_dim=hidden_dim
-        )
-
-        self.critic = OffPolicyDoubleCritic(
-            action_dim=self.action_dim, 
-            feature_dim=self.feature_dim, 
-            hidden_dim=hidden_dim
-        )
-
-        self.critic_target = OffPolicyDoubleCritic(
-            action_dim=self.action_dim, 
-            feature_dim=self.feature_dim, 
-            hidden_dim=hidden_dim
-        )
-        
-    def mode(self, training: bool = True) -> None:
-        """Set the training mode.
-
-        Args:
-            training (bool): True (training) or False (testing).
-
-        Returns:
-            None.
-        """
-        self.training = training
-        self.actor.train(training)
-        self.critic.train(training)
-        self.encoder.train(training)
-        self.critic_target.train(training)
-
-    def set(self, 
-            encoder: Optional[Any] = None,
-            storage: Optional[Any] = None,
-            distribution: Optional[Any] = None,
-            augmentation: Optional[Any] = None,
-            reward: Optional[Any] = None,
-            ) -> None:
-        """Set a module for the agent.
-
-        Args:
-            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
-
-        Returns:
-            None.
-        """
-        super().set(
-            encoder=encoder,
-            storage=storage,
-            distribution=distribution,
-            augmentation=augmentation,
-            reward=reward
-        )
-        if encoder is not None:
-            self.encoder = encoder
-            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
     
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
         # set encoder and distribution
-        self.encoder = self.encoder
-        self.actor.dist = self.dist
+        self.policy.encoder = self.encoder
+        self.policy.dist = self.dist
         # network initialization
-        self.encoder.apply(get_network_init(self.network_init_method))
-        self.actor.apply(get_network_init(self.network_init_method))
-        self.critic.apply(get_network_init(self.network_init_method))
+        self.policy.apply(get_network_init(self.network_init_method))
         # to device
-        self.encoder.to(self.device)
-        self.actor.to(self.device)
-        self.critic.to(self.device)
-        self.critic_target.to(self.device)
-        # synchronize critic and target critic
-        self.critic_target.load_state_dict(self.critic.state_dict())
+        self.policy.to(self.device)
         # create optimizers
-        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=self.lr, eps=self.eps)
-        self.actor_opt = th.optim.Adam(self.actor.parameters(), lr=self.lr, eps=self.eps)
-        self.critic_opt = th.optim.Adam(self.critic.parameters(), lr=self.lr, eps=self.eps)
+        self.encoder_opt = th.optim.Adam(self.policy.encoder.parameters(), lr=self.lr, eps=self.eps)
+        self.actor_opt = th.optim.Adam(self.policy.actor.parameters(), lr=self.lr, eps=self.eps)
+        self.critic_opt = th.optim.Adam(self.policy.critic.parameters(), lr=self.lr, eps=self.eps)
         # set the training mode
         self.mode(training=True)
-
-    def act(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): training mode, True or False.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self.encoder(obs)
-        dist = self.actor.get_dist(obs=encoded_obs, step=self.global_step)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-
-        return action
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc.
@@ -243,9 +124,9 @@ class DrQv2(OffPolicyAgent):
             next_obs = self.aug(next_obs.float())
 
         # encode
-        encoded_obs = self.encoder(obs)
+        encoded_obs = self.policy.encoder(obs)
         with th.no_grad():
-            encoded_next_obs = self.encoder(next_obs)
+            encoded_next_obs = self.policy.encoder(next_obs)
 
         # update criitc
         metrics.update(self.update_critic(encoded_obs, action, reward, discount, encoded_next_obs))
@@ -254,7 +135,7 @@ class DrQv2(OffPolicyAgent):
         metrics.update(self.update_actor(encoded_obs.detach()))
 
         # udpate critic target
-        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
+        utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
 
         return metrics
 
@@ -281,14 +162,14 @@ class DrQv2(OffPolicyAgent):
 
         with th.no_grad():
             # sample actions
-            dist = self.actor.get_dist(next_obs, step=self.global_step)
+            dist = self.policy.get_dist(next_obs, step=self.global_step)
 
             next_action = dist.sample(clip=True)
-            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
             target_V = th.min(target_Q1, target_Q2)
             target_Q = reward + (discount * target_V)
 
-        Q1, Q2 = self.critic(obs, action)
+        Q1, Q2 = self.policy.critic(obs, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
@@ -315,10 +196,10 @@ class DrQv2(OffPolicyAgent):
             Actor loss metrics.
         """
         # sample actions
-        dist = self.actor.get_dist(obs, step=self.global_step)
+        dist = self.policy.get_dist(obs, step=self.global_step)
         action = dist.sample(clip=True)
 
-        Q1, Q2 = self.critic(obs, action)
+        Q1, Q2 = self.policy.critic(obs, action)
         Q = th.min(Q1, Q2)
 
         actor_loss = -Q.mean()
@@ -329,38 +210,3 @@ class DrQv2(OffPolicyAgent):
         self.actor_opt.step()
 
         return {"actor_loss": actor_loss.item()}
-
-    def save(self) -> None:
-        """Save models."""
-        if self.pretraining:  # pretraining
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self.encoder.state_dict(), save_dir / "encoder.pth")
-            th.save(self.actor.state_dict(), save_dir / "actor.pth")
-            th.save(self.critic.state_dict(), save_dir / "critic.pth")
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-            export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, save_dir / "agent.pth")
-                
-        self.logger.info(f"Model saved at: {save_dir}")
-
-    def load(self, path: str) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-
-        Returns:
-            None.
-        """
-        self.logger.info(f"Loading Initial Parameters from {path}")
-        encoder_params = th.load(os.path.join(path, "encoder.pth"), map_location=self.device)
-        actor_params = th.load(os.path.join(path, "actor.pth"), map_location=self.device)
-        critic_params = th.load(os.path.join(path, "critic.pth"), map_location=self.device)
-
-        self.encoder.load_state_dict(encoder_params)
-        self.actor.load_state_dict(actor_params)
-        self.critic.load_state_dict(critic_params)
-        self.critic_target.load_state_dict(critic_params)

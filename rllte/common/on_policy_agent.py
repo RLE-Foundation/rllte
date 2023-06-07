@@ -1,14 +1,18 @@
 from collections import deque
 from typing import Dict, Optional
-
+from pathlib import Path
 import gymnasium as gym
 import numpy as np
 import torch as th
 
 from rllte.common.base_agent import BaseAgent
 from rllte.common import utils
+from rllte.common.policies import OnPolicyDecoupledActorCritic, OnPolicySharedActorCritic
+from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from rllte.xploit.storage import VanillaRolloutStorage as Storage
+from rllte.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
 
-class OnPolicyAgent(BaseAgent):
+class OnPolicyAgent(BaseAgent): # noqa
     """Trainer for on-policy algorithms.
 
     Args:
@@ -20,6 +24,8 @@ class OnPolicyAgent(BaseAgent):
         pretraining (bool): Turn on pre-training model or not.
         num_steps (int): The sample length of per rollout.
         eval_every_episodes (int): Evaluation interval.
+        shared_encoder (bool): `True` for using a shared encoder, `False` for using two separate encoders.
+        **kwargs: Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
     Returns:
         On-policy agent instance.
@@ -33,16 +39,88 @@ class OnPolicyAgent(BaseAgent):
                  pretraining: bool = False,
                  num_steps: int = 128,
                  eval_every_episodes: int = 10,
+                 shared_encoder: bool = True,
+                 **kwargs
                  ) -> None:
+        feature_dim = kwargs.pop('feature_dim', 512)
+        hidden_dim = kwargs.pop('feature_dim', 256)
+        batch_size = kwargs.pop('batch_size', 256)
         super().__init__(env=env,
                          eval_env=eval_env,
                          tag=tag,
                          seed=seed,
                          device=device,
-                         pretraining=pretraining
+                         pretraining=pretraining,
+                         feature_dim=feature_dim
                          )
         self.num_steps = num_steps
         self.eval_every_episodes = eval_every_episodes
+
+        # build encoder
+        if len(self.obs_shape) == 3:
+            self.encoder = MnihCnnEncoder(
+                observation_space=env.observation_space,
+                feature_dim=self.feature_dim
+            )
+        elif len(self.obs_shape) == 1:
+            self.feature_dim = self.obs_shape[0]
+            self.encoder = IdentityEncoder(
+                observation_space=env.observation_space,
+                feature_dim=self.feature_dim
+            )
+
+        # build storage
+        self.storage = Storage(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            num_steps=self.num_steps,
+            num_envs=self.num_envs,
+            batch_size=batch_size
+        )
+
+        # build distribution
+        if self.action_type == "Discrete":
+            self.dist = Categorical
+        elif self.action_type == "Box":
+            self.dist = DiagonalGaussian
+        elif self.action_type == "MultiBinary":
+            self.dist = Bernoulli
+        else:
+            raise NotImplementedError("Unsupported action type!")
+        
+        # create policy
+        if shared_encoder:
+            self.policy = OnPolicySharedActorCritic(
+                obs_shape=self.obs_shape,
+                action_dim=self.action_dim,
+                action_type=self.action_type,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim,
+            )
+        else:
+            self.policy = OnPolicyDecoupledActorCritic(
+                obs_shape=self.obs_shape,
+                action_dim=self.action_dim,
+                action_type=self.action_type,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim,
+            )
+    
+    def freeze(self) -> None:
+        """Freeze the structure of the agent. Implemented by individual algorithms."""
+
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
+
+        Args:
+            training (bool): True (training) or False (evaluation).
+
+        Returns:
+            None.
+        """
+        self.training = training
+        self.policy.train(training)
 
     def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
         """Training function.
@@ -60,7 +138,8 @@ class OnPolicyAgent(BaseAgent):
         self.check()
         # load initial model parameters 
         if init_model_path is not None:
-            self.load(init_model_path)
+            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
+            self.load(init_model_path) # type: ignore
         # reset the env
         episode_rewards = deque(maxlen=100)
         episode_steps = deque(maxlen=100)
@@ -77,7 +156,7 @@ class OnPolicyAgent(BaseAgent):
             for _step in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    agent_outputs = self.act(obs, training=True)
+                    actions, values, log_probs = self.policy.get_action_and_value(obs, training=True)
 
                 (
                     next_obs,
@@ -85,19 +164,7 @@ class OnPolicyAgent(BaseAgent):
                     terminateds,
                     truncateds,
                     infos,
-                ) = self.env.step(agent_outputs["actions"].clamp(*self.action_range))
-
-                agent_outputs.update(
-                    {
-                        "obs": obs,
-                        "rewards": th.zeros_like(rewards, device=self.device)
-                        if self.pretraining
-                        else rewards,  # pre-training mode
-                        "terminateds": terminateds,
-                        "truncateds": truncateds,
-                        "next_obs": next_obs,
-                    }
-                )
+                ) = self.env.step(actions.clamp(*self.action_range))
 
                 if "episode" in infos:
                     indices = np.nonzero(infos["episode"]["l"])
@@ -105,13 +172,22 @@ class OnPolicyAgent(BaseAgent):
                     episode_steps.extend(infos["episode"]["l"][indices].tolist())
 
                 # add transitions
-                self.storage.add(**agent_outputs)
+                self.storage.add(
+                    obs=obs,
+                    actions=actions,
+                    rewards=th.zeros_like(rewards, device=self.device) if self.pretraining else rewards, # pre-training mode
+                    terminateds=terminateds,
+                    truncateds=truncateds,
+                    next_obs=next_obs,
+                    log_probs=log_probs,
+                    values=values
+                )
 
                 obs = next_obs
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.get_value(next_obs).detach()
+                last_values = self.policy.get_value(next_obs).detach()
             
             # compute intrinsic rewards
             if self.irs is not None:
@@ -128,7 +204,7 @@ class OnPolicyAgent(BaseAgent):
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
 
-            # policy update
+            # agent update
             self.update()
 
             # update and reset buffer
@@ -151,7 +227,16 @@ class OnPolicyAgent(BaseAgent):
 
         # save model
         self.logger.info("Training Accomplished!")
-        self.save()
+        if self.pretraining:  # pretraining
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+        else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+        self.policy.save(path=save_dir, pretraining=self.pretraining)
+        self.logger.info(f"Model saved at: {save_dir}")
+
+        # close env
         self.env.close()
         if self.eval_env is not None:
             self.eval_env.close()
@@ -164,7 +249,7 @@ class OnPolicyAgent(BaseAgent):
 
         while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions = self.act(obs, training=False)
+                actions = self.policy.get_action_and_value(obs, training=False)
             obs, rewards, terminateds, truncateds, infos = self.eval_env.step(actions.clamp(*self.action_range))
 
             if "episode" in infos:

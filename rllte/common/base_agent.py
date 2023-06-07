@@ -29,6 +29,7 @@ class BaseAgent(ABC):
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on pre-training model or not.
+        feature_dim (int): Number of features extracted by the encoder.
 
     Returns:
         Base agent instance.
@@ -41,6 +42,7 @@ class BaseAgent(ABC):
                  seed: int = 1,
                  device: str = "cpu",
                  pretraining: bool = False,
+                 feature_dim: int = 512,
                  ) -> None:
         # change work dir
         path = Path.cwd() / "logs" / tag / datetime.now().strftime("%Y-%m-%d-%I-%M-%S")
@@ -53,6 +55,7 @@ class BaseAgent(ABC):
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
+        self.feature_dim = feature_dim
         self.num_eval_episodes = 10
         self.global_step = 0
         self.global_episode = 0
@@ -148,7 +151,8 @@ class BaseAgent(ABC):
         self.logger.debug(f"Selected Agent: {self.__class__.__name__}")
         self.logger.debug(f"Selected Encoder: {self.encoder.__class__.__name__}")
         self.logger.debug(f"Selected Storage: {self.storage.__class__.__name__}")
-        dist_name = self.dist.__name__ if inspect.isclass(self.dist) else self.dist.__class__.__name__
+        # class for `Distribution` and instance for `Noise`
+        dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
         self.logger.debug(f"Selected Distribution: {dist_name}")
 
         if self.aug is not None:
@@ -192,6 +196,8 @@ class BaseAgent(ABC):
         if encoder is not None:
             assert isinstance(encoder, Encoder), "The `encoder` must be a subclass of `BaseEncoder`!"
             self.encoder = encoder
+            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
+            
         if storage is not None:
             assert isinstance(storage, Storage), "The `storage` must be a subclass of `BaseStorage`!"
             self.storage = storage
@@ -206,33 +212,9 @@ class BaseAgent(ABC):
             self.irs = reward
 
     @abstractmethod
-    def mode(self) -> None:
-        """Set the training mode."""
-
-    @abstractmethod
-    def freeze(self) -> None:
-        """Freeze the structure of the agent."""
-
-    @abstractmethod
-    def act(self) -> Any:
-        """Sample actions based on observations."""
-    
-    @abstractmethod
-    def update(self) -> Dict[str, float]:
-        """Update the agent."""
-    
-    @abstractmethod
-    def train(self) -> Optional[Dict[str, float]]:
+    def train(self) -> None:
         """Training function."""
 
     @abstractmethod
     def eval(self) -> Optional[Dict[str, float]]:
         """Evaluation function."""
-
-    @abstractmethod
-    def load(self) -> None:
-        """Load initial model parameters."""
-
-    @abstractmethod
-    def save(self) -> None:
-        """Save the trained model."""

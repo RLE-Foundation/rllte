@@ -8,10 +8,8 @@ import torch as th
 from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.xploit.agent.networks import OnPolicySharedActorCritic, get_network_init
-from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
-from rllte.xploit.storage import VanillaRolloutStorage as Storage
-from rllte.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
+from rllte.common.utils import get_network_init
+
 
 class PPO(OnPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -77,8 +75,11 @@ class PPO(OnPolicyAgent):
                          device=device,
                          pretraining=pretraining,
                          num_steps=num_steps,
-                         eval_every_episodes=eval_every_episodes)
-        self.feature_dim = feature_dim
+                         eval_every_episodes=eval_every_episodes,
+                         shared_encoder=True,
+                         feature_dim=feature_dim,
+                         hidden_dim=hidden_dim,
+                         batch_size=batch_size)
         self.lr = lr
         self.eps = eps
         self.n_epochs = n_epochs
@@ -89,132 +90,20 @@ class PPO(OnPolicyAgent):
         self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
         self.network_init_method = network_init_method
-
-        # build encoder
-        if len(self.obs_shape) == 3:
-            self.encoder = MnihCnnEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-        elif len(self.obs_shape) == 1:
-            self.encoder = IdentityEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
-            self.feature_dim = self.obs_shape[0]
-
-        # build storage
-        self.storage = Storage(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=device,
-            num_steps=self.num_steps,
-            num_envs=self.num_envs,
-            batch_size=batch_size
-        )
-
-        # build distribution
-        if self.action_type == "Discrete":
-            self.dist = Categorical
-        elif self.action_type == "Box":
-            self.dist = DiagonalGaussian
-        elif self.action_type == "MultiBinary":
-            self.dist = Bernoulli
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
-        # create models
-        self.ac = OnPolicySharedActorCritic(
-            obs_shape=self.obs_shape,
-            action_dim=self.action_dim,
-            action_type=self.action_type,
-            feature_dim=self.feature_dim,
-            hidden_dim=hidden_dim,
-        )
-        
-    def mode(self, training: bool = True) -> None:
-        """Set the training mode.
-
-        Args:
-            training (bool): True (training) or False (testing).
-
-        Returns:
-            None.
-        """
-        self.training = training
-        self.ac.train(training)
-
-    def set(self, 
-            encoder: Optional[Any] = None,
-            storage: Optional[Any] = None,
-            distribution: Optional[Any] = None,
-            augmentation: Optional[Any] = None,
-            reward: Optional[Any] = None,
-            ) -> None:
-        """Set a module for the agent.
-
-        Args:
-            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
-            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
-
-        Returns:
-            None.
-        """
-        super().set(
-            encoder=encoder,
-            storage=storage,
-            distribution=distribution,
-            augmentation=augmentation,
-            reward=reward
-        )
-        if encoder is not None:
-            self.encoder = encoder
-            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
     
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
         # set encoder and distribution
-        self.ac.encoder = self.encoder
-        self.ac.dist = self.dist
+        self.policy.encoder = self.encoder
+        self.policy.dist = self.dist
         # network initialization
-        self.ac.apply(get_network_init(self.network_init_method))
+        self.policy.apply(get_network_init(self.network_init_method))
         # to device
-        self.ac.to(self.device)
+        self.policy.to(self.device)
         # create optimizers
-        self.ac_opt = th.optim.Adam(self.ac.parameters(), lr=self.lr, eps=self.eps)
+        self.opt = th.optim.Adam(self.policy.parameters(), lr=self.lr, eps=self.eps)
         # set the training mode
         self.mode(training=True)
-
-    def get_value(self, obs: th.Tensor) -> th.Tensor:
-        """Get estimated values for observations.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Estimated values.
-        """
-        return self.ac.get_value(obs)
-
-    def act(self, obs: th.Tensor, training: bool = True) -> Union[Tuple[th.Tensor, ...], Dict[str, Any]]:
-        """Sample actions based on observations.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): training mode, True or False.
-
-        Returns:
-            Sampled actions.
-        """
-        if training:
-            actions, values, log_probs = self.ac.get_action_and_value(obs)
-            return {"actions": actions, "values": values, "log_probs": log_probs}
-        else:
-            actions = self.ac.get_det_action(obs)
-            return actions
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc.
@@ -240,7 +129,7 @@ class PPO(OnPolicyAgent):
                 ) = batch
 
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.ac.evaluate_actions(obs=batch_obs, actions=batch_actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch_obs, actions=batch_actions)
 
                 # actor loss part
                 ratio = th.exp(new_log_probs - batch_old_log_probs)
@@ -262,9 +151,9 @@ class PPO(OnPolicyAgent):
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
-                    new_batch_actions, _, _ = self.ac.get_action_and_value(obs=batch_obs)
+                    new_batch_actions, _, _ = self.policy.get_action_and_value(obs=batch_obs)
 
-                    values_aug, log_probs_aug, _ = self.ac.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                    values_aug, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                     action_loss_aug = -log_probs_aug.mean()
                     value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                     aug_loss = self.aug_coef * (action_loss_aug + value_loss_aug)
@@ -272,11 +161,11 @@ class PPO(OnPolicyAgent):
                     aug_loss = th.scalar_tensor(s=0.0, requires_grad=False, device=critic_loss.device)
 
                 # update
-                self.ac_opt.zero_grad(set_to_none=True)
+                self.opt.zero_grad(set_to_none=True)
                 loss = critic_loss * self.vf_coef + actor_loss - entropy * self.ent_coef + aug_loss
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.ac.parameters(), self.max_grad_norm)
-                self.ac_opt.step()
+                nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                self.opt.step()
 
                 total_actor_loss.append(actor_loss.item())
                 total_critic_loss.append(critic_loss.item())
@@ -289,30 +178,3 @@ class PPO(OnPolicyAgent):
             "entropy": np.mean(total_entropy_loss),
             "aug_loss": np.mean(total_aug_loss),
         }
-
-    def save(self) -> None:
-        """Save models."""
-        if self.pretraining:  # pretraining
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-            th.save(self.ac.state_dict(), save_dir / "actor_critic.pth")
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-            del self.ac.critic, self.ac.dist
-            th.save(self.ac, save_dir / "agent.pth")
-            
-        self.logger.info(f"Model saved at: {save_dir}")
-
-    def load(self, path: str) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-
-        Returns:
-            None.
-        """
-        self.logger.info(f"Loading Initial Parameters from {path}")
-        actor_critic_params = th.load(os.path.join(path, "actor_critic.pth"), map_location=self.device)
-        self.ac.load_state_dict(actor_critic_params)
