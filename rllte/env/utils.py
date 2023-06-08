@@ -2,14 +2,21 @@ from collections import deque
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
+from matplotlib import re
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 
-class VecEnvWrapper(gym.Wrapper):
-    """Env wrapper for adapting to rllte engine and outputting torch tensors.
+def make_rllte_env(
+    env_id: Union[str, Callable[..., gym.Env]],
+    num_envs: int = 1,
+    seed: int = 1,
+    device: str = "cpu",
+    parallel: bool = True,
+    env_kwargs: Optional[Dict[str, Any]] = None) -> gym.Wrapper:
+    """Create environments that adapt to rllte engine.
 
     Args:
         env_id (Union[str, Callable[..., gym.Env]]): either the env ID, the env class or a callable returning an env
@@ -20,49 +27,40 @@ class VecEnvWrapper(gym.Wrapper):
         env_kwargs: Optional keyword argument to pass to the env constructor
 
     Returns:
-        VecEnvWrapper instance.
+        Environment wrapped by `TorchVecEnvWrapper`.
     """
+    env_kwargs = env_kwargs or {}
 
-    def __init__(
-        self,
-        env_id: Union[str, Callable[..., gym.Env]],
-        num_envs: int = 1,
-        seed: int = 1,
-        device: str = "cpu",
-        parallel: bool = True,
-        env_kwargs: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        env_kwargs = env_kwargs or {}
+    def make_env(rank: int) -> Callable:
+        def _thunk() -> gym.Env:
+            assert env_kwargs is not None
+            if isinstance(env_id, str):
+                # if the render mode was not specified, we set it to `rgb_array` as default.
+                kwargs = {"render_mode": "rgb_array"}
+                kwargs.update(env_kwargs)
+                try:
+                    env = gym.make(env_id, **kwargs)
+                except Exception:
+                    env = gym.make(env_id, **env_kwargs)
+            else:
+                env = env_id(**env_kwargs)
 
-        def make_env(rank: int) -> Callable:
-            def _thunk() -> gym.Env:
-                assert env_kwargs is not None
-                if isinstance(env_id, str):
-                    # if the render mode was not specified, we set it to `rgb_array` as default.
-                    kwargs = {"render_mode": "rgb_array"}
-                    kwargs.update(env_kwargs)
-                    try:
-                        env = gym.make(env_id, **kwargs)  # type: ignore[arg-type]
-                    except Exception:
-                        env = gym.make(env_id, **env_kwargs)
-                else:
-                    env = env_id(**env_kwargs)
+            env.action_space.seed(seed + rank)
 
-                env.action_space.seed(seed + rank)
+            return env
 
-                return env
+        return _thunk
 
-            return _thunk
+    env_fns = [make_env(rank=i) for i in range(num_envs)]
+    if parallel:
+        env = AsyncVectorEnv(env_fns)
+    else:
+        env = SyncVectorEnv(env_fns)
 
-        env_fns = [make_env(rank=i) for i in range(num_envs)]
-        if parallel:
-            env = AsyncVectorEnv(env_fns)
-        else:
-            env = SyncVectorEnv(env_fns)
-
-        env = RecordEpisodeStatistics(env)
-        env = TorchVecEnvWrapper(env=env, device=device)
-        super().__init__(env)
+    env = RecordEpisodeStatistics(env)
+    env = TorchVecEnvWrapper(env=env, device=device)
+    
+    return env
 
 
 class TorchVecEnvWrapper(gym.Wrapper):
