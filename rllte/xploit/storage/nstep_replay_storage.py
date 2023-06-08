@@ -303,4 +303,5 @@ class NStepReplayStorage(BaseStorage):
         return next(self.replay_iter)
 
     def update(self, *args) -> None:
-        """Update the storage"""
+        """Update the storage if necessary."""
+        raise NotImplementedError

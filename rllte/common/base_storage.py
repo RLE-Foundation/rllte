@@ -22,29 +22,31 @@ class BaseStorage(ABC):
         action_space: gym.Space,
         device: str = "cpu",
     ) -> None:
-        self._obs_shape = observation_space.shape
+        self.obs_shape = observation_space.shape
         if action_space.__class__.__name__ == "Discrete":
-            self._action_shape = action_space.shape
-            self._action_dim = int(action_space.n)
-            self._action_type = "Discrete"
-            self._action_range = [0, int(action_space.n) - 1]
+            self.action_shape = action_space.shape
+            self.action_dim = int(action_space.n)
+            self.action_type = "Discrete"
+            self.action_range = [0, int(action_space.n) - 1]
+
         elif action_space.__class__.__name__ == "Box":
-            self._action_shape = action_space.shape
-            self._action_dim = action_space.shape[0]
-            self._action_type = "Box"
-            self._action_range = [
+            self.action_shape = action_space.shape
+            self.action_dim = action_space.shape[0]
+            self.action_type = "Box"
+            self.action_range = [
                 float(action_space.low[0]),
                 float(action_space.high[0]),
             ]
+            
         elif action_space.__class__.__name__ == "MultiBinary":
-            self._action_shape = action_space.shape
-            self._action_dim = action_space.shape[0]
-            self._action_type = "MultiBinary"
-            self._action_range = [0, 1]
+            self.action_shape = action_space.shape
+            self.action_dim = action_space.shape[0]
+            self.action_type = "MultiBinary"
+            self.action_range = [0, 1]
         else:
             raise NotImplementedError("Unsupported action type!")
 
-        self._device = th.device(device)
+        self.device = th.device(device)
 
     @abstractmethod
     def add(self, *args) -> None:
@@ -56,4 +58,4 @@ class BaseStorage(ABC):
 
     @abstractmethod
     def update(self, *args) -> None:
-        """Update the storage"""
+        """Update the storage if necessary."""

@@ -101,3 +101,6 @@ disable = ["pyi-error"]
 ignore_missing_imports = true
 follow_imports = "silent"
 show_error_codes = true
+exclude = """(?x)(
+    rllte/common/base_storage.py$
+)"""

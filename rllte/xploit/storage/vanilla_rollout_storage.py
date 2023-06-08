@@ -37,51 +37,51 @@ class VanillaRolloutStorage(BaseStorage):
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device)
-        self._num_steps = num_steps
-        self._num_envs = num_envs
-        self._batch_size = batch_size
-        self._discount = discount
-        self._gae_lambda = gae_lambda
+        self.num_steps = num_steps
+        self.num_envs = num_envs
+        self.batch_size = batch_size
+        self.discount = discount
+        self.gae_lambda = gae_lambda
 
         # transition part
         self.obs = th.empty(
-            size=(num_steps + 1, num_envs, *self._obs_shape),
+            size=(num_steps + 1, num_envs, *self.obs_shape),
             dtype=th.float32,
-            device=self._device,
+            device=self.device,
         )
-        if self._action_type == "Discrete":
+        if self.action_type == "Discrete":
             self.actions = th.empty(
                 size=(num_steps, num_envs),
                 dtype=th.float32,
-                device=self._device,
+                device=self.device,
             )
-        elif self._action_type == "Box":
+        elif self.action_type == "Box":
             self.actions = th.empty(
-                size=(num_steps, num_envs, self._action_shape[0]),
+                size=(num_steps, num_envs, self.action_shape[0]),
                 dtype=th.float32,
-                device=self._device,
+                device=self.device,
             )
-        elif self._action_type == "MultiBinary":
+        elif self.action_type == "MultiBinary":
             self.actions = th.empty(
-                size=(num_steps, num_envs, self._action_shape[0]),
+                size=(num_steps, num_envs, self.action_shape[0]),
                 dtype=th.float32,
-                device=self._device,
+                device=self.device,
             )
         else:
             raise NotImplementedError
-        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
-        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device)
-        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self._device)
+        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
+        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
+        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
         # first next_terminated
-        self.terminateds[0].copy_(th.zeros(num_envs).to(self._device))
-        self.truncateds[0].copy_(th.zeros(num_envs).to(self._device))
+        self.terminateds[0].copy_(th.zeros(num_envs).to(self.device))
+        self.truncateds[0].copy_(th.zeros(num_envs).to(self.device))
         # extra part
-        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
-        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
-        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
-        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self._device)
+        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
+        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
+        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
+        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
 
-        self._global_step = 0
+        self.global_step = 0
 
     def add(
         self,
@@ -109,16 +109,16 @@ class VanillaRolloutStorage(BaseStorage):
         Returns:
             None.
         """
-        self.obs[self._global_step].copy_(obs)
-        self.actions[self._global_step].copy_(actions)
-        self.rewards[self._global_step].copy_(rewards)
-        self.terminateds[self._global_step + 1].copy_(terminateds)
-        self.truncateds[self._global_step + 1].copy_(truncateds)
-        self.obs[self._global_step + 1].copy_(next_obs)
-        self.log_probs[self._global_step].copy_(log_probs)
-        self.values[self._global_step].copy_(values.flatten())
+        self.obs[self.global_step].copy_(obs)
+        self.actions[self.global_step].copy_(actions)
+        self.rewards[self.global_step].copy_(rewards)
+        self.terminateds[self.global_step + 1].copy_(terminateds)
+        self.truncateds[self.global_step + 1].copy_(truncateds)
+        self.obs[self.global_step + 1].copy_(next_obs)
+        self.log_probs[self.global_step].copy_(log_probs)
+        self.values[self.global_step].copy_(values.flatten())
 
-        self._global_step = (self._global_step + 1) % self._num_steps
+        self.global_step = (self.global_step + 1) % self.num_steps
 
     def update(self) -> None:
         """Reset the terminal state of each env."""
@@ -137,15 +137,15 @@ class VanillaRolloutStorage(BaseStorage):
             None.
         """
         gae = 0
-        for step in reversed(range(self._num_steps)):
-            if step == self._num_steps - 1:
+        for step in reversed(range(self.num_steps)):
+            if step == self.num_steps - 1:
                 next_non_terminal = 1.0 - self.terminateds[-1]
                 next_values = last_values[:, 0]
             else:
                 next_non_terminal = 1.0 - self.terminateds[step + 1]
                 next_values = self.values[step + 1]
-            delta = self.rewards[step] + self._discount * next_values * next_non_terminal - self.values[step]
-            gae = delta + self._discount * self._gae_lambda * next_non_terminal * gae
+            delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
+            gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
             self.advantages[step] = gae
 
         self.returns = self.advantages + self.values
@@ -153,11 +153,11 @@ class VanillaRolloutStorage(BaseStorage):
 
     def sample(self) -> Generator:
         """Sample data from storage."""
-        sampler = BatchSampler(SubsetRandomSampler(range(self._num_envs * self._num_steps)), self._batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = self.obs[:-1].view(-1, *self._obs_shape)[indices]
-            batch_actions = self.actions.view(-1, *self._action_shape)[indices]
+            batch_obs = self.obs[:-1].view(-1, *self.obs_shape)[indices]
+            batch_actions = self.actions.view(-1, *self.action_shape)[indices]
             batch_values = self.values.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]
             batch_terminateds = self.terminateds[:-1].view(-1)[indices]

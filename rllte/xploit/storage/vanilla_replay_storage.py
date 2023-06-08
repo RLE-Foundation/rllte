@@ -31,27 +31,27 @@ class VanillaReplayStorage(BaseStorage):
         batch_size: int = 1024,
     ):
         super().__init__(observation_space, action_space, device)
-        self._storage_size = storage_size
-        self._batch_size = batch_size
+        self.storage_size = storage_size
+        self.batch_size = batch_size
 
         # the proprioceptive obs is stored as float32, pixels obs as uint8
-        obs_dtype = np.float32 if len(self._obs_shape) == 1 else np.uint8
+        obs_dtype = np.float32 if len(self.obs_shape) == 1 else np.uint8
 
-        self.obs = np.empty((storage_size, *self._obs_shape), dtype=obs_dtype)
+        self.obs = np.empty((storage_size, *self.obs_shape), dtype=obs_dtype)
 
-        if self._action_type == "Discrete":
+        if self.action_type == "Discrete":
             self.actions = np.empty((storage_size, 1), dtype=np.float32)
-        if self._action_type == "Box":
-            self.actions = np.empty((storage_size, self._action_shape[0]), dtype=np.float32)
+        if self.action_type == "Box":
+            self.actions = np.empty((storage_size, self.action_shape[0]), dtype=np.float32)
 
         self.rewards = np.empty((storage_size, 1), dtype=np.float32)
         self.terminateds = np.empty((storage_size, 1), dtype=np.float32)
 
-        self._global_step = 0
-        self._full = False
+        self.global_step = 0
+        self.full = False
 
     def __len__(self):
-        return self._storage_size if self._full else self._global_step
+        return self.storage_size if self.full else self.global_step
 
     def add(
         self,
@@ -75,14 +75,14 @@ class VanillaReplayStorage(BaseStorage):
         Returns:
             None.
         """
-        np.copyto(self.obs[self._global_step], obs)
-        np.copyto(self.actions[self._global_step], action)
-        np.copyto(self.rewards[self._global_step], reward)
-        np.copyto(self.obs[(self._global_step + 1) % self._storage_size], next_obs)
-        np.copyto(self.terminateds[self._global_step], terminated)
+        np.copyto(self.obs[self.global_step], obs)
+        np.copyto(self.actions[self.global_step], action)
+        np.copyto(self.rewards[self.global_step], reward)
+        np.copyto(self.obs[(self.global_step + 1) % self.storage_size], next_obs)
+        np.copyto(self.terminateds[self.global_step], terminated)
 
-        self._global_step = (self._global_step + 1) % self._storage_size
-        self._full = self._full or self._global_step == 0
+        self.global_step = (self.global_step + 1) % self.storage_size
+        self.full = self.full or self.global_step == 0
 
     def sample(self, step: int) -> Tuple[th.Tensor, ...]:
         """Sample from the storage.
@@ -95,18 +95,19 @@ class VanillaReplayStorage(BaseStorage):
         """
         indices = np.random.randint(
             0,
-            self._storage_size if self._full else self._global_step,
-            size=self._batch_size,
+            self.storage_size if self.full else self.global_step,
+            size=self.batch_size,
         )
 
-        obs = th.as_tensor(self.obs[indices], device=self._device).float()
-        actions = th.as_tensor(self.actions[indices], device=self._device).float()
-        rewards = th.as_tensor(self.rewards[indices], device=self._device).float()
-        next_obs = th.as_tensor(self.obs[(indices + 1) % self._storage_size], device=self._device).float()
-        terminateds = th.as_tensor(self.terminateds[indices], device=self._device).float()
-        weights = th.ones_like(terminateds, device=self._device)
+        obs = th.as_tensor(self.obs[indices], device=self.device).float()
+        actions = th.as_tensor(self.actions[indices], device=self.device).float()
+        rewards = th.as_tensor(self.rewards[indices], device=self.device).float()
+        next_obs = th.as_tensor(self.obs[(indices + 1) % self.storage_size], device=self.device).float()
+        terminateds = th.as_tensor(self.terminateds[indices], device=self.device).float()
+        weights = th.ones_like(terminateds, device=self.device)
 
         return indices, obs, actions, rewards, terminateds, next_obs, weights
 
     def update(self, *args) -> None:
-        """Update the storage"""
+        """Update the storage if necessary."""
+        raise NotImplementedError

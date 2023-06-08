@@ -33,36 +33,36 @@ class DistributedStorage(BaseStorage):
         batch_size: int = 32,
     ) -> None:
         super().__init__(observation_space, action_space, device)
-        self._num_steps = num_steps
-        self._num_storages = num_storages
-        self._batch_size = batch_size
+        self.num_steps = num_steps
+        self.num_storages = num_storages
+        self.batch_size = batch_size
 
-        if self._action_type == "Discrete":
+        if self.action_type == "Discrete":
             specs = dict(
-                obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
+                obs=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
                 reward=dict(size=(num_steps + 1,), dtype=th.float32),
                 terminated=dict(size=(num_steps + 1,), dtype=th.bool),
                 truncated=dict(size=(num_steps + 1,), dtype=th.bool),
                 episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
                 episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
                 last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-                policy_outputs=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+                policy_outputs=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
                 baseline=dict(size=(num_steps + 1,), dtype=th.float32),
                 action=dict(size=(num_steps + 1,), dtype=th.int64),
             )
 
-        elif self._action_type == "Box":
+        elif self.action_type == "Box":
             specs = dict(
-                obs=dict(size=(num_steps + 1, *self._obs_shape), dtype=th.uint8),
+                obs=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
                 reward=dict(size=(num_steps + 1,), dtype=th.float32),
                 terminated=dict(size=(num_steps + 1,), dtype=th.bool),
                 truncated=dict(size=(num_steps + 1,), dtype=th.bool),
                 episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
                 episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-                last_action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
-                policy_outputs=dict(size=(num_steps + 1, self._action_dim * 2), dtype=th.float32),
+                last_action=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
+                policy_outputs=dict(size=(num_steps + 1, self.action_dim * 2), dtype=th.float32),
                 baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-                action=dict(size=(num_steps + 1, self._action_dim), dtype=th.float32),
+                action=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
             )
         else:
             raise NotImplementedError
@@ -113,3 +113,4 @@ class DistributedStorage(BaseStorage):
 
     def update(self, *args) -> None:
         """Update the storage"""
+        raise NotImplementedError
