@@ -20,6 +20,7 @@
 
 
 !!! tip "Tips of Agent"
+    - DrQ=SAC+Augmentation, DDPG=DrQ-v2-Augmentation, DrAC=PPO+Augmentation
     - 🐌: Developing.
     - **NPU**: Support Neural-network processing unit.
     - **Recurrent**: Support recurrent neural network.
