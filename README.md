@@ -169,7 +169,7 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 |DAAC|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |56⭐|
 |IMPALA|✔️| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
 
-> - DrQ=SAC+Augmentation, DDPG=DrQ-v2-Augmentation, DrAC=PPO+Augmentation
+> - DrQ=SAC+Augmentation, DDPG=DrQ-v2-Augmentation, DrAC=PPO+Augmentation.
 > - 🐌: Developing.
 > - `NPU`: Support Neural-network processing unit.
 > - `Recurrent`: Support recurrent neural network.
