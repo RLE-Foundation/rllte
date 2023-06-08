@@ -24,7 +24,7 @@ See the project structure below:
 If you use **rllte** in your research, please cite this project like this:
 ``` tex
 @software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Pal, Suman},
+  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
   title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
   url = {https://github.com/RLE-Foundation/rllte},
   year = {2023},

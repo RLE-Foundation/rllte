@@ -3,10 +3,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      # Only rebuild website when docs have changed
-      # Comment out when testing locally via act!
-      - 'docs/trigger.yml'
 permissions:
   contents: write
 jobs:
