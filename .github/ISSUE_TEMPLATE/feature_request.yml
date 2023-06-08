@@ -40,5 +40,5 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/Hsuanwu/issues) in the repo
+        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/rllte/issues) in the repo
           required: true

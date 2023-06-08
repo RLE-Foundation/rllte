@@ -33,7 +33,7 @@ Run `train.py` and you'll see the pre-training mode is on:
 
 !!! tip
     When the pre-training mode is on, a `reward` module must be specified!
-For all supported reward modules, see [API Documentation](https://docs.hsuanwu.dev/api/).
+For all supported reward modules, see [API Documentation](https://docs.rllte.dev/api/).
 
 ## Fine-tuning
 Once the pre-training is finished, you can find the model parameters in the `pretrained` subfolder of the working directory. To 
