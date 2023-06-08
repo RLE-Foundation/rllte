@@ -7,6 +7,16 @@
 
 **RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. 
 
+If you use **rllte** in your research, please cite this project like this:
+``` tex
+@software{rllte,
+  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Pal, Suman},
+  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
+  url = {https://github.com/RLE-Foundation/rllte},
+  year = {2023},
+}
+```
+
 # Contents
 - [Overview](#overview)
 - [Quick Start](#quick-start)
@@ -17,8 +27,11 @@
 - [Acknowledgment](#acknowledgment)
 
 # Overview
+For the project tenet, please read [Evolution Tenet](https://docs.rllte.dev/tenet).
+
 The highlight features of **rllte**:
 - ⏱️ Latest algorithms and tricks;
+- 📕 Standard and sophisticated modules for redevelopment;
 - 🧱 Highly modularized design for complete decoupling of RL algorithms;
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support for custom environments and modules;
