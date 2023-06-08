@@ -1,8 +1,7 @@
-from typing import List, Union
+from typing import List
 
 import gymnasium as gym
 import torch as th
-from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 

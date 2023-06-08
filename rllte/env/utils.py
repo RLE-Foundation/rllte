@@ -6,7 +6,6 @@ import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
-from omegaconf import OmegaConf
 
 
 class VecEnvWrapper(gym.Wrapper):
@@ -44,7 +43,7 @@ class VecEnvWrapper(gym.Wrapper):
                     kwargs.update(env_kwargs)
                     try:
                         env = gym.make(env_id, **kwargs)  # type: ignore[arg-type]
-                    except:
+                    except Exception:
                         env = gym.make(env_id, **env_kwargs)
                 else:
                     env = env_id(**env_kwargs)

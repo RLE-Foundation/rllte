@@ -1,5 +1,5 @@
-from .utils import VecEnvWrapper as VecEnvWrapper
 from .utils import TorchVecEnvWrapper as TorchVecEnvWrapper
+from .utils import VecEnvWrapper as VecEnvWrapper
 
 try:
     from .atari import make_atari_env as make_atari_env

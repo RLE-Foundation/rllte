@@ -1,8 +1,8 @@
 import torch as th
 import torch.distributions as pyd
 
-from rllte.xplore.distribution import utils
 from rllte.common.base_distribution import BaseDistribution
+from rllte.xplore.distribution import utils
 
 
 class NormalNoise(BaseDistribution):

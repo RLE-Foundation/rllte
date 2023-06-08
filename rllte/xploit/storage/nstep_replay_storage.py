@@ -3,12 +3,11 @@ import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple, Union
+from typing import Any, Dict, Iterator, Tuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-from omegaconf import DictConfig
 from torch.utils.data import IterableDataset
 
 from rllte.common.base_storage import BaseStorage
@@ -116,7 +115,7 @@ class NStepReplayDataset(IterableDataset):
     def _store_episode(self, eps_fn: Path) -> bool:
         try:
             episode = load_episode(eps_fn)
-        except:  # noqa E722
+        except Exception:
             return False
         eps_len = episode_len(episode)
         while eps_len + self._worker_size > self._worker_max_size:
@@ -125,8 +124,8 @@ class NStepReplayDataset(IterableDataset):
             self._worker_size -= episode_len(early_eps)
             try:
                 early_eps_fn.unlink(missing_ok=True)
-            except:
-                if early_eps_fn.exists(): # for py37
+            except Exception:
+                if early_eps_fn.exists():  # for py37
                     early_eps_fn.unlink()
         self._worker_eps_fn_pool.append(eps_fn)
         self._worker_eps_fn_pool.sort()
@@ -136,7 +135,7 @@ class NStepReplayDataset(IterableDataset):
         if not self._save_snapshot:
             try:
                 eps_fn.unlink(missing_ok=True)
-            except:
+            except Exception:
                 if eps_fn.exists():  # for py37
                     eps_fn.unlink()
         return True
@@ -147,7 +146,7 @@ class NStepReplayDataset(IterableDataset):
         self._fetched_samples = 0
         try:
             worker_id = th.utils.data.get_worker_info().id
-        except:  # noqa E722
+        except Exception:
             worker_id = 0
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
         fetched_size = 0
@@ -201,7 +200,7 @@ class NStepReplayStorage(BaseStorage):
 
     Args:
         observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment. 
+        action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the storage.
         batch_size (int): Number of samples per batch to load.

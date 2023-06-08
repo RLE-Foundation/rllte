@@ -1,19 +1,18 @@
 from typing import Dict
-from huggingface_hub import hf_hub_download
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from huggingface_hub import hf_hub_download
 
 
-class DMC(object):
-    """Scores and learning cures of various RL algorithms on the full 
-        DeepMind Control Suite benchmark.
+class DMC:
+    """Scores and learning cures of various RL algorithms on the full
+    DeepMind Control Suite benchmark.
     """
+
     def __init__(self) -> None:
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub",
-            repo_type="dataset",
-            filename="dm_control.json", 
-            subfolder="datasets"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="dm_control.json", subfolder="datasets"
         )
         self.dm_control_data = pd.read_json(file)
 

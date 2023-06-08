@@ -1,6 +1,4 @@
-import os
-from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Dict, Optional, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -8,8 +6,9 @@ import torch as th
 from torch.nn import functional as F
 
 from rllte.common.off_policy_agent import OffPolicyAgent
-from rllte.xploit.agent import utils
 from rllte.common.utils import get_network_init
+from rllte.xploit.agent import utils
+
 
 class NpuSAC(OffPolicyAgent):
     """Soft Actor-Critic (SAC) agent for `NPU` device.
@@ -46,7 +45,7 @@ class NpuSAC(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env, 
+        env: gym.Env,
         eval_env: Optional[gym.Env] = None,
         tag: str = "default",
         seed: int = 1,
@@ -68,20 +67,21 @@ class NpuSAC(OffPolicyAgent):
         discount: float = 0.99,
         network_init_method: str = "orthogonal",
     ) -> None:
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=pretraining,
-                         num_init_steps=num_init_steps,
-                         eval_every_steps=eval_every_steps,
-                         agent_name="SAC",
-                         feature_dim=feature_dim,
-                         hidden_dim=hidden_dim,
-                         batch_size=batch_size,
-                         npu=True
-                         )
+        super().__init__(
+            env=env,
+            eval_env=eval_env,
+            tag=tag,
+            seed=seed,
+            device=device,
+            pretraining=pretraining,
+            num_init_steps=num_init_steps,
+            eval_every_steps=eval_every_steps,
+            agent_name="SAC",
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            batch_size=batch_size,
+            npu=True,
+        )
         self.lr = lr
         self.eps = eps
         self.critic_target_tau = critic_target_tau
@@ -92,9 +92,9 @@ class NpuSAC(OffPolicyAgent):
         self.network_init_method = network_init_method
 
         # target entropy
-        self.target_entropy = - self.action_dim
+        self.target_entropy = -self.action_dim
         self.log_alpha = th.tensor(np.log(temperature), device=self.device, requires_grad=True)
-    
+
     @property
     def alpha(self) -> th.Tensor:
         """Get the temperature coefficient."""
@@ -118,8 +118,7 @@ class NpuSAC(OffPolicyAgent):
         self.mode(training=True)
 
     def update(self) -> Dict[str, float]:
-        """Update the agent and return training metrics such as actor loss, critic_loss, etc.
-        """
+        """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
         metrics = {}
         if self.global_step % self.update_every_steps != 0:
             return metrics

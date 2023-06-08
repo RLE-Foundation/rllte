@@ -7,10 +7,7 @@ pytest:
 pytype:
 	pytype -j auto ${LINT_PATHS}
 
-mypy:
-	mypy ${LINT_PATHS}
-
-type: pytype mypy
+type: pytype
 
 lint:
 	# stop the build if there are Python syntax errors or undefined names

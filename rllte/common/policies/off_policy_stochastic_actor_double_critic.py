@@ -1,14 +1,17 @@
-from typing import Tuple
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Tuple
+
 import torch as th
 from torch import nn
 from torch.distributions import Distribution
-from rllte.common.utils import ExportModel
+
 from rllte.common.policies.off_policy_deterministic_actor_double_critic import DoubleCritic
+from rllte.common.utils import ExportModel
+
 
 class OffPolicyStochasticActorDoubleCritic(nn.Module):
-    """Stochastic actor network and double critic network for SAC. 
+    """Stochastic actor network and double critic network for SAC.
         Here the 'self.dist' refers to an sampling distribution instance.
 
     Args:
@@ -37,17 +40,9 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
             nn.Linear(hidden_dim, 2 * action_dim),
         )
 
-        self.critic = DoubleCritic(
-            action_dim=action_dim,
-            feature_dim=feature_dim,
-            hidden_dim=hidden_dim
-        )
+        self.critic = DoubleCritic(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
 
-        self.critic_target = DoubleCritic(
-            action_dim=action_dim,
-            feature_dim=feature_dim,
-            hidden_dim=hidden_dim
-        )
+        self.critic_target = DoubleCritic(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
         # synchronize critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -55,10 +50,10 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         self.encoder = None
         self.dist = None
         self.log_std_min, self.log_std_max = log_std_range
-    
+
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
-        
+
         Args:
             obs (Tensor): Observations.
             training (bool): Training mode, True or False.
@@ -124,8 +119,9 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
 
+
 class NpuOffPolicyStochasticActorDoubleCritic(OffPolicyStochasticActorDoubleCritic):
-    """Stochastic actor network and double critic network for SAC and `NPU` device. 
+    """Stochastic actor network and double critic network for SAC and `NPU` device.
         Here the 'self.dist' refers to an sampling distribution instance.
 
     Args:
@@ -145,10 +141,10 @@ class NpuOffPolicyStochasticActorDoubleCritic(OffPolicyStochasticActorDoubleCrit
         log_std_range: Tuple = (-10, 2),
     ) -> None:
         super().__init__(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim, log_std_range=log_std_range)
-    
+
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
-        
+
         Args:
             obs (Tensor): Observations.
             training (bool): Training mode, True or False.

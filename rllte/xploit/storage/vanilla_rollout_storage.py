@@ -1,8 +1,7 @@
-from typing import Generator, Union
+from typing import Generator
 
 import gymnasium as gym
 import torch as th
-from omegaconf import DictConfig
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from rllte.common.base_storage import BaseStorage
@@ -13,7 +12,7 @@ class VanillaRolloutStorage(BaseStorage):
 
     Args:
         observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment. 
+        action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.

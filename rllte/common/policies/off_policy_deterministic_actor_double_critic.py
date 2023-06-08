@@ -1,10 +1,13 @@
-from typing import Tuple
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Tuple
+
 import torch as th
 from torch import nn
 from torch.distributions import Distribution
+
 from rllte.common.utils import ExportModel
+
 
 class DoubleCritic(nn.Module):
     """Double critic network for DrQv2 and SAC.
@@ -54,8 +57,10 @@ class DoubleCritic(nn.Module):
 
         return q1, q2
 
+
 class OffPolicyDeterministicActorDoubleCritic(nn.Module):
-    """Deterministic actor network and double critic network for DrQv2. Here the 'self.dist' refers to an action noise instance.
+    """Deterministic actor network and double critic network for DrQv2. 
+        Here the 'self.dist' refers to an action noise instance.
 
     Args:
         action_dim (int): Number of neurons for outputting actions.
@@ -65,6 +70,7 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
     Returns:
         Actor network instance.
     """
+
     def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__()
         self.actor = nn.Sequential(
@@ -78,27 +84,19 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
             nn.Tanh(),
         )
 
-        self.critic = DoubleCritic(
-            action_dim=action_dim,
-            feature_dim=feature_dim,
-            hidden_dim=hidden_dim
-        )
+        self.critic = DoubleCritic(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
 
-        self.critic_target = DoubleCritic(
-            action_dim=action_dim,
-            feature_dim=feature_dim,
-            hidden_dim=hidden_dim
-        )
+        self.critic_target = DoubleCritic(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
         # synchronize critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
 
         # placeholder for distribution
         self.encoder = None
         self.dist = None
-    
+
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
-        
+
         Args:
             obs (Tensor): Observations.
             training (bool): Training mode, True or False.
@@ -179,8 +177,9 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
 
+
 class NpuOffPolicyDeterministicActorDoubleCritic(OffPolicyDeterministicActorDoubleCritic):
-    """Deterministic actor network and double critic network for DrQv2 and `NPU` device. 
+    """Deterministic actor network and double critic network for DrQv2 and `NPU` device.
         Here the 'self.dist' refers to an action noise instance.
 
     Args:
@@ -191,13 +190,13 @@ class NpuOffPolicyDeterministicActorDoubleCritic(OffPolicyDeterministicActorDoub
     Returns:
         Actor network instance.
     """
+
     def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
         super().__init__(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
-        
-    
+
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
-        
+
         Args:
             obs (Tensor): Observations.
             training (bool): Training mode, True or False.

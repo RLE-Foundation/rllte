@@ -1,9 +1,9 @@
 import os
 import random
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Dict, Optional, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -12,18 +12,18 @@ import torch as th
 
 # try to load torch_npu
 try:
-    import torch_npu # type: ignore
-    from torch_npu.contrib import transfer_to_npu # type: ignore
+    pass  # type: ignore
 except Exception:
     pass
 
+from rllte.common.base_augmentation import BaseAugmentation as Augmentation
+from rllte.common.base_distribution import BaseDistribution as Distribution
+from rllte.common.base_encoder import BaseEncoder as Encoder
+from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
+from rllte.common.base_storage import BaseStorage as Storage
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer
-from rllte.common.base_encoder import BaseEncoder as Encoder
-from rllte.common.base_storage import BaseStorage as Storage
-from rllte.common.base_distribution import BaseDistribution as Distribution
-from rllte.common.base_augmentation import BaseAugmentation as Augmentation
-from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
+
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -41,15 +41,16 @@ class BaseAgent(ABC):
         Base agent instance.
     """
 
-    def __init__(self, 
-                 env: gym.Env, 
-                 eval_env: Optional[gym.Env] = None,
-                 tag: str = "default",
-                 seed: int = 1,
-                 device: str = "cpu",
-                 pretraining: bool = False,
-                 feature_dim: int = 512,
-                 ) -> None:
+    def __init__(
+        self,
+        env: gym.Env,
+        eval_env: Optional[gym.Env] = None,
+        tag: str = "default",
+        seed: int = 1,
+        device: str = "cpu",
+        pretraining: bool = False,
+        feature_dim: int = 512,
+    ) -> None:
         # change work dir
         path = Path.cwd() / "logs" / tag / datetime.now().strftime("%Y-%m-%d-%I-%M-%S")
         os.makedirs(path)
@@ -72,7 +73,7 @@ class BaseAgent(ABC):
         self.env = env
         self.eval_env = eval_env
         self.get_env_info(env)
-        
+
         # set seed
         self.seed = seed
         th.manual_seed(seed=seed)
@@ -109,7 +110,7 @@ class BaseAgent(ABC):
 
         Args:
             env (Env): A Gym-like environment for training.
-        
+
         Returns:
             None.
         """
@@ -137,7 +138,7 @@ class BaseAgent(ABC):
             self.action_range = [0, 1]
         else:
             raise NotImplementedError("Unsupported action type!")
-    
+
     def get_npu_name(self) -> str:
         """Get NPU name."""
         str_command = "npu-smi info"
@@ -150,7 +151,7 @@ class BaseAgent(ABC):
         npu_name = name_part.split()[-1]
 
         return npu_name
-    
+
     def check(self) -> None:
         """Check the compatibility of selected modules."""
         self.logger.debug("Checking the Compatibility of Modules...")
@@ -164,29 +165,28 @@ class BaseAgent(ABC):
         if self.aug is not None:
             self.logger.debug(f"Use Augmentation: True, {self.aug.__class__.__name__}")
         else:
-            self.logger.debug(f"Use Augmentation: False")
+            self.logger.debug("Use Augmentation: False")
 
         if self.pretraining:
-            assert (
-                self.irs is not None
-            ), "When the pre-training mode is turned on, an intrinsic reward must be specified!"
+            assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if self.irs is not None:
             self.logger.debug(f"Use Intrinsic Reward: True, {self.irs.__class__.__name__}")
         else:
-            self.logger.debug(f"Use Intrinsic Reward: False")
+            self.logger.debug("Use Intrinsic Reward: False")
 
         if self.pretraining:
             self.logger.info("Pre-training Mode On...")
         self.logger.debug("Check Accomplished. Start Training...")
-    
-    def set(self, 
-            encoder: Optional[Any] = None,
-            storage: Optional[Any] = None,
-            distribution: Optional[Any] = None,
-            augmentation: Optional[Any] = None,
-            reward: Optional[Any] = None,
-            ) -> None:
+
+    def set(
+        self,
+        encoder: Optional[Any] = None,
+        storage: Optional[Any] = None,
+        distribution: Optional[Any] = None,
+        augmentation: Optional[Any] = None,
+        reward: Optional[Any] = None,
+    ) -> None:
         """Set a module for the agent.
 
         Args:
@@ -202,8 +202,10 @@ class BaseAgent(ABC):
         if encoder is not None:
             assert isinstance(encoder, Encoder), "The `encoder` must be a subclass of `BaseEncoder`!"
             self.encoder = encoder
-            assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
-            
+            assert (
+                self.encoder.feature_dim == self.feature_dim
+            ), "The `feature_dim` argument of agent and encoder must be same!"
+
         if storage is not None:
             assert isinstance(storage, Storage), "The `storage` must be a subclass of `BaseStorage`!"
             self.storage = storage

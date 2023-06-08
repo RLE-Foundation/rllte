@@ -1,6 +1,4 @@
-import os
-from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -46,7 +44,7 @@ class PPO(OnPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env, 
+        env: gym.Env,
         eval_env: Optional[gym.Env] = None,
         tag: str = "default",
         seed: int = 1,
@@ -68,18 +66,20 @@ class PPO(OnPolicyAgent):
         max_grad_norm: float = 0.5,
         network_init_method: str = "orthogonal",
     ) -> None:
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=pretraining,
-                         num_steps=num_steps,
-                         eval_every_episodes=eval_every_episodes,
-                         shared_encoder=True,
-                         feature_dim=feature_dim,
-                         hidden_dim=hidden_dim,
-                         batch_size=batch_size)
+        super().__init__(
+            env=env,
+            eval_env=eval_env,
+            tag=tag,
+            seed=seed,
+            device=device,
+            pretraining=pretraining,
+            num_steps=num_steps,
+            eval_every_episodes=eval_every_episodes,
+            shared_encoder=True,
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            batch_size=batch_size,
+        )
         self.lr = lr
         self.eps = eps
         self.n_epochs = n_epochs
@@ -90,7 +90,7 @@ class PPO(OnPolicyAgent):
         self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
         self.network_init_method = network_init_method
-    
+
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
         # set encoder and distribution
@@ -106,12 +106,11 @@ class PPO(OnPolicyAgent):
         self.mode(training=True)
 
     def update(self) -> Dict[str, float]:
-        """Update the agent and return training metrics such as actor loss, critic_loss, etc.
-        """
-        total_actor_loss = [0.]
-        total_critic_loss = [0.]
-        total_entropy_loss = [0.]
-        total_aug_loss = [0.]
+        """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
+        total_actor_loss = [0.0]
+        total_critic_loss = [0.0]
+        total_entropy_loss = [0.0]
+        total_aug_loss = [0.0]
 
         for _ in range(self.n_epochs):
             generator = self.storage.sample()

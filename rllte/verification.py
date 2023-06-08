@@ -4,11 +4,13 @@ from termcolor import colored
 from rllte.env.utils import VecEnvWrapper
 from rllte.xploit.agent import PPO
 
+
 def make_env():
     def _thunk():
         return gym.make("Acrobot-v1")
 
     return _thunk
+
 
 if __name__ == "__main__":
     env = VecEnvWrapper(env_id="Acrobot-v1", num_envs=1, device="cpu")

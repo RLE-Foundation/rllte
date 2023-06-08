@@ -1,10 +1,13 @@
-from typing import Tuple, Union
-from pathlib import Path
-from copy import deepcopy
 import os
+from copy import deepcopy
+from pathlib import Path
+from typing import Tuple
+
 import torch as th
 from torch import nn
+
 from rllte.common.utils import ExportModel
+
 
 class DiscreteActor(nn.Module):
     """Actor for `Discrete` tasks.
@@ -193,30 +196,27 @@ class OnPolicySharedActorCritic(nn.Module):
     Returns:
         Actor-Critic network instance.
     """
-    def __init__(self, 
-                 obs_shape: Tuple, 
-                 action_dim: int, 
-                 action_type: str, 
-                 feature_dim: int, 
-                 hidden_dim: int,
-                 aux_critic: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        obs_shape: Tuple,
+        action_dim: int,
+        action_type: str,
+        feature_dim: int,
+        hidden_dim: int,
+        aux_critic: bool = False,
+    ) -> None:
         super().__init__()
         if action_type == "Discrete":
-            self.actor = DiscreteActor(obs_shape=obs_shape, 
-                                       action_dim=action_dim, 
-                                       feature_dim=feature_dim, 
-                                       hidden_dim=hidden_dim)
+            self.actor = DiscreteActor(
+                obs_shape=obs_shape, action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim
+            )
         elif action_type == "Box":
-            self.actor = BoxActor(obs_shape=obs_shape, 
-                                  action_dim=action_dim, 
-                                  feature_dim=feature_dim, 
-                                  hidden_dim=hidden_dim)
+            self.actor = BoxActor(obs_shape=obs_shape, action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
         elif action_type == "MultiBinary":
-            self.actor = MultiBinaryActor(obs_shape=obs_shape, 
-                                          action_dim=action_dim, 
-                                          feature_dim=feature_dim, 
-                                          hidden_dim=hidden_dim)
+            self.actor = MultiBinaryActor(
+                obs_shape=obs_shape, action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim
+            )
         else:
             raise NotImplementedError("Unsupported action type!")
 
@@ -246,7 +246,7 @@ class OnPolicySharedActorCritic(nn.Module):
             training (bool): training mode, `True` or `False`.
 
         Returns:
-            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`, 
+            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`,
             else only deterministic actions.
         """
         h = self.encoder(obs)
@@ -362,16 +362,18 @@ class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
     Returns:
         Actor-Critic network instance.
     """
-    def __init__(self, 
-                 obs_shape: Tuple, 
-                 action_dim: int, 
-                 action_type: str, 
-                 feature_dim: int, 
-                 hidden_dim: int,
-                 aux_critic: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        obs_shape: Tuple,
+        action_dim: int,
+        action_type: str,
+        feature_dim: int,
+        hidden_dim: int,
+        aux_critic: bool = False,
+    ) -> None:
         super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim, aux_critic=aux_critic)
-    
+
     def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations, for `NPU` device.
 
@@ -380,7 +382,7 @@ class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
             training (bool): training mode, `True` or `False`.
 
         Returns:
-            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`, 
+            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`,
             else only deterministic actions.
         """
         h = self.encoder(obs)
@@ -395,7 +397,7 @@ class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
         else:
             actions = dist.mean
             return actions
-    
+
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations, for `NPU` device.
 

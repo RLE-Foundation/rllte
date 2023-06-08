@@ -1,9 +1,6 @@
-import os
-from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Dict, Optional
 
 import gymnasium as gym
-import numpy as np
 import torch as th
 from torch.nn import functional as F
 
@@ -43,7 +40,7 @@ class NpuDrQv2(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env, 
+        env: gym.Env,
         eval_env: Optional[gym.Env] = None,
         tag: str = "default",
         seed: int = 1,
@@ -60,20 +57,21 @@ class NpuDrQv2(OffPolicyAgent):
         update_every_steps: int = 2,
         network_init_method: str = "orthogonal",
     ) -> None:
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=pretraining,
-                         num_init_steps=num_init_steps,
-                         eval_every_steps=eval_every_steps,
-                         agent_name="DrQv2",
-                         feature_dim=feature_dim,
-                         hidden_dim=hidden_dim,
-                         batch_size=batch_size,
-                         npu=True
-                         )
+        super().__init__(
+            env=env,
+            eval_env=eval_env,
+            tag=tag,
+            seed=seed,
+            device=device,
+            pretraining=pretraining,
+            num_init_steps=num_init_steps,
+            eval_every_steps=eval_every_steps,
+            agent_name="DrQv2",
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            batch_size=batch_size,
+            npu=True,
+        )
         self.lr = lr
         self.eps = eps
         self.critic_target_tau = critic_target_tau
@@ -97,8 +95,7 @@ class NpuDrQv2(OffPolicyAgent):
         self.mode(training=True)
 
     def update(self) -> Dict[str, float]:
-        """Update the agent and return training metrics such as actor loss, critic_loss, etc.
-        """
+        """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
         metrics = {}
         if self.global_step % self.update_every_steps != 0:
             return metrics

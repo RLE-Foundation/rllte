@@ -1,9 +1,8 @@
 import threading
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, Generator, List, Tuple
 
 import gymnasium as gym
 import torch as th
-from omegaconf import DictConfig
 
 from rllte.common.base_storage import BaseStorage
 
@@ -13,7 +12,7 @@ class DistributedStorage(BaseStorage):
 
     Args:
         observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment. 
+        action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample steps of per rollout.
         num_storages (int): The number of shared-memory storages.

@@ -1,11 +1,11 @@
 from typing import Callable, Dict, Tuple
 
 import gymnasium as gym
-import robosuite as suite
-from robosuite.wrappers import GymWrapper
 import numpy as np
+import robosuite as suite
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
+from robosuite.wrappers import GymWrapper
 
 from rllte.env.utils import TorchVecEnvWrapper
 
@@ -45,10 +45,10 @@ class AdapterEnv(gym.Wrapper):
 
 
 def make_robosuite_env(
-    env_id: str = "Lift_Panda", 
-    num_envs: int = 1, 
-    device: str = "cpu", 
-    seed: int = 0, 
+    env_id: str = "Lift_Panda",
+    num_envs: int = 1,
+    device: str = "cpu",
+    seed: int = 0,
     distributed: bool = False,
     has_renderer: bool = False,
     has_offscreen_renderer: bool = False,
@@ -80,7 +80,7 @@ def make_robosuite_env(
                 robots=robots,
                 has_renderer=has_renderer,
                 has_offscreen_renderer=has_offscreen_renderer,
-                use_camera_obs=use_camera_obs
+                use_camera_obs=use_camera_obs,
             )
             env = GymWrapper(env)
             env.seed(seed)

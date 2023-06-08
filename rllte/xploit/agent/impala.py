@@ -3,17 +3,17 @@ import threading
 import traceback
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Tuple, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import gymnasium as gym
-import numpy as np
 import torch as th
+from torch import multiprocessing as mp
 from torch import nn
 from torch.nn import functional as F
-from torch import multiprocessing as mp
 
 from rllte.common.distributed_agent import DistributedAgent, Environment
 from rllte.common.utils import get_network_init
+
 
 class VTraceLoss:
     """V-trace loss function.
@@ -25,6 +25,7 @@ class VTraceLoss:
     Returns:
         V-trace loss instance.
     """
+
     def __init__(
         self,
         clip_rho_threshold: float = 1.0,
@@ -83,6 +84,7 @@ class VTraceLoss:
 
         return pg_loss, baseline_loss, entropy_loss
 
+
 class IMPALA(DistributedAgent):
     """Importance Weighted Actor-Learner Architecture (IMPALA).
         Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
@@ -116,7 +118,7 @@ class IMPALA(DistributedAgent):
 
     def __init__(
         self,
-        env: gym.Env, 
+        env: gym.Env,
         eval_env: Optional[gym.Env] = None,
         tag: str = "default",
         seed: int = 1,
@@ -136,18 +138,19 @@ class IMPALA(DistributedAgent):
         discount: float = 0.99,
         network_init_method: str = "identity",
     ) -> None:
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         num_steps=num_steps,
-                         num_actors=num_actors,
-                         num_learners=num_learners,
-                         batch_size=batch_size,
-                         feature_dim=feature_dim,
-                         use_lstm=use_lstm
-                         )
+        super().__init__(
+            env=env,
+            eval_env=eval_env,
+            tag=tag,
+            seed=seed,
+            device=device,
+            num_steps=num_steps,
+            num_actors=num_actors,
+            num_learners=num_learners,
+            batch_size=batch_size,
+            feature_dim=feature_dim,
+            use_lstm=use_lstm,
+        )
         self.feature_dim = feature_dim
         self.lr = lr
         self.eps = eps
@@ -156,7 +159,7 @@ class IMPALA(DistributedAgent):
         self.max_grad_norm = max_grad_norm
         self.discount = discount
         self.network_init_method = network_init_method
-    
+
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
         # set encoder and distribution
@@ -188,7 +191,7 @@ class IMPALA(DistributedAgent):
         free_queue: mp.SimpleQueue,
         full_queue: mp.SimpleQueue,
         init_actor_state_storages: List[th.Tensor],
-    ) -> None:
+    ) -> None: # : c901
         """Sampling function for each actor.
 
         Args:
@@ -240,7 +243,7 @@ class IMPALA(DistributedAgent):
             self.logger.error(f"Exception in worker process {actor_idx}!")
             traceback.print_exc()
             raise e
-        
+
     def update(
         self,
         batch: Dict,
@@ -307,7 +310,7 @@ class IMPALA(DistributedAgent):
         save_dir = Path.cwd() / "model"
         save_dir.mkdir(exist_ok=True)
         th.save(self.learner, save_dir / "agent.pth")
-            
+
         self.logger.info(f"Model saved at: {save_dir}")
 
     def load(self, path: str) -> None:

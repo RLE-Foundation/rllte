@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Tuple, Union, List
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import random
@@ -123,11 +123,9 @@ class Performance:
             metric, reps=self.reps, size=self.confidence_interval_size, method=self.method
         )
         return interval_estimates
-    
+
     def create_performance_profile(
-        self,
-        tau_list: Union[List[float], np.ndarray],
-        use_score_distribution: bool = True
+        self, tau_list: Union[List[float], np.ndarray], use_score_distribution: bool = True
     ) -> Tuple[np.ndarray, Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]]:
         """Method for calculating performance profilies.
 
@@ -136,19 +134,22 @@ class Performance:
                 values on which the profile is evaluated.
             use_score_distribution (bool): Whether to report score distributions or average
                 score distributions.
-                
+
         Returns:
             Point and interval estimates of profiles evaluated at all thresholds in 'tau_list'.
         """
         if use_score_distribution:
+
             def _thunk(scores, tau):
                 return np.mean(scores > tau)
+
         else:
+
             def _thunk(scores, tau):
                 return np.mean(np.mean(scores, axis=0) > tau)
 
         profile_function = np.vectorize(_thunk, excluded=[0])
         profiles = profile_function(self.scores, tau_list)
-        profile_cis = self.get_interval_estimates(scores=self.scores, metric=lambda x:profile_function(x, tau_list))
+        profile_cis = self.get_interval_estimates(scores=self.scores, metric=lambda x: profile_function(x, tau_list))
 
         return profiles, profile_cis

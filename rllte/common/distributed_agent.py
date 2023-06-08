@@ -1,28 +1,21 @@
 import os
 import threading
 import time
-import traceback
 from collections import deque
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import gymnasium as gym
-import hydra
 import numpy as np
-import omegaconf
 import torch as th
 from torch import multiprocessing as mp
-from torch import nn
-
-import gymnasium as gym
-import numpy as np
-import torch as th
 
 from rllte.common.base_agent import BaseAgent
 from rllte.common.policies import DistributedActorCritic
-from rllte.xploit.encoder import MnihCnnEncoder, IdentityEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.storage import DistributedStorage as Storage
 from rllte.xplore.distribution import Categorical, DiagonalGaussian
+
 
 class Environment:
     """An env wrapper to adapt to the distributed trainer.
@@ -126,7 +119,8 @@ class Environment:
         obs = th.from_numpy(np.array(obs))
         return obs.view((1, 1, *obs.shape))
 
-class DistributedAgent(BaseAgent): # type: ignore
+
+class DistributedAgent(BaseAgent):  # type: ignore
     """Trainer for distributed algorithms.
 
     Args:
@@ -145,29 +139,26 @@ class DistributedAgent(BaseAgent): # type: ignore
     Returns:
         Distributed agent instance.
     """
-    def __init__(self, 
-                 env: gym.Env,
-                 eval_env: Optional[gym.Env] = None,
-                 tag: str = "default",
-                 seed: int = 1,
-                 device: str = "cpu",
-                 num_steps: int = 80,
-                 num_actors: int = 45,
-                 num_learners: int = 4,
-                 num_storages: int = 60,
-                 **kwargs) -> None:
-        feature_dim = kwargs.pop('feature_dim', 512)
-        use_lstm = kwargs.pop('use_lstm', 256)
-        batch_size = kwargs.pop('batch_size', 4)
 
-        npu = kwargs.pop('npu', False)
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=False
-                         )
+    def __init__(
+        self,
+        env: gym.Env,
+        eval_env: Optional[gym.Env] = None,
+        tag: str = "default",
+        seed: int = 1,
+        device: str = "cpu",
+        num_steps: int = 80,
+        num_actors: int = 45,
+        num_learners: int = 4,
+        num_storages: int = 60,
+        **kwargs,
+    ) -> None:
+        feature_dim = kwargs.pop("feature_dim", 512)
+        use_lstm = kwargs.pop("use_lstm", 256)
+        batch_size = kwargs.pop("batch_size", 4)
+
+        kwargs.pop("npu", False)
+        super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
         self.num_actors = num_actors
         self.num_learners = num_learners
         self.num_steps = num_steps
@@ -176,15 +167,9 @@ class DistributedAgent(BaseAgent): # type: ignore
 
         # build encoder
         if len(self.obs_shape) == 3:
-            self.encoder = MnihCnnEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
+            self.encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            self.encoder = IdentityEncoder(
-                observation_space=env.observation_space,
-                feature_dim=feature_dim
-            )
+            self.encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
             self.feature_dim = self.obs_shape[0]
 
         # build storage
@@ -194,7 +179,7 @@ class DistributedAgent(BaseAgent): # type: ignore
             device=device,
             num_steps=self.num_steps,
             num_storages=num_storages,
-            batch_size=batch_size
+            batch_size=batch_size,
         )
 
         # build distribution
@@ -226,15 +211,15 @@ class DistributedAgent(BaseAgent): # type: ignore
         )
         # get separate environments
         self.env = self.env.envs
-    
+
     def act(self) -> None:
         """Act function of each actor. Implemented by individual algorithms."""
         raise NotImplementedError
-    
+
     def update(self) -> None:
         """Update function of the learner. Implemented by individual algorithms."""
         raise NotImplementedError
-    
+
     def freeze(self) -> None:
         """Freeze the structure of the agent. Implemented by individual algorithms."""
         raise NotImplementedError
@@ -252,9 +237,9 @@ class DistributedAgent(BaseAgent): # type: ignore
         self.actor.train(training)
         self.learner.train(training)
 
-    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None:
+    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None: # noqa: c901
         """Training function.
-        
+
         Args:
             num_train_steps (int): Number of training steps.
             init_model_path (Optional[str]): Path of Iinitial model parameters.
@@ -262,6 +247,7 @@ class DistributedAgent(BaseAgent): # type: ignore
         Returns:
             None.
         """
+
         def lr_lambda(self, epoch: int = 0) -> float:
             """Function for learning rate scheduler.
 
@@ -271,14 +257,14 @@ class DistributedAgent(BaseAgent): # type: ignore
             Returns:
                 Learning rate.
             """
-            return (1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps)
+            return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
 
         self.lr_lambda = lr_lambda
         # freeze the structure of the agent
         self.freeze()
         # final check
         self.check()
-        # load initial model parameters 
+        # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
             self.actor.load(init_model_path)
@@ -303,10 +289,7 @@ class DistributedAgent(BaseAgent): # type: ignore
                     storages=self.storage.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
-                metrics = self.update( # type: ignore
-                    batch=batch,
-                    init_actor_states=actor_states
-                )
+                metrics = self.update(batch=batch, init_actor_states=actor_states)  # type: ignore
                 with lock:
                     global_step += self.num_steps * self.batch_size
                     global_episode += self.batch_size

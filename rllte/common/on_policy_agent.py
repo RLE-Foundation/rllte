@@ -1,19 +1,23 @@
 from collections import deque
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
+
 import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.base_agent import BaseAgent
 from rllte.common import utils
-from rllte.common.policies import (OnPolicyDecoupledActorCritic, 
-                                   OnPolicySharedActorCritic, 
-                                   NpuOnPolicySharedActorCritic, 
-                                   NpuOnPolicyDecoupledActorCritic)
-from rllte.xploit.encoder import PathakCnnEncoder, IdentityEncoder
+from rllte.common.base_agent import BaseAgent
+from rllte.common.policies import (
+    NpuOnPolicyDecoupledActorCritic,
+    NpuOnPolicySharedActorCritic,
+    OnPolicyDecoupledActorCritic,
+    OnPolicySharedActorCritic,
+)
+from rllte.xploit.encoder import IdentityEncoder, PathakCnnEncoder
 from rllte.xploit.storage import VanillaRolloutStorage as Storage
-from rllte.xplore.distribution import Categorical, DiagonalGaussian, Bernoulli
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+
 
 class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
@@ -33,45 +37,36 @@ class OnPolicyAgent(BaseAgent):
     Returns:
         On-policy agent instance.
     """
-    def __init__(self, 
-                 env: gym.Env,
-                 eval_env: Optional[gym.Env] = None,
-                 tag: str = "default",
-                 seed: int = 1,
-                 device: str = "cpu",
-                 pretraining: bool = False,
-                 num_steps: int = 128,
-                 eval_every_episodes: int = 10,
-                 shared_encoder: bool = True,
-                 **kwargs
-                 ) -> None:
-        feature_dim = kwargs.pop('feature_dim', 512)
-        hidden_dim = kwargs.pop('feature_dim', 256)
-        batch_size = kwargs.pop('batch_size', 256)
-        npu = kwargs.pop('npu', False)
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=pretraining,
-                         feature_dim=feature_dim
-                         )
+
+    def __init__(
+        self,
+        env: gym.Env,
+        eval_env: Optional[gym.Env] = None,
+        tag: str = "default",
+        seed: int = 1,
+        device: str = "cpu",
+        pretraining: bool = False,
+        num_steps: int = 128,
+        eval_every_episodes: int = 10,
+        shared_encoder: bool = True,
+        **kwargs,
+    ) -> None:
+        feature_dim = kwargs.pop("feature_dim", 512)
+        hidden_dim = kwargs.pop("feature_dim", 256)
+        batch_size = kwargs.pop("batch_size", 256)
+        npu = kwargs.pop("npu", False)
+        super().__init__(
+            env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining, feature_dim=feature_dim
+        )
         self.num_steps = num_steps
         self.eval_every_episodes = eval_every_episodes
 
         # build encoder
         if len(self.obs_shape) == 3:
-            self.encoder = PathakCnnEncoder(
-                observation_space=env.observation_space,
-                feature_dim=self.feature_dim
-            )
+            self.encoder = PathakCnnEncoder(observation_space=env.observation_space, feature_dim=self.feature_dim)
         elif len(self.obs_shape) == 1:
             self.feature_dim = self.obs_shape[0]
-            self.encoder = IdentityEncoder(
-                observation_space=env.observation_space,
-                feature_dim=self.feature_dim
-            )
+            self.encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=self.feature_dim)
 
         # build storage
         self.storage = Storage(
@@ -80,7 +75,7 @@ class OnPolicyAgent(BaseAgent):
             device="cpu" if npu else device,
             num_steps=self.num_steps,
             num_envs=self.num_envs,
-            batch_size=batch_size
+            batch_size=batch_size,
         )
 
         # build distribution
@@ -92,7 +87,7 @@ class OnPolicyAgent(BaseAgent):
             self.dist = Bernoulli
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
         # create policy
         if shared_encoder:
             if npu:
@@ -128,11 +123,11 @@ class OnPolicyAgent(BaseAgent):
                     feature_dim=self.feature_dim,
                     hidden_dim=hidden_dim,
                 )
-    
+
     def update(self) -> Dict[str, float]:
         """Update function of the agent. Implemented by individual algorithms."""
         raise NotImplementedError
-    
+
     def freeze(self) -> None:
         """Freeze the structure of the agent. Implemented by individual algorithms."""
         raise NotImplementedError
@@ -151,7 +146,7 @@ class OnPolicyAgent(BaseAgent):
 
     def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
         """Training function.
-        
+
         Args:
             num_train_steps (int): Number of training steps.
             init_model_path (Optional[str]): Path of Iinitial model parameters.
@@ -163,10 +158,10 @@ class OnPolicyAgent(BaseAgent):
         self.freeze()
         # final check
         self.check()
-        # load initial model parameters 
+        # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.load(init_model_path) # type: ignore
+            self.load(init_model_path)  # type: ignore
         # reset the env
         episode_rewards = deque(maxlen=100)
         episode_steps = deque(maxlen=100)
@@ -202,12 +197,12 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.add(
                     obs=obs,
                     actions=actions,
-                    rewards=th.zeros_like(rewards, device=self.device) if self.pretraining else rewards, # pre-training mode
+                    rewards=th.zeros_like(rewards, device=self.device) if self.pretraining else rewards,  # pre-training mode
                     terminateds=terminateds,
                     truncateds=truncateds,
                     next_obs=next_obs,
                     log_probs=log_probs,
-                    values=values
+                    values=values,
                 )
 
                 obs = next_obs
@@ -215,7 +210,7 @@ class OnPolicyAgent(BaseAgent):
             # get the value estimation of the last step
             with th.no_grad():
                 last_values = self.policy.get_value(next_obs).detach()
-            
+
             # compute intrinsic rewards
             if self.irs is not None:
                 intrinsic_rewards = self.irs.compute_irs(

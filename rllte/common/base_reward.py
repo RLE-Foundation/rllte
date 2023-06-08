@@ -4,11 +4,12 @@ from typing import Dict
 import gymnasium as gym
 import torch as th
 
+
 class BaseIntrinsicRewardModule(ABC):
     """Base class of intrinsic reward module.
 
     Args:
-        observation_space (Space): The observation space of environment. 
+        observation_space (Space): The observation space of environment.
         action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.

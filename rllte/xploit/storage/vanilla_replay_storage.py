@@ -1,9 +1,8 @@
-from typing import Any, Tuple, Union
+from typing import Any, Tuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-from omegaconf import DictConfig
 
 from rllte.common.base_storage import BaseStorage
 
@@ -13,7 +12,7 @@ class VanillaReplayStorage(BaseStorage):
 
     Args:
         observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment. 
+        action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         storage_size (int): Max number of element in the buffer.
         batch_size (int): Batch size of samples.

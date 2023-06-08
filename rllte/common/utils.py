@@ -1,6 +1,8 @@
 from typing import Callable
-from torch import nn
+
 import torch as th
+from torch import nn
+
 
 class ExportModel(nn.Module):
     """Module for model export.
@@ -30,8 +32,10 @@ class ExportModel(nn.Module):
         """
         return self.actor(self.encoder(obs))
 
+
 class eval_mode:
     """Set the evaluation mode."""
+
     def __init__(self, *models):
         self.models = models
 
@@ -45,7 +49,7 @@ class eval_mode:
         for model, state in zip(self.models, self.prev_states):
             model.mode(state)
         return False
-    
+
 
 def get_network_init(method: str = "orthogonal") -> Callable:  # noqa: c901
     """Returns a network initialization function.

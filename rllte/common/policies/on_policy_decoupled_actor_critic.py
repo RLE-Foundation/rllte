@@ -1,12 +1,14 @@
-from typing import Tuple, Dict
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Tuple
+
 import torch as th
 from torch import nn
 from torch.nn import functional as F
 
+from rllte.common.policies.on_policy_shared_actor_critic import BoxActor, DiscreteActor, MultiBinaryActor
 from rllte.common.utils import ExportModel
-from rllte.common.policies.on_policy_shared_actor_critic import DiscreteActor, BoxActor, MultiBinaryActor
+
 
 class OnPolicyDecoupledActorCritic(nn.Module):
     """Actor-Critic network using using separate encoders for on-policy algorithms like `DAAC`.
@@ -71,7 +73,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
         self.actor_encoder = None
         self.critic_encoder = None
         self.dist = None
-    
+
     def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations.
 
@@ -80,7 +82,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
             training (bool): training mode, `True` or `False`.
 
         Returns:
-            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`, 
+            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`,
             else only deterministic actions.
         """
         h = self.actor_encoder(obs)
@@ -130,7 +132,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
         entropy = dist.entropy().mean()
 
         return gae, self.critic(self.critic_encoder(obs)), log_probs, entropy
-    
+
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.
 
@@ -159,6 +161,7 @@ class OnPolicyDecoupledActorCritic(nn.Module):
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
 
+
 class NpuOnPolicyDecoupledActorCritic(OnPolicyDecoupledActorCritic):
     """Actor-Critic network using using separate encoders for on-policy algorithms like `DAAC`, for `NPU` device.
 
@@ -182,7 +185,7 @@ class NpuOnPolicyDecoupledActorCritic(OnPolicyDecoupledActorCritic):
         hidden_dim: int,
     ) -> None:
         super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim)
-    
+
     def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations, for `NPU` device.
 
@@ -191,7 +194,7 @@ class NpuOnPolicyDecoupledActorCritic(OnPolicyDecoupledActorCritic):
             training (bool): training mode, `True` or `False`.
 
         Returns:
-            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`, 
+            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`,
             else only deterministic actions.
         """
         h = self.actor_encoder(obs)

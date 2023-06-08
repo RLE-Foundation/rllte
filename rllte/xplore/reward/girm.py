@@ -1,9 +1,8 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-from omegaconf import DictConfig
 from torch import nn, optim
 from torch.autograd import Variable
 from torch.nn import functional as F
@@ -38,7 +37,7 @@ class Encoder(nn.Module):
                 nn.ELU(),
                 nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
                 nn.ELU(),
-                nn.Flatten()
+                nn.Flatten(),
             )
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape))
@@ -173,7 +172,7 @@ class GIRM(BaseIntrinsicRewardModule):
         See paper: http://proceedings.mlr.press/v119/yu20d/yu20d.pdf
 
     Args:
-        observation_space (Space): The observation space of environment. 
+        observation_space (Space): The observation space of environment.
         action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.

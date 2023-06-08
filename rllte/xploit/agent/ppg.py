@@ -51,7 +51,7 @@
 
 #     def __init__(
 #         self,
-#         env: gym.Env, 
+#         env: gym.Env,
 #         eval_env: Optional[gym.Env] = None,
 #         tag: str = "default",
 #         seed: int = 1,
@@ -149,7 +149,7 @@
 #         self.aux_returns = None
 #         # self.aux_logits = None
 #         self.aux_policy_outputs = None
-        
+
 #     def mode(self, training: bool = True) -> None:
 #         """Set the training mode.
 
@@ -162,7 +162,7 @@
 #         self.training = training
 #         self.ac.train(training)
 
-#     def set(self, 
+#     def set(self,
 #             encoder: Optional[Any] = None,
 #             storage: Optional[Any] = None,
 #             distribution: Optional[Any] = None,
@@ -190,8 +190,9 @@
 #         )
 #         if encoder is not None:
 #             self.encoder = encoder
-#             assert self.encoder.feature_dim == self.feature_dim, "The `feature_dim` argument of agent and encoder must be same!"
-    
+#             assert self.encoder.feature_dim == self.feature_dim, 
+# "The `feature_dim` argument of agent and encoder must be same!"
+
 #     def freeze(self) -> None:
 #         """Freeze the structure of the agent."""
 #         # set encoder and distribution
@@ -426,7 +427,7 @@
 #             save_dir.mkdir(exist_ok=True)
 #             del self.ac.critic, self.ac.dist
 #             th.save(self.ac, save_dir / "agent.pth")
-            
+
 #         self.logger.info(f"Model saved at: {save_dir}")
 
 #     def load(self, path: str) -> None:

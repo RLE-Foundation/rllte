@@ -1,8 +1,6 @@
-from typing import Union
 
 import gymnasium as gym
 import torch as th
-from omegaconf import DictConfig
 from torch import nn
 
 from rllte.common.base_encoder import BaseEncoder

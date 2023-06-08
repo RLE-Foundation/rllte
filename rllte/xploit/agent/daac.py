@@ -1,8 +1,6 @@
 import itertools
-import os
-from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Optional
 from copy import deepcopy
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -11,6 +9,7 @@ from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
 from rllte.common.utils import get_network_init
+
 
 class DAAC(OnPolicyAgent):
     """Decoupled Advantage Actor-Critic (DAAC) agent.
@@ -51,7 +50,7 @@ class DAAC(OnPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env, 
+        env: gym.Env,
         eval_env: Optional[gym.Env] = None,
         tag: str = "default",
         seed: int = 1,
@@ -76,19 +75,20 @@ class DAAC(OnPolicyAgent):
         max_grad_norm: float = 0.5,
         network_init_method: str = "xavier_uniform",
     ) -> None:
-        super().__init__(env=env,
-                         eval_env=eval_env,
-                         tag=tag,
-                         seed=seed,
-                         device=device,
-                         pretraining=pretraining,
-                         num_steps=num_steps,
-                         eval_every_episodes=eval_every_episodes,
-                         feature_dim=feature_dim,
-                         hidden_dim=hidden_dim,
-                         batch_size=batch_size,
-                         shared_encoder=False
-                         )
+        super().__init__(
+            env=env,
+            eval_env=eval_env,
+            tag=tag,
+            seed=seed,
+            device=device,
+            pretraining=pretraining,
+            num_steps=num_steps,
+            eval_every_episodes=eval_every_episodes,
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            batch_size=batch_size,
+            shared_encoder=False,
+        )
         self.lr = lr
         self.eps = eps
         self.policy_epochs = policy_epochs
@@ -105,7 +105,7 @@ class DAAC(OnPolicyAgent):
         # training track
         self.num_policy_updates = 0
         self.prev_total_critic_loss = 0
-    
+
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
         # set encoder and distribution
@@ -127,13 +127,12 @@ class DAAC(OnPolicyAgent):
         self.mode(training=True)
 
     def update(self) -> Dict[str, float]:
-        """Update the agent and return training metrics such as actor loss, critic_loss, etc.
-        """
-        total_actor_loss = [0.]
-        total_adv_loss = [0.]
-        total_critic_loss = [0.]
-        total_entropy_loss = [0.]
-        total_aug_loss = [0.]
+        """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
+        total_actor_loss = [0.0]
+        total_adv_loss = [0.0]
+        total_critic_loss = [0.0]
+        total_entropy_loss = [0.0]
+        total_aug_loss = [0.0]
 
         for _ in range(self.policy_epochs):
             generator = self.storage.sample()
