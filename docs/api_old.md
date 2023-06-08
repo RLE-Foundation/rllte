@@ -2,10 +2,12 @@
 <img src='/assets/images/structure.svg' style="width: 100%">
 </div>
 
-### <font color="#0053D6"><b>Common</b></font>: Base classes and auxiliary modules like trainer and logger.
+### <font color="#0053D6"><b>Common</b></font>: Auxiliary modules like trainer and logger.
+- **Engine**: *Engine for building Hsuanwu application.*
+- **Logger**: *Logger for managing output information.*
 
 ### <font color="#0053D6"><b>Xploit</b></font>: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
-+ **Agent**: *Agents for interacting and learning.*
++ **Agent**: *Agent for interacting and learning.*
 
 | Module | Recurrent | Box | Discrete | MultiBinary | Multi Processing | NPU | Paper | Citations |
 |---|---|---|---|---|---|---|---|---|
@@ -16,7 +18,7 @@
 | DAAC | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) | 56⭐ |
 | PPO | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](https://arxiv.org/pdf/1707.06347) | 11155⭐ |
 | DrAC | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) | 29⭐ |
-| IMPALA | ✔️ | ✔️ | ✔️ | ❌ | ✔️ | 🐌 | [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | 1219⭐ |
+| IMPALA | ✔️ | ✔️ | ✔️ | ❌ | ✔️ | ✔️ | [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | 1219⭐ |
 
 
 !!! tip "Tips of Agent"
@@ -27,7 +29,7 @@
     - **Discrete**: A list of possible actions, where each timestep only one of the actions can be used.
     - **MultiBinary**: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
-+ **Encoder**: *Neural nework-based encoders for processing observations.*
++ **Encoder**: *Neural nework-based encoder for processing observations.*
 
 |Module|Input|Reference|Target Task|
 |:-|:-|:-|:-|
@@ -43,7 +45,7 @@
     - **Input**: Input type.
     - **Target Task**: The testing tasks in their paper or potential tasks.
 
-+ **Storage**: *Storges for storing collected experiences.*
++ **Storage**: *Storge for storing collected experiences.*
 
 |Module|Remark|
 |:-|:-|
@@ -84,7 +86,7 @@
 |SquashedNormal|Distribution|[torch.distributions](https://pytorch.org/docs/stable/distributions.html)|
 
 !!! tip "Tips of Distribution"
-    - In **rllte**, the action noise is implemented via a `Distribution` manner to realize unification.
+    - In Hsuanwu, the action noise is implemented via a `Distribution` manner to realize unification.
 
 + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
@@ -105,10 +107,10 @@
     - **Repr.**: The method involves representation learning.
     - **Visual**: The method works well in visual RL.
 
-See [Tutorials: Use Intrinsic Reward and Observation Augmentation](./tutorials/data_augmentation.md) for usage examples.
+See [Tutorials: Use intrinsic reward and observation augmentation](./tutorials/data_augmentation.md) for usage examples.
 
 ### <font color="#0053D6"><b>Evaluation</b></font>: Reasonable and reliable metrics for algorithm <font color="#B80000"><b>evaluation</b></font>.
-See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
+See [Tutorials: Evaluate your model](./tutorials/evaluation.md).
 
 ### <font color="#0053D6"><b>Env</b></font>: Packaged <font color="#B80000"><b>environments</b></font> (e.g., Atari games) for fast invocation.
 
@@ -123,8 +125,8 @@ See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
 
 ### <font color="#0053D6"><b>Pre-training</b></font>: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 
-See [Tutorials: Pre-training](./tutorials/pre-training.md).
+See [Tutorials: Pre-training in Hsuanwu](./tutorials/pre-training.md).
 
 ### <font color="#0053D6"><b>Deployment</b></font>: Methods of model <font color="#B80000"><b>deployment</b></font> in RL.
 
-See [Tutorials: Deploy Your Model in Inference Devices](./tutorials/deployment.md).
+See [Tutorials: Deploy your model in inference devices](./tutorials/deployment.md).
