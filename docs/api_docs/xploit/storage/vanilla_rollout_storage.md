@@ -2,7 +2,7 @@
 
 
 ## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L10)
 ```python 
 VanillaRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -19,7 +19,7 @@ Vanilla rollout storage for on-policy algorithms.
 **Args**
 
 * **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **num_steps** (int) : The sample length of per rollout.
 * **num_envs** (int) : The number of parallel environments.
@@ -37,7 +37,7 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L86)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L85)
 ```python
 .add(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -67,7 +67,7 @@ Add sampled transitions into storage.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L123)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L122)
 ```python
 .update()
 ```
@@ -76,7 +76,7 @@ None.
 Reset the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L128)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L127)
 ```python
 .compute_returns_and_advantages(
    last_values: th.Tensor
@@ -99,7 +99,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L154)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L153)
 ```python
 .sample()
 ```

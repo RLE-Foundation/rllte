@@ -2,7 +2,7 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L10)
 ```python 
 VanillaReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -18,7 +18,7 @@ Vanilla replay storage for off-policy algorithms.
 **Args**
 
 * **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **storage_size** (int) : Max number of element in the buffer.
 * **batch_size** (int) : Batch size of samples.
@@ -33,7 +33,7 @@ Vanilla replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L55)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -59,7 +59,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L86)
 ```python
 .sample(
    step: int
@@ -80,7 +80,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L110)
 ```python
 .update(
    *args
@@ -88,4 +88,4 @@ Batched samples.
 ```
 
 ---
-Update the storage
+Update the storage if necessary.

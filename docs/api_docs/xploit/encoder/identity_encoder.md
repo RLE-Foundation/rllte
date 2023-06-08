@@ -2,7 +2,7 @@
 
 
 ## IdentityEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L9)
 ```python 
 IdentityEncoder(
    observation_space: gym.Space, feature_dim: int = 64
@@ -29,7 +29,7 @@ Identity encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L30)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L28)
 ```python
 .forward(
    obs: th.Tensor

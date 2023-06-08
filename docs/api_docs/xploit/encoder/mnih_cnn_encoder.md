@@ -2,7 +2,7 @@
 
 
 ## MnihCnnEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L9)
 ```python 
 MnihCnnEncoder(
    observation_space: gym.Space, feature_dim: int = 0
@@ -32,7 +32,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L47)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/mnih_cnn_encoder.py/#L46)
 ```python
 .forward(
    obs: th.Tensor

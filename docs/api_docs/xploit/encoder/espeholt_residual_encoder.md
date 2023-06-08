@@ -2,7 +2,7 @@
 
 
 ## EspeholtResidualEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L110)
 ```python 
 EspeholtResidualEncoder(
    observation_space: gym.Space, feature_dim: int = 0, net_arch: List[int] = [16, 32,

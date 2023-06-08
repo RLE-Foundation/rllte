@@ -2,7 +2,7 @@
 
 
 ## NpuPPO
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L17)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L12)
 ```python 
 NpuPPO(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -56,56 +56,8 @@ PPO agent instance.
 **Methods:**
 
 
-### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L136)
-```python
-.mode(
-   training: bool = True
-)
-```
-
----
-Set the training mode.
-
-
-**Args**
-
-* **training** (bool) : True (training) or False (testing).
-
-
-**Returns**
-
-None.
-
-### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L148)
-```python
-.set(
-   encoder: Optional[Any] = None, storage: Optional[Any] = None,
-   distribution: Optional[Any] = None, augmentation: Optional[Any] = None,
-   reward: Optional[Any] = None
-)
-```
-
----
-Set a module for the agent.
-
-
-**Args**
-
-* **encoder** (Optional[Any]) : An encoder of `rllte.xploit.encoder` or a custom encoder.
-* **storage** (Optional[Any]) : A storage of `rllte.xploit.storage` or a custom storage.
-* **distribution** (Optional[Any]) : A distribution of `rllte.xplore.distribution` or a custom distribution.
-* **augmentation** (Optional[Any]) : An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-* **reward** (Optional[Any]) : A reward of `rllte.xplore.reward` or a custom reward.
-
-
-**Returns**
-
-None.
-
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L178)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L95)
 ```python
 .freeze()
 ```
@@ -113,86 +65,11 @@ None.
 ---
 Freeze the structure of the agent.
 
-### .get_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L192)
-```python
-.get_value(
-   obs: th.Tensor
-)
-```
-
----
-Get estimated values for observations.
-
-
-**Args**
-
-* **obs** (Tensor) : Observations.
-
-
-**Returns**
-
-Estimated values.
-
-### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L203)
-```python
-.act(
-   obs: th.Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs**  : Observations.
-* **training**  : training mode, True or False.
-* **step**  : Global training step.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L221)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L109)
 ```python
 .update()
 ```
 
 ---
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
-
-
-### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L307)
-```python
-.save()
-```
-
----
-Save models.
-
-### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_ppo.py/#L321)
-```python
-.load(
-   path: str
-)
-```
-
----
-Load initial parameters.
-
-
-**Args**
-
-* **path** (str) : Import path.
-
-
-**Returns**
-
-None.

@@ -49,7 +49,7 @@ Comparer instance.
 Compute the overall probability of imporvement of algorithm `X` over `Y`.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/comparison.py/#L78)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/comparison.py/#L77)
 ```python
 .get_interval_estimates(
    scores_x: np.ndarray, scores_y: np.ndarray, metric: Callable

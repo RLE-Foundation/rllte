@@ -2,7 +2,7 @@
 
 
 ## TassaCnnEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L9)
 ```python 
 TassaCnnEncoder(
    observation_space: gym.Space, feature_dim: int = 50
@@ -32,7 +32,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L48)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L46)
 ```python
 .forward(
    obs: th.Tensor

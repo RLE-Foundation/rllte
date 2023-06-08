@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L89)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L88)
 ```python 
 IMPALA(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -53,56 +53,8 @@ IMPALA agent instance.
 **Methods:**
 
 
-### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L212)
-```python
-.mode(
-   training: bool = True
-)
-```
-
----
-Set the training mode.
-
-
-**Args**
-
-* **training** (bool) : True (training) or False (testing).
-
-
-**Returns**
-
-None.
-
-### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L225)
-```python
-.set(
-   encoder: Optional[Any] = None, storage: Optional[Any] = None,
-   distribution: Optional[Any] = None, augmentation: Optional[Any] = None,
-   reward: Optional[Any] = None
-)
-```
-
----
-Set a module for the agent.
-
-
-**Args**
-
-* **encoder** (Optional[Any]) : An encoder of `rllte.xploit.encoder` or a custom encoder.
-* **storage** (Optional[Any]) : A storage of `rllte.xploit.storage` or a custom storage.
-* **distribution** (Optional[Any]) : A distribution of `rllte.xplore.distribution` or a custom distribution.
-* **augmentation** (Optional[Any]) : An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-* **reward** (Optional[Any]) : A reward of `rllte.xplore.reward` or a custom reward.
-
-
-**Returns**
-
-None.
-
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L255)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L163)
 ```python
 .freeze()
 ```
@@ -111,7 +63,7 @@ None.
 Freeze the structure of the agent.
 
 ### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L278)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L187)
 ```python
 .act(
    env: Environment, actor_idx: int, free_queue: mp.SimpleQueue,
@@ -137,11 +89,10 @@ Sampling function for each actor.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L338)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L247)
 ```python
 .update(
-   batch: Dict, init_actor_states: Tuple[th.Tensor, ...],
-   lr_scheduler: th.optim.lr_scheduler, lock = threading.Lock()
+   batch: Dict, init_actor_states: Tuple[th.Tensor, ...], lock = threading.Lock()
 )
 ```
 
@@ -153,7 +104,6 @@ Update the learner model.
 
 * **batch** (Batch) : Batch samples.
 * **init_actor_states** (List[Tensor]) : Initial states for LSTM.
-* **lr_scheduler** (th.optim.lr_scheduler) : Learning rate scheduler.
 * **lock** (Lock) : Thread lock.
 
 
@@ -162,7 +112,7 @@ Update the learner model.
 Training metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L401)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L308)
 ```python
 .save()
 ```
@@ -171,7 +121,7 @@ Training metrics.
 Save models.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L409)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L316)
 ```python
 .load(
    path: str

@@ -171,7 +171,8 @@ nav:
       - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_robosuite_env: api_docs/env/robosuite/__init__.md
       - utils:
-        - VecEnvWrapper: api_docs/env/utils.md
+        - make_rllte_env: api_docs/env/utils.md
+        - TorchVecEnvWrapper: api_docs/env/utils.md
     
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md

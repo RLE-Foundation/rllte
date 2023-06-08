@@ -2,7 +2,7 @@
 
 
 ## BaseStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L7)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L8)
 ```python 
 BaseStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu'
@@ -17,7 +17,7 @@ Base class of storage module.
 **Args**
 
 * **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 
 
@@ -30,7 +30,7 @@ Instance of the base storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L50)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L53)
 ```python
 .add(
    *args
@@ -41,7 +41,7 @@ Instance of the base storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L54)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L57)
 ```python
 .sample(
    *args
@@ -52,7 +52,7 @@ Add sampled transitions into storage.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L58)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_storage.py/#L61)
 ```python
 .update(
    *args
@@ -60,4 +60,4 @@ Sample from the storage.
 ```
 
 ---
-Update the storage
+Update the storage if necessary.

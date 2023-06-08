@@ -2,7 +2,7 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L58)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L60)
 ```python 
 RE3(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -19,7 +19,7 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment. 
+* **observation_space** (Space) : The observation space of environment.
 * **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
@@ -38,7 +38,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L101)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L103)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -64,7 +64,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L136)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L138)
 ```python
 .update(
    samples: Dict

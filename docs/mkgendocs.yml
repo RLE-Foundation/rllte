@@ -83,6 +83,10 @@ pages:
     source: rllte/xploit/agent/impala.py
     classes:
       - IMPALA
+  - page: xploit/agent/npu_daac.md
+    source: rllte/xploit/agent/npu_daac.py
+    classes:
+      - NpuDAAC
   - page: xploit/agent/npu_drqv2.md
     source: rllte/xploit/agent/npu_drqv2.py
     classes:
@@ -91,10 +95,10 @@ pages:
     source: rllte/xploit/agent/npu_ppo.py
     classes:
       - NpuPPO
-  - page: xploit/agent/ppg.md
-    source: rllte/xploit/agent/ppg.py
+  - page: xploit/agent/npu_sac.md
+    source: rllte/xploit/agent/npu_sac.py
     classes:
-      - PPG
+      - NpuSAC
   - page: xploit/agent/ppo.md
     source: rllte/xploit/agent/ppo.py
     classes:
@@ -242,8 +246,9 @@ pages:
       - kl_diagonal_gaussian_diagonal_gaussian
   - page: env/utils.md
     source: rllte/env/utils.py
+    functions:
+      - make_rllte_env
     classes:
-      - RllteEnvWrapper
       - TorchVecEnvWrapper
   - page: env/atari/__init__.md
     source: rllte/env/atari/__init__.py
@@ -269,6 +274,10 @@ pages:
     source: rllte/env/procgen/__init__.py
     functions:
       - make_procgen_env
+  - page: env/robosuite/__init__.md
+    source: rllte/env/robosuite/__init__.py
+    functions:
+      - make_robosuite_env
   - page: evaluation/comparison.md
     source: rllte/evaluation/comparison.py
     classes:
@@ -281,3 +290,10 @@ pages:
     source: rllte/evaluation/utils.py
     functions:
       - min_max_normalize
+  - page: evaluation/visualization.md
+    source: rllte/evaluation/visualization.py
+    functions:
+      - plot_interval_estimates
+      - plot_performance_profile
+      - plot_probability_improvement
+      - plot_sample_efficiency_curve

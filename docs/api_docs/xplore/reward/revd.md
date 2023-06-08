@@ -2,7 +2,7 @@
 
 
 ## REVD
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L59)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L60)
 ```python 
 REVD(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -19,7 +19,7 @@ See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment. 
+* **observation_space** (Space) : The observation space of environment.
 * **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
@@ -39,7 +39,7 @@ Instance of REVD.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L108)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L109)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -65,7 +65,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L163)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L164)
 ```python
 .update(
    samples: Dict

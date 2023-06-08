@@ -2,7 +2,7 @@
 
 
 ## PrioritizedReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L12)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L11)
 ```python 
 PrioritizedReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -19,7 +19,7 @@ Prioritized replay storage with proportional prioritization for off-policy algor
 **Args**
 
 * **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **storage_size** (int) : Max number of element in the buffer.
 * **batch_size** (int) : Batch size of samples.
@@ -36,7 +36,7 @@ Prioritized replay storage.
 
 
 ### .annealing_beta
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L51)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L50)
 ```python
 .annealing_beta(
    step: int
@@ -57,7 +57,7 @@ Linearly increases beta from the initial value to 1 over global training steps.
 Beta value.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L62)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L61)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -83,7 +83,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L90)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L89)
 ```python
 .sample(
    step: int
@@ -104,7 +104,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L129)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L128)
 ```python
 .update(
    metrics: Dict
@@ -118,8 +118,8 @@ Update the priorities.
 **Args**
 
 * **metrics** (Dict) : Training metrics from agent to udpate the priorities:
-    indices (NdArray): The indices of current batch data.
-    priorities (NdArray): The priorities of current batch data.
+* **indices** (NdArray) : The indices of current batch data.
+* **priorities** (NdArray) : The priorities of current batch data.
 
 
 **Returns**

@@ -50,7 +50,7 @@ Performance evaluator.
 Computes mean of sample mean scores per task.
 
 ### .aggregate_median
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L62)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L61)
 ```python
 .aggregate_median()
 ```
@@ -59,7 +59,7 @@ Computes mean of sample mean scores per task.
 Computes median of sample mean scores per task.
 
 ### .aggregate_og
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L76)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L74)
 ```python
 .aggregate_og(
    gamma: float = 1.0
@@ -81,7 +81,7 @@ to `gamma`.
 Optimality gap at threshold `gamma`.
 
 ### .aggregate_iqm
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L97)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L94)
 ```python
 .aggregate_iqm()
 ```
@@ -90,7 +90,7 @@ Optimality gap at threshold `gamma`.
 Computes the interquartile mean across runs and tasks.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L106)
 ```python
 .get_interval_estimates(
    scores: np.ndarray, metric: Callable
@@ -111,3 +111,27 @@ Computes interval estimation of the above performance evaluators.
 **Returns**
 
 Confidence intervals.
+
+### .create_performance_profile
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L127)
+```python
+.create_performance_profile(
+   tau_list: Union[List[float], np.ndarray], use_score_distribution: bool = True
+)
+```
+
+---
+Method for calculating performance profilies.
+
+
+**Args**
+
+* **tau_list** (Union[List[float], np.ndarray]) : List of 1D numpy array of threshold
+    values on which the profile is evaluated.
+* **use_score_distribution** (bool) : Whether to report score distributions or average
+    score distributions.
+
+
+**Returns**
+
+Point and interval estimates of profiles evaluated at all thresholds in 'tau_list'.

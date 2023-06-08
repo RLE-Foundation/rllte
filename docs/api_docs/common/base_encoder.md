@@ -22,7 +22,7 @@ Base class that represents a features extractor.
 
 **Returns**
 
-The base encoder class
+The base encoder instance.
 
 
 **Methods:**

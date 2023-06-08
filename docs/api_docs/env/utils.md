@@ -1,36 +1,8 @@
 #
 
 
-## VecEnvWrapper
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L12)
-```python 
-RllteEnvWrapper(
-   env_fn: Callable, num_envs: int = 1, device: str = 'cpu', parallel: bool = True
-)
-```
-
-
----
-Env wrapper for adapting to rllte engine and outputting torch tensors.
-
-
-**Args**
-
-* **env_fn** (Callable) : Function that creates the environments.
-* **num_envs** (int) : Number of environments.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
-* **parallel** (bool) : `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-
-
-**Returns**
-
-RllteEnvWrapper instance.
-
-----
-
-
 ## TorchVecEnvWrapper
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L43)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L66)
 ```python 
 TorchVecEnvWrapper(
    env: VectorEnv, device: str
@@ -57,7 +29,7 @@ TorchVecEnvWrapper instance.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L63)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L86)
 ```python
 .reset(
    seed: Optional[Union[int, List[int]]] = None, options: Optional[dict] = None
@@ -79,7 +51,7 @@ Reset all environments and return a batch of initial observations and info.
 A batch of observations and info from the vectorized environment.
 
 ### .step
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L81)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L104)
 ```python
 .step(
    actions: th.Tensor
@@ -98,3 +70,34 @@ Take an action for each environment.
 **Returns**
 
 Batch of (observations, rewards, terminations, truncations, infos)
+
+----
+
+
+### make_rllte_env
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L12)
+```python
+.make_rllte_env(
+   env_id: Union[str, Callable[..., gym.Env]], num_envs: int = 1, seed: int = 1,
+   device: str = 'cpu', parallel: bool = True, env_kwargs: Optional[Dict[str,
+   Any]] = None
+)
+```
+
+---
+Create environments that adapt to rllte engine.
+
+
+**Args**
+
+* **env_id** (Union[str, Callable[..., gym.Env]]) : either the env ID, the env class or a callable returning an env
+* **num_envs** (int) : Number of environments.
+* **seed** (int) : Random seed.
+* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **parallel** (bool) : `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
+* **env_kwargs**  : Optional keyword argument to pass to the env constructor
+
+
+**Returns**
+
+Environment wrapped by `TorchVecEnvWrapper`.

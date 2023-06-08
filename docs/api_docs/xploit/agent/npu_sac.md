@@ -1,25 +1,25 @@
 #
 
 
-## SAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L13)
+## NpuSAC
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L13)
 ```python 
-SAC(
+NpuSAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 2000,
    eval_every_steps: int = 5000, feature_dim: int = 50, batch_size: int = 1024,
    lr: float = 0.0001, eps: float = 1e-08, hidden_dim: int = 1024,
    critic_target_tau: float = 0.005, update_every_steps: int = 2,
    log_std_range: Tuple[float, ...] = (-5.0, 2), betas: Tuple[float, ...] = (0.9,
-   0.999), temperature: float = 0.1, fixed_temperature: bool = False,
+   0.999), temperature: float = 0.1, fixed_temperature: bool = True,
    discount: float = 0.99, network_init_method: str = 'orthogonal'
 )
 ```
 
 
 ---
-Soft Actor-Critic (SAC) agent.
-When 'augmentation' module is invoked, this agent will transform into Data Regularized Q (DrQ) agent.
+Soft Actor-Critic (SAC) agent for `NPU` device.
+When 'augmentation' module is invoked, this agent will transform into Data-Regularized Q (DrQ) agent.
 Based on: https://github.com/denisyarats/pytorch_sac
 
 
@@ -58,7 +58,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L99)
 ```python
 .alpha()
 ```
@@ -67,7 +67,7 @@ PPO agent instance.
 Get the temperature coefficient.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L102)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L103)
 ```python
 .freeze()
 ```
@@ -76,7 +76,7 @@ Get the temperature coefficient.
 Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L119)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L120)
 ```python
 .update()
 ```
@@ -85,7 +85,7 @@ Freeze the structure of the agent.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L190)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L198)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
@@ -115,7 +115,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L262)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_sac.py/#L272)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor, weights: th.Tensor

@@ -2,7 +2,7 @@
 
 
 ## PathakCnnEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L9)
 ```python 
 PathakCnnEncoder(
    observation_space: gym.Space, feature_dim: int = 0
@@ -32,7 +32,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L49)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L48)
 ```python
 .forward(
    obs: th.Tensor

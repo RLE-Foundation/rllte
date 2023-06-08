@@ -2,12 +2,12 @@
 
 
 ## DistributedAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L125)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L123)
 ```python 
 DistributedAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', num_steps: int = 80, num_actors: int = 45, num_learners: int = 4,
-   num_storages: int = 60, batch_size: int = 4
+   num_storages: int = 60, **kwargs
 )
 ```
 
@@ -28,7 +28,7 @@ Trainer for distributed algorithms.
 * **num_actors** (int) : Number of actors.
 * **num_learners** (int) : Number of learners.
 * **num_storages** (int) : Number of storages.
-* **batch_size** (int) : Number of samples per batch to load.
+* **kwargs**  : Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
 
 **Returns**
@@ -39,8 +39,56 @@ Distributed agent instance.
 **Methods:**
 
 
+### .act
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L215)
+```python
+.act()
+```
+
+---
+Act function of each actor. Implemented by individual algorithms.
+
+### .update
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L219)
+```python
+.update()
+```
+
+---
+Update function of the learner. Implemented by individual algorithms.
+
+### .freeze
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L223)
+```python
+.freeze()
+```
+
+---
+Freeze the structure of the agent. Implemented by individual algorithms.
+
+### .mode
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L227)
+```python
+.mode(
+   training: bool = True
+)
+```
+
+---
+Set the training mode.
+
+
+**Args**
+
+* **training** (bool) : True (training) or False (testing).
+
+
+**Returns**
+
+None.
+
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L171)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L240)
 ```python
 .train(
    num_train_steps: int = 30000000, init_model_path: Optional[str] = None
@@ -62,7 +110,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L309)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L386)
 ```python
 .eval()
 ```

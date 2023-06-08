@@ -2,7 +2,7 @@
 
 
 ## NpuDrQv2
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L22)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L12)
 ```python 
 NpuDrQv2(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -51,56 +51,8 @@ DrQv2 agent instance.
 **Methods:**
 
 
-### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L129)
-```python
-.mode(
-   training: bool = True
-)
-```
-
----
-Set the training mode.
-
-
-**Args**
-
-* **training** (bool) : True (training) or False (testing).
-
-
-**Returns**
-
-None.
-
-### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L144)
-```python
-.set(
-   encoder: Optional[Any] = None, storage: Optional[Any] = None,
-   distribution: Optional[Any] = None, augmentation: Optional[Any] = None,
-   reward: Optional[Any] = None
-)
-```
-
----
-Set a module for the agent.
-
-
-**Args**
-
-* **encoder** (Optional[Any]) : An encoder of `rllte.xploit.encoder` or a custom encoder.
-* **storage** (Optional[Any]) : A storage of `rllte.xploit.storage` or a custom storage.
-* **distribution** (Optional[Any]) : A distribution of `rllte.xplore.distribution` or a custom distribution.
-* **augmentation** (Optional[Any]) : An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-* **reward** (Optional[Any]) : A reward of `rllte.xplore.reward` or a custom reward.
-
-
-**Returns**
-
-None.
-
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L174)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L81)
 ```python
 .freeze()
 ```
@@ -108,31 +60,8 @@ None.
 ---
 Freeze the structure of the agent.
 
-### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L197)
-```python
-.act(
-   obs: th.Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs** (Tensor) : Observations.
-* **training** (bool) : training mode, True or False.
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L218)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L97)
 ```python
 .update()
 ```
@@ -140,9 +69,8 @@ Sampled actions.
 ---
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
-
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L264)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L142)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
@@ -168,7 +96,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L311)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L189)
 ```python
 .update_actor(
    obs: th.Tensor
@@ -187,33 +115,3 @@ Update the actor network.
 **Returns**
 
 Actor loss metrics.
-
-### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L336)
-```python
-.save()
-```
-
----
-Save models.
-
-### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_drqv2.py/#L352)
-```python
-.load(
-   path: str
-)
-```
-
----
-Load initial parameters.
-
-
-**Args**
-
-* **path** (str) : Import path.
-
-
-**Returns**
-
-None.

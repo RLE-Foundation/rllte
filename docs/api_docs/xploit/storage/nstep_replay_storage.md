@@ -2,7 +2,7 @@
 
 
 ## NStepReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L199)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L198)
 ```python 
 NStepReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -20,7 +20,7 @@ Replay storage for off-policy algorithms (N-step returns supported).
 **Args**
 
 * **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment. 
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **storage_size** (int) : Max number of element in the storage.
 * **batch_size** (int) : Number of samples per batch to load.
@@ -41,7 +41,7 @@ N-step replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L256)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L255)
 ```python
 .add(
    obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
@@ -67,7 +67,7 @@ Add sampled transitions into storage.
 None.
 
 ### .replay_iter
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L288)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L287)
 ```python
 .replay_iter()
 ```
@@ -76,7 +76,7 @@ None.
 Create iterable dataloader.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L294)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L293)
 ```python
 .sample(
    step: int
@@ -97,7 +97,7 @@ Generate samples.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L305)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L304)
 ```python
 .update(
    *args
@@ -105,4 +105,4 @@ Batched samples.
 ```
 
 ---
-Update the storage
+Update the storage if necessary.

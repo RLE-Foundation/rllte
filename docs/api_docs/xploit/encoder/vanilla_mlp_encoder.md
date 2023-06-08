@@ -2,7 +2,7 @@
 
 
 ## VanillaMlpEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L9)
 ```python 
 VanillaMlpEncoder(
    observation_space: gym.Space, feature_dim: int = 64, hidden_dim: int = 64
@@ -30,7 +30,7 @@ Mlp-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L32)
 ```python
 .forward(
    obs: th.Tensor

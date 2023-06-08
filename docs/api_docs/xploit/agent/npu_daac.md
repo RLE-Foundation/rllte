@@ -1,10 +1,10 @@
 #
 
 
-## DAAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L14)
+## NpuDAAC
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_daac.py/#L14)
 ```python 
-DAAC(
+NpuDAAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
@@ -18,7 +18,7 @@ DAAC(
 
 
 ---
-Decoupled Advantage Actor-Critic (DAAC) agent.
+Decoupled Advantage Actor-Critic (DAAC) agent for `NPU` device.
 When 'augmentation' module is invoked, this learner will transform into
 Data Regularized Decoupled Actor-Critic (DrAAC) agent.
 Based on: https://github.com/rraileanu/idaac
@@ -62,7 +62,7 @@ DAAC agent instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L109)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_daac.py/#L110)
 ```python
 .freeze()
 ```
@@ -71,7 +71,7 @@ DAAC agent instance.
 Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L129)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/npu_daac.py/#L130)
 ```python
 .update()
 ```

@@ -2,7 +2,7 @@
 
 
 ## RND
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L61)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L62)
 ```python 
 RND(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -19,7 +19,7 @@ See paper: https://arxiv.org/pdf/1810.12894.pdf
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment. 
+* **observation_space** (Space) : The observation space of environment.
 * **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
@@ -38,7 +38,7 @@ Instance of RND.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L111)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -64,7 +64,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L145)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L146)
 ```python
 .update(
    samples: Dict
