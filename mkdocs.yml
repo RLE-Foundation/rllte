@@ -142,6 +142,7 @@ nav:
         - GaussianNoise: api_docs/xplore/augmentation/gaussian_noise.md
         - RandomAmplitudeScaling: api_docs/xplore/augmentation/random_amplitude_scaling.md
         - GrayScale: api_docs/xplore/augmentation/grayscale.md
+        - Identity: api_docs/xplore/augmentation/identity.md
         - RandomColorJitter: api_docs/xplore/augmentation/random_colorjitter.md
         - RandomConvolution: api_docs/xplore/augmentation/random_convolution.md
         - RandomCrop: api_docs/xplore/augmentation/random_crop.md

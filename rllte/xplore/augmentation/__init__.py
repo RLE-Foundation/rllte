@@ -1,5 +1,6 @@
 from .gaussian_noise import GaussianNoise as GaussianNoise
 from .grayscale import GrayScale as GrayScale
+from .identity import Identity as Identity
 from .random_amplitude_scaling import RandomAmplitudeScaling as RandomAmplitudeScaling
 from .random_colorjitter import RandomColorJitter as RandomColorJitter
 from .random_convolution import RandomConvolution as RandomConvolution
