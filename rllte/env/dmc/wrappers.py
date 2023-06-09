@@ -62,7 +62,7 @@ class DMCWrapper(core.Env):
         self._from_pixels = from_pixels
         self._height = height
         self._width = width
-        self._camera_id = camera_id
+        self._camera_id = dict(quadruped=2).get(domain_name, 0)
         self._frame_skip = frame_skip
         self._img_source = img_source
 
