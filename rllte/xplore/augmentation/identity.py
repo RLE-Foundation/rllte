@@ -1,3 +1,4 @@
+import torch as th
 from rllte.common.base_augmentation import BaseAugmentation
 
 class Identity(BaseAugmentation):

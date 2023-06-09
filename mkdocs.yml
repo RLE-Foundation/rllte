@@ -178,6 +178,7 @@ nav:
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md
       - Performance: api_docs/evaluation/performance.md
+      - Visualization: api_docs/evaluation/visualization.md
 
     - Pre-training: tutorials/pre-training.md
     
