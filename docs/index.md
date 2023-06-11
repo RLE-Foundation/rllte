@@ -11,10 +11,10 @@
 - 📕 Standard and sophisticated modules for redevelopment;
 - 🧱 Highly modularized design for complete decoupling of RL algorithms;
 - 🚀 Optimized workflow for full hardware acceleration;
-- ⚙️ Support for custom environments and modules;
-- 🖥️ Support for multiple computing devices like GPU and NPU;
-- 🛠️ Support for RL model engineering deployment (TensorRT, CANN, ...);
-- 💾 Large number of reusable bechmarks (See [rllte-hub](https://hub.rllte.dev));
+- ⚙️ Support custom environments and modules;
+- 🖥️ Support multiple computing devices like GPU and NPU;
+- 🛠️ Support RL model engineering deployment (TensorRT, CANN, ...);
+- 💾 Large number of reusable benchmarks (See [rllte-hub](https://hub.rllte.dev));
 
 See the project structure below:
 <div align=center>
