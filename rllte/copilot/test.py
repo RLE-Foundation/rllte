@@ -1,10 +1,6 @@
-import os
 import torch
 from flagai.auto_model.auto_loader import AutoLoader
 from flagai.model.predictor.predictor import Predictor
-from flagai.data.tokenizer import Tokenizer
-import bminf
-from torch import inf
 
 state_dict = "./checkpoints_in/"
 model_name = 'aquila-7b' # 'aquila-33b'

@@ -158,7 +158,7 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 
 # Implemented Modules
 ## RL Agents
-|Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
+<!-- |Module|Recurrent|Box|Discrete|MultiBinary|Multi Processing|NPU|Paper|Citations|
 |:-|:-|:-|:-|:-|:-|:-|:-|:-|
 |SAC|❌| ✔️ |❌|❌|❌|✔️ | [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) |5077⭐|
 |DrQ|❌| ✔️ |❌|❌|❌|✔️ | [Link](https://arxiv.org/pdf/2004.13649) |433⭐|
@@ -167,7 +167,120 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 |PPO|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://arxiv.org/pdf/1707.06347) |11155⭐|
 |DrAC|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) |29⭐|
 |DAAC|❌| ✔️ |✔️|✔️|✔️|✔️ | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |56⭐|
-|IMPALA|✔️| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐|
+|IMPALA|✔️| ✔️ |✔️|❌|✔️|🐌| [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) |1219⭐| -->
+
+<table>
+<thead>
+  <tr>
+    <th>Type</th>
+    <th>Module</th>
+    <th>Recurrent</th>
+    <th>Box</th>
+    <th>Discrete</th>
+    <th>MultiBinary</th>
+    <th>Multi Processing</th>
+    <th>NPU</th>
+    <th>Paper</th>
+    <th>Citations</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Original</td>
+    <td>SAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>5077⭐</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>DDPG</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>11819⭐</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>PPO</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/1707.06347" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>11155⭐</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>DAAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>56⭐</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>IMPALA</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td><a href="http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>1219⭐</td>
+  </tr>
+  <tr>
+    <td rowspan="3">Augmented</td>
+    <td>DrQ-v2</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>100⭐</td>
+  </tr>
+  <tr>
+    <td>DrQ</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/2004.13649" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>433⭐</td>
+  </tr>
+  <tr>
+    <td>DrAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>29⭐</td>
+  </tr>
+</tbody>
+</table>
 
 > - DrQ=SAC+Augmentation, DDPG=DrQ-v2-Augmentation, DrAC=PPO+Augmentation.
 > - 🐌: Developing.
