@@ -186,7 +186,7 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 </thead>
 <tbody>
   <tr>
-    <td>Original</td>
+    <td rowspan="5">Original</td>
     <td>SAC</td>
     <td>❌</td>
     <td>✔️</td>
@@ -198,7 +198,6 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
     <td>5077⭐</td>
   </tr>
   <tr>
-    <td></td>
     <td>DDPG</td>
     <td>❌</td>
     <td>✔️</td>
@@ -210,7 +209,6 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
     <td>11819⭐</td>
   </tr>
   <tr>
-    <td></td>
     <td>PPO</td>
     <td>❌</td>
     <td>✔️</td>
@@ -222,7 +220,6 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
     <td>11155⭐</td>
   </tr>
   <tr>
-    <td></td>
     <td>DAAC</td>
     <td>❌</td>
     <td>✔️</td>
@@ -234,7 +231,6 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
     <td>56⭐</td>
   </tr>
   <tr>
-    <td></td>
     <td>IMPALA</td>
     <td>✔️</td>
     <td>✔️</td>
