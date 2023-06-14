@@ -7,17 +7,114 @@
 ### <font color="#0053D6"><b>Xploit</b></font>: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
 + **Agent**: *Agents for interacting and learning.*
 
-| Module | Recurrent | Box | Discrete | MultiBinary | Multi Processing | NPU | Paper | Citations |
-|---|---|---|---|---|---|---|---|---|
-| SAC | ❌ | ✔️ | ❌ | ❌ | ❌ | ✔️ | [Link](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf) | 5077⭐ |
-| DrQ | ❌ | ✔️ | ❌ | ❌ | ❌ | ✔️ | [Link](https://arxiv.org/pdf/2004.13649) | 433⭐ |
-| DDPG | ❌ | ✔️ | ❌ | ❌ | ❌ | ✔️ | [Link](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------) | 11819⭐ |
-| DrQ-v2 | ❌ | ✔️ | ❌ | ❌ | ❌ | ✔️ | [Link](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) | 100⭐ |
-| DAAC | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) | 56⭐ |
-| PPO | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](https://arxiv.org/pdf/1707.06347) | 11155⭐ |
-| DrAC | ❌ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | [Link](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf) | 29⭐ |
-| IMPALA | ✔️ | ✔️ | ✔️ | ❌ | ✔️ | 🐌 | [Link](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | 1219⭐ |
-
+<table>
+<thead>
+  <tr>
+    <th>Type</th>
+    <th>Module</th>
+    <th>Recurrent</th>
+    <th>Box</th>
+    <th>Discrete</th>
+    <th>MultiBinary</th>
+    <th>Multi Processing</th>
+    <th>NPU</th>
+    <th>Paper</th>
+    <th>Citations</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="5">Original</td>
+    <td>SAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>5077⭐</td>
+  </tr>
+  <tr>
+    <td>DDPG</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>11819⭐</td>
+  </tr>
+  <tr>
+    <td>PPO</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/1707.06347" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>11155⭐</td>
+  </tr>
+  <tr>
+    <td>DAAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>56⭐</td>
+  </tr>
+  <tr>
+    <td>IMPALA</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td><a href="http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>1219⭐</td>
+  </tr>
+  <tr>
+    <td rowspan="3">Augmented</td>
+    <td>DrQ-v2</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>100⭐</td>
+  </tr>
+  <tr>
+    <td>DrQ</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td><a href="https://arxiv.org/pdf/2004.13649" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>433⭐</td>
+  </tr>
+  <tr>
+    <td>DrAC</td>
+    <td>❌</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td>✔️</td>
+    <td><a href="https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf" target="_blank" rel="noopener noreferrer">Link</a></td>
+    <td>29⭐</td>
+  </tr>
+</tbody>
+</table>
 
 !!! tip "Tips of Agent"
     - DrQ=SAC+Augmentation, DDPG=DrQ-v2-Augmentation, DrAC=PPO+Augmentation.

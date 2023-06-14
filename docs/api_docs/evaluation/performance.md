@@ -2,7 +2,7 @@
 
 
 ## Performance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L10)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L35)
 ```python 
 Performance(
    scores: np.ndarray, get_ci: bool = False, method: str = 'percentile',
@@ -20,10 +20,10 @@ https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 
 **Args**
 
-* **scores** (NdArray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
+* **scores** (np.ndarray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m`.
 * **get_ci** (bool) : Compute CIs or not.
-* **method** (str) :  One of `basic`, `percentile`, `bc` (identical to `debiased`,
+* **method** (str) : One of `basic`, `percentile`, `bc` (identical to `debiased`,
     `bias-corrected`), or `bca`.
 * **task_bootstrap** (bool) :  Whether to perform bootstrapping over tasks in addition to
     runs. Defaults to False. See `StratifiedBoostrap` for more details.
@@ -41,7 +41,7 @@ Performance evaluator.
 
 
 ### .aggregate_mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L48)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L73)
 ```python
 .aggregate_mean()
 ```
@@ -50,7 +50,7 @@ Performance evaluator.
 Computes mean of sample mean scores per task.
 
 ### .aggregate_median
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L61)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L86)
 ```python
 .aggregate_median()
 ```
@@ -59,7 +59,7 @@ Computes mean of sample mean scores per task.
 Computes median of sample mean scores per task.
 
 ### .aggregate_og
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L74)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L99)
 ```python
 .aggregate_og(
    gamma: float = 1.0
@@ -81,7 +81,7 @@ to `gamma`.
 Optimality gap at threshold `gamma`.
 
 ### .aggregate_iqm
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L94)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L119)
 ```python
 .aggregate_iqm()
 ```
@@ -90,7 +90,7 @@ Optimality gap at threshold `gamma`.
 Computes the interquartile mean across runs and tasks.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L106)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L131)
 ```python
 .get_interval_estimates(
    scores: np.ndarray, metric: Callable
@@ -103,7 +103,7 @@ Computes interval estimation of the above performance evaluators.
 
 **Args**
 
-* **scores** (NdArray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
+* **scores** (np.ndarray) : A matrix of size (`num_runs` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m`.
 * **metric** (Callable) : One of the above performance evaluators used for estimation.
 
@@ -113,7 +113,7 @@ Computes interval estimation of the above performance evaluators.
 Confidence intervals.
 
 ### .create_performance_profile
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L127)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/performance.py/#L152)
 ```python
 .create_performance_profile(
    tau_list: Union[List[float], np.ndarray], use_score_distribution: bool = True

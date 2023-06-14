@@ -2,7 +2,7 @@
 
 
 ## BaseIntrinsicRewardModule
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L8)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L33)
 ```python 
 BaseIntrinsicRewardModule(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -17,8 +17,8 @@ Base class of intrinsic reward module.
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment.
+* **observation_space** (gym.Space) : The observation space of environment.
+* **action_space** (gym.Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
 * **kappa** (float) : The decay rate.
@@ -33,7 +33,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L51)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L76)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -59,7 +59,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L67)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L92)
 ```python
 .update(
    samples: Dict

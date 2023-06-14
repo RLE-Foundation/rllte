@@ -2,7 +2,7 @@
 
 
 ## PseudoCounts
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L82)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L107)
 ```python 
 PseudoCounts(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -46,7 +46,7 @@ Instance of PseudoCounts.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L169)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -59,7 +59,7 @@ Pseudo counts.
 
 **Args**
 
-* **e** (Tensor) : Encoded observations.
+* **e** (th.Tensor) : Encoded observations.
 
 
 **Returns**
@@ -67,7 +67,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L171)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L196)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -93,7 +93,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L208)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L233)
 ```python
 .update(
    samples: Dict

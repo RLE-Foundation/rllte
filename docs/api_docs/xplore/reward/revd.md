@@ -2,7 +2,7 @@
 
 
 ## REVD
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L85)
 ```python 
 REVD(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -39,7 +39,7 @@ Instance of REVD.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L109)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L134)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -65,7 +65,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L164)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L189)
 ```python
 .update(
    samples: Dict

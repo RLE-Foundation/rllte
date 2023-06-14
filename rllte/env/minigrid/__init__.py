@@ -24,6 +24,7 @@
 
 
 from typing import Dict
+
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
@@ -35,13 +36,14 @@ from rllte.env.utils import FrameStack, TorchVecEnvWrapper
 
 class Minigrid2Image(gym.ObservationWrapper):
     """Convert MiniGrid observation to image.
-    
+
     Args:
         env (gym.Env): Environment to wrap.
 
     Returns:
         Minigrid2Image instance.
     """
+
     def __init__(self, env: gym.Env) -> None:
         gym.ObservationWrapper.__init__(self, env)
         self.observation_space = env.observation_space["image"]

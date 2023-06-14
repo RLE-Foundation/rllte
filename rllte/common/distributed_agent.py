@@ -262,7 +262,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         self.actor.train(training)
         self.learner.train(training)
 
-    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None: # noqa: c901
+    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None:  # noqa: c901
         """Training function.
 
         Args:
@@ -283,6 +283,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 Learning rate.
             """
             return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
+
         self.lr_lambda = lr_lambda
 
         # freeze the structure of the agent
@@ -290,7 +291,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
         # final check
         self.check()
-        
+
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")

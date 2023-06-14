@@ -23,12 +23,15 @@
 # =============================================================================
 
 
-import os
-os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
-os.environ['MUJOCO_GL'] = 'egl'
-from rllte.xploit.agent import DrQv2
-from rllte.env import make_dmc_env
 import argparse
+import os
+
+os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
+os.environ["MUJOCO_GL"] = "egl"
+
+
+from rllte.env import make_dmc_env
+from rllte.xploit.agent import DrQv2
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="finger_spin")
@@ -72,7 +75,7 @@ if __name__ == "__main__":
         hidden_dim=1024,
         critic_target_tau=0.01,
         update_every_steps=2,
-        network_init_method="orthogonal"
+        network_init_method="orthogonal",
     )
     # training
     agent.train(num_train_steps=250000)

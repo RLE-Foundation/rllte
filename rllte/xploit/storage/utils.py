@@ -34,7 +34,7 @@ import numpy as np
 def episode_len(episode: Dict[str, np.ndarray]) -> int:
     """Returns the length of an episode.
         Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/replay_buffer.py
-    
+
     Args:
         episode (Dict[str, np.ndarray]): Selected episode.
 
@@ -42,6 +42,7 @@ def episode_len(episode: Dict[str, np.ndarray]) -> int:
         Episode length.
     """
     return next(iter(episode.values())).shape[0]
+
 
 def save_episode(episode: Dict[str, np.ndarray], fn: Path) -> None:
     """Saves an episode to a `.npz` file.
@@ -57,8 +58,9 @@ def save_episode(episode: Dict[str, np.ndarray], fn: Path) -> None:
     with io.BytesIO() as bs:
         np.savez_compressed(bs, **episode)
         bs.seek(0)
-        with fn.open('wb') as f:
+        with fn.open("wb") as f:
             f.write(bs.read())
+
 
 def load_episode(fn: Path) -> Dict[str, np.ndarray]:
     """Loads an episode from a `.npz` file.
@@ -70,10 +72,11 @@ def load_episode(fn: Path) -> Dict[str, np.ndarray]:
     Returns:
         Episode data.
     """
-    with fn.open('rb') as f:
+    with fn.open("rb") as f:
         episode = np.load(f)
         episode = {k: episode[k] for k in episode.keys()}
         return episode
+
 
 def worker_init_fn(worker_id: int) -> None:
     """Sets the random seed for each worker.
@@ -81,7 +84,7 @@ def worker_init_fn(worker_id: int) -> None:
 
     Args:
         worker_id (int): Worker ID.
-    
+
     Returns:
         None.
     """

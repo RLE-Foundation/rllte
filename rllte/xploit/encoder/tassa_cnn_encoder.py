@@ -69,10 +69,10 @@ class TassaCnnEncoder(BaseEncoder):
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Forward method implementation.
-        
+
         Args:
             obs (th.Tensor): Observation tensor.
-        
+
         Returns:
             Encoded observation tensor.
         """

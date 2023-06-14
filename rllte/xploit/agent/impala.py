@@ -210,14 +210,14 @@ class IMPALA(DistributedAgent):
         # set the training mode
         self.mode(training=True)
 
-    def act(
+    def act(  # noqa: c901
         self,
         env: Environment,
         actor_idx: int,
         free_queue: mp.SimpleQueue,
         full_queue: mp.SimpleQueue,
         init_actor_state_storages: List[th.Tensor],
-    ) -> None: # : c901
+    ) -> None:
         """Sampling function for each actor.
 
         Args:

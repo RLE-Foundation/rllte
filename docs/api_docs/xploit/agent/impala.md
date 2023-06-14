@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L88)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L113)
 ```python 
 IMPALA(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -22,8 +22,8 @@ Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/mo
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
-* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -54,7 +54,7 @@ IMPALA agent instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L163)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L189)
 ```python
 .freeze()
 ```
@@ -63,7 +63,7 @@ IMPALA agent instance.
 Freeze the structure of the agent.
 
 ### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L187)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L213)
 ```python
 .act(
    env: Environment, actor_idx: int, free_queue: mp.SimpleQueue,
@@ -89,7 +89,7 @@ Sampling function for each actor.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L247)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L273)
 ```python
 .update(
    batch: Dict, init_actor_states: Tuple[th.Tensor, ...], lock = threading.Lock()
@@ -112,7 +112,7 @@ Update the learner model.
 Training metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L308)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L334)
 ```python
 .save()
 ```
@@ -121,7 +121,7 @@ Training metrics.
 Save models.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L316)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L342)
 ```python
 .load(
    path: str

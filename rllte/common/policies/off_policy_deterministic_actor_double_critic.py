@@ -33,6 +33,7 @@ from torch.distributions import Distribution
 
 from rllte.common.utils import ExportModel
 
+
 class DoubleCritic(nn.Module):
     """Double critic network for DrQv2 and SAC.
 
@@ -81,8 +82,9 @@ class DoubleCritic(nn.Module):
 
         return q1, q2
 
+
 class OffPolicyDeterministicActorDoubleCritic(nn.Module):
-    """Deterministic actor network and double critic network for DrQv2. 
+    """Deterministic actor network and double critic network for DrQv2.
         Here the 'self.dist' refers to an action noise instance.
 
     Args:

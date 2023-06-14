@@ -2,7 +2,7 @@
 
 
 ## RND
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L62)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L87)
 ```python 
 RND(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -38,7 +38,7 @@ Instance of RND.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L136)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -64,7 +64,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L146)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rnd.py/#L171)
 ```python
 .update(
    samples: Dict

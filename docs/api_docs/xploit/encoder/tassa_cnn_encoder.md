@@ -2,7 +2,7 @@
 
 
 ## TassaCnnEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L9)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L33)
 ```python 
 TassaCnnEncoder(
    observation_space: gym.Space, feature_dim: int = 50
@@ -19,8 +19,8 @@ Target task: DeepMind Control Suite.
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **feature_dim** (int) : Number of features extracted.
+* **observation_space** (gym.Space) : Observation space.
+* **feature_dim** (int) : Number of features extracted by the encoder.
 
 
 **Returns**
@@ -32,10 +32,22 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L46)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L70)
 ```python
 .forward(
    obs: th.Tensor
 )
 ```
 
+---
+Forward method implementation.
+
+
+**Args**
+
+* **obs** (th.Tensor) : Observation tensor.
+
+
+**Returns**
+
+Encoded observation tensor.

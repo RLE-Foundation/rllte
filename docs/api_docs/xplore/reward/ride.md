@@ -2,7 +2,7 @@
 
 
 ## RIDE
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L125)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L150)
 ```python 
 RIDE(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -46,7 +46,7 @@ Instance of RIDE.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L194)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L219)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -59,7 +59,7 @@ Pseudo counts.
 
 **Args**
 
-* **e** (Tensor) : Encoded observations.
+* **e** (th.Tensor) : Encoded observations.
 
 
 **Returns**
@@ -67,7 +67,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L221)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L246)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -93,7 +93,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L264)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L289)
 ```python
 .update(
    samples: Dict

@@ -54,8 +54,8 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         self,
         loc: float = 0.0,
         scale: float = 1.0,
-        low: float = -1.0, 
-        high: float = 1.0, 
+        low: float = -1.0,
+        high: float = 1.0,
         eps: float = 1e-6,
         theta: float = 0.15,
         dt: float = 1e-2,
@@ -93,10 +93,9 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         if self.stddev_schedule is not None:
             # TODO: reset the std of
             self.scale = utils.schedule(self.stddev_schedule, step)
-    
+
     def _clamp(self, x: th.Tensor) -> th.Tensor:
-        """Clamps the input to the range [low, high].
-        """
+        """Clamps the input to the range [low, high]."""
         clamped_x = th.clamp(x, self.low + self.eps, self.high - self.eps)
         x = x - x.detach() + clamped_x.detach()
         return x

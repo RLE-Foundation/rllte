@@ -82,7 +82,7 @@ class DiscreteActor(nn.Module):
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference.
-        
+
         Args:
             obs (th.Tensor): Observations.
 

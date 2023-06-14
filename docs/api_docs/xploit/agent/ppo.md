@@ -2,7 +2,7 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L12)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L37)
 ```python 
 PPO(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -24,8 +24,8 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
-* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -57,7 +57,7 @@ PPO agent instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L94)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L119)
 ```python
 .freeze()
 ```
@@ -66,7 +66,7 @@ PPO agent instance.
 Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L108)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L133)
 ```python
 .update()
 ```

@@ -2,7 +2,7 @@
 
 
 ## DrQv2
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L12)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L37)
 ```python 
 DrQv2(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -23,8 +23,8 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
-* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -51,7 +51,7 @@ DrQv2 agent instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L79)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L104)
 ```python
 .freeze()
 ```
@@ -60,7 +60,7 @@ DrQv2 agent instance.
 Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L95)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L120)
 ```python
 .update()
 ```
@@ -69,7 +69,7 @@ Freeze the structure of the agent.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L140)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L161)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
@@ -83,11 +83,11 @@ Update the critic network.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **action** (Tensor) : Actions.
-* **reward** (Tensor) : Rewards.
-* **discount** (Tensor) : discounts.
-* **next_obs** (Tensor) : Next observations.
+* **obs** (th.Tensor) : Observations.
+* **action** (th.Tensor) : Actions.
+* **reward** (th.Tensor) : Rewards.
+* **discount** (th.Tensor) : discounts.
+* **next_obs** (th.Tensor) : Next observations.
 
 
 **Returns**
@@ -95,7 +95,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L187)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L208)
 ```python
 .update_actor(
    obs: th.Tensor
@@ -108,7 +108,7 @@ Update the actor network.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
+* **obs** (th.Tensor) : Observations.
 
 
 **Returns**

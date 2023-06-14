@@ -190,7 +190,7 @@
 #         )
 #         if encoder is not None:
 #             self.encoder = encoder
-#             assert self.encoder.feature_dim == self.feature_dim, 
+#             assert self.encoder.feature_dim == self.feature_dim,
 # "The `feature_dim` argument of agent and encoder must be same!"
 
 #     def freeze(self) -> None:

@@ -59,7 +59,7 @@ class AdapterEnv(gym.Wrapper):
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """Step the environment.
-        
+
         Args:
             action (int): Action to take.
 

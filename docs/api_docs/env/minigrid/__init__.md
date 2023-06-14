@@ -2,7 +2,7 @@
 
 
 ### make_minigrid_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/minigrid/__init__.py/#L26)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/minigrid/__init__.py/#L61)
 ```python
 .make_minigrid_env(
    env_id: str = 'MiniGrid-DoorKey-5x5-v0', num_envs: int = 8,
@@ -29,4 +29,4 @@ Build MiniGrid environments.
 
 **Returns**
 
-Environments instance.
+The vectorized environment.

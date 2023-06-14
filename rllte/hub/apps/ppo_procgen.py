@@ -23,10 +23,11 @@
 # =============================================================================
 
 
+import argparse
+
+from rllte.env import make_procgen_env
 from rllte.xploit.agent import PPO
 from rllte.xploit.encoder import EspeholtResidualEncoder
-from rllte.env import make_procgen_env
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="bigfish")
@@ -44,7 +45,7 @@ if __name__ == "__main__":
         gamma=0.99,
         num_levels=200,
         start_level=0,
-        distribution_mode="easy"
+        distribution_mode="easy",
     )
     eval_env = make_procgen_env(
         env_id=args.env_id,
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         gamma=0.99,
         num_levels=0,
         start_level=0,
-        distribution_mode="easy"
+        distribution_mode="easy",
     )
     # create agent
     feature_dim = 256
@@ -75,12 +76,9 @@ if __name__ == "__main__":
         vf_coef=0.5,
         ent_coef=0.01,
         max_grad_norm=0.5,
-        network_init_method="xavier_uniform"
+        network_init_method="xavier_uniform",
     )
-    encoder = EspeholtResidualEncoder(
-        observation_space=env.observation_space,
-        feature_dim=feature_dim
-    )
+    encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
     agent.set(encoder=encoder)
     # training
     agent.train(num_train_steps=25000000)

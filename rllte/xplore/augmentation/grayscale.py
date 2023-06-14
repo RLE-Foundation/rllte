@@ -29,8 +29,7 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 
 class GrayScale(BaseAugmentation):
-    """Grayscale operation for image augmentation.
-    """
+    """Grayscale operation for image augmentation."""
 
     def __init__(self) -> None:
         super().__init__()

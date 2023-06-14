@@ -24,11 +24,12 @@
 
 
 import os
-os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
-from rllte.xploit.agent import SAC
-from rllte.xploit.storage import PrioritizedReplayStorage
-from rllte.env import make_dmc_env
+
+os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 import argparse
+
+from rllte.env import make_dmc_env
+from rllte.xploit.agent import SAC
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="finger_spin")
@@ -39,20 +40,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # create env
     env = make_dmc_env(
-        env_id=args.env_id,
-        num_envs=1,
-        device=args.device,
-        seed=args.seed,
-        from_pixels=False,
-        visualize_reward=True
+        env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
     )
     eval_env = make_dmc_env(
-        env_id=args.env_id,
-        num_envs=1,
-        device=args.device,
-        seed=args.seed,
-        from_pixels=False,
-        visualize_reward=True
+        env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
     )
     # create agent
     agent = SAC(
@@ -68,7 +59,7 @@ if __name__ == "__main__":
         hidden_dim=1024,
         critic_target_tau=0.005,
         update_every_steps=2,
-        network_init_method="orthogonal"
+        network_init_method="orthogonal",
     )
     # storage = PrioritizedReplayStorage(
     #     observation_space=env.observation_space,

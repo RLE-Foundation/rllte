@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Any, Dict, Tuple
+from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -108,8 +108,14 @@ class PrioritizedReplayStorage(BaseStorage):
             None.
         """
         # TODO: add parallel env support
-        transition = (obs[0].cpu().numpy(), action[0].cpu().numpy(), reward[0].cpu().numpy(), 
-                      terminated[0].cpu().numpy(), truncated[0].cpu().numpy(), next_obs[0].cpu().numpy())
+        transition = (
+            obs[0].cpu().numpy(),
+            action[0].cpu().numpy(),
+            reward[0].cpu().numpy(),
+            terminated[0].cpu().numpy(),
+            truncated[0].cpu().numpy(),
+            next_obs[0].cpu().numpy(),
+        )
         max_prio = self.priorities.max() if self.storage else 1.0
         self.priorities[self.position] = max_prio
         self.storage.append(transition)

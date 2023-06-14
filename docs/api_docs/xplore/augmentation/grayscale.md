@@ -2,7 +2,7 @@
 
 
 ## GrayScale
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L31)
 ```python 
 
 ```
@@ -12,21 +12,12 @@
 Grayscale operation for image augmentation.
 
 
-**Args**
-
-None.
-
-
-**Returns**
-
-Augmented images.
-
 
 **Methods:**
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L19)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/grayscale.py/#L38)
 ```python
 .forward(
    x: th.Tensor

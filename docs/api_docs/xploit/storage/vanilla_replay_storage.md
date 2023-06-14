@@ -2,7 +2,7 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L10)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L35)
 ```python 
 VanillaReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -17,11 +17,11 @@ Vanilla replay storage for off-policy algorithms.
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
-* **storage_size** (int) : Max number of element in the buffer.
-* **batch_size** (int) : Batch size of samples.
+* **observation_space** (gym.Space) : Observation space.
+* **action_space** (gym.Space) : Action space.
+* **device** (str) : Device to store the data.
+* **storage_size** (int) : Storage size.
+* **batch_size** (int) : Batch size.
 
 
 **Returns**
@@ -33,10 +33,11 @@ Vanilla replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L55)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L80)
 ```python
 .add(
-   obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
+   obs: Any, action: Any, reward: Any, terminated: Any, truncated: Any, info: Any,
+   next_obs: Any
 )
 ```
 
@@ -46,12 +47,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (Any) : Observations.
-* **action** (Any) : Actions.
-* **reward** (Any) : Rewards.
-* **terminated** (Any) : Terminateds.
-* **info** (Any) : Infos.
-* **next_obs** (Any) : Next observations.
+* **obs** (Any) : Observation.
+* **action** (Any) : Action.
+* **reward** (Any) : Reward.
+* **terminated** (Any) : Termination flag.
+* **truncated** (Any) : Truncation flag.
+* **info** (Any) : Additional information.
+* **next_obs** (Any) : Next observation.
 
 
 **Returns**
@@ -59,7 +61,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L86)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L115)
 ```python
 .sample(
    step: int
@@ -80,7 +82,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L140)
 ```python
 .update(
    *args

@@ -2,7 +2,7 @@
 
 
 ## ICM
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L124)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L149)
 ```python 
 ICM(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -38,7 +38,7 @@ Instance of ICM.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L173)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L198)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -64,7 +64,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L211)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L236)
 ```python
 .update(
    samples: Dict

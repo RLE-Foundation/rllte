@@ -67,6 +67,7 @@ class eval_mode:
     Returns:
         None.
     """
+
     def __init__(self, *models) -> None:
         self.models = models
 

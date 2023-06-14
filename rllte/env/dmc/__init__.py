@@ -27,17 +27,13 @@ from typing import Callable
 
 import gymnasium as gym
 import numpy as np
-from dm_control import suite, manipulation
+from dm_control import manipulation, suite
 from dm_control.suite.wrappers import action_scale, pixels
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
+from rllte.env.dmc.wrappers import ActionDTypeWrapper, ActionRepeatWrapper, DMC2Gymnasium, FlatObsWrapper, FrameStackWrapper
 from rllte.env.utils import TorchVecEnvWrapper
-from rllte.env.dmc.wrappers import (DMC2Gymnasium, 
-                                    ActionDTypeWrapper,
-                                    ActionRepeatWrapper,
-                                    FrameStackWrapper,
-                                    FlatObsWrapper)
 
 
 def make_dmc_env(
@@ -69,26 +65,24 @@ def make_dmc_env(
     Returns:
         The vectorized environment.
     """
+
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            domain, task = env_id.split('_', 1)
+            domain, task = env_id.split("_", 1)
             # overwrite cup to ball_in_cup
-            domain = dict(cup='ball_in_cup').get(domain, domain)
+            domain = dict(cup="ball_in_cup").get(domain, domain)
             if from_pixels:
                 assert not visualize_reward, "Cannot use visualize reward when learning from pixels!"
             if (domain, task) in suite.ALL_TASKS:
-                env = suite.load(domain,
-                                 task,
-                                 task_kwargs={'random': seed},
-                                 visualize_reward=False)
-                pixels_key = 'pixels'
+                env = suite.load(domain, task, task_kwargs={"random": seed}, visualize_reward=False)
+                pixels_key = "pixels"
             else:
-                name = f'{domain}_{task}_vision'
+                name = f"{domain}_{task}_vision"
                 env = manipulation.load(name, seed=seed)
-                pixels_key = 'front_close'
+                pixels_key = "front_close"
             # add wrappers
             env = ActionDTypeWrapper(env, np.float32)
-            env = ActionRepeatWrapper(env, 1 if from_pixels else action_repeat)
+            env = ActionRepeatWrapper(env, action_repeat if from_pixels else 1)
             env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
 
             if visualize_reward and not from_pixels:
@@ -99,9 +93,7 @@ def make_dmc_env(
                     # zoom in camera for quadruped
                     camera_id = dict(quadruped=2).get(domain, 0)
                     render_kwargs = dict(height=height, width=width, camera_id=camera_id)
-                    env = pixels.Wrapper(env,
-                                        pixels_only=True,
-                                        render_kwargs=render_kwargs)
+                    env = pixels.Wrapper(env, pixels_only=True, render_kwargs=render_kwargs)
                 # stack several frames
                 env = FrameStackWrapper(env, frame_stack, pixels_key)
 
@@ -109,7 +101,7 @@ def make_dmc_env(
             env = DMC2Gymnasium(env)
 
             return env
-        
+
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]

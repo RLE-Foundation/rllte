@@ -30,7 +30,7 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 class RandomFlip(BaseAugmentation):
     """Random flip operation for image augmentation.
-    
+
     Args:
         p (float): The image flip problistily in a batch.
 

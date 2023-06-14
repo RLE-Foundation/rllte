@@ -2,7 +2,7 @@
 
 
 ## NGU
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L82)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L107)
 ```python 
 NGU(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -47,7 +47,7 @@ Instance of NGU.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L167)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L192)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -60,7 +60,7 @@ Pseudo counts.
 
 **Args**
 
-* **e** (Tensor) : Encoded observations.
+* **e** (th.Tensor) : Encoded observations.
 
 
 **Returns**
@@ -68,7 +68,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L194)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L219)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -94,7 +94,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L240)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L265)
 ```python
 .update(
    samples: Dict

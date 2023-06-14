@@ -24,18 +24,11 @@
 
 
 import datetime
-import io
-import random
-import traceback
-from collections import defaultdict
-
-import numpy as np
-import datetime
 import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Dict, Iterator, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -43,22 +36,20 @@ import torch as th
 from torch.utils.data import IterableDataset
 
 from rllte.common.base_storage import BaseStorage
-from rllte.xploit.storage.utils import (episode_len, 
-                                        load_episode,
-                                        save_episode,
-                                        worker_init_fn
-                                        )
+from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
+
 
 class ReplayStorage:
     """Replay storage for storing transitions.
         Implemented based on: https://github.com/facebookresearch/drqv2/blob/main/replay_buffer.py
-    
+
     Args:
         replay_dir (Path): Directory to store replay data.
-    
+
     Returns:
         Replay storage.
     """
+
     def __init__(self, replay_dir: Path) -> None:
         self._replay_dir = replay_dir
         replay_dir.mkdir(exist_ok=True)
@@ -67,15 +58,17 @@ class ReplayStorage:
 
     def __len__(self) -> int:
         return self._num_transitions
-    
-    def add(self, 
-            obs: np.ndarray, 
-            action: np.ndarray, 
-            reward: float, 
-            terminated: bool, 
-            truncated: bool,
-            info: Dict,
-            next_obs: np.ndarray) -> None:
+
+    def add(
+        self,
+        obs: np.ndarray,
+        action: np.ndarray,
+        reward: float,
+        terminated: bool,
+        truncated: bool,
+        info: Dict,
+        next_obs: np.ndarray,
+    ) -> None:
         """Add a new transition to the storage.
 
         Args:
@@ -111,12 +104,12 @@ class ReplayStorage:
         """Preload replay data from disk."""
         self._num_episodes = 0
         self._num_transitions = 0
-        for fn in self._replay_dir.glob('*.npz'):
-            _, _, eps_len = fn.stem.split('_')
+        for fn in self._replay_dir.glob("*.npz"):
+            _, _, eps_len = fn.stem.split("_")
             self._num_episodes += 1
             self._num_transitions += int(eps_len)
 
-    def _store_episode(self, episode : Dict[str, np.ndarray]) -> None:
+    def _store_episode(self, episode: Dict[str, np.ndarray]) -> None:
         """Store an episode to disk.
 
         Args:
@@ -129,8 +122,8 @@ class ReplayStorage:
         eps_len = episode_len(episode)
         self._num_episodes += 1
         self._num_transitions += eps_len
-        ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        eps_fn = f'{ts}_{eps_idx}_{eps_len}.npz'
+        ts = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+        eps_fn = f"{ts}_{eps_idx}_{eps_len}.npz"
         save_episode(episode, self._replay_dir / eps_fn)
 
 
@@ -150,14 +143,17 @@ class ReplayStorageDataset(IterableDataset):
     Returns:
         Replay storage dataset.
     """
-    def __init__(self, 
-                 replay_dir: Path, 
-                 max_size: int, 
-                 num_workers: int, 
-                 nstep: int, 
-                 discount: float,
-                 fetch_every: int, 
-                 save_snapshot: bool) -> None:
+
+    def __init__(
+        self,
+        replay_dir: Path,
+        max_size: int,
+        num_workers: int,
+        nstep: int,
+        discount: float,
+        fetch_every: int,
+        save_snapshot: bool,
+    ) -> None:
         self._replay_dir = replay_dir
         self._size = 0
         self._max_size = max_size
@@ -179,7 +175,7 @@ class ReplayStorageDataset(IterableDataset):
         """Store an episode to the storage."""
         try:
             episode = load_episode(eps_fn)
-        except:
+        except Exception:
             return False
         eps_len = episode_len(episode)
         while eps_len + self._size > self._max_size:
@@ -203,12 +199,12 @@ class ReplayStorageDataset(IterableDataset):
         self._samples_since_last_fetch = 0
         try:
             worker_id = th.utils.data.get_worker_info().id
-        except:
+        except Exception:
             worker_id = 0
-        eps_fns = sorted(self._replay_dir.glob('*.npz'), reverse=True)
+        eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
         fetched_size = 0
         for eps_fn in eps_fns:
-            eps_idx, eps_len = [int(x) for x in eps_fn.stem.split('_')[1:]]
+            eps_idx, eps_len = (int(x) for x in eps_fn.stem.split("_")[1:])
             if eps_idx % self._num_workers != worker_id:
                 continue
             if eps_fn in self._episodes.keys():
@@ -223,30 +219,31 @@ class ReplayStorageDataset(IterableDataset):
         """Sample a transition from the storage."""
         try:
             self._try_fetch()
-        except:
+        except Exception:
             traceback.print_exc()
         self._samples_since_last_fetch += 1
         episode = self._sample_episode()
         idx = np.random.randint(0, episode_len(episode) - self._nstep)
-        obs = episode['observation'][idx]
-        action = episode['action'][idx]
-        next_obs = episode['observation'][idx + self._nstep]
-        reward = np.zeros_like(episode['reward'][idx])
-        discount = np.ones_like(episode['discount'][idx])
+        obs = episode["observation"][idx]
+        action = episode["action"][idx]
+        next_obs = episode["observation"][idx + self._nstep]
+        reward = np.zeros_like(episode["reward"][idx])
+        discount = np.ones_like(episode["discount"][idx])
         for i in range(self._nstep):
-            step_reward = episode['reward'][idx + i]
+            step_reward = episode["reward"][idx + i]
             reward += discount * step_reward
-            discount *= episode['discount'][idx + i] * self._discount
+            discount *= episode["discount"][idx + i] * self._discount
         return (obs, action, reward, discount, next_obs)
 
     def __iter__(self) -> Iterator:
         while True:
             yield self._sample()
 
+
 class NStepReplayStorage(BaseStorage):
     """N-step replay storage.
         Implemented based on: https://github.com/facebookresearch/drqv2/blob/main/replay_buffer.py
-    
+
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
@@ -259,10 +256,11 @@ class NStepReplayStorage(BaseStorage):
         discount (float): The discount factor for future rewards.
         fetch_every (int): Loading interval.
         save_snapshot (bool): Save loaded file or not.
-    
+
     Returns:
         N-step replay storage.
     """
+
     def __init__(
         self,
         observation_space: gym.Space,
@@ -277,28 +275,24 @@ class NStepReplayStorage(BaseStorage):
         fetch_every: int = 1000,
         save_snapshot: bool = False,
     ) -> None:
-        super().__init__(
-            observation_space=observation_space,
-            action_space=action_space,
-            device=device
-        )
+        super().__init__(observation_space=observation_space, action_space=action_space, device=device)
         # build storage
         self.replay_dir = Path.cwd() / "storage"
         self.replay_storage = ReplayStorage(self.replay_dir)
         max_size_per_worker = storage_size // max(1, num_workers)
-        dataset = ReplayStorageDataset(replay_dir=self.replay_dir,
-                                       max_size=max_size_per_worker,
-                                       num_workers=num_workers,
-                                       nstep=n_step,
-                                       discount=discount,
-                                       fetch_every=fetch_every,
-                                       save_snapshot=save_snapshot)
+        dataset = ReplayStorageDataset(
+            replay_dir=self.replay_dir,
+            max_size=max_size_per_worker,
+            num_workers=num_workers,
+            nstep=n_step,
+            discount=discount,
+            fetch_every=fetch_every,
+            save_snapshot=save_snapshot,
+        )
         # build dataloader
-        self.replay_loader = th.utils.data.DataLoader(dataset,
-                                                      batch_size=batch_size,
-                                                      num_workers=num_workers,
-                                                      pin_memory=pin_memory,
-                                                      worker_init_fn=worker_init_fn)
+        self.replay_loader = th.utils.data.DataLoader(
+            dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, worker_init_fn=worker_init_fn
+        )
         self._replay_iter = None
 
     def add(
@@ -333,9 +327,9 @@ class NStepReplayStorage(BaseStorage):
             terminated=terminated[0].cpu().numpy(),
             truncated=truncated[0].cpu().numpy(),
             info=info,
-            next_obs=next_obs[0].cpu().numpy()
+            next_obs=next_obs[0].cpu().numpy(),
         )
-        
+
     @property
     def replay_iter(self) -> Iterator:
         """Create iterable dataloader."""
@@ -345,7 +339,7 @@ class NStepReplayStorage(BaseStorage):
 
     def sample(self, step: int) -> Tuple:
         """Sample from the storage.
-        
+
         Args:
             step (int): Global training step.
 

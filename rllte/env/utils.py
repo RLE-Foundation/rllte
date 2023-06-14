@@ -39,7 +39,8 @@ def make_rllte_env(
     seed: int = 1,
     device: str = "cpu",
     parallel: bool = True,
-    env_kwargs: Optional[Dict[str, Any]] = None) -> gym.Wrapper:
+    env_kwargs: Optional[Dict[str, Any]] = None,
+) -> gym.Wrapper:
     """Create environments that adapt to rllte engine.
 
     Args:
@@ -83,7 +84,7 @@ def make_rllte_env(
 
     env = RecordEpisodeStatistics(env)
     env = TorchVecEnvWrapper(env=env, device=device)
-    
+
     return env
 
 

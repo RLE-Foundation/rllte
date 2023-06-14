@@ -31,14 +31,12 @@ import torch as th
 
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
-from rllte.common.policies import (
-    OffPolicyDeterministicActorDoubleCritic,
-    OffPolicyStochasticActorDoubleCritic,
-)
+from rllte.common.policies import OffPolicyDeterministicActorDoubleCritic, OffPolicyStochasticActorDoubleCritic
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.storage import NStepReplayStorage, VanillaReplayStorage
-from rllte.xplore.augmentation import RandomShift, Identity
+from rllte.xplore.augmentation import Identity, RandomShift
 from rllte.xplore.distribution import SquashedNormal, TruncatedNormalNoise
+
 
 class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
@@ -97,8 +95,7 @@ class OffPolicyAgent(BaseAgent):
                 device=device,
                 batch_size=batch_size,
             )
-            self.dist = TruncatedNormalNoise(low=self.action_range[0],
-                                             high=self.action_range[1])
+            self.dist = TruncatedNormalNoise(low=self.action_range[0], high=self.action_range[1])
             # for `DDPG` without augmentation
             if len(self.obs_shape) == 1:
                 self.aug = Identity().to(self.device)
@@ -164,7 +161,7 @@ class OffPolicyAgent(BaseAgent):
         episode_step, episode_reward = 0, 0
         obs, info = self.env.reset(seed=self.seed)
         metrics = None
-        
+
         # training loop
         while self.global_step <= num_train_steps:
             # try to eval
@@ -179,7 +176,7 @@ class OffPolicyAgent(BaseAgent):
                     action = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
                 else:
                     action = self.policy(obs, training=True, step=self.global_step)
-            
+
             # observe reward and next obs
             next_obs, reward, terminated, truncated, info = self.env.step(action)
             episode_reward += reward[0].cpu().numpy()
@@ -216,11 +213,11 @@ class OffPolicyAgent(BaseAgent):
                         "total_time": total_time,
                     }
                     self.logger.train(msg=train_metrics)
-                
-                # As the vector environments autoreset for a terminating and truncating sub-environments, 
-                # the returned observation and info is not the final step’s observation or info which 
-                # is instead stored in info as “final_observation” and “final_info”. Therefore, 
-                # we don’t need to reset the env here.
+
+                # As the vector environments autoreset for a terminating and truncating sub-environments,
+                # the returned observation and info is not the final step's observation or info which
+                # is instead stored in info as `final_observation` and `final_info`. Therefore,
+                # we don't need to reset the env here.
                 self.global_episode += 1
                 episode_step, episode_reward = 0, 0
 
@@ -261,10 +258,10 @@ class OffPolicyAgent(BaseAgent):
 
             # terminated or truncated
             if terminated or truncated:
-                # As the vector environments autoreset for a terminating and truncating sub-environments, 
-                # the returned observation and info is not the final step’s observation or info which 
-                # is instead stored in info as “final_observation” and “final_info”. Therefore, 
-                # we don’t need to reset the env here.
+                # As the vector environments autoreset for a terminating and truncating sub-environments,
+                # the returned observation and info is not the final step's observation or info which
+                # is instead stored in info as `final_observation` and `final_info`. Therefore,
+                # we don't need to reset the env here.
                 episode += 1
 
             obs = next_obs

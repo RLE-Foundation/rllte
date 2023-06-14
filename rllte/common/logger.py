@@ -68,7 +68,7 @@ class Logger:
 
     def _format(self, key: str, value: Any, ty: str) -> str:
         """Format the value according to the type.
-        
+
         Args:
             key (str): The key of the value.
             value (Any): The value to be formatted.
@@ -90,7 +90,7 @@ class Logger:
 
     def parse_train_msg(self, msg: Dict) -> str:
         """Parse the training message.
-        
+
         Args:
             msg (Dict): The training message.
 
@@ -105,7 +105,7 @@ class Logger:
 
     def parse_eval_msg(self, msg: Dict) -> str:
         """Parse the evaluation message.
-        
+
         Args:
             msg (Dict): The evaluation message.
 
@@ -191,7 +191,7 @@ class Logger:
 
     def _dump_to_csv(self, file: Path, data: Dict, write_header: bool) -> None:
         """Dump data to csv file.
-        
+
         Args:
             file (Path): The file to be written.
             data (Dict): The data to be written.

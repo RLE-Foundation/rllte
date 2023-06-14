@@ -23,15 +23,15 @@
 # =============================================================================
 
 
-from typing import Dict, Tuple, Any
-
-from dm_env import specs
-from gymnasium import spaces
 from collections import deque
+from typing import Any, Dict, Tuple
 
 import dm_env
-import numpy as np
 import gymnasium as gym
+import numpy as np
+from dm_env import specs
+from gymnasium import spaces
+
 
 class ActionRepeatWrapper(dm_env.Environment):
     """Repeats the action for a given number of steps.
@@ -40,26 +40,27 @@ class ActionRepeatWrapper(dm_env.Environment):
     Args:
         env (dm_env.Environment): Environment to wrap.
         num_repeats (int): Number of times to repeat the action.
-    
+
     Returns:
         Wrapped environment.
     """
+
     def __init__(self, env: dm_env.Environment, num_repeats: int) -> None:
         self._env = env
         self._num_repeats = num_repeats
 
     def step(self, action: np.ndarray) -> dm_env.TimeStep:
         """Repeat the action for a given number of steps and return the accumulated reward.
-        
+
         Args:
             action (np.ndarray): Action to take.
-        
+
         Returns:
             dm_env.TimeStep: Time step.
         """
         reward = 0.0
         discount = 1.0
-        for i in range(self._num_repeats):
+        for _ in range(self._num_repeats):
             time_step = self._env.step(action)
             reward += (time_step.reward or 0.0) * discount
             discount *= time_step.discount
@@ -87,16 +88,17 @@ class ActionRepeatWrapper(dm_env.Environment):
 class FrameStackWrapper(dm_env.Environment):
     """Stacks consecutive frames together to feed them to the agent.
         Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/dmc.py
-    
+
     Args:
         env (dm_env.Environment): Environment to wrap.
         num_frames (int): Number of frames to stack.
         pixels_key (str): Key of the pixels in the observation dictionary.
-    
+
     Returns:
         Wrapped environment.
     """
-    def __init__(self, env: dm_env.Environment, num_frames: int, pixels_key: str = 'pixels') -> None:
+
+    def __init__(self, env: dm_env.Environment, num_frames: int, pixels_key: str = "pixels") -> None:
         self._env = env
         self._num_frames = num_frames
         self._frames = deque([], maxlen=num_frames)
@@ -109,19 +111,20 @@ class FrameStackWrapper(dm_env.Environment):
         # remove batch dim
         if len(pixels_shape) == 4:
             pixels_shape = pixels_shape[1:]
-        self._obs_spec = specs.BoundedArray(shape=np.concatenate(
-            [[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0),
-                                            dtype=np.uint8,
-                                            minimum=0,
-                                            maximum=255,
-                                            name='observation')
+        self._obs_spec = specs.BoundedArray(
+            shape=np.concatenate([[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0),
+            dtype=np.uint8,
+            minimum=0,
+            maximum=255,
+            name="observation",
+        )
 
     def _transform_observation(self, time_step: dm_env.TimeStep) -> dm_env.TimeStep:
         """Concatenate the frames and return the new observation.
-        
-        Args:   
+
+        Args:
             time_step (dm_env.TimeStep): Time step.
-        
+
         Returns:
             dm_env.TimeStep: Time step with the new observation.
         """
@@ -131,10 +134,10 @@ class FrameStackWrapper(dm_env.Environment):
 
     def _extract_pixels(self, time_step: dm_env.TimeStep) -> np.ndarray:
         """Extract pixels from the observation dictionary.
-        
+
         Args:
             time_step (dm_env.TimeStep): Time step.
-        
+
         Returns:
             np.ndarray: Pixels.
         """
@@ -154,7 +157,7 @@ class FrameStackWrapper(dm_env.Environment):
 
     def step(self, action: np.ndarray) -> dm_env.TimeStep:
         """Take a step in the environment and stack the new frame.
-        
+
         Args:
             action (np.ndarray): Action to take.
 
@@ -181,26 +184,25 @@ class FrameStackWrapper(dm_env.Environment):
 class ActionDTypeWrapper(dm_env.Environment):
     """A wrapper that converts actions to a given dtype.
         Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/dmc.py
-    
+
     Args:
         env (dm_env.Environment): An environment to be wrapped.
         dtype (np.dtype): A dtype to convert actions to.
-    
+
     Returns:
         Wrapped environment.
     """
+
     def __init__(self, env: dm_env.Environment, dtype: np.dtype) -> None:
         self._env = env
         wrapped_action_spec = env.action_spec()
-        self._action_spec = specs.BoundedArray(wrapped_action_spec.shape,
-                                               dtype,
-                                               wrapped_action_spec.minimum,
-                                               wrapped_action_spec.maximum,
-                                               'action')
+        self._action_spec = specs.BoundedArray(
+            wrapped_action_spec.shape, dtype, wrapped_action_spec.minimum, wrapped_action_spec.maximum, "action"
+        )
 
     def step(self, action: np.ndarray) -> dm_env.TimeStep:
         """Take a step in the environment.
-        
+
         Args:
             action (np.ndarray): Action to take.
 
@@ -224,17 +226,18 @@ class ActionDTypeWrapper(dm_env.Environment):
 
     def __getattr__(self, name):
         return getattr(self._env, name)
-    
+
 
 class FlatObsWrapper(dm_env.Environment):
     """Flattens the observation dictionary into a single array.
-    
+
     Args:
         env (dm_env.Environment): Environment to wrap.
-    
+
     Returns:
         Wrapped environment.
     """
+
     def __init__(self, env: dm_env.Environment) -> None:
         self._env = env
 
@@ -242,18 +245,16 @@ class FlatObsWrapper(dm_env.Environment):
         for item in env.observation_spec().values():
             state_dim += item.shape[0]
 
-        self._obs_spec = specs.BoundedArray(shape=(state_dim,),
-                                            dtype=np.float32,
-                                            minimum=-np.inf,
-                                            maximum=np.inf,
-                                            name='observation')
+        self._obs_spec = specs.BoundedArray(
+            shape=(state_dim,), dtype=np.float32, minimum=-np.inf, maximum=np.inf, name="observation"
+        )
 
     def _flatten_obs(self, obs: Dict[str, np.ndarray]) -> np.ndarray:
         """Flatten the observation dictionary into a single array.
-        
+
         Args:
             obs (Dict[str, np.ndarray]): Observation dictionary.
-        
+
         Returns:
             np.ndarray: Flattened observation.
         """
@@ -294,6 +295,7 @@ class DMC2Gymnasium(gym.Env):
     Returns:
         Wrapped environment.
     """
+
     def __init__(self, env: dm_env.Environment) -> None:
         super().__init__()
         self.env = env
@@ -303,7 +305,7 @@ class DMC2Gymnasium(gym.Env):
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
         """Run one timestep of the environment's dynamics using the agent actions.
-        
+
         Args:
             action (np.ndarray): Action to take.
 
@@ -313,7 +315,7 @@ class DMC2Gymnasium(gym.Env):
         time_step = self.env.step(action)
         obs = time_step.observation
         reward = time_step.reward
-        terminated = False # never stop
+        terminated = False  # never stop
         truncated = time_step.last()
         info = {"discount": time_step.discount}
 
@@ -325,13 +327,13 @@ class DMC2Gymnasium(gym.Env):
         obs = time_step.observation
         info = {"discount": time_step.discount}
         return obs, info
-    
+
     def _spec_to_box(self, spec: specs.Array) -> spaces.Box:
         """Converts a dm_env spec to a gym Box space.
 
         Args:
             spec (specs.Array): A dm_env spec.
-        
+
         Returns:
             A gym Box space.
         """

@@ -2,7 +2,7 @@
 
 
 ## Logger
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L26)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L51)
 ```python 
 Logger(
    log_dir: Path
@@ -28,25 +28,49 @@ Logger instance.
 
 
 ### .parse_train_msg
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L91)
 ```python
 .parse_train_msg(
-   msg: Any
+   msg: Dict
 )
 ```
 
+---
+Parse the training message.
+
+
+**Args**
+
+* **msg** (Dict) : The training message.
+
+
+**Returns**
+
+The formatted string.
 
 ### .parse_eval_msg
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L63)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L106)
 ```python
 .parse_eval_msg(
-   msg: Any
+   msg: Dict
 )
 ```
 
+---
+Parse the evaluation message.
+
+
+**Args**
+
+* **msg** (Dict) : The evaluation message.
+
+
+**Returns**
+
+The formatted string.
 
 ### .time_stamp
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L71)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L122)
 ```python
 .time_stamp()
 ```
@@ -55,7 +79,7 @@ Logger instance.
 Return the current time stamp.
 
 ### .info
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L75)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L126)
 ```python
 .info(
    msg: str
@@ -76,7 +100,7 @@ Output msg with 'info' level.
 None.
 
 ### .debug
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L138)
 ```python
 .debug(
    msg: str
@@ -97,7 +121,7 @@ Output msg with 'debug' level.
 None.
 
 ### .error
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L99)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L150)
 ```python
 .error(
    msg: str
@@ -118,7 +142,7 @@ Output msg with 'error' level.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L162)
 ```python
 .train(
    msg: Dict
@@ -131,7 +155,7 @@ Output msg with 'train' level.
 
 **Args**
 
-* **msg** (str) : Message to be printed.
+* **msg** (Dict) : Message to be printed.
 
 
 **Returns**
@@ -139,7 +163,7 @@ Output msg with 'train' level.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L126)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/logger.py/#L177)
 ```python
 .eval(
    msg: Dict
@@ -152,7 +176,7 @@ Output msg with 'eval' level.
 
 **Args**
 
-* **msg** (str) : Message to be printed.
+* **msg** (Dict) : Message to be printed.
 
 
 **Returns**

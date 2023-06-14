@@ -2,7 +2,7 @@
 
 
 ## BaseAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L28)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L53)
 ```python 
 BaseAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -17,8 +17,8 @@ Base class of the agent.
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
-* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -35,7 +35,7 @@ Base agent instance.
 
 
 ### .get_env_info
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L108)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L133)
 ```python
 .get_env_info(
    env: gym.Env
@@ -48,7 +48,7 @@ Get the environment information.
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
+* **env** (gym.Env) : A Gym-like environment for training.
 
 
 **Returns**
@@ -56,7 +56,7 @@ Get the environment information.
 None.
 
 ### .get_npu_name
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L142)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L167)
 ```python
 .get_npu_name()
 ```
@@ -65,7 +65,7 @@ None.
 Get NPU name.
 
 ### .check
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L155)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L180)
 ```python
 .check()
 ```
@@ -74,7 +74,7 @@ Get NPU name.
 Check the compatibility of selected modules.
 
 ### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L182)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L207)
 ```python
 .set(
    encoder: Optional[Any] = None, storage: Optional[Any] = None,
@@ -101,7 +101,7 @@ Set a module for the agent.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L223)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L248)
 ```python
 .train()
 ```
@@ -110,7 +110,7 @@ None.
 Training function.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L227)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L252)
 ```python
 .eval()
 ```

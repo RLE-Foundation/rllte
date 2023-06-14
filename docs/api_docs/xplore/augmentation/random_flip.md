@@ -2,7 +2,7 @@
 
 
 ## RandomFlip
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_flip.py/#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_flip.py/#L31)
 ```python 
 RandomFlip(
    p: float = 0.2
@@ -12,6 +12,7 @@ RandomFlip(
 
 ---
 Random flip operation for image augmentation.
+
 
 **Args**
 
@@ -27,7 +28,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_flip.py/#L19)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_flip.py/#L45)
 ```python
 .forward(
    x: th.Tensor

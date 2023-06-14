@@ -23,7 +23,6 @@
 # =============================================================================
 
 
-
 import torch as th
 import torch.distributions as pyd
 
@@ -32,7 +31,7 @@ from rllte.common.base_distribution import BaseDistribution
 
 class Categorical(BaseDistribution):
     """Categorical distribution for sampling actions for 'Discrete' tasks.
-    
+
     Args:
         logits (th.Tensor): The event log probabilities (unnormalized).
 

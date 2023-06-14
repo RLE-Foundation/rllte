@@ -2,7 +2,7 @@
 
 
 ### plot_interval_estimates
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L116)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L141)
 ```python
 .plot_interval_estimates(
    metrics_dict: Dict[str, Dict], metric_names: List[str], algorithms: List[str],
@@ -44,7 +44,7 @@ A matplotlib figure and an array of Axes.
 
 
 ### plot_performance_profile
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L306)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L331)
 ```python
 .plot_performance_profile(
    profile_dict: Dict[str, List], tau_list: np.ndarray,
@@ -67,7 +67,7 @@ See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 **Args**
 
 * **profile_dict** (Dict[str, List]) : A dictionary mapping a method to its performance.
-* **tau_list** (Ndarray) : 1D numpy array of threshold values on which the profile is evaluated.
+* **tau_list** (np.ndarray) : 1D numpy array of threshold values on which the profile is evaluated.
 * **use_non_linear_scaling** (bool) : Whether to scale the x-axis in proportion to the 
     number of runs within any specified range.
 * **figsize** (Tuple[float]) : Size of the figure passed to `matplotlib.subplots`.
@@ -93,7 +93,7 @@ A matplotlib figure and `axes.Axes` which contains the plot for performance prof
 
 
 ### plot_probability_improvement
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L196)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L221)
 ```python
 .plot_probability_improvement(
    poi_dict: Dict[str, List], pair_separator: str = '_', figsize: Tuple[float,
@@ -138,7 +138,7 @@ A matplotlib figure and `axes.Axes` which contains the plot for probability of i
 
 
 ### plot_sample_efficiency_curve
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L384)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/visualization.py/#L409)
 ```python
 .plot_sample_efficiency_curve(
    sampling_dict: Dict[str, Dict], frames: np.ndarray, algorithms: List[str],

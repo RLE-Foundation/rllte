@@ -77,7 +77,7 @@ class SAC(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 5000,
+        eval_every_steps: int = 10000,
         feature_dim: int = 50,
         batch_size: int = 1024,
         lr: float = 1e-4,

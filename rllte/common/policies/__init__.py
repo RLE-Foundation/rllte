@@ -24,7 +24,11 @@
 
 
 from .distributed_actor_critic import DistributedActorCritic as DistributedActorCritic
-from .off_policy_deterministic_actor_double_critic import OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic
-from .off_policy_stochastic_actor_double_critic import OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic
+from .off_policy_deterministic_actor_double_critic import (
+    OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic,
+)
+from .off_policy_stochastic_actor_double_critic import (
+    OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic,
+)
 from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
 from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic

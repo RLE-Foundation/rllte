@@ -50,8 +50,8 @@ class NormalNoise(BaseDistribution):
         self,
         loc: float = 0.0,
         scale: float = 1.0,
-        low: float = -1.0, 
-        high: float = 1.0, 
+        low: float = -1.0,
+        high: float = 1.0,
         eps: float = 1e-6,
         stddev_schedule: str = "linear(1.0, 0.1, 100000)",
         stddev_clip: float = 0.3,
@@ -67,10 +67,9 @@ class NormalNoise(BaseDistribution):
         self.noiseless_action = None
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
-    
+
     def _clamp(self, x: th.Tensor) -> th.Tensor:
-        """Clamps the input to the range [low, high].
-        """
+        """Clamps the input to the range [low, high]."""
         clamped_x = th.clamp(x, self.low + self.eps, self.high - self.eps)
         x = x - x.detach() + clamped_x.detach()
         return x

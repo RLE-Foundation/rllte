@@ -2,7 +2,7 @@
 
 
 ## SquashedNormal
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L39)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L64)
 ```python 
 SquashedNormal(
    loc: th.Tensor, scale: th.Tensor
@@ -16,8 +16,8 @@ Squashed normal distribution for Soft Actor-Critic learner.
 
 **Args**
 
-* **loc** (Tensor) : The mean of the distribution (often referred to as mu).
-* **scale** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
+* **loc** (th.Tensor) : The mean of the distribution (often referred to as mu).
+* **scale** (th.Tensor) : The standard deviation of the distribution (often referred to as sigma).
 
 
 **Returns**
@@ -29,7 +29,7 @@ Squashed normal distribution instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L85)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -43,7 +43,7 @@ batch of samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -51,7 +51,7 @@ batch of samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L72)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L97)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -65,7 +65,7 @@ batch of reparameterized samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -73,7 +73,7 @@ batch of reparameterized samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L85)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L110)
 ```python
 .mean()
 ```
@@ -82,7 +82,7 @@ A sample_shape shaped sample.
 Return the transformed mean.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L93)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L118)
 ```python
 .mode()
 ```
@@ -91,7 +91,7 @@ Return the transformed mean.
 Returns the mode of the distribution.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L97)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L122)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -104,7 +104,7 @@ the score of the base distribution and the log abs det jacobian.
 
 **Args**
 
-* **actions** (Tensor) : The actions to be evaluated.
+* **actions** (th.Tensor) : The actions to be evaluated.
 
 
 **Returns**
@@ -112,7 +112,7 @@ the score of the base distribution and the log abs det jacobian.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L108)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L133)
 ```python
 .entropy()
 ```
@@ -121,7 +121,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L113)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L138)
 ```python
 .stddev()
 ```
@@ -130,7 +130,7 @@ Returns the Shannon entropy of distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L118)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L143)
 ```python
 .variance()
 ```
@@ -139,7 +139,7 @@ Returns the standard deviation of the distribution.
 Returns the variance of the distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L122)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L147)
 ```python
 .reset()
 ```

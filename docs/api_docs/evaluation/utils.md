@@ -2,7 +2,7 @@
 
 
 ### min_max_normalize
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/utils.py/#L10)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/utils.py/#L35)
 ```python
 .min_max_normalize(
    value: np.ndarray, min_scores: np.ndarray, max_scores: np.ndarray

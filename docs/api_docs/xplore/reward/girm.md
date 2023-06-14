@@ -2,7 +2,7 @@
 
 
 ## GIRM
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L170)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L195)
 ```python 
 GIRM(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -43,7 +43,7 @@ Instance of GIRM.
 
 
 ### .get_vae_loss
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L230)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L255)
 ```python
 .get_vae_loss(
    recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor
@@ -56,10 +56,10 @@ Compute the vae loss.
 
 **Args**
 
-* **recon_x** (Tensor) : Reconstructed x.
-* **x** (Tensor) : Input x.
-* **mean** (Tensor) : Sample mean.
-* **logvar** (Tensor) : Log of the sample variance.
+* **recon_x** (th.Tensor) : Reconstructed x.
+* **x** (th.Tensor) : Input x.
+* **mean** (th.Tensor) : Sample mean.
+* **logvar** (th.Tensor) : Log of the sample variance.
 
 
 **Returns**
@@ -67,7 +67,7 @@ Compute the vae loss.
 Loss values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L247)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L272)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -93,7 +93,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L296)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L321)
 ```python
 .update(
    samples: Dict

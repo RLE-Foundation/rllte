@@ -111,7 +111,7 @@ class EpisodicLifeEnv(gym.Wrapper):
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
         """Reset only when the env is done or a life is lost.
-        
+
         Args:
             action (int): Action to take.
 
@@ -167,7 +167,7 @@ class MaxAndSkipEnv(gym.Wrapper):
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
         """Repeat action, sum reward, and max over last observations.
-        
+
         Args:
             action (int): Action to take.
 

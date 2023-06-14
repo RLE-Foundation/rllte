@@ -2,7 +2,7 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L85)
 ```python 
 RE3(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -38,7 +38,7 @@ Instance of RE3.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L103)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L128)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -64,7 +64,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L138)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L163)
 ```python
 .update(
    samples: Dict

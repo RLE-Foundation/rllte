@@ -37,7 +37,7 @@ import torch as th
 
 # try to load torch_npu
 try:
-    import torch_npu  # type: ignore
+    import torch_npu  # noqa: f401
 except Exception:
     pass
 

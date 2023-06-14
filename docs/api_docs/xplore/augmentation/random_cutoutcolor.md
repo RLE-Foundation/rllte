@@ -2,7 +2,7 @@
 
 
 ## RandomCutoutColor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutoutcolor.py/#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutoutcolor.py/#L31)
 ```python 
 RandomCutoutColor(
    min_cut: int = 10, max_cut: int = 30
@@ -12,6 +12,7 @@ RandomCutoutColor(
 
 ---
 Random Cutout operation for image augmentation.
+
 
 **Args**
 
@@ -28,7 +29,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutoutcolor.py/#L21)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutoutcolor.py/#L47)
 ```python
 .forward(
    x: th.Tensor

@@ -32,10 +32,7 @@ import torch as th
 
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
-from rllte.common.policies import (
-    OnPolicyDecoupledActorCritic,
-    OnPolicySharedActorCritic,
-)
+from rllte.common.policies import OnPolicyDecoupledActorCritic, OnPolicySharedActorCritic
 from rllte.xploit.encoder import IdentityEncoder, PathakCnnEncoder
 from rllte.xploit.storage import VanillaRolloutStorage as Storage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
@@ -112,20 +109,20 @@ class OnPolicyAgent(BaseAgent):
         # create policy
         if shared_encoder:
             self.policy = OnPolicySharedActorCritic(
-                    obs_shape=self.obs_shape,
-                    action_dim=self.action_dim,
-                    action_type=self.action_type,
-                    feature_dim=self.feature_dim,
-                    hidden_dim=hidden_dim,
-                )
+                obs_shape=self.obs_shape,
+                action_dim=self.action_dim,
+                action_type=self.action_type,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim,
+            )
         else:
             self.policy = OnPolicyDecoupledActorCritic(
-                    obs_shape=self.obs_shape,
-                    action_dim=self.action_dim,
-                    action_type=self.action_type,
-                    feature_dim=self.feature_dim,
-                    hidden_dim=hidden_dim,
-                )
+                obs_shape=self.obs_shape,
+                action_dim=self.action_dim,
+                action_type=self.action_type,
+                feature_dim=self.feature_dim,
+                hidden_dim=hidden_dim,
+            )
 
     def update(self) -> Dict[str, float]:
         """Update function of the agent. Implemented by individual algorithms."""

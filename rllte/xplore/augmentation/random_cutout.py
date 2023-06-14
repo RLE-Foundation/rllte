@@ -30,7 +30,7 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 class RandomCutout(BaseAugmentation):
     """Random Cutout operation for image augmentation.
-    
+
     Args:
         min_cut (int): Min size of the cut shape.
         max_cut (int): Max size of the cut shape.

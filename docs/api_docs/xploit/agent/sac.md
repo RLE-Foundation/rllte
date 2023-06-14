@@ -2,7 +2,7 @@
 
 
 ## SAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L13)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L38)
 ```python 
 SAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -25,8 +25,8 @@ Based on: https://github.com/denisyarats/pytorch_sac
 
 **Args**
 
-* **env** (Env) : A Gym-like environment for training.
-* **eval_env** (Env) : A Gym-like environment for evaluation.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -58,7 +58,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L123)
 ```python
 .alpha()
 ```
@@ -67,7 +67,7 @@ PPO agent instance.
 Get the temperature coefficient.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L102)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L127)
 ```python
 .freeze()
 ```
@@ -76,7 +76,7 @@ Get the temperature coefficient.
 Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L119)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L144)
 ```python
 .update()
 ```
@@ -85,12 +85,12 @@ Freeze the structure of the agent.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L190)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L217)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
-   next_obs: th.Tensor, weights: th.Tensor, aug_obs: th.Tensor,
-   aug_next_obs: th.Tensor
+   truncateds: th.Tensor, next_obs: th.Tensor, weights: th.Tensor,
+   aug_obs: th.Tensor, aug_next_obs: th.Tensor
 )
 ```
 
@@ -100,14 +100,15 @@ Update the critic network.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **action** (Tensor) : Actions.
-* **reward** (Tensor) : Rewards.
-* **terminated** (Tensor) : Terminateds.
-* **next_obs** (Tensor) : Next observations.
-* **weights** (Tensor) : Batch sample weights.
-* **aug_obs** (Tensor) : Augmented observations.
-* **aug_next_obs** (Tensor) : Augmented next observations.
+* **obs** (th.Tensor) : Observations.
+* **action** (th.Tensor) : Actions.
+* **reward** (th.Tensor) : Rewards.
+* **terminated** (th.Tensor) : Terminateds.
+* **truncateds** (th.Tensor) : Truncateds.
+* **next_obs** (th.Tensor) : Next observations.
+* **weights** (th.Tensor) : Batch sample weights.
+* **aug_obs** (th.Tensor) : Augmented observations.
+* **aug_next_obs** (th.Tensor) : Augmented next observations.
 
 
 **Returns**
@@ -115,7 +116,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L262)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L291)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor, weights: th.Tensor
@@ -128,8 +129,8 @@ Update the actor network and temperature.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **weights** (Tensor) : Batch sample weights.
+* **obs** (th.Tensor) : Observations.
+* **weights** (th.Tensor) : Batch sample weights.
 
 
 **Returns**

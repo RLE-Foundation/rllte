@@ -83,22 +83,6 @@ pages:
     source: rllte/xploit/agent/impala.py
     classes:
       - IMPALA
-  - page: xploit/agent/npu_daac.md
-    source: rllte/xploit/agent/npu_daac.py
-    classes:
-      - NpuDAAC
-  - page: xploit/agent/npu_drqv2.md
-    source: rllte/xploit/agent/npu_drqv2.py
-    classes:
-      - NpuDrQv2
-  - page: xploit/agent/npu_ppo.md
-    source: rllte/xploit/agent/npu_ppo.py
-    classes:
-      - NpuPPO
-  - page: xploit/agent/npu_sac.md
-    source: rllte/xploit/agent/npu_sac.py
-    classes:
-      - NpuSAC
   - page: xploit/agent/ppo.md
     source: rllte/xploit/agent/ppo.py
     classes:
@@ -171,6 +155,10 @@ pages:
     source: rllte/xplore/augmentation/grayscale.py
     classes:
       - GrayScale
+  - page: xplore/augmentation/identity.md
+    source: rllte/xplore/augmentation/identity.py
+    classes:
+      - Identity
   - page: xplore/augmentation/random_amplitude_scaling.md
     source: rllte/xplore/augmentation/random_amplitude_scaling.py
     classes:
@@ -239,17 +227,6 @@ pages:
     source: rllte/xplore/distribution/truncated_normal_noise.py
     classes:
       - TruncatedNormalNoise
-  - page: xplore/distribution/kl.md
-    source: rllte/xplore/distribution/kl.py
-    functions:
-      - kl_categorical_categorical
-      - kl_diagonal_gaussian_diagonal_gaussian
-  - page: env/utils.md
-    source: rllte/env/utils.py
-    functions:
-      - make_rllte_env
-    classes:
-      - TorchVecEnvWrapper
   - page: env/atari/__init__.md
     source: rllte/env/atari/__init__.py
     functions:
@@ -274,10 +251,10 @@ pages:
     source: rllte/env/procgen/__init__.py
     functions:
       - make_procgen_env
-  - page: env/robosuite/__init__.md
-    source: rllte/env/robosuite/__init__.py
+  - page: env/utils.md
+    source: rllte/env/utils.py
     functions:
-      - make_robosuite_env
+      - make_rllte_env
   - page: evaluation/comparison.md
     source: rllte/evaluation/comparison.py
     classes:

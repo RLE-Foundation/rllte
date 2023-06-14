@@ -25,8 +25,10 @@
 
 import time
 
+
 class Timer:
     """The calculagraph class."""
+
     def __init__(self) -> None:
         self._start_time = time.perf_counter()
         self._last_time = time.perf_counter()

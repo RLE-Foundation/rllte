@@ -2,7 +2,7 @@
 
 
 ### make_bullet_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/bullet/__init__.py/#L47)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/bullet/__init__.py/#L81)
 ```python
 .make_bullet_env(
    env_id: str = 'AntBulletEnv-v0', num_envs: int = 1, device: str = 'cpu', seed: int = 0,
@@ -26,4 +26,4 @@ Build PyBullet robotics environments.
 
 **Returns**
 
-Environments instance.
+The vectorized environment.

@@ -29,8 +29,7 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 
 class RandomConvolution(BaseAugmentation):
-    """Random Convolution operation for image augmentation. Note that imgs should be normalized and torch tensor.
-    """
+    """Random Convolution operation for image augmentation. Note that imgs should be normalized and torch tensor."""
 
     def __init__(self) -> None:
         super().__init__()

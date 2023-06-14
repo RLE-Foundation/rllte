@@ -2,7 +2,7 @@
 
 
 ## RISE
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L85)
 ```python 
 RISE(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -39,7 +39,7 @@ Instance of RISE.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L106)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L131)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -65,7 +65,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L142)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/rise.py/#L167)
 ```python
 .update(
    samples: Dict

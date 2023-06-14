@@ -35,6 +35,7 @@ from rllte.env.utils import TorchVecEnvWrapper
 
 class StateEnv(gym.Env):
     """Environment with state-based observation space and `MultiBinary` action space for testing."""
+
     def __init__(self) -> None:
         super().__init__()
         self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
@@ -42,7 +43,7 @@ class StateEnv(gym.Env):
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
-        
+
         Args:
             seed (int, optional): Seed for the environment. Defaults to None.
             options (Dict[str, Any], optional): Options for the environment. Defaults to None.
@@ -54,7 +55,7 @@ class StateEnv(gym.Env):
 
     def step(self, action: Any) -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
         """Take a step in the environment.
-        
+
         Args:
             action (Any): Action to take.
 
@@ -75,6 +76,7 @@ class StateEnv(gym.Env):
 
 class PixelEnv(gym.Env):
     """Environment with image-based observation space and `MultiBinary` action space for testing."""
+
     def __init__(self) -> None:
         super().__init__()
         self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(4, 84, 84), dtype=np.float32)
@@ -113,12 +115,9 @@ class PixelEnv(gym.Env):
         return obs, reward, terminated, truncated, info
 
 
-def make_multibinary_env(env_id: str = "multibinary_state", 
-                         num_envs: int = 1, 
-                         device: str = "cpu", 
-                         seed: int = 0, 
-                         distributed: bool = False
-                         ) -> gym.Env:
+def make_multibinary_env(
+    env_id: str = "multibinary_state", num_envs: int = 1, device: str = "cpu", seed: int = 0, distributed: bool = False
+) -> gym.Env:
     """Build environments with `MultiBinary` action space for testing.
 
     Args:
