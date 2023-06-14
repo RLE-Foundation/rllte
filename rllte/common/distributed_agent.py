@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 import os
 import threading
 import time
@@ -21,7 +46,7 @@ class Environment:
     """An env wrapper to adapt to the distributed trainer.
 
     Args:
-        env (Env): A Gym-like env.
+        env (gym.Env): A Gym-like env.
 
     Returns:
         Processed env.
@@ -66,7 +91,7 @@ class Environment:
         """Step function that returns a dict consists of current and history observation and action.
 
         Args:
-            action (Tensor): Action tensor.
+            action (th.Tensor): Action tensor.
 
         Returns:
             Step information dict.
@@ -111,7 +136,7 @@ class Environment:
         """Reformat the observation by adding an time dimension.
 
         Args:
-            obs (NdArray): Observation.
+            obs (np.ndarray): Observation.
 
         Returns:
             Formatted observation.
@@ -124,8 +149,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
     """Trainer for distributed algorithms.
 
     Args:
-        env (Env): A Gym-like environment for training.
-        eval_env (Env): A Gym-like environment for evaluation.
+        env (gym.Env): A Gym-like environment for training.
+        eval_env (gym.Env): A Gym-like environment for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -259,12 +284,14 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 Learning rate.
             """
             return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
-
         self.lr_lambda = lr_lambda
+
         # freeze the structure of the agent
         self.freeze()
+
         # final check
         self.check()
+        
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
@@ -295,7 +322,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
                     global_step += self.num_steps * self.batch_size
                     global_episode += self.batch_size
 
-        # TODO: Add initial RNN state.
+        # add initial RNN state.
         init_actor_state_storages = []
         for _ in range(self.num_storages):
             state = self.actor.init_state(batch_size=1)

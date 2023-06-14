@@ -46,8 +46,8 @@ class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
 
     Args:
-        env (Env): A Gym-like environment for training.
-        eval_env (Env): A Gym-like environment for evaluation.
+        env (gym.Env): A Gym-like environment for training.
+        eval_env (gym.Env): A Gym-like environment for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.

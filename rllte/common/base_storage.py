@@ -9,8 +9,8 @@ class BaseStorage(ABC):
     """Base class of storage module.
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        observation_space (gym.Space): The observation space of environment.
+        action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
 
     Returns:
@@ -51,7 +51,7 @@ class BaseStorage(ABC):
 
     @abstractmethod
     def add(self, *args) -> None:
-        """Add sampled transitions into storage."""
+        """Add samples to the storage."""
 
     @abstractmethod
     def sample(self, *args) -> Any:

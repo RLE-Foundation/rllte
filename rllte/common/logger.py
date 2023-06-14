@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 import csv
 import datetime
 from pathlib import Path
@@ -41,7 +66,17 @@ class Logger:
         self._train_file_write_header = True
         self._eval_file_write_header = True
 
-    def _format(self, key: str, value: Any, ty: str):
+    def _format(self, key: str, value: Any, ty: str) -> str:
+        """Format the value according to the type.
+        
+        Args:
+            key (str): The key of the value.
+            value (Any): The value to be formatted.
+            ty (str): The type of the value.
+
+        Returns:
+            The formatted string.
+        """
         if ty == "int":
             value = int(value)
             return f"{key}: {value}"
@@ -53,14 +88,30 @@ class Logger:
         else:
             raise TypeError(f"invalid format type: {ty}")
 
-    def parse_train_msg(self, msg: Any) -> str:
+    def parse_train_msg(self, msg: Dict) -> str:
+        """Parse the training message.
+        
+        Args:
+            msg (Dict): The training message.
+
+        Returns:
+            The formatted string.
+        """
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
             value = msg.get(key, 0)
             pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
         return " | ".join(pieces)
 
-    def parse_eval_msg(self, msg: Any) -> str:
+    def parse_eval_msg(self, msg: Dict) -> str:
+        """Parse the evaluation message.
+        
+        Args:
+            msg (Dict): The evaluation message.
+
+        Returns:
+            The formatted string.
+        """
         pieces = []
         for key, disp_key, ty in EVAL_MSG_FORMAT:
             value = msg.get(key, 0)
@@ -112,7 +163,7 @@ class Logger:
         """Output msg with 'train' level.
 
         Args:
-            msg (str): Message to be printed.
+            msg (Dict): Message to be printed.
 
         Returns:
             None.
@@ -127,7 +178,7 @@ class Logger:
         """Output msg with 'eval' level.
 
         Args:
-            msg (str): Message to be printed.
+            msg (Dict): Message to be printed.
 
         Returns:
             None.
@@ -139,6 +190,16 @@ class Logger:
         self._eval_file_write_header = False
 
     def _dump_to_csv(self, file: Path, data: Dict, write_header: bool) -> None:
+        """Dump data to csv file.
+        
+        Args:
+            file (Path): The file to be written.
+            data (Dict): The data to be written.
+            write_header (bool): Whether to write the header.
+
+        Returns:
+            None.
+        """
         csv_file = file.open("a")
         csv_writer = csv.DictWriter(csv_file, fieldnames=sorted(data.keys()), restval=0.0)
 
