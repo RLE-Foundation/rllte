@@ -104,12 +104,9 @@ nav:
         - DrQv2: api_docs/xploit/agent/drqv2.md
         - DDPG: api_docs/xploit/agent/drqv2.md
         - DAAC: api_docs/xploit/agent/daac.md
-        - PPG: api_docs/xploit/agent/ppg.md
         - PPO: api_docs/xploit/agent/ppo.md
         - DrAC: api_docs/xploit/agent/ppo.md
         - IMPALA: api_docs/xploit/agent/impala.md
-        - NpuDrQv2: api_docs/xploit/agent/npu_drqv2.md
-        - NpuPPO: api_docs/xploit/agent/npu_ppo.md
       
       - encoder:
         - EspeholtResidualEncoder: api_docs/xploit/encoder/espeholt_residual_encoder.md
@@ -161,7 +158,6 @@ nav:
         - NormalNoise: api_docs/xplore/distribution/normal_noise.md
         - OrnsteinUhlenbeckNoise: api_docs/xplore/distribution/ornstein_uhlenbeck_noise.md
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
-        - kl: api_docs/xplore/distribution/kl.md
     
     - Env:
       - make_atari_env: api_docs/env/atari/__init__.md
@@ -171,9 +167,7 @@ nav:
       - make_multibinary_env: api_docs/env/multibinary/__init__.md
       - make_procgen_env: api_docs/env/procgen/__init__.md
       - make_robosuite_env: api_docs/env/robosuite/__init__.md
-      - utils:
-        - make_rllte_env: api_docs/env/utils.md
-        - TorchVecEnvWrapper: api_docs/env/utils.md
+      - make_rllte_env: api_docs/env/utils.md
     
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md

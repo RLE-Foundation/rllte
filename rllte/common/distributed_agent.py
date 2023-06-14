@@ -181,8 +181,6 @@ class DistributedAgent(BaseAgent):  # type: ignore
         feature_dim = kwargs.pop("feature_dim", 512)
         use_lstm = kwargs.pop("use_lstm", 256)
         batch_size = kwargs.pop("batch_size", 4)
-        # TODO: add `NPU`` support
-        npu = kwargs.pop("npu", False)
 
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
 

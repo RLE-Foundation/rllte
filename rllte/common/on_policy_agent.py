@@ -33,8 +33,6 @@ import torch as th
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
 from rllte.common.policies import (
-    NpuOnPolicyDecoupledActorCritic,
-    NpuOnPolicySharedActorCritic,
     OnPolicyDecoupledActorCritic,
     OnPolicySharedActorCritic,
 )
@@ -78,7 +76,6 @@ class OnPolicyAgent(BaseAgent):
         feature_dim = kwargs.pop("feature_dim", 512)
         hidden_dim = kwargs.pop("feature_dim", 256)
         batch_size = kwargs.pop("batch_size", 256)
-        npu = kwargs.pop("npu", False)
         super().__init__(
             env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining, feature_dim=feature_dim
         )
@@ -96,7 +93,7 @@ class OnPolicyAgent(BaseAgent):
         self.storage = Storage(
             observation_space=env.observation_space,
             action_space=env.action_space,
-            device="cpu" if npu else device,
+            device=device,
             num_steps=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
@@ -114,16 +111,7 @@ class OnPolicyAgent(BaseAgent):
 
         # create policy
         if shared_encoder:
-            if npu:
-                self.policy = NpuOnPolicySharedActorCritic(
-                    obs_shape=self.obs_shape,
-                    action_dim=self.action_dim,
-                    action_type=self.action_type,
-                    feature_dim=self.feature_dim,
-                    hidden_dim=hidden_dim,
-                )
-            else:
-                self.policy = OnPolicySharedActorCritic(
+            self.policy = OnPolicySharedActorCritic(
                     obs_shape=self.obs_shape,
                     action_dim=self.action_dim,
                     action_type=self.action_type,
@@ -131,16 +119,7 @@ class OnPolicyAgent(BaseAgent):
                     hidden_dim=hidden_dim,
                 )
         else:
-            if npu:
-                self.policy = NpuOnPolicyDecoupledActorCritic(
-                    obs_shape=self.obs_shape,
-                    action_dim=self.action_dim,
-                    action_type=self.action_type,
-                    feature_dim=self.feature_dim,
-                    hidden_dim=hidden_dim,
-                )
-            else:
-                self.policy = OnPolicyDecoupledActorCritic(
+            self.policy = OnPolicyDecoupledActorCritic(
                     obs_shape=self.obs_shape,
                     action_dim=self.action_dim,
                     action_type=self.action_type,

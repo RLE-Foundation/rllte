@@ -32,8 +32,6 @@ import torch as th
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
 from rllte.common.policies import (
-    NpuOffPolicyDeterministicActorDoubleCritic,
-    NpuOffPolicyStochasticActorDoubleCritic,
     OffPolicyDeterministicActorDoubleCritic,
     OffPolicyStochasticActorDoubleCritic,
 )
@@ -75,7 +73,6 @@ class OffPolicyAgent(BaseAgent):
         feature_dim = kwargs.pop("feature_dim", 50)
         hidden_dim = kwargs.pop("feature_dim", 1024)
         batch_size = kwargs.pop("batch_size", 256)
-        npu = kwargs.pop("npu", False)
         super().__init__(
             env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining, feature_dim=feature_dim
         )
@@ -91,18 +88,13 @@ class OffPolicyAgent(BaseAgent):
             self.encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=self.feature_dim)
 
         if kwargs["agent_name"] == "DrQv2":
-            if npu:
-                self.policy = NpuOffPolicyDeterministicActorDoubleCritic(
-                    action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
-                )
-            else:
-                self.policy = OffPolicyDeterministicActorDoubleCritic(
-                    action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
-                )
+            self.policy = OffPolicyDeterministicActorDoubleCritic(
+                action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
+            )
             self.storage = NStepReplayStorage(
                 observation_space=env.observation_space,
                 action_space=env.action_space,
-                device="cpu" if npu else device,
+                device=device,
                 batch_size=batch_size,
             )
             self.dist = TruncatedNormalNoise(low=self.action_range[0],
@@ -114,18 +106,13 @@ class OffPolicyAgent(BaseAgent):
                 self.aug = RandomShift(pad=4).to(self.device)
 
         if kwargs["agent_name"] == "SAC":
-            if npu:
-                self.policy = NpuOffPolicyStochasticActorDoubleCritic(
-                    action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
-                )
-            else:
-                self.policy = OffPolicyStochasticActorDoubleCritic(
-                    action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
-                )
+            self.policy = OffPolicyStochasticActorDoubleCritic(
+                action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
+            )
             self.storage = VanillaReplayStorage(
                 observation_space=env.observation_space,
                 action_space=env.action_space,
-                device="cpu" if npu else device,
+                device=device,
                 batch_size=batch_size,
             )
 
