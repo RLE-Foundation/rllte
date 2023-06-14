@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Any, Dict, Tuple
 
 import gymnasium as gym
@@ -10,7 +35,7 @@ class NoopResetEnv(gym.Wrapper):
     """Sample initial states by taking random number of no-ops on reset. No-op is assumed to be action 0.
 
     Args:
-        env (Env): Environment to wrap.
+        env (gym.Env): Environment to wrap.
         noop_max (int): Maximum value of no-ops to run.
 
     Returns:
@@ -25,6 +50,7 @@ class NoopResetEnv(gym.Wrapper):
         assert env.unwrapped.get_action_meanings()[0] == "NOOP"
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Do no-op action for a number of steps in [1, noop_max]."""
         self.env.reset(**kwargs)
         if self.override_num_noops is not None:
             noops = self.override_num_noops
@@ -44,7 +70,7 @@ class FireResetEnv(gym.Wrapper):
     """Take action on reset for environments that are fixed until firing.
 
     Args:
-        env (Env): Environment to wrap.
+        env (gym.Env): Environment to wrap.
 
     Returns:
         FireResetEnv instance.
@@ -56,6 +82,7 @@ class FireResetEnv(gym.Wrapper):
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Take action on reset for environments that are fixed until firing."""
         self.env.reset(**kwargs)
         obs, _, terminated, truncated, _ = self.env.step(1)
         if terminated or truncated:
@@ -71,7 +98,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         DeepMind for the DQN and co. since it helps value estimation.
 
     Args:
-        env (Env): Environment to wrap.
+        env (gym.Env): Environment to wrap.
 
     Returns:
         EpisodicLifeEnv instance.
@@ -83,6 +110,14 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.was_real_done = True
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Reset only when the env is done or a life is lost.
+        
+        Args:
+            action (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.was_real_done = terminated or truncated
         # check current lives, make loss of life terminal,
@@ -97,6 +132,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         return obs, reward, terminated, truncated, info
 
     def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset only when the env is actually done."""
         if self.was_real_done:
             obs, info = self.env.reset(**kwargs)
         else:
@@ -116,7 +152,7 @@ class MaxAndSkipEnv(gym.Wrapper):
     """Return only every ``skip``-th frame (frameskipping) and return the max between the two last frames.
 
     Args:
-        env (Env): Environment to wrap.
+        env (gym.Env): Environment to wrap.
         skip (int): Number of ``skip``-th frame. The same action will be taken ``skip`` times.
 
     Returns:
@@ -130,6 +166,14 @@ class MaxAndSkipEnv(gym.Wrapper):
         self._skip = skip
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Repeat action, sum reward, and max over last observations.
+        
+        Args:
+            action (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
         total_reward = 0.0
         terminated = truncated = False
         for i in range(self._skip):

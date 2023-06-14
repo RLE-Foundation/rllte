@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from collections import deque
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -104,7 +129,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
         """Take an action for each environment.
 
         Args:
-            actions (Tensor): element of :attr:`action_space` Batch of actions.
+            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
 
         Returns:
             Batch of (observations, rewards, terminations, truncations, infos)
@@ -130,7 +155,7 @@ class FrameStack(gym.Wrapper):
     """Observation wrapper that stacks the observations in a rolling manner.
 
     Args:
-        env (Env): Environment to wrap.
+        env (gym.Env): Environment to wrap.
         k (int): Number of stacked frames.
 
     Returns:
