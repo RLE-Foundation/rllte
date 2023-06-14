@@ -85,24 +85,24 @@ class PrioritizedReplayStorage(BaseStorage):
 
     def add(
         self,
-        obs: Any,
-        action: Any,
-        reward: Any,
-        terminated: Any,
-        truncated: Any,
-        info: Any,
-        next_obs: Any,
+        obs: th.Tensor,
+        action: th.Tensor,
+        reward: th.Tensor,
+        terminated: th.Tensor,
+        truncated: th.Tensor,
+        info: th.Tensor,
+        next_obs: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (Any): Observation.
-            action (Any): Action.
-            reward (Any): Reward.
-            terminated (Any): Termination flag.
-            truncated (Any): Truncation flag.
-            info (Any): Additional information.
-            next_obs (Any): Next observation.
+            obs (th.Tensor): Observation.
+            action (th.Tensor): Action.
+            reward (th.Tensor): Reward.
+            terminated (th.Tensor): Termination flag.
+            truncated (th.Tensor): Truncation flag.
+            info (th.Tensor): Additional information.
+            next_obs (th.Tensor): Next observation.
 
         Returns:
             None.

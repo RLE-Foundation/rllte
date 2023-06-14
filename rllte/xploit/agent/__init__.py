@@ -28,5 +28,3 @@ from .drqv2 import DrQv2 as DrQv2
 from .impala import IMPALA as IMPALA
 from .ppo import PPO as PPO
 from .sac import SAC as SAC
-from .utils import soft_update_params as soft_update_params
-from .utils import to_torch as to_torch

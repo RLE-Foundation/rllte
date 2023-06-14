@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 import math
 
 import torch as th
@@ -40,8 +65,8 @@ class SquashedNormal(BaseDistribution):
     """Squashed normal distribution for Soft Actor-Critic learner.
 
     Args:
-        loc (Tensor): The mean of the distribution (often referred to as mu).
-        scale (Tensor): The standard deviation of the distribution (often referred to as sigma).
+        loc (th.Tensor): The mean of the distribution (often referred to as mu).
+        scale (th.Tensor): The standard deviation of the distribution (often referred to as sigma).
 
     Returns:
         Squashed normal distribution instance.
@@ -62,7 +87,7 @@ class SquashedNormal(BaseDistribution):
             batch of samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (Size): The size of the sample to be drawn.
+            sample_shape (th.Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -74,7 +99,7 @@ class SquashedNormal(BaseDistribution):
             batch of reparameterized samples if the distribution parameters are batched.
 
         Args:
-            sample_shape (Size): The size of the sample to be drawn.
+            sample_shape (th.Size): The size of the sample to be drawn.
 
         Returns:
             A sample_shape shaped sample.
@@ -98,7 +123,7 @@ class SquashedNormal(BaseDistribution):
         """Scores the sample by inverting the transform(s) and computing the score using
             the score of the base distribution and the log abs det jacobian.
         Args:
-            actions (Tensor): The actions to be evaluated.
+            actions (th.Tensor): The actions to be evaluated.
 
         Returns:
             The log_prob value.

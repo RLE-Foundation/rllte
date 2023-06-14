@@ -69,23 +69,23 @@ class ReplayStorage:
         return self._num_transitions
     
     def add(self, 
-            obs: Any, 
-            action: Any, 
+            obs: np.ndarray, 
+            action: np.ndarray, 
             reward: float, 
             terminated: bool, 
             truncated: bool,
             info: Dict,
-            next_obs: Any) -> None:
+            next_obs: np.ndarray) -> None:
         """Add a new transition to the storage.
 
         Args:
-            obs (Any): Observation.
-            action (Any): Action.
+            obs (np.ndarray): Observation.
+            action (np.ndarray): Action.
             reward (float): Reward.
             terminated (bool): Termination flag.
             truncated (bool): Truncation flag.
             info (Dict): Additional information.
-            next_obs (Any): Next observation.
+            next_obs (np.ndarray): Next observation.
 
         Returns:
             None.
@@ -301,24 +301,26 @@ class NStepReplayStorage(BaseStorage):
                                                       worker_init_fn=worker_init_fn)
         self._replay_iter = None
 
-    def add(self, 
-            obs: Any,
-            action: Any,
-            reward: Any,
-            terminated: Any,
-            truncated: Any,
-            info: Any,
-            next_obs: Any) -> None:
-        """Add a new transition to the storage.
-        
+    def add(
+        self,
+        obs: th.Tensor,
+        action: th.Tensor,
+        reward: th.Tensor,
+        terminated: th.Tensor,
+        truncated: th.Tensor,
+        info: th.Tensor,
+        next_obs: th.Tensor,
+    ) -> None:
+        """Add sampled transitions into storage.
+
         Args:
-            obs (Any): Observation.
-            action (Any): Action.
-            reward (float): Reward.
-            terminated (bool): Termination flag.
-            truncated (bool): Truncation flag.
-            info (Dict): Additional information.
-            next_obs (Any): Next observation.
+            obs (th.Tensor): Observation.
+            action (th.Tensor): Action.
+            reward (th.Tensor): Reward.
+            terminated (th.Tensor): Termination flag.
+            truncated (th.Tensor): Truncation flag.
+            info (th.Tensor): Additional information.
+            next_obs (th.Tensor): Next observation.
 
         Returns:
             None.

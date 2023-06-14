@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Generator
 
 import gymnasium as gym
@@ -11,8 +36,8 @@ class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        observation_space (gym.Space): The observation space of environment.
+        action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         num_steps (int): The sample length of per rollout.
         num_envs (int): The number of parallel environments.
@@ -96,14 +121,14 @@ class VanillaRolloutStorage(BaseStorage):
         """Add sampled transitions into storage.
 
         Args:
-            obs (Tensor): Observations.
-            actions (Tensor): Actions.
-            rewards (Tensor): Rewards.
-            terminateds (Tensor): Terminateds.
-            truncateds (Tensor): Truncateds.
-            next_obs (Tensor): Next observations.
-            log_probs (Tensor): Log of the probability evaluated at `actions`.
-            values (Tensor): Estimated values.
+            obs (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Terminateds.
+            truncateds (th.Tensor): Truncateds.
+            next_obs (th.Tensor): Next observations.
+            log_probs (th.Tensor): Log of the probability evaluated at `actions`.
+            values (th.Tensor): Estimated values.
 
         Returns:
             None.
@@ -128,7 +153,7 @@ class VanillaRolloutStorage(BaseStorage):
         """Perform generalized advantage estimation (GAE).
 
         Args:
-            last_values (Tensor): Estimated values of the last step.
+            last_values (th.Tensor): Estimated values of the last step.
             gamma (float): Discount factor.
             gae_lamdba (float): Coefficient of GAE.
 

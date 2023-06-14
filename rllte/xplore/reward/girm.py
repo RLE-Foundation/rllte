@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Dict, Tuple
 
 import gymnasium as gym
@@ -54,8 +79,8 @@ class Encoder(nn.Module):
         """Forward function for encoding observations and next-observations.
 
         Args:
-            obs (Tensor): Current observations.
-            next_obs (Tensor): Next observations.
+            obs (th.Tensor): Current observations.
+            next_obs (th.Tensor): Next observations.
 
         Returns:
             Encoding vectors.
@@ -70,7 +95,7 @@ class Encoder(nn.Module):
         """Encode the input tensors.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Encoding tensors.
@@ -132,8 +157,8 @@ class VAE(nn.Module):
         """Reparameterization trick.
 
         Args:
-            mu (Tensor): Mean of the distribution.
-            logvar (Tensor): Log of the variance of the distribution.
+            mu (th.Tensor): Mean of the distribution.
+            logvar (th.Tensor): Log of the variance of the distribution.
             device (Device): Running device.
             training (bool): True or False.
 
@@ -150,8 +175,8 @@ class VAE(nn.Module):
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> Tuple[th.Tensor, ...]:
         """VAE single forward.
         Args:
-            obs (Tensor): Observations tensor.
-            next_obs (Tensor): Next-observations tensor.
+            obs (th.Tensor): Observations tensor.
+            next_obs (th.Tensor): Next-observations tensor.
 
         Returns:
             Latent vectors, mean, log of variance, and reconstructed next-observations.
@@ -231,10 +256,10 @@ class GIRM(BaseIntrinsicRewardModule):
         """Compute the vae loss.
 
         Args:
-            recon_x (Tensor): Reconstructed x.
-            x (Tensor): Input x.
-            mean (Tensor): Sample mean.
-            logvar (Tensor): Log of the sample variance.
+            recon_x (th.Tensor): Reconstructed x.
+            x (th.Tensor): Input x.
+            mean (th.Tensor): Sample mean.
+            logvar (th.Tensor): Log of the sample variance.
 
         Returns:
             Loss values.
