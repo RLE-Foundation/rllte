@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
@@ -12,12 +37,12 @@ class Comparison:
         https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 
     Args:
-        scores_x (NdArray): A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
+        scores_x (np.ndarray): A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
             represent the score on run `n` of task `m` for algorithm `X`.
-        scores_y (NdArray): A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
+        scores_y (np.ndarray): A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
             represent the score on run `n` of task `m` for algorithm `Y`.
         get_ci (bool): Compute CIs or not.
-        method (str):  One of `basic`, `percentile`, `bc` (identical to `debiased`,
+        method (str): One of `basic`, `percentile`, `bc` (identical to `debiased`,
             `bias-corrected`), or `bca`.
         reps (int): Number of bootstrap replications.
         confidence_interval_size (float): Coverage of confidence interval.
@@ -83,9 +108,9 @@ class Comparison:
         """Computes interval estimation of the above performance evaluators.
 
         Args:
-            scores_x (NdArray): A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
+            scores_x (np.ndarray): A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
                 represent the score on run `n` of task `m` for algorithm `X`.
-            scores_y (NdArray): A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
+            scores_y (np.ndarray): A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
                 represent the score on run `n` of task `m` for algorithm `Y`.
             metric (Callable): One of the above performance evaluators used for estimation.
 

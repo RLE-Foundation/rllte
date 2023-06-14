@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -84,7 +109,7 @@ def _non_linear_scaling(
 
     Args:
         profile_dict (Dict[str, List]): A dictionary mapping a method to its performance.
-        tau_list (Ndarray): 1D numpy array of threshold values on which the profile is evaluated.
+        tau_list (np.ndarray): 1D numpy array of threshold values on which the profile is evaluated.
         xticklabels (List[str]): x-axis labels correspond to non-linearly scaled thresholds.
         num_points (int): If `xticklabels` are not passed, then specifices 
             the number of indices to be generated on a log scale.
@@ -324,7 +349,7 @@ def plot_performance_profile(
 
     Args:
         profile_dict (Dict[str, List]): A dictionary mapping a method to its performance.
-        tau_list (Ndarray): 1D numpy array of threshold values on which the profile is evaluated.
+        tau_list (np.ndarray): 1D numpy array of threshold values on which the profile is evaluated.
         use_non_linear_scaling (bool): Whether to scale the x-axis in proportion to the 
             number of runs within any specified range.
         figsize (Tuple[float]): Size of the figure passed to `matplotlib.subplots`.

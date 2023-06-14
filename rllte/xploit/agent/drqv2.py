@@ -40,8 +40,8 @@ class DrQv2(OffPolicyAgent):
         Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
     Args:
-        env (Env): A Gym-like environment for training.
-        eval_env (Env): A Gym-like environment for evaluation.
+        env (gym.Env): A Gym-like environment for training.
+        eval_env (gym.Env): A Gym-like environment for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -169,11 +169,11 @@ class DrQv2(OffPolicyAgent):
         """Update the critic network.
 
         Args:
-            obs (Tensor): Observations.
-            action (Tensor): Actions.
-            reward (Tensor): Rewards.
-            discount (Tensor): discounts.
-            next_obs (Tensor): Next observations.
+            obs (th.Tensor): Observations.
+            action (th.Tensor): Actions.
+            reward (th.Tensor): Rewards.
+            discount (th.Tensor): discounts.
+            next_obs (th.Tensor): Next observations.
 
         Returns:
             Critic loss metrics.
@@ -209,7 +209,7 @@ class DrQv2(OffPolicyAgent):
         """Update the actor network.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Actor loss metrics.

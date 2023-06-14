@@ -115,8 +115,8 @@ class IMPALA(DistributedAgent):
         Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
 
     Args:
-        env (Env): A Gym-like environment for training.
-        eval_env (Env): A Gym-like environment for evaluation.
+        env (gym.Env): A Gym-like environment for training.
+        eval_env (gym.Env): A Gym-like environment for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -172,6 +172,7 @@ class IMPALA(DistributedAgent):
             num_steps=num_steps,
             num_actors=num_actors,
             num_learners=num_learners,
+            num_storages=num_storages,
             batch_size=batch_size,
             feature_dim=feature_dim,
             use_lstm=use_lstm,

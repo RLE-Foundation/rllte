@@ -41,8 +41,8 @@ class SAC(OffPolicyAgent):
         Based on: https://github.com/denisyarats/pytorch_sac
 
     Args:
-        env (Env): A Gym-like environment for training.
-        eval_env (Env): A Gym-like environment for evaluation.
+        env (gym.Env): A Gym-like environment for training.
+        eval_env (gym.Env): A Gym-like environment for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -229,15 +229,15 @@ class SAC(OffPolicyAgent):
         """Update the critic network.
 
         Args:
-            obs (Tensor): Observations.
-            action (Tensor): Actions.
-            reward (Tensor): Rewards.
-            terminated (Tensor): Terminateds.
-            truncateds (Tensor): Truncateds.
-            next_obs (Tensor): Next observations.
-            weights (Tensor): Batch sample weights.
-            aug_obs (Tensor): Augmented observations.
-            aug_next_obs (Tensor): Augmented next observations.
+            obs (th.Tensor): Observations.
+            action (th.Tensor): Actions.
+            reward (th.Tensor): Rewards.
+            terminated (th.Tensor): Terminateds.
+            truncateds (th.Tensor): Truncateds.
+            next_obs (th.Tensor): Next observations.
+            weights (th.Tensor): Batch sample weights.
+            aug_obs (th.Tensor): Augmented observations.
+            aug_next_obs (th.Tensor): Augmented next observations.
 
         Returns:
             Critic loss metrics.
@@ -292,8 +292,8 @@ class SAC(OffPolicyAgent):
         """Update the actor network and temperature.
 
         Args:
-            obs (Tensor): Observations.
-            weights (Tensor): Batch sample weights.
+            obs (th.Tensor): Observations.
+            weights (th.Tensor): Batch sample weights.
 
         Returns:
             Actor loss metrics.
