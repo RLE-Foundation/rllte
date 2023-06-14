@@ -71,7 +71,7 @@ class DiscreteActor(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Unnormalized probabilities.
@@ -83,7 +83,7 @@ class DiscreteActor(nn.Module):
         """Only for model inference.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Unnormalized action probabilities.
@@ -129,7 +129,7 @@ class BoxActor(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Mean and variance of sample distributions.
@@ -142,7 +142,7 @@ class BoxActor(nn.Module):
         """Only for model inference.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Deterministic actions.
@@ -187,7 +187,7 @@ class MultiBinaryActor(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Unnormalized probabilities.
@@ -199,7 +199,7 @@ class MultiBinaryActor(nn.Module):
         """Only for model inference.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Unnormalized action probabilities.
@@ -267,7 +267,7 @@ class OnPolicySharedActorCritic(nn.Module):
         """Get actions and estimated values for observations.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
             training (bool): training mode, `True` or `False`.
 
         Returns:
@@ -290,7 +290,7 @@ class OnPolicySharedActorCritic(nn.Module):
         """Get estimated values for observations.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Estimated values.
@@ -301,8 +301,8 @@ class OnPolicySharedActorCritic(nn.Module):
         """Evaluate actions according to the current policy given the observations.
 
         Args:
-            obs (Tensor): Sampled observations.
-            actions (Tensor): Sampled actions.
+            obs (th.Tensor): Sampled observations.
+            actions (th.Tensor): Sampled actions.
 
         Returns:
             Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
@@ -335,7 +335,7 @@ class OnPolicySharedActorCritic(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Policy outputs like unnormalized probabilities for `Discrete` tasks.
@@ -371,85 +371,3 @@ class OnPolicySharedActorCritic(nn.Module):
         """
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
-
-
-class NpuOnPolicySharedActorCritic(OnPolicySharedActorCritic):
-    """Actor-Critic network using a shared encoder for on-policy algorithms like `PPO`, for `NPU` device.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        action_type (str): The action type like 'Discrete' or 'Box', etc.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-        aux_critic (bool): Use auxiliary critic or not, for `PPG` agent.
-
-    Returns:
-        Actor-Critic network instance.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        action_type: str,
-        feature_dim: int,
-        hidden_dim: int,
-        aux_critic: bool = False,
-    ) -> None:
-        super().__init__(obs_shape, action_dim, action_type, feature_dim, hidden_dim, aux_critic=aux_critic)
-
-    def get_action_and_value(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
-        """Get actions and estimated values for observations, for `NPU` device.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): training mode, `True` or `False`.
-
-        Returns:
-            Sampled actions, estimated values, and log of probabilities for observations when `training` is `True`,
-            else only deterministic actions.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        policy_outputs = [item.cpu() for item in policy_outputs]
-        dist = self.dist(*policy_outputs)
-
-        if training:
-            actions = dist.sample()
-            log_probs = dist.log_prob(actions)
-            return actions, self.critic(h), log_probs
-        else:
-            actions = dist.mean
-            return actions
-
-    def get_value(self, obs: th.Tensor) -> th.Tensor:
-        """Get estimated values for observations, for `NPU` device.
-
-        Args:
-            obs (Tensor): Observations.
-
-        Returns:
-            Estimated values.
-        """
-        return self.critic(self.encoder(obs)).cpu()
-
-    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
-        """Evaluate actions according to the current policy given the observations, for `NPU` device.
-
-        Args:
-            obs (Tensor): Sampled observations.
-            actions (Tensor): Sampled actions.
-
-        Returns:
-            Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        policy_outputs = [item.cpu() for item in policy_outputs]
-        dist = self.dist(*policy_outputs)
-
-        log_probs = dist.log_prob(actions)
-        entropy = dist.entropy().mean()
-
-        return self.critic(h), log_probs, entropy

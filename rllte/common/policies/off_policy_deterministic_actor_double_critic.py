@@ -68,8 +68,8 @@ class DoubleCritic(nn.Module):
         """Value estimation.
 
         Args:
-            obs (Tensor): Observations.
-            action (Tensor): Actions.
+            obs (th.Tensor): Observations.
+            action (th.Tensor): Actions.
 
         Returns:
             Estimated values.
@@ -121,7 +121,7 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
         """Sample actions based on observations.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
             step (int): Global training step.
 
@@ -142,7 +142,7 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
         """Get sample distribution.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
             step (int): Global training step.
 
         Returns:
@@ -182,58 +182,3 @@ class OffPolicyDeterministicActorDoubleCritic(nn.Module):
         """
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
-
-
-class NpuOffPolicyDeterministicActorDoubleCritic(OffPolicyDeterministicActorDoubleCritic):
-    """Deterministic actor network and double critic network for DrQv2 and `NPU` device.
-        Here the 'self.dist' refers to an action noise instance.
-
-    Args:
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network instance.
-    """
-
-    def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
-        super().__init__(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim)
-
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): Training mode, True or False.
-            step (int): Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-
-        return action
-
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get sample distribution, for `NPU` device.
-
-        Args:
-            obs (Tensor): Observations.
-            step (int): Global training step.
-
-        Returns:
-            RLLTE distribution.
-        """
-        mu = self.actor(obs)
-
-        # for Scheduled Exploration Noise
-        self.dist.reset(mu.cpu(), step)
-
-        return self.dist

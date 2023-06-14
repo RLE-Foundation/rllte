@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -47,22 +72,22 @@ class DiscreteActor(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
-            Unnormalized probabilities.
+            Unnormalized action probabilities.
         """
         logits = self.actor(obs)
         return (logits,)
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference.
-
+        
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
-            Unnormalized action probabilities.
+            Deterministic actions.
         """
         return self.actor(obs)
 
@@ -105,10 +130,10 @@ class BoxActor(nn.Module):
         """Get policy outputs for training.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
-            Mean and variance of sample distributions.
+            Mean and standard deviation of action distribution.
         """
         mu = self.actor_mu(obs)
         logstd = self.actor_logstd.expand_as(mu)
@@ -118,7 +143,7 @@ class BoxActor(nn.Module):
         """Only for model inference.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
 
         Returns:
             Deterministic actions.
@@ -133,13 +158,14 @@ class DistributedActorCritic(nn.Module):
         obs_shape (Tuple): The data shape of observations.
         action_shape (Tuple): The data shape of actions.
         action_dim (int): Number of neurons for outputting actions.
-        action_type (str): The action type like 'Discrete' or 'Box', etc.
+        action_type (str): Type of actions.
+        action_range (List): Range of actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
-        use_lstm (bool): Use LSTM or not.
+        use_lstm (bool): Whether to use LSTM module.
 
     Returns:
-        Actor network instance.
+        Actor-Critic network.
     """
 
     def __init__(
@@ -187,10 +213,10 @@ class DistributedActorCritic(nn.Module):
         self.dist = None
 
     def init_state(self, batch_size: int) -> Tuple[th.Tensor, ...]:
-        """Generate the initial states for LSTM.
+        """Initialize the state of LSTM.
 
         Args:
-            batch_size (int): The batch size for training.
+            batch_size (int): Batch size of input data.
 
         Returns:
             Initial states.
@@ -201,16 +227,16 @@ class DistributedActorCritic(nn.Module):
 
     def get_action(
         self,
-        inputs: Dict,
+        inputs: Dict[str, th.Tensor],
         lstm_state: Tuple = (),
         training: bool = True,
-    ) -> th.Tensor:
+    ) -> Tuple[Dict[str, th.Tensor], Tuple[th.Tensor, ...]]:
         """Get actions in training.
 
         Args:
-            inputs (Dict): Inputs data that contains observations, last actions, ...
-            lstm_state (Tuple): LSTM states.
-            training (bool): Training flag.
+            inputs (Dict[str, th.Tensor]): Inputs data that contains observations, last actions, ...
+            lstm_state (Tuple): Hidden states of LSTM.
+            training (bool): Whether in training mode.
 
         Returns:
             Actions.
@@ -269,13 +295,13 @@ class DistributedActorCritic(nn.Module):
         return (dict(policy_outputs=policy_outputs, baseline=baseline, action=action), lstm_state)
 
     def get_dist(self, outputs: th.Tensor) -> Distribution:
-        """Get sample distributions.
+        """Get action distribution.
 
         Args:
-            outputs (Tensor): Policy outputs.
+            outputs (th.Tensor): Policy outputs.
 
         Returns:
-            Sample distributions.
+            Action distribution.
         """
         if self.action_type == "Discrete":
             return self.dist(outputs)
@@ -294,7 +320,7 @@ class DistributedActorCritic(nn.Module):
 
         Args:
             inputs (Dict): Inputs data that contains observations, last actions, ...
-            lstm_state (Tuple): LSTM states.
+            lstm_state (Tuple): Hidden states of LSTM.
             training (bool): Training flag.
 
         Returns:

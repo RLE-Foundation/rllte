@@ -2,7 +2,6 @@ from collections import deque
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
-from matplotlib import re
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv

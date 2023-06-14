@@ -1,17 +1,30 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from .distributed_actor_critic import DistributedActorCritic as DistributedActorCritic
-from .off_policy_deterministic_actor_double_critic import (
-    NpuOffPolicyDeterministicActorDoubleCritic as NpuOffPolicyDeterministicActorDoubleCritic,
-)
-from .off_policy_deterministic_actor_double_critic import (
-    OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic,
-)
-from .off_policy_stochastic_actor_double_critic import (
-    NpuOffPolicyStochasticActorDoubleCritic as NpuOffPolicyStochasticActorDoubleCritic,
-)
-from .off_policy_stochastic_actor_double_critic import (
-    OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic,
-)
-from .on_policy_decoupled_actor_critic import NpuOnPolicyDecoupledActorCritic as NpuOnPolicyDecoupledActorCritic
+from .off_policy_deterministic_actor_double_critic import OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic
+from .off_policy_stochastic_actor_double_critic import OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic
 from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
-from .on_policy_shared_actor_critic import NpuOnPolicySharedActorCritic as NpuOnPolicySharedActorCritic
 from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic

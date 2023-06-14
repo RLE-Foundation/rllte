@@ -43,9 +43,10 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
+        log_std_range (Tuple): Range of log standard deviation.
 
     Returns:
-        Actor network instance.
+        Actor-Critic network.
     """
 
     def __init__(
@@ -80,7 +81,7 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         """Sample actions based on observations.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
             step (int): Global training step.
 
@@ -101,11 +102,11 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         """Get sample distribution.
 
         Args:
-            obs (Tensor): Observations.
+            obs (th.Tensor): Observations.
             step (int): Global training step.
 
         Returns:
-            RLLTE distribution.
+            Action distribution.
         """
         mu, log_std = self.actor(obs).chunk(2, dim=-1)
 
@@ -143,66 +144,3 @@ class OffPolicyStochasticActorDoubleCritic(nn.Module):
         """
         params = th.load(os.path.join(path, "pretrained.pth"), map_location=self.device)
         self.load_state_dict(params)
-
-
-class NpuOffPolicyStochasticActorDoubleCritic(OffPolicyStochasticActorDoubleCritic):
-    """Stochastic actor network and double critic network for SAC and `NPU` device.
-        Here the 'self.dist' refers to an sampling distribution instance.
-
-    Args:
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network instance.
-    """
-
-    def __init__(
-        self,
-        action_dim: int,
-        feature_dim: int = 64,
-        hidden_dim: int = 1024,
-        log_std_range: Tuple = (-10, 2),
-    ) -> None:
-        super().__init__(action_dim=action_dim, feature_dim=feature_dim, hidden_dim=hidden_dim, log_std_range=log_std_range)
-
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
-        """Sample actions based on observations.
-
-        Args:
-            obs (Tensor): Observations.
-            training (bool): Training mode, True or False.
-            step (int): Global training step.
-
-        Returns:
-            Sampled actions.
-        """
-        encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
-
-        if not training:
-            action = dist.mean
-        else:
-            action = dist.sample()
-
-        return action
-
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get sample distribution, for `NPU` device.
-
-        Args:
-            obs (Tensor): Observations.
-            step (int): Global training step.
-
-        Returns:
-            RLLTE distribution.
-        """
-        mu, log_std = self.actor(obs).chunk(2, dim=-1)
-
-        log_std = th.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1)
-
-        std = log_std.exp()
-
-        return self.dist(mu.cpu(), std.cpu())
