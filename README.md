@@ -18,9 +18,16 @@ If you use **rllte** in your research, please cite this project like this:
 ```
 
 # Contents
+- [Contents](#contents)
 - [Overview](#overview)
 - [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Start Training](#start-training)
+    - [On NVIDIA GPU](#on-nvidia-gpu)
+    - [On HUAWEI NPU](#on-huawei-npu)
 - [Implemented Modules](#implemented-modules)
+  - [RL Agents](#rl-agents)
+  - [Intrinsic Reward Modules](#intrinsic-reward-modules)
 - [Benchmark](#benchmark)
 - [API Documentation](#api-documentation)
 - [How To Contribute](#how-to-contribute)
@@ -82,8 +89,8 @@ conda create -n rllte python=3.8
 
 Open up a terminal and install **rllte** with `pip`:
 ``` shell
-pip install rllte # basic installation
-pip install rllte[envs] # for pre-defined environments
+pip install rllte-core # basic installation
+pip install rllte-core[envs] # for pre-defined environments
 ```
 
 - with git

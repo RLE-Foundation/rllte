@@ -12,8 +12,8 @@ conda create -n rllte python=3.8
 **rllte** has been published as a Python package in [PyPi](https://pypi.org/project/rllte/) and can be installed with `pip`, ideally by using a virtual environment. Open up a terminal and install **rllte** with:
 
 ``` shell
-pip install rllte # basic installation
-pip install rllte[envs] # for pre-defined environments
+pip install rllte-core # basic installation
+pip install rllte-core[envs] # for pre-defined environments
 ```
 
 ### with git

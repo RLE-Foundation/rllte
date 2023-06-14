@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "rllte"
-version = "0.0.1.beta07"
+name = "rllte-core"
+version = "0.0.1.beta01"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="rlltedev@gmail.com" },
 ]
