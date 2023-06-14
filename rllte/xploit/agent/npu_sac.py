@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from typing import Dict, Optional, Tuple
 
 import gymnasium as gym
@@ -130,6 +155,7 @@ class NpuSAC(OffPolicyAgent):
             action,
             reward,
             terminated,
+            truncateds,
             next_obs,
             weights,
         ) = self.storage.sample(self.global_step)
@@ -178,6 +204,7 @@ class NpuSAC(OffPolicyAgent):
                 action=action,
                 reward=reward,
                 terminated=terminated,
+                truncateds=truncateds,
                 next_obs=encoded_next_obs,
                 weights=weights,
                 aug_obs=encoded_aug_obs,
@@ -201,6 +228,7 @@ class NpuSAC(OffPolicyAgent):
         action: th.Tensor,
         reward: th.Tensor,
         terminated: th.Tensor,
+        truncateds: th.Tensor,
         next_obs: th.Tensor,
         weights: th.Tensor,
         aug_obs: th.Tensor,
@@ -213,6 +241,7 @@ class NpuSAC(OffPolicyAgent):
             action (Tensor): Actions.
             reward (Tensor): Rewards.
             terminated (Tensor): Terminateds.
+            truncateds (Tensor): Truncateds.
             next_obs (Tensor): Next observations.
             weights (Tensor): Batch sample weights.
             aug_obs (Tensor): Augmented observations.
@@ -228,7 +257,7 @@ class NpuSAC(OffPolicyAgent):
             log_prob = log_prob.to(self.device)
             target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action.to(self.device))
             target_V = th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
-            target_Q = reward + (1.0 - terminated) * self.discount * target_V
+            target_Q = reward + (1.0 - terminated) * (1.0 - truncateds) * self.discount * target_V
 
             # enable observation augmentation
             if self.aug is not None:
@@ -238,7 +267,7 @@ class NpuSAC(OffPolicyAgent):
                 log_prob_aug = log_prob_aug.to(self.device)
                 target_Q1, target_Q2 = self.policy.critic_target(aug_next_obs, next_action_aug.to(self.device))
                 target_V = th.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob_aug.to(self.device)
-                target_Q_aug = reward + (1.0 - terminated) * self.discount * target_V
+                target_Q_aug = reward + (1.0 - terminated) * (1.0 - truncateds) * self.discount * target_V
                 # mixed target Q-function
                 target_Q = (target_Q + target_Q_aug) / 2
 

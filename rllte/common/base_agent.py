@@ -12,7 +12,7 @@ import torch as th
 
 # try to load torch_npu
 try:
-    pass  # type: ignore
+    import torch_npu  # type: ignore
 except Exception:
     pass
 

@@ -11,7 +11,11 @@ class NormalNoise(BaseDistribution):
     Args:
         loc (float): mean of the noise (often referred to as mu).
         scale (float): standard deviation of the noise (often referred to as sigma).
+        low (float): The lower bound of the noise.
+        high (float): The upper bound of the noise.
+        eps (float): A small value to avoid numerical instability.
         stddev_schedule (str): Use the exploration std schedule.
+        stddev_clip (float): The exploration std clip range.
 
     Returns:
         Gaussian action noise instance.
@@ -21,6 +25,9 @@ class NormalNoise(BaseDistribution):
         self,
         loc: float = 0.0,
         scale: float = 1.0,
+        low: float = -1.0, 
+        high: float = 1.0, 
+        eps: float = 1e-6,
         stddev_schedule: str = "linear(1.0, 0.1, 100000)",
         stddev_clip: float = 0.3,
     ) -> None:
@@ -28,9 +35,20 @@ class NormalNoise(BaseDistribution):
 
         self.loc = loc
         self.scale = scale
+        self.low = low
+        self.high = high
+        self.eps = eps
         self.dist = pyd.Normal(loc=loc, scale=scale)
         self.noiseless_action = None
         self.stddev_schedule = stddev_schedule
+        self.stddev_clip = stddev_clip
+    
+    def _clamp(self, x: th.Tensor) -> th.Tensor:
+        """Clamps the input to the range [low, high].
+        """
+        clamped_x = th.clamp(x, self.low + self.eps, self.high - self.eps)
+        x = x - x.detach() + clamped_x.detach()
+        return x
 
     def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
@@ -49,7 +67,10 @@ class NormalNoise(BaseDistribution):
             dtype=self.noiseless_action.dtype,
         )
 
-        return noise + self.noiseless_action
+        if clip:
+            # clip the sampled noises
+            noise = th.clamp(noise, -self.stddev_clip, self.stddev_clip)
+        return self._clamp(noise + self.noiseless_action)
 
     def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of

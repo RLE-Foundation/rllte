@@ -1,3 +1,28 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from collections import deque
 from typing import Any, Dict, Tuple
 
@@ -12,13 +37,13 @@ class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        storage_size (int): Max number of element in the buffer.
-        batch_size (int): Batch size of samples.
-        alpha (float): The alpha coefficient.
-        beta (float): The beta coefficient.
+        observation_space (gym.Space): Observation space.
+        action_space (gym.Space): Action space.
+        device (str): Device to store the data.
+        storage_size (int): Storage size.
+        batch_size (int): Batch size.
+        alpha (float): Prioritization value.
+        beta (float): Importance sampling value.
 
     Returns:
         Prioritized replay storage.
@@ -33,7 +58,7 @@ class PrioritizedReplayStorage(BaseStorage):
         batch_size: int = 1024,
         alpha: float = 0.6,
         beta: float = 0.4,
-    ):
+    ) -> None:
         super().__init__(observation_space, action_space, device)
         self.storage_size = storage_size
         self.batch_size = batch_size
@@ -44,7 +69,7 @@ class PrioritizedReplayStorage(BaseStorage):
         self.priorities = np.zeros((storage_size,), dtype=np.float32)
         self.position = 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.storage)
 
     def annealing_beta(self, step: int) -> float:
@@ -64,23 +89,27 @@ class PrioritizedReplayStorage(BaseStorage):
         action: Any,
         reward: Any,
         terminated: Any,
+        truncated: Any,
         info: Any,
         next_obs: Any,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (Any): Observations.
-            action (Any): Actions.
-            reward (Any): Rewards.
-            terminated (Any): Terminateds.
-            info (Any): Infos.
-            next_obs (Any): Next observations.
+            obs (Any): Observation.
+            action (Any): Action.
+            reward (Any): Reward.
+            terminated (Any): Termination flag.
+            truncated (Any): Truncation flag.
+            info (Any): Additional information.
+            next_obs (Any): Next observation.
 
         Returns:
             None.
         """
-        transition = (obs, action, reward, terminated, next_obs)
+        # TODO: add parallel env support
+        transition = (obs[0].cpu().numpy(), action[0].cpu().numpy(), reward[0].cpu().numpy(), 
+                      terminated[0].cpu().numpy(), truncated[0].cpu().numpy(), next_obs[0].cpu().numpy())
         max_prio = self.priorities.max() if self.storage else 1.0
         self.priorities[self.position] = max_prio
         self.storage.append(transition)
@@ -109,11 +138,12 @@ class PrioritizedReplayStorage(BaseStorage):
         weights /= weights.max()
         weights = np.array(weights, dtype=np.float32)
 
-        obs, actions, rewards, terminateds, next_obs = zip(*samples)
+        obs, actions, rewards, terminateds, truncateds, next_obs = zip(*samples)
         obs = np.stack(obs)
         actions = np.stack(actions)
         rewards = np.expand_dims(np.stack(rewards), 1)
         terminateds = np.expand_dims(np.stack(terminateds), 1)
+        truncateds = np.expand_dims(np.stack(truncateds), 1)
         next_obs = np.stack(next_obs)
 
         obs = th.as_tensor(obs, device=self.device).float()
@@ -121,17 +151,18 @@ class PrioritizedReplayStorage(BaseStorage):
         rewards = th.as_tensor(rewards, device=self.device).float()
         next_obs = th.as_tensor(next_obs, device=self.device).float()
         terminateds = th.as_tensor(terminateds, device=self.device).float()
+        truncateds = th.as_tensor(truncateds, device=self.device).float()
         weights = th.as_tensor(weights, device=self.device).float()
 
-        return indices, obs, actions, rewards, terminateds, next_obs, weights
+        return indices, obs, actions, rewards, terminateds, truncateds, next_obs, weights
 
     def update(self, metrics: Dict) -> None:
         """Update the priorities.
 
         Args:
             metrics (Dict): Training metrics from agent to udpate the priorities:
-            indices (NdArray): The indices of current batch data.
-            priorities (NdArray): The priorities of current batch data.
+                indices (np.ndarray): The indices of current batch data.
+                priorities (np.ndarray): The priorities of current batch data.
 
         Returns:
             None.

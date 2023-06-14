@@ -5,9 +5,11 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 class RandomTranslate(BaseAugmentation):
     """Random translate operation for processing image-based observations.
+
     Args:
         size (int): The scale size in translated images
         scale_factor (float): The scale factor ratio in translated images. Should have 0.0 <= scale_factor <= 1.0
+        
     Returns:
         Augmented images.
     """

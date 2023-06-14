@@ -1,8 +1,32 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from pathlib import Path
 from typing import Dict, Optional
 
 import gymnasium as gym
-import numpy as np
 import torch as th
 
 from rllte.common import utils
@@ -15,9 +39,8 @@ from rllte.common.policies import (
 )
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.storage import NStepReplayStorage, VanillaReplayStorage
-from rllte.xplore.augmentation import RandomShift
+from rllte.xplore.augmentation import RandomShift, Identity
 from rllte.xplore.distribution import SquashedNormal, TruncatedNormalNoise
-
 
 class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
@@ -82,8 +105,13 @@ class OffPolicyAgent(BaseAgent):
                 device="cpu" if npu else device,
                 batch_size=batch_size,
             )
-            self.dist = TruncatedNormalNoise()
-            self.aug = RandomShift(pad=4)
+            self.dist = TruncatedNormalNoise(low=self.action_range[0],
+                                             high=self.action_range[1])
+            # for `DDPG` without augmentation
+            if len(self.obs_shape) == 1:
+                self.aug = Identity().to(self.device)
+            else:
+                self.aug = RandomShift(pad=4).to(self.device)
 
         if kwargs["agent_name"] == "SAC":
             if npu:
@@ -136,17 +164,21 @@ class OffPolicyAgent(BaseAgent):
         """
         # freeze the structure of the agent
         self.freeze()
+
         # final check
         self.check()
+
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
             self.policy.load(init_model_path)
+
         # reset the env
         episode_step, episode_reward = 0, 0
         obs, info = self.env.reset(seed=self.seed)
         metrics = None
-
+        
+        # training loop
         while self.global_step <= num_train_steps:
             # try to eval
             if (self.global_step % self.eval_every_steps) == 0 and (self.eval_env is not None):
@@ -155,23 +187,27 @@ class OffPolicyAgent(BaseAgent):
 
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                action = self.policy(obs, training=True, step=self.global_step)
                 # Initial exploration
-                if self.global_step < self.num_init_steps:
-                    action.uniform_(-1.0, 1.0)
-            next_obs, reward, terminated, truncated, info = self.env.step(action.clamp(*self.action_range))
+                if self.global_step <= self.num_init_steps:
+                    action = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
+                else:
+                    action = self.policy(obs, training=True, step=self.global_step)
+            
+            # observe reward and next obs
+            next_obs, reward, terminated, truncated, info = self.env.step(action)
             episode_reward += reward[0].cpu().numpy()
             episode_step += 1
             self.global_step += 1
 
             # save transition
             self.storage.add(
-                obs[0].cpu().numpy(),
-                action[0].cpu().numpy(),
-                np.zeros_like(reward[0].cpu().numpy()) if self.pretraining else reward[0].cpu().numpy(),  # pre-training mode
-                terminated[0].cpu().numpy(),
-                info,
-                next_obs[0].cpu().numpy(),
+                obs=obs,
+                action=action,
+                reward=th.zeros_like(reward) if self.pretraining else reward,  # pre-training mode
+                terminated=terminated,
+                truncated=truncated,
+                info=info,
+                next_obs=next_obs,
             )
 
             # update agent
@@ -180,7 +216,7 @@ class OffPolicyAgent(BaseAgent):
                 # try to update storage
                 self.storage.update(metrics)
 
-            # done
+            # terminated or truncated
             if terminated or truncated:
                 episode_time, total_time = self.timer.reset()
                 if metrics is not None:
@@ -193,11 +229,13 @@ class OffPolicyAgent(BaseAgent):
                         "total_time": total_time,
                     }
                     self.logger.train(msg=train_metrics)
-
-                obs, info = self.env.reset(seed=self.seed)
+                
+                # As the vector environments autoreset for a terminating and truncating sub-environments, 
+                # the returned observation and info is not the final step’s observation or info which 
+                # is instead stored in info as “final_observation” and “final_info”. Therefore, 
+                # we don’t need to reset the env here.
                 self.global_episode += 1
                 episode_step, episode_reward = 0, 0
-                continue
 
             obs = next_obs
 
@@ -219,21 +257,28 @@ class OffPolicyAgent(BaseAgent):
 
     def eval(self) -> Dict[str, float]:
         """Evaluation function."""
+        # reset the env
         step, episode, total_reward = 0, 0, 0
         obs, info = self.eval_env.reset(seed=self.seed)
 
+        # eval loop
         while episode <= self.num_eval_episodes:
+            # sample actions
             with th.no_grad(), utils.eval_mode(self):
                 action = self.policy(obs, training=False, step=self.global_step)
 
-            next_obs, reward, terminated, truncated, info = self.eval_env.step(action.clamp(*self.action_range))
+            # observe reward and next obs
+            next_obs, reward, terminated, truncated, info = self.eval_env.step(action)
             total_reward += reward[0].cpu().numpy()
             step += 1
 
+            # terminated or truncated
             if terminated or truncated:
-                obs, info = self.eval_env.reset(seed=self.seed)
+                # As the vector environments autoreset for a terminating and truncating sub-environments, 
+                # the returned observation and info is not the final step’s observation or info which 
+                # is instead stored in info as “final_observation” and “final_info”. Therefore, 
+                # we don’t need to reset the env here.
                 episode += 1
-                continue
 
             obs = next_obs
 

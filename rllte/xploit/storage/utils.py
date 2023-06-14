@@ -6,56 +6,53 @@ from typing import Dict
 import numpy as np
 
 
-def dump_episode(episode: Dict, fn: Path) -> None:
-    """Save episode as *.npz file.
+def episode_len(episode: Dict[str, np.ndarray]) -> int:
+    """Returns the length of an episode.
+    
+    Args:
+        episode (Dict[str, np.ndarray]): Selected episode.
+
+    Returns:
+        Episode length.
+    """
+    return next(iter(episode.values())).shape[0]
+
+def save_episode(episode: Dict[str, np.ndarray], fn: Path) -> None:
+    """Saves an episode to a `.npz` file.
 
     Args:
-        episode: episode to be save.
-        fn: file path.
+        episode (Dict[str, np.ndarray]): Episode to be saved.
+        fn (Path): File path.
 
-    Return:
+    Returns:
         None.
     """
     with io.BytesIO() as bs:
         np.savez_compressed(bs, **episode)
         bs.seek(0)
-        with fn.open("wb") as f:
+        with fn.open('wb') as f:
             f.write(bs.read())
 
-
-def load_episode(fn: Path):
-    """Load episode from *.npz file.
+def load_episode(fn: Path) -> Dict[str, np.ndarray]:
+    """Loads an episode from a `.npz` file.
 
     Args:
-        fn: file path.
+        fn (Path): File path.
 
-    Return:
+    Returns:
         Episode data.
     """
-    with fn.open("rb") as f:
+    with fn.open('rb') as f:
         episode = np.load(f)
         episode = {k: episode[k] for k in episode.keys()}
         return episode
 
-
-def episode_len(episode: Dict) -> int:
-    """Get the length of an episode.
-
-    Args:
-        episode: Selected episode.
-
-    Returns:
-        episode length.
-    """
-    return len(episode["observation"]) - 1
-
-
-def worker_init_fn(worker_id):
-    """Function for dataloader initialization.
+def worker_init_fn(worker_id: int) -> None:
+    """Sets the random seed for each worker.
 
     Args:
-        workder_id: .
-
+        worker_id (int): Worker ID.
+    
     Returns:
         None.
     """

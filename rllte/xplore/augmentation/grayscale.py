@@ -5,12 +5,6 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 class GrayScale(BaseAugmentation):
     """Grayscale operation for image augmentation.
-
-    Args:
-        None.
-
-    Returns:
-        Augmented images.
     """
 
     def __init__(self) -> None:

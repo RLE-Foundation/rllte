@@ -5,6 +5,7 @@ from rllte.common.base_augmentation import BaseAugmentation
 
 class RandomCutoutColor(BaseAugmentation):
     """Random Cutout operation for image augmentation.
+    
     Args: the size of the cut area
         min_cut (int): min size of the cut shape.
         max_cut (int): max size of the cut shape.

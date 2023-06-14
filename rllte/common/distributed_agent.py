@@ -156,9 +156,10 @@ class DistributedAgent(BaseAgent):  # type: ignore
         feature_dim = kwargs.pop("feature_dim", 512)
         use_lstm = kwargs.pop("use_lstm", 256)
         batch_size = kwargs.pop("batch_size", 4)
+        npu = kwargs.pop("npu", False)
 
-        kwargs.pop("npu", False)
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
+
         self.num_actors = num_actors
         self.num_learners = num_learners
         self.num_steps = num_steps
@@ -248,7 +249,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             None.
         """
 
-        def lr_lambda(self, epoch: int = 0) -> float:
+        def lr_lambda(epoch: int = 0) -> float:
             """Function for learning rate scheduler.
 
             Args:

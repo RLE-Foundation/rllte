@@ -13,8 +13,13 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
     Args:
         loc (float): mean of the noise (often referred to as mu).
         scale (float): standard deviation of the noise (often referred to as sigma).
-        theta (float): Rate of mean reversion.
+        low (float): The lower bound of the noise.
+        high (float): The upper bound of the noise.
+        eps (float): A small value to avoid numerical instability.
+        theta (float): The rate of mean reversion.
         dt (float): Timestep for the noise.
+        stddev_schedule (str): Use the exploration std schedule.
+        stddev_clip (float): The exploration std clip range.
 
     Returns:
         Ornstein-Uhlenbeck noise instance.
@@ -24,18 +29,26 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         self,
         loc: float = 0.0,
         scale: float = 1.0,
+        low: float = -1.0, 
+        high: float = 1.0, 
+        eps: float = 1e-6,
         theta: float = 0.15,
         dt: float = 1e-2,
         stddev_schedule: str = "linear(1.0, 0.1, 100000)",
+        stddev_clip: float = 0.3,
     ) -> None:
         super().__init__()
 
         self.loc = loc
         self.scale = scale
-        self._theta = theta
+        self.low = low
+        self.high = high
+        self.eps = eps
+        self.theta = theta
         self.dt = dt
         self.noiseless_action = None
         self.stddev_schedule = stddev_schedule
+        self.stddev_clip = stddev_clip
 
         self.noise_prev = None
 
@@ -55,6 +68,13 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         if self.stddev_schedule is not None:
             # TODO: reset the std of
             self.scale = utils.schedule(self.stddev_schedule, step)
+    
+    def _clamp(self, x: th.Tensor) -> th.Tensor:
+        """Clamps the input to the range [low, high].
+        """
+        clamped_x = th.clamp(x, self.low + self.eps, self.high - self.eps)
+        x = x - x.detach() + clamped_x.detach()
+        return x
 
     def sample(self, clip: bool = False, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample
@@ -68,7 +88,7 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         """
         noise = (
             self.noise_prev
-            + self._theta * (self.loc - self.noise_prev) * self.dt
+            + self.theta * (self.loc - self.noise_prev) * self.dt
             + self.scale
             * np.sqrt(self.dt)
             * _standard_normal(
@@ -84,7 +104,11 @@ class OrnsteinUhlenbeckNoise(BaseDistribution):
         )
         self.noise_prev = noise
 
-        return noise + self.noiseless_action
+        if clip:
+            # clip the sampled noises
+            noise = th.clamp(noise, -self.stddev_clip, self.stddev_clip)
+
+        return self._clamp(noise + self.noiseless_action)
 
     @property
     def mean(self) -> th.Tensor:
