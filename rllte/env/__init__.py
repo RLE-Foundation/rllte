@@ -23,7 +23,6 @@
 # =============================================================================
 
 
-from .utils import TorchVecEnvWrapper as TorchVecEnvWrapper
 from .utils import make_rllte_env as make_rllte_env
 
 try:
