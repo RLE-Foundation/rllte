@@ -7,6 +7,7 @@
 
 **RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of **rllte**:
 
+- 👨‍✈️ Large language model-empowered copilot;
 - ⏱️ Latest algorithms and tricks;
 - 📕 Standard and sophisticated modules for redevelopment;
 - 🧱 Highly modularized design for complete decoupling of RL algorithms;
