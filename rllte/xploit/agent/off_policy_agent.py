@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import gymnasium as gym
-import numpy as np
 import torch as th
 
 from rllte.common import utils

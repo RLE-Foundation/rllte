@@ -13,7 +13,7 @@ packages = ["rllte"]
 
 [project]
 name = "rllte-core"
-version = "0.0.1.beta01"
+version = "0.0.1.beta02"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]

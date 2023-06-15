@@ -26,12 +26,11 @@
 import argparse
 import os
 
-os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
-os.environ["MUJOCO_GL"] = "egl"
-
-
 from rllte.env import make_dmc_env
 from rllte.xploit.agent import DrQv2
+
+os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
+os.environ["MUJOCO_GL"] = "egl"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="finger_spin")

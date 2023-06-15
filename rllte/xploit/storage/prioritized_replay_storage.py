@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple, Any
+from typing import Any, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np

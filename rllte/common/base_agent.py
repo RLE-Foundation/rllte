@@ -37,7 +37,7 @@ import torch as th
 
 # try to load torch_npu
 try:
-    import torch_npu  # noqa: f401
+    import torch_npu as torch_npu  # type: ignore
 except Exception:
     pass
 
@@ -243,7 +243,7 @@ class BaseAgent(ABC):
         if reward is not None:
             assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
             self.irs = reward
-    
+
     @abstractmethod
     def mode(self) -> None:
         """Set the training mode."""
@@ -252,6 +252,7 @@ class BaseAgent(ABC):
     def update(self) -> Dict[str, float]:
         """Update the agent."""
 
+    @abstractmethod
     def freeze(self) -> None:
         """Freeze the structure of the agent."""
 

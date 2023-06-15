@@ -25,9 +25,10 @@
 
 from typing import Tuple
 
+import numpy as np
 import torch as th
 from torch import nn
-import numpy as np
+
 
 def soft_update_params(net: nn.Module, target_net: nn.Module, tau: float) -> None:
     """Soft update of the target network.

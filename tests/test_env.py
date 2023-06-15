@@ -1,27 +1,12 @@
-import os
-import sys
 import pytest
-
 import torch as th
 
-curren_dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
-sys.path.append(parent_dir_path)
+from rllte.env import make_atari_env, make_bullet_env, make_dmc_env, make_minigrid_env, make_procgen_env, make_robosuite_env
 
-from rllte.env import (make_atari_env, 
-                       make_dmc_env, 
-                       make_minigrid_env,
-                       make_procgen_env,
-                       make_bullet_env,
-                       make_robosuite_env
-                       )
 
-@pytest.mark.parametrize("env_cls", [make_atari_env, 
-                                     make_minigrid_env,
-                                     make_procgen_env,
-                                     make_dmc_env, 
-                                     make_bullet_env,
-                                     make_robosuite_env])
+@pytest.mark.parametrize(
+    "env_cls", [make_atari_env, make_minigrid_env, make_procgen_env, make_dmc_env, make_bullet_env, make_robosuite_env]
+)
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_discrete_env(env_cls, device):
     if env_cls in [make_procgen_env, make_dmc_env]:
@@ -32,9 +17,9 @@ def test_discrete_env(env_cls, device):
 
     print(env.observation_space, env.action_space)
 
-    for step in range(10):
+    for _step in range(10):
         action = env.action_space.sample()
-        
+
         if env_cls in [make_atari_env, make_minigrid_env, make_procgen_env]:
             action = th.randint(0, env.action_space.n, (1,)).to(device)
         else:
@@ -46,4 +31,3 @@ def test_discrete_env(env_cls, device):
     env.close()
 
     print("Environment test passed!")
-    

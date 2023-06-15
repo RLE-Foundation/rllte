@@ -23,13 +23,13 @@
 # =============================================================================
 
 
-import os
-
-os.environ["OMP_NUM_THREADS"] = "1"
 import argparse
+import os
 
 from rllte.env import make_atari_env
 from rllte.xploit.agent import IMPALA
+
+os.environ["OMP_NUM_THREADS"] = "1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="PongNoFrameskip-v4")

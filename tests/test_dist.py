@@ -1,55 +1,48 @@
-import os
-import sys
 import pytest
-
-curren_dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
-sys.path.append(parent_dir_path)
-
 import torch as th
 
-from rllte.xplore.distribution import (Categorical,
-                                       DiagonalGaussian,
-                                       Bernoulli,
-                                       NormalNoise,
-                                       OrnsteinUhlenbeckNoise,
-                                       SquashedNormal,
-                                       TruncatedNormalNoise)
+from rllte.xplore.distribution import (
+    Bernoulli,
+    Categorical,
+    DiagonalGaussian,
+    NormalNoise,
+    OrnsteinUhlenbeckNoise,
+    SquashedNormal,
+    TruncatedNormalNoise,
+)
 
-@pytest.mark.parametrize("dist", [Categorical,
-                                  DiagonalGaussian,
-                                  Bernoulli,
-                                  NormalNoise,
-                                  OrnsteinUhlenbeckNoise,
-                                  SquashedNormal,
-                                  TruncatedNormalNoise])
+
+@pytest.mark.parametrize(
+    "dist_cls",
+    [Categorical, DiagonalGaussian, Bernoulli, NormalNoise, OrnsteinUhlenbeckNoise, SquashedNormal, TruncatedNormalNoise],
+)
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
-def test_aug(dist, device):    
+def test_aug(dist_cls, device):
     device = th.device(device)
-    if dist in [Categorical, Bernoulli]:
-        inputs = th.randn(size=(1, 7), device=device)
-        dist = dist(logits=inputs)
+    if dist_cls in [Categorical, Bernoulli]:
+        inputs = th.rand(size=(1, 7), device=device)
+        dist = dist_cls(logits=inputs)
         dist.sample()
-        dist.mean
+        print(dist.mean)
 
-        if dist is Categorical:
-            dist.log_prob(actions=th.randint(1, 7, size=(1,), device=device))
-        if dist is Bernoulli:
-            dist.log_prob(actions=th.randint(1, 7, size=(7,), device=device))
+        if dist_cls is Categorical:
+            dist.log_prob(actions=th.randint(1, 7, size=(1,), device=device).float())
+        if dist_cls is Bernoulli:
+            dist.log_prob(actions=th.randint(0, 2, size=(7,), device=device).float())
 
-    if dist in [DiagonalGaussian, SquashedNormal]:
+    if dist_cls in [DiagonalGaussian, SquashedNormal]:
         mu = th.randn(size=(1, 17), device=device)
         sigma = th.rand(size=(1, 17), device=device)
-        dist = dist(loc=mu, scale=sigma)
+        dist = dist_cls(loc=mu, scale=sigma)
         dist.sample()
-        dist.mean
+        print(dist.mean)
         dist.log_prob(actions=th.rand(1, 17, device=device))
-    
-    if dist in [NormalNoise, OrnsteinUhlenbeckNoise, TruncatedNormalNoise]:
+
+    if dist_cls in [NormalNoise, OrnsteinUhlenbeckNoise, TruncatedNormalNoise]:
         noiseless_action = th.rand(size=(1, 8), device=device)
-        dist = dist()
+        dist = dist_cls()
         dist.reset(noiseless_action, step=0)
         dist.sample()
-        dist.mean
+        print(dist.mean)
 
     print("Distribution test passed!")

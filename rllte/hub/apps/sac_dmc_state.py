@@ -23,13 +23,13 @@
 # =============================================================================
 
 
-import os
-
-os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 import argparse
+import os
 
 from rllte.env import make_dmc_env
 from rllte.xploit.agent import SAC
+
+os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="finger_spin")

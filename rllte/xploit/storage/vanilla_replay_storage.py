@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Any, Tuple, Dict
+from typing import Any, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np

@@ -241,7 +241,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         """Act function of each actor. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def update(self) -> None:
+    def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 

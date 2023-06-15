@@ -30,8 +30,8 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.xploit.agent.on_policy_agent import OnPolicyAgent
 from rllte.common.utils import get_network_init
+from rllte.xploit.agent.on_policy_agent import OnPolicyAgent
 
 
 class PPO(OnPolicyAgent):

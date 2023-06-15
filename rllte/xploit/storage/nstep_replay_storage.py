@@ -28,7 +28,7 @@ import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterator, Tuple, Any
+from typing import Any, Dict, Iterator, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -63,10 +63,10 @@ class ReplayStorage:
         self,
         obs: np.ndarray,
         action: np.ndarray,
-        reward: float,
-        terminated: bool,
-        truncated: bool,
-        info: Dict,
+        reward: np.ndarray,
+        terminated: np.ndarray,
+        truncated: np.ndarray,
+        info: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
         """Add a new transition to the storage.

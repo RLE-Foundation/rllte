@@ -140,7 +140,7 @@ def get_network_init(method: str = "orthogonal") -> Callable:  # noqa: c901
         return _xavier_uniform
     else:
         return _identity
-    
+
 
 def to_numpy(xs: Tuple[th.Tensor, ...]) -> Tuple[np.ndarray, ...]:
     """Converts torch tensors to numpy arrays.
