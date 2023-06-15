@@ -9,14 +9,21 @@ sys.path.append(parent_dir_path)
 from rllte.evaluation.performance import Performance
 from rllte.evaluation.comparison import Comparison
 
-scores_x = np.random.rand(10, 5)
-scores_y = np.random.rand(10, 5)
+if __name__ == "__main__":
+    scores_x = np.random.rand(10, 5)
+    scores_y = np.random.rand(10, 5)
 
-perf = Performance(scores=scores_x)
-perf.describe()
+    perf = Performance(scores=scores_x)
+    perf.aggregate_iqm()
+    perf.aggregate_mean()
+    perf.aggregate_median()
+    perf.aggregate_og()
+    perf.create_performance_profile()
 
-comp = Comparison(
-    scores_x=scores_x,
-    scores_y=scores_y
-)
-ips = comp.compute_poi()
+    comp = Comparison(
+        scores_x=scores_x,
+        scores_y=scores_y
+    )
+    ips = comp.compute_poi()
+
+    print("Evaluation test passed!")

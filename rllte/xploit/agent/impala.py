@@ -36,7 +36,7 @@ from torch import multiprocessing as mp
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.distributed_agent import DistributedAgent, Environment
+from rllte.xploit.agent.distributed_agent import DistributedAgent, Environment
 from rllte.common.utils import get_network_init
 
 

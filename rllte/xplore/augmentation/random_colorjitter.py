@@ -56,12 +56,12 @@ class RandomColorJitter(BaseAugmentation):
         b, c, h, w = x.size()
 
         # For Channels to split. Like RGB-3 Channels.
-        x_list = th.Tensorsplit(x, 3, dim=1)
+        x_list = th.split(x, 3, dim=1)
         x_aug_list = []
         for x_part in x_list:
             x_part_aug = self.color_jitter(x_part)
             x_aug_list.append(x_part_aug)
 
-        x = th.Tensorcat(x_aug_list, dim=1)
+        x = th.cat(x_aug_list, dim=1)
 
         return x

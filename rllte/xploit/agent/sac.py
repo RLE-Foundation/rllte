@@ -30,7 +30,7 @@ import numpy as np
 import torch as th
 from torch.nn import functional as F
 
-from rllte.common.off_policy_agent import OffPolicyAgent
+from rllte.xploit.agent.off_policy_agent import OffPolicyAgent
 from rllte.common.utils import get_network_init
 from rllte.xploit.agent import utils
 

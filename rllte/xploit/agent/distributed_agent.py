@@ -242,7 +242,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         raise NotImplementedError
 
     def update(self) -> None:
-        """Update function of the learner. Implemented by individual algorithms."""
+        """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
     def freeze(self) -> None:

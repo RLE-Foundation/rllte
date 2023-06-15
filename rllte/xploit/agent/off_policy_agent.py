@@ -118,7 +118,7 @@ class OffPolicyAgent(BaseAgent):
             self.dist = SquashedNormal
 
     def update(self) -> Dict[str, float]:
-        """Update function of the agent. Implemented by individual algorithms."""
+        """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
     def freeze(self) -> None:
