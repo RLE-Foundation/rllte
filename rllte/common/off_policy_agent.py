@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 
 from rllte.common import utils
@@ -183,15 +184,17 @@ class OffPolicyAgent(BaseAgent):
             episode_step += 1
             self.global_step += 1
 
+            # TODO: add parallel env support
             # save transition
+            reward = th.zeros_like(reward) if self.pretraining else reward  # pre-training mode
             self.storage.add(
-                obs=obs,
-                action=action,
-                reward=th.zeros_like(reward) if self.pretraining else reward,  # pre-training mode
-                terminated=terminated,
-                truncated=truncated,
+                obs=obs[0].cpu().numpy(),
+                action=action[0].cpu().numpy(),
+                reward=reward[0].cpu().numpy(),
+                terminated=terminated[0].cpu().numpy(),
+                truncated=truncated[0].cpu().numpy(),
                 info=info,
-                next_obs=next_obs,
+                next_obs=next_obs[0].cpu().numpy(),
             )
 
             # update agent

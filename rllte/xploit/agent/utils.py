@@ -27,7 +27,7 @@ from typing import Tuple
 
 import torch as th
 from torch import nn
-
+import numpy as np
 
 def soft_update_params(net: nn.Module, target_net: nn.Module, tau: float) -> None:
     """Soft update of the target network.
@@ -44,7 +44,7 @@ def soft_update_params(net: nn.Module, target_net: nn.Module, tau: float) -> Non
         target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
 
-def to_torch(xs: Tuple[th.Tensor, ...], device: th.device) -> Tuple[th.Tensor, ...]:
+def to_torch(xs: Tuple[np.ndarray, ...], device: th.device) -> Tuple[th.Tensor, ...]:
     """Convert numpy arrays to torch tensors.
 
     Args:

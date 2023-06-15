@@ -23,8 +23,9 @@
 # =============================================================================
 
 
-from typing import Callable
+from typing import Callable, Tuple
 
+import numpy as np
 import torch as th
 from torch import nn
 
@@ -139,3 +140,17 @@ def get_network_init(method: str = "orthogonal") -> Callable:  # noqa: c901
         return _xavier_uniform
     else:
         return _identity
+    
+
+def to_numpy(xs: Tuple[th.Tensor, ...]) -> Tuple[np.ndarray, ...]:
+    """Converts torch tensors to numpy arrays.
+
+    Args:
+        xs (Tuple[th.Tensor, ...]): Torch tensors.
+
+    Returns:
+        Numpy arrays.
+    """
+    for x in xs:
+        print(x.size())
+    return tuple(x[0].cpu().numpy() for x in xs)

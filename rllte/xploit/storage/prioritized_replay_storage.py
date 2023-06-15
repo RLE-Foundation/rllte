@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 import gymnasium as gym
 import numpy as np
@@ -85,36 +85,35 @@ class PrioritizedReplayStorage(BaseStorage):
 
     def add(
         self,
-        obs: th.Tensor,
-        action: th.Tensor,
-        reward: th.Tensor,
-        terminated: th.Tensor,
-        truncated: th.Tensor,
-        info: th.Tensor,
-        next_obs: th.Tensor,
+        obs: np.ndarray,
+        action: np.ndarray,
+        reward: np.ndarray,
+        terminated: np.ndarray,
+        truncated: np.ndarray,
+        info: Dict[str, Any],
+        next_obs: np.ndarray,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (th.Tensor): Observation.
-            action (th.Tensor): Action.
-            reward (th.Tensor): Reward.
-            terminated (th.Tensor): Termination flag.
-            truncated (th.Tensor): Truncation flag.
-            info (th.Tensor): Additional information.
-            next_obs (th.Tensor): Next observation.
+            obs (np.ndarray): Observation.
+            action (np.ndarray): Action.
+            reward (np.ndarray): Reward.
+            terminated (np.ndarray): Termination flag.
+            truncated (np.ndarray): Truncation flag.
+            info (Dict[str, Any]): Additional information.
+            next_obs (np.ndarray): Next observation.
 
         Returns:
             None.
         """
-        # TODO: add parallel env support
         transition = (
-            obs[0].cpu().numpy(),
-            action[0].cpu().numpy(),
-            reward[0].cpu().numpy(),
-            terminated[0].cpu().numpy(),
-            truncated[0].cpu().numpy(),
-            next_obs[0].cpu().numpy(),
+            obs,
+            action,
+            reward,
+            terminated,
+            truncated,
+            next_obs,
         )
         max_prio = self.priorities.max() if self.storage else 1.0
         self.priorities[self.position] = max_prio

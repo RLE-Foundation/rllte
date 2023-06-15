@@ -28,7 +28,7 @@ import random
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterator, Tuple
+from typing import Dict, Iterator, Tuple, Any
 
 import gymnasium as gym
 import numpy as np
@@ -297,37 +297,36 @@ class NStepReplayStorage(BaseStorage):
 
     def add(
         self,
-        obs: th.Tensor,
-        action: th.Tensor,
-        reward: th.Tensor,
-        terminated: th.Tensor,
-        truncated: th.Tensor,
-        info: th.Tensor,
-        next_obs: th.Tensor,
+        obs: np.ndarray,
+        action: np.ndarray,
+        reward: np.ndarray,
+        terminated: np.ndarray,
+        truncated: np.ndarray,
+        info: Dict[str, Any],
+        next_obs: np.ndarray,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (th.Tensor): Observation.
-            action (th.Tensor): Action.
-            reward (th.Tensor): Reward.
-            terminated (th.Tensor): Termination flag.
-            truncated (th.Tensor): Truncation flag.
-            info (th.Tensor): Additional information.
-            next_obs (th.Tensor): Next observation.
+            obs (np.ndarray): Observation.
+            action (np.ndarray): Action.
+            reward (np.ndarray): Reward.
+            terminated (np.ndarray): Termination flag.
+            truncated (np.ndarray): Truncation flag.
+            info (Dict[str, Any]): Additional information.
+            next_obs (np.ndarray): Next observation.
 
         Returns:
             None.
         """
-        # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs[0].cpu().numpy(),
-            action=action[0].cpu().numpy(),
-            reward=reward[0].cpu().numpy(),
-            terminated=terminated[0].cpu().numpy(),
-            truncated=truncated[0].cpu().numpy(),
+            obs=obs,
+            action=action,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
             info=info,
-            next_obs=next_obs[0].cpu().numpy(),
+            next_obs=next_obs,
         )
 
     @property
