@@ -41,11 +41,11 @@
     Declear an instance of RLLTEDeployer.  
 >* `deployer.build(path_of_onnx_model)`  
     Use the build member function to convert the onnx model to the tensorrt static model(plan).
->* `deployer.loadPlan()`  
-    `deployer.loadPlan(path_of_the_tensortrt_plan)`
+>* `deployer.loadPlan()`   
+    `deployer.loadPlan(path_of_the_tensortrt_plan)`   
     Use the loadPlan member function to load the converted model. If a path is given, then it will search the path, or it will just search the current working directory.
->* `deployer.infer<float>(input, output, 1);`  
-   `deployer.infer<float16_t>(input, output, 1);`  
+>* `deployer.infer<float>(input, output, 1);`   
+   `deployer.infer<float16_t>(input, output, 1);`   
    `deployer.infer<int8>(input, output, 1);`  
    Use infer member funtion to execute the infer process. The input is the tensor with relevant data type, and the output is a pointer with relevant data size and data type. The infer result will be moved to the output.
 >* The complete code please refer to the DeployerTest.cpp;
