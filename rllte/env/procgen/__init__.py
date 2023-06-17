@@ -111,7 +111,8 @@ def make_procgen_env(
         env_name=env_id,
         num_levels=num_levels,
         start_level=start_level,
-        distribution_mode=distribution_mode
+        distribution_mode=distribution_mode,
+        rand_seed=seed
     )
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))

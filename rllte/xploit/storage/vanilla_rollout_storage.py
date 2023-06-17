@@ -57,7 +57,7 @@ class VanillaRolloutStorage(BaseStorage):
         num_steps: int = 256,
         num_envs: int = 8,
         batch_size: int = 64,
-        discount: float = 0.99,
+        discount: float = 0.999,
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device)
@@ -163,11 +163,10 @@ class VanillaRolloutStorage(BaseStorage):
         gae = 0
         for step in reversed(range(self.num_steps)):
             if step == self.num_steps - 1:
-                next_non_terminal = 1.0 - self.terminateds[-1]
                 next_values = last_values[:, 0]
             else:
-                next_non_terminal = 1.0 - self.terminateds[step + 1]
                 next_values = self.values[step + 1]
+            next_non_terminal = 1.0 - self.terminateds[step + 1]
             delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
             self.advantages[step] = gae
@@ -188,8 +187,6 @@ class VanillaRolloutStorage(BaseStorage):
             batch_truncateds = self.truncateds[:-1].view(-1)[indices]
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
-
-            adv_targ = (adv_targ - adv_targ.mean()) / (adv_targ.std() + 1e-8)
 
             yield (
                 batch_obs,
