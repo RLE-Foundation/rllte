@@ -160,6 +160,7 @@ class VanillaRolloutStorage(BaseStorage):
         Returns:
             None.
         """
+        # TODO: add time limit
         gae = 0
         for step in reversed(range(self.num_steps)):
             if step == self.num_steps - 1:

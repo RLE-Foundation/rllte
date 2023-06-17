@@ -166,8 +166,8 @@ class OnPolicyAgent(BaseAgent):
             self.policy.load(init_model_path)
 
         # reset the env
-        episode_rewards = deque(maxlen=100)
-        episode_steps = deque(maxlen=100)
+        episode_rewards = deque(maxlen=10)
+        episode_steps = deque(maxlen=10)
         obs, info = self.env.reset(seed=self.seed)
         # Number of updates
         num_updates = num_train_steps // self.num_envs // self.num_steps

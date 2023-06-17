@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatApp</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        .card {
+            position: absolute;
+            width: 95%;
+            height: 80%;
+            box-shadow: 0px 0px 5px gray;
+            left: 2.5%;
+            top: 5%;
+        }
+        #user-form {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #user-form input {
+            width: 400px;
+            padding-right: 30%;
+        }
+        #user-form button {
+            position: absolute;
+            left: 75%;
+            margin-left: 2px;
+        }
+    </style>
+</head>
+<script>
+        $(document).ready(function(){
+            $("#user-form").on("submit", function(e){
+                e.preventDefault();
+                var current_user = $("#user_input").val();
+                if (current_user){
+                    data = {"username": current_user};
+                    $.post('/api/register', JSON.stringify(data), function(response){
+                        $(".chat-body").removeClass("hide");
+                        $(".chat-register").addClass("hide");
+                        window.location.href = "/chat";
+                    });
+                }
+            });
+        });
+    </script>
+<body>
+    <div class="chat-body card">
+        <div class="card-body">
+            <h4 class="card-title text-center"> Chat App </h4>
+            <hr>
+            <form class="form-inline" id="user-form">
+                <input type="text" class="form-control" id="user_input" placeholder="Enter your name">
+                <button id="start" type="submit" class="btn btn-primary">Start Chat</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
