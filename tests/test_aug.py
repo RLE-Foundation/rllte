@@ -1,63 +1,56 @@
-import os
-import sys
+import pytest
+import torch as th
 
-curren_dir_path = os.path.dirname(os.path.realpath(__file__))
-parent_dir_path = os.path.abspath(os.path.join(curren_dir_path, os.pardir))
-sys.path.append(parent_dir_path)
+from rllte.env.dmc import make_dmc_env
+from rllte.xplore.augmentation import (
+    GaussianNoise,
+    GrayScale,
+    Identity,
+    RandomAmplitudeScaling,
+    RandomColorJitter,
+    RandomConvolution,
+    RandomCrop,
+    RandomCutout,
+    RandomCutoutColor,
+    RandomFlip,
+    RandomRotate,
+    RandomShift,
+    RandomTranslate,
+)
 
-import cv2
-import numpy as np
-import torch
 
-from hsuanwu.env.dmc import make_dmc_env
-from hsuanwu.xplore.augmentation import RandomCrop, RandomAmplitudeScaling, GaussianNoise
-
-if __name__ == "__main__":
-    env = make_dmc_env(
-        env_id="hopper_hop",
-        resource_files=None,
-        img_source=None,
-        total_frames=None,
-        seed=1,
-        visualize_reward=False,
-        from_pixels=True,
-        frame_skip=1,
-        frame_stack=1,
-    )
-
+@pytest.mark.parametrize(
+    "aug_cls",
+    [
+        GrayScale,
+        Identity,
+        RandomColorJitter,
+        RandomConvolution,
+        RandomCrop,
+        RandomCutout,
+        RandomCutoutColor,
+        RandomFlip,
+        RandomRotate,
+        RandomShift,
+        RandomTranslate,
+    ],
+)
+@pytest.mark.parametrize("device", ["cuda", "cpu"])
+def test_image_augmentation(aug_cls, device):
+    env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device)
     obs, info = env.reset()
+    aug = aug_cls().to(th.device(device))
+    aug(obs / 255.0)
 
-    obs_tensor = obs / 255.0
-    print(obs_tensor.size())
-    cv2.imwrite(
-        "./tests/origin.jpg", np.transpose(obs_tensor.numpy()[0], [1, 2, 0]) * 255.0
-    )
+    print("Image augmentation test passed!")
 
-    aug = RandomCrop(pad=20, out=84)
 
-    auged_obs = aug(obs_tensor)
-    print(auged_obs.size())
-    cv2.imwrite(
-        "./tests/after.jpg", np.transpose(auged_obs.numpy()[0], [1, 2, 0]) * 255.0
-    )
-
-    # TODO: state-based inputs
-    env = make_dmc_env(
-        env_id="hopper_hop",
-        resource_files=None,
-        img_source=None,
-        total_frames=None,
-        seed=1,
-        visualize_reward=True,
-        from_pixels=False,
-        frame_skip=1,
-        frame_stack=1,
-    )
-
+@pytest.mark.parametrize("aug_cls", [RandomAmplitudeScaling, GaussianNoise])
+@pytest.mark.parametrize("device", ["cuda", "cpu"])
+def test_state_augmentation(aug_cls, device):
+    env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device)
     obs, info = env.reset()
+    aug = aug_cls().to(th.device(device))
+    aug(obs)
 
-    aug_obs = RandomAmplitudeScaling()(obs)
-    print(obs, aug_obs)
-    aug_obs = GaussianNoise()(obs)
-    print(obs, aug_obs)
-    
+    print("State augmentation test passed!")

@@ -2,10 +2,10 @@
 
 
 ## TassaCnnEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/tassa_cnn_encoder.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L33)
 ```python 
 TassaCnnEncoder(
-   observation_space: Union[gym.Space, DictConfig], feature_dim: int = 50
+   observation_space: gym.Space, feature_dim: int = 50
 )
 ```
 
@@ -19,9 +19,8 @@ Target task: DeepMind Control Suite.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **feature_dim** (int) : Number of features extracted.
+* **observation_space** (gym.Space) : Observation space.
+* **feature_dim** (int) : Number of features extracted by the encoder.
 
 
 **Returns**
@@ -33,10 +32,22 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/tassa_cnn_encoder.py/#L51)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/tassa_cnn_encoder.py/#L70)
 ```python
 .forward(
    obs: th.Tensor
 )
 ```
 
+---
+Forward method implementation.
+
+
+**Args**
+
+* **obs** (th.Tensor) : Observation tensor.
+
+
+**Returns**
+
+Encoded observation tensor.

@@ -2,13 +2,13 @@
 
 
 ## PseudoCounts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L81)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L107)
 ```python 
 PseudoCounts(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', beta: float = 0.05, kappa: float = 2.5e-05,
-   latent_dim: int = 32, lr: float = 0.001, batch_size: int = 64, capacity: int = 1000,
-   k: int = 10, kernel_cluster_distance: float = 0.008, kernel_epsilon: float = 0.0001,
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   beta: float = 0.05, kappa: float = 2.5e-05, latent_dim: int = 32, lr: float = 0.001,
+   batch_size: int = 64, capacity: int = 1000, k: int = 10,
+   kernel_cluster_distance: float = 0.008, kernel_epsilon: float = 0.0001,
    c: float = 0.001, sm: float = 8.0
 )
 ```
@@ -21,12 +21,8 @@ See paper: https://arxiv.org/pdf/2002.06038
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **observation_space** (Space) : The observation space of environment.
+* **action_space** (Space) : The action space of environment.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
 * **kappa** (float) : The decay rate.
@@ -50,7 +46,7 @@ Instance of PseudoCounts.
 
 
 ### .pseudo_counts
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L147)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L169)
 ```python
 .pseudo_counts(
    e: th.Tensor
@@ -63,7 +59,7 @@ Pseudo counts.
 
 **Args**
 
-* **e** (Tensor) : Encoded observations.
+* **e** (th.Tensor) : Encoded observations.
 
 
 **Returns**
@@ -71,7 +67,7 @@ Pseudo counts.
 Conut values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L174)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L196)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -97,7 +93,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/reward/pseudo_counts.py/#L211)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/pseudo_counts.py/#L233)
 ```python
 .update(
    samples: Dict

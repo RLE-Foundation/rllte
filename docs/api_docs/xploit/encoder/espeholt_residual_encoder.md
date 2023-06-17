@@ -2,11 +2,11 @@
 
 
 ## EspeholtResidualEncoder
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L68)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L135)
 ```python 
 EspeholtResidualEncoder(
-   observation_space: Union[gym.Space, DictConfig], feature_dim: int = 0,
-   net_arch: List[int] = [16, 32, 32]
+   observation_space: gym.Space, feature_dim: int = 0, net_arch: List[int] = [16, 32,
+   32]
 )
 ```
 
@@ -20,8 +20,7 @@ Target task: Atari games and Procgen games.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
+* **observation_space** (gym.Space) : Observation space.
 * **feature_dim** (int) : Number of features extracted.
 * **net_arch** (List) : Architecture of the network.
     It represents the out channels of each residual layer.
@@ -37,10 +36,22 @@ ResNet-like encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/encoder/espeholt_residual_encoder.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L181)
 ```python
 .forward(
    obs: th.Tensor
 )
 ```
 
+---
+Forward method implementation.
+
+
+**Args**
+
+* **obs** (th.Tensor) : Observation tensor.
+
+
+**Returns**
+
+Encoded observation tensor.

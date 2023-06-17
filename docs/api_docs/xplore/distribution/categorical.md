@@ -2,7 +2,7 @@
 
 
 ## Categorical
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L7)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L33)
 ```python 
 Categorical(
    logits: th.Tensor
@@ -13,9 +13,10 @@ Categorical(
 ---
 Categorical distribution for sampling actions for 'Discrete' tasks.
 
+
 **Args**
 
-* **logits** (Tensor) : The event log probabilities (unnormalized).
+* **logits** (th.Tensor) : The event log probabilities (unnormalized).
 
 
 **Returns**
@@ -27,7 +28,7 @@ Categorical distribution instance.
 
 
 ### .probs
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L24)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L51)
 ```python
 .probs()
 ```
@@ -36,7 +37,7 @@ Categorical distribution instance.
 Return probabilities.
 
 ### .logits
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L29)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L56)
 ```python
 .logits()
 ```
@@ -45,7 +46,7 @@ Return probabilities.
 Returns the unnormalized log probabilities.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L33)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L60)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -59,7 +60,7 @@ samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (TorchSize) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -67,7 +68,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L45)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L72)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -80,7 +81,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 
 **Args**
 
-* **actions** (Tensor) : The actions to be evaluated.
+* **actions** (th.Tensor) : The actions to be evaluated.
 
 
 **Returns**
@@ -88,7 +89,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L83)
 ```python
 .entropy()
 ```
@@ -97,7 +98,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L61)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L88)
 ```python
 .mode()
 ```
@@ -106,7 +107,7 @@ Returns the Shannon entropy of distribution.
 Returns the mode of the distribution.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L66)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L93)
 ```python
 .mean()
 ```
@@ -115,7 +116,7 @@ Returns the mode of the distribution.
 Returns the mean of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L71)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L98)
 ```python
 .stddev()
 ```
@@ -124,7 +125,7 @@ Returns the mean of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L76)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L103)
 ```python
 .variance()
 ```
@@ -133,7 +134,7 @@ Returns the standard deviation of the distribution.
 Returns the variance of the distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L80)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L107)
 ```python
 .reset()
 ```
@@ -142,7 +143,7 @@ Returns the variance of the distribution.
 Reset the distribution.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/categorical.py/#L84)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L111)
 ```python
 .rsample(
    sample_shape: th.Size = ...

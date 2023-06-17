@@ -2,38 +2,35 @@
 
 
 ## NStepReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L191)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L246)
 ```python 
 NStepReplayStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', storage_size: int = 500000, batch_size: int = 256,
-   num_workers: int = 4, pin_memory: bool = True, n_step: int = 3, discount: float = 0.99,
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   storage_size: int = 1000000, batch_size: int = 256, num_workers: int = 4,
+   pin_memory: bool = True, n_step: int = 3, discount: float = 0.99,
    fetch_every: int = 1000, save_snapshot: bool = False
 )
 ```
 
 
 ---
-Replay storage for off-policy algorithms (N-step returns supported).
+N-step replay storage.
+Implemented based on: https://github.com/facebookresearch/drqv2/blob/main/replay_buffer.py
 
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **observation_space** (gym.Space) : Observation space.
+* **action_space** (gym.Space) : Action space.
+* **device** (str) : Device to store replay data.
 * **storage_size** (int) : Max number of element in the storage.
-* **batch_size** (int) : Number of samples per batch to load.
+* **batch_size** (int) : Batch size.
 * **num_workers** (int) : Subprocesses to use for data loading.
-* **pin_memory** (bool) : Copy Tensors into device/CUDA pinned memory before returning them.
+* **pin_memory** (bool) : Pin memory or not.
+* **nstep** (int) : The number of transitions to consider when computing n-step returns
 * **discount** (float) : The discount factor for future rewards.
 * **fetch_every** (int) : Loading interval.
 * **save_snapshot** (bool) : Save loaded file or not.
-n_step (int) The number of transitions to consider when computing n-step returns
 
 
 **Returns**
@@ -45,10 +42,11 @@ N-step replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L252)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L304)
 ```python
 .add(
-   obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
+   obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
+   truncated: th.Tensor, info: th.Tensor, next_obs: th.Tensor
 )
 ```
 
@@ -58,12 +56,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (Any) : Observations.
-* **action** (Any) : Actions.
-* **reward** (Any) : Rewards.
-* **terminated** (Any) : Terminateds.
-* **info** (Any) : Infos.
-* **next_obs** (Any) : Next observations.
+* **obs** (th.Tensor) : Observation.
+* **action** (th.Tensor) : Action.
+* **reward** (th.Tensor) : Reward.
+* **terminated** (th.Tensor) : Termination flag.
+* **truncated** (th.Tensor) : Truncation flag.
+* **info** (th.Tensor) : Additional information.
+* **next_obs** (th.Tensor) : Next observation.
 
 
 **Returns**
@@ -71,7 +70,7 @@ Add sampled transitions into storage.
 None.
 
 ### .replay_iter
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L284)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L340)
 ```python
 .replay_iter()
 ```
@@ -80,7 +79,7 @@ None.
 Create iterable dataloader.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L290)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L346)
 ```python
 .sample(
    step: int
@@ -88,7 +87,7 @@ Create iterable dataloader.
 ```
 
 ---
-Generate samples.
+Sample from the storage.
 
 
 **Args**
@@ -98,10 +97,10 @@ Generate samples.
 
 **Returns**
 
-Batched samples.
+Sampled data.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/nstep_replay_storage.py/#L301)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L357)
 ```python
 .update(
    *args
@@ -109,4 +108,4 @@ Batched samples.
 ```
 
 ---
-Update the storage
+Update the storage if necessary.

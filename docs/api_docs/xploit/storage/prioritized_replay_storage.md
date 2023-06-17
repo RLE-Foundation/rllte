@@ -2,12 +2,12 @@
 
 
 ## PrioritizedReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L12)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L36)
 ```python 
 PrioritizedReplayStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', storage_size: int = 1000000, batch_size: int = 1024,
-   alpha: float = 0.6, beta: float = 0.4
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   storage_size: int = 1000000, batch_size: int = 1024, alpha: float = 0.6,
+   beta: float = 0.4
 )
 ```
 
@@ -18,17 +18,13 @@ Prioritized replay storage with proportional prioritization for off-policy algor
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
-* **storage_size** (int) : Max number of element in the buffer.
-* **batch_size** (int) : Batch size of samples.
-* **alpha** (float) : The alpha coefficient.
-* **beta** (float) : The beta coefficient.
+* **observation_space** (gym.Space) : Observation space.
+* **action_space** (gym.Space) : Action space.
+* **device** (str) : Device to store the data.
+* **storage_size** (int) : Storage size.
+* **batch_size** (int) : Batch size.
+* **alpha** (float) : Prioritization value.
+* **beta** (float) : Importance sampling value.
 
 
 **Returns**
@@ -40,7 +36,7 @@ Prioritized replay storage.
 
 
 ### .annealing_beta
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L55)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L75)
 ```python
 .annealing_beta(
    step: int
@@ -61,10 +57,11 @@ Linearly increases beta from the initial value to 1 over global training steps.
 Beta value.
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L66)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L86)
 ```python
 .add(
-   obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
+   obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
+   truncated: th.Tensor, info: th.Tensor, next_obs: th.Tensor
 )
 ```
 
@@ -74,12 +71,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (Any) : Observations.
-* **action** (Any) : Actions.
-* **reward** (Any) : Rewards.
-* **terminated** (Any) : Terminateds.
-* **info** (Any) : Infos.
-* **next_obs** (Any) : Next observations.
+* **obs** (th.Tensor) : Observation.
+* **action** (th.Tensor) : Action.
+* **reward** (th.Tensor) : Reward.
+* **terminated** (th.Tensor) : Termination flag.
+* **truncated** (th.Tensor) : Truncation flag.
+* **info** (th.Tensor) : Additional information.
+* **next_obs** (th.Tensor) : Next observation.
 
 
 **Returns**
@@ -87,7 +85,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L94)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L118)
 ```python
 .sample(
    step: int
@@ -108,7 +106,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/prioritized_replay_storage.py/#L133)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L159)
 ```python
 .update(
    metrics: Dict
@@ -122,8 +120,8 @@ Update the priorities.
 **Args**
 
 * **metrics** (Dict) : Training metrics from agent to udpate the priorities:
-    indices (NdArray): The indices of current batch data.
-    priorities (NdArray): The priorities of current batch data.
+    indices (np.ndarray): The indices of current batch data.
+    priorities (np.ndarray): The priorities of current batch data.
 
 
 **Returns**

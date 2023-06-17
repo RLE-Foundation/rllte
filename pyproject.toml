@@ -2,11 +2,20 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["rllte"]
+
 [project]
-name = "hsuanwu"
-version = "0.0.1.beta05"
+name = "rllte-core"
+version = "0.0.1.beta02"
 authors = [
-  { name="Reinforcement Learning Evolution Foundation", email="hsuanwudev@gmail.com" },
+  { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
 description = "Long-Term Evolution Project of Reinforcement Learning"
 readme = "README.md"
@@ -14,6 +23,11 @@ requires-python = ">=3.8"
 keywords = ["Reinforcement Learning", "Algorithm", "Evolution", "Baseline"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -28,7 +42,11 @@ dependencies = [
   "tensorboardX",
   "termcolor",
   "scipy>= 1.7.0",
-  "arch==5.3.0"
+  "arch==5.3.0",
+  "pynvml==11.5.0",
+  "matplotlib==3.6.0",
+  "seaborn==0.12.2",
+  "huggingface_hub==0.14.1"
 ]
 
 [project.optional-dependencies]
@@ -44,8 +62,9 @@ tests = [
   "black"
 ]
 envs = [
-  "gym==0.21.0", # for Procgen games
+  "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
   "ale-py==0.8.1",
+  "robosuite==1.4.0",
   "gymnasium[accept-rom-license]",
   "dm-control==1.0.11",
   "procgen==0.10.7",
@@ -60,10 +79,10 @@ docs = [
 ]
 
 [project.urls]
-"Code" = "https://github.com/RLE-Foundation/Hsuanwu"
-"Documentation" = "https://docs.hsuanwu.dev/"
-"Benchmark" = "https://hub.hsuanwu.dev/"
-"Bug Tracker" = "https://github.com/RLE-Foundation/Hsuanwu/issues"
+"Code" = "https://github.com/RLE-Foundation/rllte"
+"Documentation" = "https://docs.rllte.dev/"
+"Benchmark" = "https://hub.rllte.dev/"
+"Bug Tracker" = "https://github.com/RLE-Foundation/rllte/issues"
 
 [tool.ruff]
 # Same as Black.
@@ -81,8 +100,8 @@ line-length = 127
 [tool.isort]
 profile = "black"
 line_length = 127
-src_paths = ["hsuanwu"]
+src_paths = ["rllte"]
 
 [tool.pytype]
-inputs = ["hsuanwu"]
+inputs = ["rllte"]
 disable = ["pyi-error"]

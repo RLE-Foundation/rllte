@@ -2,38 +2,43 @@
 
 
 ## DrQv2
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L65)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L37)
 ```python 
 DrQv2(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int, lr: float, eps: float,
-   hidden_dim: int, critic_target_tau: float, update_every_steps: int
+   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 2000,
+   eval_every_steps: int = 5000, feature_dim: int = 50, batch_size: int = 256,
+   lr: float = 0.0001, eps: float = 1e-08, hidden_dim: int = 1024,
+   critic_target_tau: float = 0.01, update_every_steps: int = 2,
+   network_init_method: str = 'orthogonal'
 )
 ```
 
 
 ---
-Data Regularized-Q v2 (DrQ-v2).
-When 'augmentation' module is deprecated, this agent will transform into
-    Deep Deterministic Policy Gradient (DDPG) agent.
-Based on: https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
+Proximal Policy Optimization (PPO) agent.
+When the `augmentation` module is invoked, this agent will transform into Data Regularized Actor-Critic (DrAC) agent.
+Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **tag** (str) : An experiment tag.
+* **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **pretraining** (bool) : Turn on the pre-training mode.
+* **num_init_steps** (int) : Number of initial exploration steps.
+* **eval_every_steps** (int) : Evaluation interval.
 * **feature_dim** (int) : Number of features extracted by the encoder.
+* **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
 * **eps** (float) : Term added to the denominator to improve numerical stability.
 * **hidden_dim** (int) : The size of the hidden layers.
 * **critic_target_tau**  : The critic Q-function soft-update rate.
 * **update_every_steps** (int) : The agent update frequency.
+* **network_init_method** (str) : Network initialization method name.
 
 
 
@@ -45,89 +50,30 @@ DrQv2 agent instance.
 **Methods:**
 
 
-### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L124)
+### .freeze
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L104)
 ```python
-.train(
-   training: bool = True
-)
+.freeze()
 ```
 
 ---
-Set the train mode.
-
-
-**Args**
-
-* **training** (bool) : True (training) or False (testing).
-
-
-**Returns**
-
-None.
-
-### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L139)
-```python
-.integrate(
-   **kwargs
-)
-```
-
----
-Integrate agent and other modules (encoder, reward, ...) together
-
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L151)
-```python
-.act(
-   obs: th.Tensor, training: bool = True, step: int = 0
-)
-```
-
----
-Sample actions based on observations.
-
-
-**Args**
-
-* **obs** (Tensor) : Observations.
-* **training** (bool) : training mode, True or False.
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Sampled actions.
+Freeze the structure of the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L172)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L120)
 ```python
-.update(
-   replay_storage, step: int = 0
-)
+.update()
 ```
 
 ---
-Update the agent.
-
-
-**Args**
-
-* **replay_storage** (Storage) : Hsuanwu replay storage.
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Training metrics such as actor loss, critic_loss, etc.
+Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L226)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L161)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
-   next_obs: th.Tensor, step: int
+   next_obs: th.Tensor
 )
 ```
 
@@ -137,12 +83,11 @@ Update the critic network.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **action** (Tensor) : Actions.
-* **reward** (Tensor) : Rewards.
-* **discount** (Tensor) : discounts.
-* **next_obs** (Tensor) : Next observations.
-* **step** (int) : Global training step.
+* **obs** (th.Tensor) : Observations.
+* **action** (th.Tensor) : Actions.
+* **reward** (th.Tensor) : Rewards.
+* **discount** (th.Tensor) : discounts.
+* **next_obs** (th.Tensor) : Next observations.
 
 
 **Returns**
@@ -150,10 +95,10 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L275)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L208)
 ```python
 .update_actor(
-   obs: th.Tensor, step: int
+   obs: th.Tensor
 )
 ```
 
@@ -163,52 +108,9 @@ Update the actor network.
 
 **Args**
 
-* **obs** (Tensor) : Observations.
-* **step** (int) : Global training step.
+* **obs** (th.Tensor) : Observations.
 
 
 **Returns**
 
 Actor loss metrics.
-
-### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L301)
-```python
-.save(
-   path: Path
-)
-```
-
----
-Save models.
-
-
-**Args**
-
-* **path** (Path) : Storage path.
-
-
-**Returns**
-
-None.
-
-### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/drqv2.py/#L319)
-```python
-.load(
-   path: str
-)
-```
-
----
-Load initial parameters.
-
-
-**Args**
-
-* **path** (str) : Import path.
-
-
-**Returns**
-
-None.

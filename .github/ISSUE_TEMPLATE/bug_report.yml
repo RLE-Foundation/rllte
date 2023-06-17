@@ -1,5 +1,5 @@
 name: "\U0001F41B Bug Report"
-description: Submit a bug report to help us improve Hsuanwu
+description: Submit a bug report to help us improve rllte
 title: "[Bug]: bug title"
 labels: ["bug"]
 body:
@@ -60,9 +60,9 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/Hsuanwu/issues) in the repo
+        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/rllte/issues) in the repo
           required: true
-        - label: I have read the [documentation](https://docs.hsuanwu.dev/)
+        - label: I have read the [documentation](https://docs.rllte.dev/)
           required: true
         - label: I have provided a minimal working example to reproduce the bug
           required: true

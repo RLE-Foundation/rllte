@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-LINT_PATHS=hsuanwu/
+LINT_PATHS=rllte/ tests/
 
 pytest: 
 	sh ./scripts/run_tests.sh

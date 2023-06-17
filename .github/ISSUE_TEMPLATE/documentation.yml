@@ -1,5 +1,5 @@
 name: "\U0001F4DA Documentation"
-description: Report an issue related to Hsuanwu documentation
+description: Report an issue related to rllte documentation
 labels: ["documentation"]
 body:
   - type: markdown
@@ -19,7 +19,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/Hsuanwu/issues) in the repo
+        - label: I have checked that there is no similar [issue](https://github.com/RLE-Foundation/rllte/issues) in the repo
           required: true
-        - label: I have read the [documentation](https://docs.hsuanwu.dev/)
+        - label: I have read the [documentation](https://docs.rllte.dev/)
           required: true

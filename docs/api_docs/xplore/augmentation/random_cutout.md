@@ -2,7 +2,7 @@
 
 
 ## RandomCutout
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_cutout.py/#L6)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutout.py/#L31)
 ```python 
 RandomCutout(
    min_cut: int = 10, max_cut: int = 30
@@ -12,6 +12,7 @@ RandomCutout(
 
 ---
 Random Cutout operation for image augmentation.
+
 
 **Args**
 
@@ -28,7 +29,7 @@ Augmented images.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/augmentation/random_cutout.py/#L21)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_cutout.py/#L47)
 ```python
 .forward(
    x: th.Tensor

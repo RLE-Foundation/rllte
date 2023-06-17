@@ -2,98 +2,97 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L126)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L113)
 ```python 
 IMPALA(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str, feature_dim: int, lr: float, eps: float, use_lstm: bool,
-   ent_coef: float, baseline_coef: float, max_grad_norm: float, discount: float
+   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   device: str = 'cpu', num_steps: int = 80, num_actors: int = 45, num_learners: int = 4,
+   num_storages: int = 60, feature_dim: int = 512, batch_size: int = 4, lr: float = 0.0004,
+   eps: float = 0.01, use_lstm: bool = False, ent_coef: float = 0.01,
+   baseline_coef: float = 0.5, max_grad_norm: float = 40, discount: float = 0.99,
+   network_init_method: str = 'identity'
 )
 ```
 
 
 ---
 Importance Weighted Actor-Learner Architecture (IMPALA).
+Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
 
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
+* **env** (gym.Env) : A Gym-like environment for training.
+* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **tag** (str) : An experiment tag.
+* **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **num_steps** (int) : The sample length of per rollout.
+* **num_actors** (int) : Number of actors.
+* **num_learners** (int) : Number of learners.
+* **num_storages** (int) : Number of storages.
 * **feature_dim** (int) : Number of features extracted by the encoder.
+* **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
 * **eps** (float) : Term added to the denominator to improve numerical stability.
+* **hidden_dim** (int) : The size of the hidden layers.
 * **use_lstm** (bool) : Use LSTM in the policy network or not.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
-* **baseline_coef** (float) : .
+* **baseline_coef** (float) : Weighting coefficient of baseline value loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
 * **discount** (float) : Discount factor.
+* **network_init_method** (str) : Network initialization method name.
+
 
 
 **Returns**
 
-IMPALA distance.
+IMPALA agent instance.
 
 
 **Methods:**
 
 
-### .train
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L182)
+### .freeze
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L189)
 ```python
-.train(
-   training: bool = True
+.freeze()
+```
+
+---
+Freeze the structure of the agent.
+
+### .act
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L213)
+```python
+.act(
+   env: Environment, actor_idx: int, free_queue: mp.SimpleQueue,
+   full_queue: mp.SimpleQueue, init_actor_state_storages: List[th.Tensor]
 )
 ```
 
 ---
-Set the train mode.
+Sampling function for each actor.
 
 
 **Args**
 
-* **training** (bool) : True (training) or False (testing).
+* **env** (Environment) : A Gym-like environment wrapped by `Environment`.
+* **actor_idx** (int) : The index of actor.
+* **free_queue** (Queue) : Free queue for communication.
+* **full_queue** (Queue) : Full queue for communication.
+* **init_actor_state_storages** (List[Tensor]) : Initial states for LSTM.
 
 
 **Returns**
 
 None.
 
-### .integrate
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L195)
-```python
-.integrate(
-   **kwargs
-)
-```
-
----
-Integrate agent and other modules (encoder, reward, ...) together
-
-### .act
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L212)
-```python
-.act(
-   *kwargs
-)
-```
-
----
-Sample actions based on observations.
-
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L217)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L273)
 ```python
 .update(
-   cfgs: omegaconf.DictConfig, actor_model: nn.Module, learner_model: nn.Module,
-   batch: Dict, init_actor_states: Tuple[th.Tensor, ...],
-   optimizer: th.optim.Optimizer, lr_scheduler: th.optim.lr_scheduler,
-   lock = threading.Lock()
+   batch: Dict, init_actor_states: Tuple[th.Tensor, ...], lock = threading.Lock()
 )
 ```
 
@@ -103,13 +102,8 @@ Update the learner model.
 
 **Args**
 
-* **cfgs** (DictConfig) : Training configs.
-* **actor_model** (NNMoudle) : Actor network.
-* **learner_model** (NNMoudle) : Learner network.
 * **batch** (Batch) : Batch samples.
 * **init_actor_states** (List[Tensor]) : Initial states for LSTM.
-* **optimizer** (th.optim.Optimizer) : Optimizer.
-* **lr_scheduler** (th.optim.lr_scheduler) : Learning rate scheduler.
 * **lock** (Lock) : Thread lock.
 
 
@@ -118,28 +112,16 @@ Update the learner model.
 Training metrics.
 
 ### .save
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L287)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L334)
 ```python
-.save(
-   path: Path
-)
+.save()
 ```
 
 ---
 Save models.
 
-
-**Args**
-
-* **path** (Path) : Storage path.
-
-
-**Returns**
-
-None.
-
 ### .load
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/agent/impala.py/#L299)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/impala.py/#L342)
 ```python
 .load(
    path: str

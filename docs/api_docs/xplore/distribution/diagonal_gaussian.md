@@ -2,7 +2,7 @@
 
 
 ## DiagonalGaussian
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L7)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L32)
 ```python 
 DiagonalGaussian(
    loc: th.Tensor, scale: th.Tensor
@@ -16,8 +16,8 @@ Diagonal Gaussian distribution for 'Box' tasks.
 
 **Args**
 
-* **loc** (Tensor) : The mean of the distribution (often referred to as mu).
-* **scale** (Tensor) : The standard deviation of the distribution (often referred to as sigma).
+* **loc** (th.Tensor) : The mean of the distribution (often referred to as mu).
+* **scale** (th.Tensor) : The standard deviation of the distribution (often referred to as sigma).
 
 
 **Returns**
@@ -29,7 +29,7 @@ Squashed normal distribution instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L25)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L50)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -43,7 +43,7 @@ samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -51,7 +51,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L37)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L62)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -65,7 +65,7 @@ reparameterized samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -73,7 +73,7 @@ reparameterized samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L50)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L75)
 ```python
 .mean()
 ```
@@ -82,7 +82,7 @@ A sample_shape shaped sample.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L55)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L80)
 ```python
 .mode()
 ```
@@ -91,7 +91,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L85)
 ```python
 .stddev()
 ```
@@ -100,7 +100,7 @@ Returns the mode of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L65)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L90)
 ```python
 .variance()
 ```
@@ -109,7 +109,7 @@ Returns the standard deviation of the distribution.
 Returns the variance of the distribution.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L69)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L94)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -122,7 +122,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 
 **Args**
 
-* **actions** (Tensor) : The actions to be evaluated.
+* **actions** (th.Tensor) : The actions to be evaluated.
 
 
 **Returns**
@@ -130,7 +130,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 The log_prob value.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L80)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L105)
 ```python
 .reset()
 ```
@@ -139,7 +139,7 @@ The log_prob value.
 Reset the distribution.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/diagonal_gaussian.py/#L84)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L109)
 ```python
 .entropy()
 ```

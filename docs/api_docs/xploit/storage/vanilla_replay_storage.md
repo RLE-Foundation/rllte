@@ -2,11 +2,11 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L11)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L35)
 ```python 
 VanillaReplayStorage(
-   observation_space: Union[gym.Space, DictConfig], action_space: Union[gym.Space,
-   DictConfig], device: str = 'cpu', storage_size: int = 1000000, batch_size: int = 1024
+   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
+   storage_size: int = 1000000, batch_size: int = 1024
 )
 ```
 
@@ -17,15 +17,11 @@ Vanilla replay storage for off-policy algorithms.
 
 **Args**
 
-* **observation_space** (Space or DictConfig) : The observation space of environment. When invoked by Hydra,
-    'observation_space' is a 'DictConfig' like {"shape": observation_space.shape, }.
-* **action_space** (Space or DictConfig) : The action space of environment. When invoked by Hydra,
-    'action_space' is a 'DictConfig' like
-    {"shape": (n, ), "type": "Discrete", "range": [0, n - 1]} or
-    {"shape": action_space.shape, "type": "Box", "range": [action_space.low[0], action_space.high[0]]}.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
-* **storage_size** (int) : Max number of element in the buffer.
-* **batch_size** (int) : Batch size of samples.
+* **observation_space** (gym.Space) : Observation space.
+* **action_space** (gym.Space) : Action space.
+* **device** (str) : Device to store the data.
+* **storage_size** (int) : Storage size.
+* **batch_size** (int) : Batch size.
 
 
 **Returns**
@@ -37,10 +33,11 @@ Vanilla replay storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L80)
 ```python
 .add(
-   obs: Any, action: Any, reward: Any, terminated: Any, info: Any, next_obs: Any
+   obs: Any, action: Any, reward: Any, terminated: Any, truncated: Any, info: Any,
+   next_obs: Any
 )
 ```
 
@@ -50,12 +47,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (Any) : Observations.
-* **action** (Any) : Actions.
-* **reward** (Any) : Rewards.
-* **terminated** (Any) : Terminateds.
-* **info** (Any) : Infos.
-* **next_obs** (Any) : Next observations.
+* **obs** (Any) : Observation.
+* **action** (Any) : Action.
+* **reward** (Any) : Reward.
+* **terminated** (Any) : Termination flag.
+* **truncated** (Any) : Truncation flag.
+* **info** (Any) : Additional information.
+* **next_obs** (Any) : Next observation.
 
 
 **Returns**
@@ -63,7 +61,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L91)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L115)
 ```python
 .sample(
    step: int
@@ -84,7 +82,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xploit/storage/vanilla_replay_storage.py/#L115)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L140)
 ```python
 .update(
    *args
@@ -92,4 +90,4 @@ Batched samples.
 ```
 
 ---
-Update the storage
+Update the storage if necessary.

@@ -2,7 +2,7 @@
 
 
 ## Comparison
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L9)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/comparison.py/#L35)
 ```python 
 Comparison(
    scores_x: np.ndarray, scores_y: np.ndarray, get_ci: bool = False,
@@ -19,12 +19,12 @@ https://github.com/google-research/rliable/blob/master/rliable/metrics.py
 
 **Args**
 
-* **scores_x** (NdArray) : A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
+* **scores_x** (np.ndarray) : A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m` for algorithm `X`.
-* **scores_y** (NdArray) : A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
+* **scores_y** (np.ndarray) : A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m` for algorithm `Y`.
 * **get_ci** (bool) : Compute CIs or not.
-* **method** (str) :  One of `basic`, `percentile`, `bc` (identical to `debiased`,
+* **method** (str) : One of `basic`, `percentile`, `bc` (identical to `debiased`,
     `bias-corrected`), or `bca`.
 * **reps** (int) : Number of bootstrap replications.
 * **confidence_interval_size** (float) : Coverage of confidence interval.
@@ -40,7 +40,7 @@ Comparer instance.
 
 
 ### .compute_poi
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L48)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/comparison.py/#L74)
 ```python
 .compute_poi()
 ```
@@ -49,10 +49,10 @@ Comparer instance.
 Compute the overall probability of imporvement of algorithm `X` over `Y`.
 
 ### .get_interval_estimates
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/evaluation/comparison.py/#L77)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/evaluation/comparison.py/#L102)
 ```python
 .get_interval_estimates(
-   scores_x: np.array, scores_y: np.array, metric: Callable
+   scores_x: np.ndarray, scores_y: np.ndarray, metric: Callable
 )
 ```
 
@@ -62,9 +62,9 @@ Computes interval estimation of the above performance evaluators.
 
 **Args**
 
-* **scores_x** (NdArray) : A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
+* **scores_x** (np.ndarray) : A matrix of size (`num_runs_x` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m` for algorithm `X`.
-* **scores_y** (NdArray) : A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
+* **scores_y** (np.ndarray) : A matrix of size (`num_runs_y` x `num_tasks`) where scores[n][m]
     represent the score on run `n` of task `m` for algorithm `Y`.
 * **metric** (Callable) : One of the above performance evaluators used for estimation.
 

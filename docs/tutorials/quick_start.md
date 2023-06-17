@@ -1,41 +1,32 @@
-## Build Application
+# Quick Start
 
-Hsuanwu uses [Hydra](https://hydra.cc/) to manage RL applications elegantly. For example, 
-we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of DeepMind Control Suite, and we only need the following two steps:
+## On NVIDIA GPU
+In **rllte**, users can build RL applications with very simple code. For example, 
+we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of DeepMind Control Suite, and 
+it suffices to write a `train.py` like:
 
-1. Write a `config.yaml` file in your working directory like:
-``` yaml title="config.yaml"
-experiment: drqv2_dmc     # Experiment ID.
-device: cuda:0            # Device (cpu, cuda, ...).
-seed: 1                   # Random seed for reproduction.
-num_train_steps: 5000     # Number of training steps.
-
-agent:
-  name: DrQv2             # The agent name.
-```
-
-2. Write a train.py file like:
 ``` py title="train.py"
-import hydra # Use Hydra to manage experiments
-from hsuanwu.common.engine import HsuanwuEngine # Import Hsuanwu engine
+# import `env` and `agent` api
+from rllte.env import make_dmc_env 
+from rllte.xploit.agent import DrQv2
 
-train_env = make_dmc_env(env_id='cartpole_balance') # Create train env
-test_env = make_dmc_env(env_id='cartpole_balance') # Create test env [Optional]
-
-@hydra.main(version_base=None, config_path='./', config_name='config')
-def main(cfgs):
-    engine = HsuanwuEngine(cfgs=cfgs, train_env=train_env, test_env=test_env) # Initialize engine
-    engine.invoke() # Start training
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    device = "cuda:0"
+    # create env, and `eval_env` is optional
+    env = make_dmc_env(env_id="cartpole_balance", device=device)
+    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
+    # create agent
+    agent = DrQv2(env=env, 
+                  eval_env=eval_env, 
+                  device='cuda',
+                  tag="drqv2_dmc_pixel")
+    # start training
+    agent.train(num_train_steps=5000)
 ```
-
-## Start Training
 
 Run `train.py` and you will see the following output:
 <div align=center>
-<img src='../../assets/images/rl_training.png'>
+<img src='../../assets/images/rl_training_gpu.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 !!! info "Read the logs"
@@ -46,35 +37,45 @@ Run `train.py` and you will see the following output:
     - **FPS**: Training FPS.
     - **T**: Time costs.
 
-## Output/Working Directory
-You can specify the working directory by  `config.yaml`, or an `outputs` folder will be used by default.
-``` yaml title="config.yaml"
-experiment: drqv2_dmc     # Experiment ID.
-device: cuda:0            # Device (cpu, cuda, ...).
-seed: 1                   # Random seed for reproduction.
-num_train_steps: 5000     # Number of training steps.
+## On HUAWEI NPU
+Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
+``` py title="train.py"
+# import `env` and `agent` api
+from rllte.env import make_dmc_env 
+from rllte.xploit.agent import NpuDrQv2
 
-agent:
-  name: DrQv2             # The agent name.
-
-hydra:
-run:
-  dir: ./logs/${experiment}/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname} # Specify the output directory.
-job:
-  chdir: true # Change the working working.
+if __name__ == "__main__":
+    device = "npu:0"
+    # create env, and `eval_env` is optional
+    env = make_dmc_env(env_id="cartpole_balance", device=device)
+    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
+    # create agent
+    agent = NpuDrQv2(env=env, 
+                     eval_env=eval_env, 
+                     device='cuda',
+                     tag="drqv2_dmc_pixel")
+    # start training
+    agent.train(num_train_steps=5000)
 ```
 
+!!! info "Compatibility of NPU"
+    Please refer to [https://docs.rllte.dev/api/](https://docs.rllte.dev/api/) for the compatibility of NPU.
+
+Run `train.py` and you will see the following output:
+<div align=center>
+<img src='../../assets/images/rl_training_npu.png' style="filter: drop-shadow(0px 0px 7px #000);">
+</div>
+
 ## Load the Trained Model
-Once the training is finished, you can find `encoder.pth` and `actor.pth` in the subfolder `model` of the specified working directory.
+Once the training is finished, you can find `agent.pth` in the subfolder `model` of the specified working directory.
 
 ``` py title="play.py"
 import torch as th
 
 # load the model and specify the map location
-encoder = th.load("encoder.pth", map_location=th.device('cpu'))
-actor = th.load("actor.pth", map_location=th.device('cpu'))
+agent = th.load("agent.pth", map_location=th.device('cpu'))
 obs = th.zeros(size=(1, 9, 84, 84))
-action = actor(encoder(obs))
+action = agent(obs)
 print(action)
 
 # Output: tensor([[-1.0000]], grad_fn=<TanhBackward0>)

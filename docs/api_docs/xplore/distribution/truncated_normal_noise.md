@@ -2,11 +2,12 @@
 
 
 ## TruncatedNormalNoise
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L8)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L34)
 ```python 
 TruncatedNormalNoise(
-   loc: float = 0.0, scale: float = 1.0, stddev_schedule: str = 'linear(1.0, 0.1,
-   100000)', stddev_clip: float = 0.3
+   loc: float = 0.0, scale: float = 1.0, low: float = -1.0, high: float = 1.0,
+   eps: float = 1e-06, stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
+   stddev_clip: float = 0.3
 )
 ```
 
@@ -20,6 +21,9 @@ Truncated normal action noise. See Section 3.1 of
 
 * **loc** (float) : mean of the noise (often referred to as mu).
 * **scale** (float) : standard deviation of the noise (often referred to as sigma).
+* **low** (float) : The lower bound of the noise.
+* **high** (float) : The upper bound of the noise.
+* **eps** (float) : A small value to avoid numerical instability.
 * **stddev_schedule** (str) : Use the exploration std schedule.
 * **stddev_clip** (float) : The exploration std clip range.
 
@@ -33,7 +37,7 @@ Truncated normal noise instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L38)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L80)
 ```python
 .sample(
    clip: bool = False, sample_shape: th.Size = th.Size()
@@ -48,7 +52,7 @@ samples if the distribution parameters are batched.
 **Args**
 
 * **clip** (bool) : Whether to perform noise truncation.
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -56,7 +60,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L59)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L101)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -70,7 +74,7 @@ samples if the distribution parameters are batched.
 
 **Args**
 
-* **sample_shape** (Size) : The size of the sample to be drawn.
+* **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
 **Returns**
@@ -78,7 +82,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L71)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L113)
 ```python
 .log_prob(
    value: th.Tensor
@@ -91,7 +95,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 
 **Args**
 
-* **value** (Tensor) : The value to be evaluated.
+* **value** (th.Tensor) : The value to be evaluated.
 
 
 **Returns**
@@ -99,7 +103,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 The log_prob value.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L82)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L124)
 ```python
 .reset(
    noiseless_action: th.Tensor, step: int = 0
@@ -112,7 +116,7 @@ Reset the noise instance.
 
 **Args**
 
-* **noiseless_action** (Tensor) : Unprocessed actions.
+* **noiseless_action** (th.Tensor) : Unprocessed actions.
 * **step** (int) : Global training step that can be None when there is no noise schedule.
 
 
@@ -121,7 +125,7 @@ Reset the noise instance.
 None.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L140)
 ```python
 .mean()
 ```
@@ -130,7 +134,7 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L103)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L145)
 ```python
 .mode()
 ```
@@ -139,7 +143,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L107)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L149)
 ```python
 .entropy()
 ```
@@ -148,7 +152,7 @@ Returns the mode of the distribution.
 Returns the Shannon entropy of distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L112)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L154)
 ```python
 .stddev()
 ```
@@ -157,7 +161,7 @@ Returns the Shannon entropy of distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/Hsuanwu/blob/main/hsuanwu/xplore/distribution/truncated_normal_noise.py/#L117)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L159)
 ```python
 .variance()
 ```
