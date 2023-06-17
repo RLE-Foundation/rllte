@@ -23,6 +23,6 @@
 # =============================================================================
 
 
-from .atari_200m import Atari200M as Atari200M
-from .dmc import DMC as DMC
+from .atari import Atari as Atari
+from .dmc import DeepMindControl as DeepMindControl
 from .procgen import Procgen as Procgen

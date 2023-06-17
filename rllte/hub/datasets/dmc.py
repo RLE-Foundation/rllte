@@ -30,7 +30,7 @@ import pandas as pd
 from huggingface_hub import hf_hub_download
 
 
-class DMC:
+class DeepMindControl:
     """Scores and learning cures of various RL algorithms on the full
     DeepMind Control Suite benchmark.
     """

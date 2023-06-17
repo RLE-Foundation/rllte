@@ -1,23 +1,14 @@
-import torch
-from flagai.auto_model.auto_loader import AutoLoader
-from flagai.model.predictor.predictor import Predictor
+from transformers import T5ForConditionalGeneration, AutoTokenizer
 
-state_dict = "./checkpoints_in/"
-model_name = "aquila-7b"  # 'aquila-33b'
+checkpoint = "./codet5p-770m-py"
+device = "cuda" # for GPU usage or "cpu" for CPU usage
 
-loader = AutoLoader("lm", model_dir=state_dict, model_name=model_name, use_cache=True)
-model = loader.get_model()
-tokenizer = loader.get_tokenizer()
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+model = T5ForConditionalGeneration.from_pretrained(checkpoint).to(device)
 
-model.eval()
-model.half()
-model.cuda()
-
-predictor = Predictor(model, tokenizer)
-
-text = "北京在哪儿?"
-text = f"{text}"
-print(f"text is {text}")
-with torch.no_grad():
-    out = predictor.predict_generate_randomsample(text, out_max_length=200, temperature=0)
-    print(f"pred is {out}")
+while True:
+    prompt = input("Prompt: ")
+    inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+    outputs = model.generate(inputs, max_length=1000)
+    print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+# ==>     print('Hello World!')

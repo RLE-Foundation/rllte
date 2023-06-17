@@ -12,7 +12,7 @@ We reconstruct and improve the code of the official repository [rliable](https:/
 # load packages
 from rllte.evaluation import Performance, Comparison, min_max_normalize
 from rllte.evaluation import *
-from rllte.hub.datasets import Procgen, Atari200M
+from rllte.hub.datasets import Procgen, Atari
 import numpy as np
 # load scores
 procgen = Procgen()
@@ -164,7 +164,7 @@ The output figure is:
 ### `.plot_sample_efficiency_curve`
 `.plot_sample_efficiency_curve` plots an aggregate metric with CIs as a function of environment frames. An example is:
 ```py title="example.py"
-ale_all_frames_scores_dict = Atari200M().load_curves()
+ale_all_frames_scores_dict = Atari().load_curves()
 frames = np.array([1, 10, 25, 50, 75, 100, 125, 150, 175, 200]) - 1
 
 sampling_dict = dict()
