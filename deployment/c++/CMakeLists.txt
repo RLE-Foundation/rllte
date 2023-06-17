@@ -1,17 +1,24 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(HsuanwuDeployer_test)
+project(RLLTEDeployer_test)
+
+if(CMAKE_BUILD_TYPE STREQUAL "")
+set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 
 find_package(CUDA REQUIRED)
 
-include_directories(${PROJECT_SOURCE_DIR} ${CUDA_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR} ${CUDA_INCLUDE_DIRS})
 
-add_library(HsuanwuDeployer SHARED HsuanwuDeployer.cpp ./common/logger.cpp)
-target_link_libraries(HsuanwuDeployer nvinfer nvonnxparser ${CUDA_LIBRARIES})
+add_library(RLLTEDeployer SHARED RLLTEDeployer.cpp ./common/logger.cpp)
+target_link_libraries(RLLTEDeployer nvinfer nvonnxparser ${CUDA_LIBRARIES})
 
-add_executable(HsuanwuDeployer_test HsuanwuDeployer_test.cpp)
-target_link_libraries(HsuanwuDeployer_test HsuanwuDeployer)
+
+add_executable(DeployerTest DeployerTest.cpp)
+target_link_libraries(DeployerTest ${PROJECT_SOURCE_DIR}/build/libRLLTEDeployer.so)
+
+message("Build type: " ${CMAKE_BUILD_TYPE})
 
