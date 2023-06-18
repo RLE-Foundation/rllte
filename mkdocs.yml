@@ -86,9 +86,6 @@ nav:
     - Overview: api.md
     - Common: 
       - BaseAgent: api_docs/common/base_agent.md
-      - OnPolicyAgent: api_docs/common/on_policy_agent.md
-      - OffPolicyAgent: api_docs/common/off_policy_agent.md
-      - DistributedAgent: api_docs/common/distributed_agent.md
       - BaseEncoder: api_docs/common/base_encoder.md
       - BaseStorage: api_docs/common/base_storage.md
       - BaseDistribution: api_docs/common/base_distribution.md
@@ -107,6 +104,9 @@ nav:
         - PPO: api_docs/xploit/agent/ppo.md
         - DrAC: api_docs/xploit/agent/ppo.md
         - IMPALA: api_docs/xploit/agent/impala.md
+        - OnPolicyAgent: api_docs/common/on_policy_agent.md
+        - OffPolicyAgent: api_docs/common/off_policy_agent.md
+        - DistributedAgent: api_docs/common/distributed_agent.md
       
       - encoder:
         - EspeholtResidualEncoder: api_docs/xploit/encoder/espeholt_residual_encoder.md
@@ -158,6 +158,14 @@ nav:
         - NormalNoise: api_docs/xplore/distribution/normal_noise.md
         - OrnsteinUhlenbeckNoise: api_docs/xplore/distribution/ornstein_uhlenbeck_noise.md
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
+    
+    - Hub: 
+      - apps: 
+        - ppo_procgen: ...
+      - datasets:
+        - Procgen: ...
+      - models:
+        - Procgen: ...
     
     - Env:
       - make_atari_env: api_docs/env/atari/__init__.md
