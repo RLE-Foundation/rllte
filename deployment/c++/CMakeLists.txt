@@ -18,7 +18,7 @@ target_link_libraries(RLLTEDeployer nvinfer nvonnxparser ${CUDA_LIBRARIES})
 
 
 add_executable(DeployerTest DeployerTest.cpp)
-target_link_libraries(DeployerTest ${PROJECT_SOURCE_DIR}/build/libRLLTEDeployer.so)
+target_link_libraries(DeployerTest RLLTEDeployer)
 
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
