@@ -45,7 +45,7 @@ python3 pth2onnx.py ../model/test_model.pth
 python3 infer.py test_model.plan
 ```
 
-## Use in Your c++ Project
+### Use in Your C++ Project
 The following code illustrates how to include our library in you project:
 ``` c++ title="example.cpp"
 // Including the header file in your cpp file.
@@ -79,14 +79,14 @@ deployer.infer<int8>(input, output, 1);
 ```
 Please refer to the [DeployerTest.cpp](https://github.com/RLE-Foundation/rllte/blob/main/deployment/c%2B%2B/DeployerTest.cpp) for the complete code.
 
-### with `CMake`
+#### with `CMake`
 ``` txt title="CMakeLists.txt"
 find_package(CUDA REQUIRED)
 include_directories(${CUDA_INCLUDE_DIRS} ${Path_of_RLLTEDeployer_h}})
 target_link_libraries(YOUREXECUTEFILE ${PATH_OF_libRLLTEDeployer_so)
 ```
 
-### with `Docker`
+#### with `Docker`
 Install the NVIDIA docker via (make sure the NVIDIA driver is installed):
 ``` sh title="install_docker.sh"
 sudo apt-get install ca-certificates gnupg lsb-release
@@ -105,12 +105,14 @@ sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 sudo groupadd docker
 sudo gpasswd -a $USER docker
+```
 
-# Logout and Login to make the user group activated.
+**Restart** your device. After that, run the following command.
+``` sh
 sudo service docker restart
 ```
 
-After that, run the following command:
+Now you can run your model via:
 ``` sh title="run_docker.sh"
 docker pull jakeshihaoluo/rllte_deployment_env:0.0.1
 docker run -it -v ${path_to_the_repo}:/rllte --gpus all jakeshihaoluo/rllte_deployment_env:0.0.1
