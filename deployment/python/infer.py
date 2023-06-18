@@ -3,12 +3,11 @@ import tensorrt as trt
 import pycuda.autoinit  #负责数据初始化，内存管理，销毁等
 import pycuda.driver as cuda  #GPU CPU之间的数据传输
 import numpy as np
-import os
-os.chdir(os.path.dirname(__file__))
+import sys
 # 创建logger：日志记录器
 logger = trt.Logger(trt.Logger.WARNING)
 # 创建runtime并反序列化生成engine
-with open('encoder.trt', 'rb') as f, trt.Runtime(logger) as runtime:
+with open(sys.argv[1], 'rb') as f, trt.Runtime(logger) as runtime:
     engine = runtime.deserialize_cuda_engine(f.read())
 # 分配CPU锁页内存和GPU显存
 with engine.create_execution_context() as context:
