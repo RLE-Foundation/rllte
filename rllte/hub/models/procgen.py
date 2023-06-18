@@ -29,13 +29,16 @@ from huggingface_hub import hf_hub_download
 from torch import nn
 
 class Procgen:
-    """Trained models various RL algorithms on the full Procgen benchmark."""
+    """Trained models various RL algorithms on the full Procgen benchmark.
+        Environment link: https://github.com/openai/procgen
+        Number of environments: 16
+        Number of training steps: 25,000,000
+        Number of seeds: 10
+        Added algorithms: [PPO]
+    """
 
     def __init__(self) -> None:
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="procgen_data.json", subfolder="datasets"
-        )
-        self.procgen_data = pd.read_json(file)
+        pass
 
     def load_models(self, 
                     agent: str,
