@@ -107,7 +107,7 @@ sudo groupadd docker
 sudo gpasswd -a $USER docker
 ```
 
-**Restart** your device. After that, run the following command.
+**Restart** your device, and run the following command.
 ``` sh
 sudo service docker restart
 ```
