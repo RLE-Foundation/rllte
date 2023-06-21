@@ -38,11 +38,11 @@ Run `train.py` and you will see the following output:
     - **T**: Time costs.
 
 ## On HUAWEI NPU
-Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
+Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `cuda` with `npu`:
 ``` py title="train.py"
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
-from rllte.xploit.agent import NpuDrQv2
+from rllte.xploit.agent import DrQv2
 
 if __name__ == "__main__":
     device = "npu:0"
@@ -50,10 +50,10 @@ if __name__ == "__main__":
     env = make_dmc_env(env_id="cartpole_balance", device=device)
     eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
     # create agent
-    agent = NpuDrQv2(env=env, 
-                     eval_env=eval_env, 
-                     device='cuda',
-                     tag="drqv2_dmc_pixel")
+    agent = DrQv2(env=env, 
+                  eval_env=eval_env, 
+                  device='cuda',
+                  tag="drqv2_dmc_pixel")
     # start training
     agent.train(num_train_steps=5000)
 ```

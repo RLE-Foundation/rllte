@@ -77,7 +77,7 @@ if __name__ == "__main__":
         value_freq=32,
         vf_coef=0.5,
         ent_coef=0.01,
-        adv_coef=0.25,
+        adv_coef=0.05,
         max_grad_norm=0.5,
         network_init_method="xavier_uniform",
     )
