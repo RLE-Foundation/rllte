@@ -23,14 +23,12 @@
 # =============================================================================
 
 
-from .base_agent import BaseAgent as BaseAgent
-from .base_augmentation import BaseAugmentation as BaseAugmentation
-from .base_distribution import BaseDistribution as BaseDistribution
-from .base_encoder import BaseEncoder as BaseEncoder
-from .base_reward import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
-from .base_storage import BaseStorage as BaseStorage
-from .logger import Logger as Logger
-from .timer import Timer as Timer
-from .on_policy_agent import OnPolicyAgent as OnPolicyAgent
-from .off_policy_agent import OffPolicyAgent as OffPolicyAgent
-from .distributed_agent import DistributedAgent as DistributedAgent
+from .distributed_actor_learner import DistributedActorLearner as DistributedActorLearner
+from .off_policy_deterministic_actor_double_critic import (
+    OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic,
+)
+from .off_policy_stochastic_actor_double_critic import (
+    OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic,
+)
+from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
+from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic

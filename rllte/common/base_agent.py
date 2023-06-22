@@ -44,6 +44,7 @@ except Exception:
 from rllte.common.base_augmentation import BaseAugmentation as Augmentation
 from rllte.common.base_distribution import BaseDistribution as Distribution
 from rllte.common.base_encoder import BaseEncoder as Encoder
+from rllte.common.base_policy import BasePolicy as Policy
 from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.base_storage import BaseStorage as Storage
 from rllte.common.logger import Logger
@@ -73,8 +74,7 @@ class BaseAgent(ABC):
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
-        pretraining: bool = False,
-        feature_dim: int = 512,
+        pretraining: bool = False
     ) -> None:
         # change work dir
         path = Path.cwd() / "logs" / tag / datetime.now().strftime("%Y-%m-%d-%I-%M-%S")
@@ -87,7 +87,6 @@ class BaseAgent(ABC):
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
-        self.feature_dim = feature_dim
         self.num_eval_episodes = 10
         self.global_step = 0
         self.global_episode = 0
@@ -125,6 +124,7 @@ class BaseAgent(ABC):
 
         # placeholder for Encoder, Storage, Distribution, Augmentation, Reward
         self.encoder = None
+        self.policy = None
         self.storage = None
         self.dist = None
         self.aug = None
@@ -182,6 +182,7 @@ class BaseAgent(ABC):
         self.logger.debug("Checking the Compatibility of Modules...")
         self.logger.debug(f"Selected Agent: {self.__class__.__name__}")
         self.logger.debug(f"Selected Encoder: {self.encoder.__class__.__name__}")
+        self.logger.debug(f"Selected Policy: {self.policy.__class__.__name__}")
         self.logger.debug(f"Selected Storage: {self.storage.__class__.__name__}")
         # class for `Distribution` and instance for `Noise`
         dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
@@ -207,6 +208,7 @@ class BaseAgent(ABC):
     def set(
         self,
         encoder: Optional[Any] = None,
+        policy: Optional[Any] = None,
         storage: Optional[Any] = None,
         distribution: Optional[Any] = None,
         augmentation: Optional[Any] = None,
@@ -216,6 +218,7 @@ class BaseAgent(ABC):
 
         Args:
             encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
+            policy (Optional[Any]): A policy of `rllte.xploit.policy` or a custom policy.
             storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
             distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
             augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
@@ -227,19 +230,26 @@ class BaseAgent(ABC):
         if encoder is not None:
             assert isinstance(encoder, Encoder), "The `encoder` must be a subclass of `BaseEncoder`!"
             self.encoder = encoder
-            assert (
-                self.encoder.feature_dim == self.feature_dim
-            ), "The `feature_dim` argument of agent and encoder must be same!"
+        
+        if policy is not None:
+            assert isinstance(policy, Policy), "The `policy` must be a subclass of `BasePolicy`!"
+            self.policy = policy
 
         if storage is not None:
             assert isinstance(storage, Storage), "The `storage` must be a subclass of `BaseStorage`!"
             self.storage = storage
+
         if distribution is not None:
-            assert isinstance(distribution, Distribution), "The `distribution` must be a subclass of `BaseDistribution`!"
+            try:
+                assert issubclass(distribution, Distribution), "The `distribution` must be a subclass of `BaseDistribution`!"
+            except TypeError:
+                assert isinstance(distribution, Distribution), "The `noise` must be a subclass of `BaseDistribution`!"
             self.dist = distribution
+
         if augmentation is not None:
             assert isinstance(augmentation, Augmentation), "The `augmentation` must be a subclass of `BaseAugmentation`!"
             self.aug = augmentation
+
         if reward is not None:
             assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
             self.irs = reward
