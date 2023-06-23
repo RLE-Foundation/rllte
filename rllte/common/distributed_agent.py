@@ -24,11 +24,12 @@
 
 
 import os
+import traceback
 import threading
 import time
 from collections import deque
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import gymnasium as gym
 import numpy as np
@@ -36,10 +37,6 @@ import torch as th
 from torch import multiprocessing as mp
 
 from rllte.common.base_agent import BaseAgent
-from rllte.common.policies import DistributedActorCritic
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.storage import DistributedStorage as Storage
-from rllte.xplore.distribution import Categorical, DiagonalGaussian
 
 
 class Environment:
@@ -178,8 +175,6 @@ class DistributedAgent(BaseAgent):  # type: ignore
         num_storages: int = 60,
         **kwargs,
     ) -> None:
-        feature_dim = kwargs.pop("feature_dim", 512)
-        use_lstm = kwargs.pop("use_lstm", 256)
         batch_size = kwargs.pop("batch_size", 4)
 
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
@@ -190,56 +185,71 @@ class DistributedAgent(BaseAgent):  # type: ignore
         self.num_storages = num_storages
         self.batch_size = batch_size
 
-        # build encoder
-        if len(self.obs_shape) == 3:
-            self.encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-        elif len(self.obs_shape) == 1:
-            self.encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-            self.feature_dim = self.obs_shape[0]
-
-        # build storage
-        self.storage = Storage(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            device=device,
-            num_steps=self.num_steps,
-            num_storages=num_storages,
-            batch_size=batch_size,
-        )
-
-        # build distribution
-        if self.action_type == "Discrete":
-            self.dist = Categorical
-        elif self.action_type == "Box":
-            self.dist = DiagonalGaussian
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
-        # create models
-        self.policy.actor = DistributedActorCritic(
-            obs_shape=self.obs_shape,
-            action_shape=self.action_shape,
-            action_dim=self.action_dim,
-            action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm,
-        )
-        self.policy.learner = DistributedActorCritic(
-            obs_shape=self.obs_shape,
-            action_shape=self.action_shape,
-            action_dim=self.action_dim,
-            action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=feature_dim,
-            use_lstm=use_lstm,
-        )
         # get separate environments
         self.env = self.env.envs
 
-    def act(self) -> None:
-        """`act` function of each actor. Implemented by individual algorithms."""
-        raise NotImplementedError
+    def run(self,
+            env: Environment,
+            actor_idx: int,
+            free_queue: mp.SimpleQueue,
+            full_queue: mp.SimpleQueue,
+            init_actor_state_storages: List[th.Tensor]) -> None:
+        """Sample function of each actor. Implemented by individual algorithms.
+        
+        Args:
+            env (Environment): A Gym-like environment wrapped by `Environment`.
+            actor_idx (int): The index of actor.
+            free_queue (Queue): Free queue for communication.
+            full_queue (Queue): Full queue for communication.
+            init_actor_state_storages (List[Tensor]): Initial states for LSTM.
+
+        Returns:
+            None.
+        """
+        seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
+        env_output = env.reset(seed)
+
+        actor_state = self.policy.actor.init_state(batch_size=1)
+        actor_output, _ = self.policy.actor.act(env_output, actor_state)
+        try:
+            seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
+            env_output = env.reset(seed)
+
+            actor_state = self.policy.actor.init_state(batch_size=1)
+            actor_output, _ = self.policy.actor.act(env_output, actor_state)
+
+            while True:
+                idx = free_queue.get()
+                if idx is None:
+                    break
+
+                # Write old rollout end.
+                for key in env_output:
+                    self.storage.storages[key][idx][0, ...] = env_output[key]
+                for key in actor_output:
+                    self.storage.storages[key][idx][0, ...] = actor_output[key]
+                for i, tensor in enumerate(actor_state):
+                    init_actor_state_storages[idx][i][...] = tensor
+
+                # Do new rollout.
+                for t in range(self.num_steps):
+                    with th.no_grad():
+                        actor_output, actor_state = self.policy.actor.act(env_output, actor_state)
+                    env_output = env.step(actor_output["action"])
+
+                    for key in env_output:
+                        self.storage.storages[key][idx][t + 1, ...] = env_output[key]
+                    for key in actor_output:
+                        self.storage.storages[key][idx][t + 1, ...] = actor_output[key]
+
+                full_queue.put(idx)
+
+        except KeyboardInterrupt:
+            pass  # Return silently.
+        except Exception as e:
+            self.logger.error(f"Exception in worker process {actor_idx}!")
+            traceback.print_exc()
+            raise e
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms."""
@@ -299,8 +309,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.actor.load(init_model_path)
-            self.policy.learner.load(init_model_path)
+            self.policy.load(init_model_path)
 
         """Training function"""
         global_step = 0
@@ -309,16 +318,13 @@ class DistributedAgent(BaseAgent):  # type: ignore
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
 
-        def sample_and_update(i, lock=threading.Lock()):  # noqa: B008
+        def sample_and_update(i, lock=threading.Lock()):  # noqa B008
             """Thread target for the learning process."""
             nonlocal global_step, global_episode, metrics
             while global_step < num_train_steps:
                 batch, actor_states = self.storage.sample(
-                    device=self.device,
-                    batch_size=self.batch_size,
                     free_queue=free_queue,
                     full_queue=full_queue,
-                    storages=self.storage.storages,
                     init_actor_state_storages=init_actor_state_storages,
                 )
                 metrics = self.update(batch=batch, init_actor_states=actor_states)  # type: ignore
@@ -341,7 +347,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
         for actor_idx in range(self.num_actors):
             actor = ctx.Process(
-                target=self.act,
+                target=self.run,
                 kwargs={
                     "env": Environment(self.env[actor_idx]),
                     "actor_idx": actor_idx,
@@ -407,7 +413,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             # save model
             save_dir = Path.cwd() / "model"
             save_dir.mkdir(exist_ok=True)
-            self.policy.learner.save(path=save_dir)
+            self.policy.save(path=save_dir)
             self.logger.info(f"Model saved at: {save_dir}")
         finally:
             for _ in range(self.num_actors):
@@ -425,7 +431,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         episode_steps = list()
         while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad():
-                actor_output, _ = self.policy.actor.get_action(env_output, training=False)
+                actor_output, _ = self.policy.actor.act(env_output, training=False)
             env_output = env.step(actor_output["action"])
             if env_output["terminated"].item() or env_output["truncated"].item():
                 episode_rewards.append(env_output["episode_return"].item())

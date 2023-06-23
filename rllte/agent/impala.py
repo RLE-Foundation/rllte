@@ -207,7 +207,7 @@ class IMPALA(DistributedAgent):
             raise NotImplementedError("Unsupported action type!")
         
         # create policy
-        self.policy = DistributedActorLearner(
+        policy = DistributedActorLearner(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -232,92 +232,10 @@ class IMPALA(DistributedAgent):
         self.set(
             encoder=encoder,
             storage=storage,
-            distribution=dist
+            distribution=dist,
+            policy=policy,
         )
 
-    def freeze(self) -> None:
-        """Freeze the structure of the agent."""
-        # set encoder and distribution
-        self.actor.encoder = self.encoder
-        self.learner.encoder = deepcopy(self.encoder)
-        self.actor.dist = self.dist
-        self.learner.dist = self.dist
-        # network initialization
-        self.actor.apply(get_network_init(self.network_init_method))
-        self.learner.apply(get_network_init(self.network_init_method))
-        # share memory
-        self.actor.share_memory()
-        # to device
-        self.learner.to(self.device)
-        # create optimizers
-        self.opt = th.optim.RMSprop(
-            self.learner.parameters(),
-            lr=self.lr,
-            eps=self.eps,
-        )
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.opt, self.lr_lambda)
-        # set the training mode
-        self.mode(training=True)
-
-    def act(  # noqa: c901
-        self,
-        env: Environment,
-        actor_idx: int,
-        free_queue: mp.SimpleQueue,
-        full_queue: mp.SimpleQueue,
-        init_actor_state_storages: List[th.Tensor],
-    ) -> None:
-        """Sampling function for each actor.
-
-        Args:
-            env (Environment): A Gym-like environment wrapped by `Environment`.
-            actor_idx (int): The index of actor.
-            free_queue (Queue): Free queue for communication.
-            full_queue (Queue): Full queue for communication.
-            init_actor_state_storages (List[Tensor]): Initial states for LSTM.
-
-        Returns:
-            None.
-        """
-        try:
-            seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
-            env_output = env.reset(seed)
-
-            actor_state = self.actor.init_state(batch_size=1)
-            actor_output, _ = self.actor.get_action(env_output, actor_state)
-
-            while True:
-                idx = free_queue.get()
-                if idx is None:
-                    break
-
-                # Write old rollout end.
-                for key in env_output:
-                    self.storage.storages[key][idx][0, ...] = env_output[key]
-                for key in actor_output:
-                    self.storage.storages[key][idx][0, ...] = actor_output[key]
-                for i, tensor in enumerate(actor_state):
-                    init_actor_state_storages[idx][i][...] = tensor
-
-                # Do new rollout.
-                for t in range(self.num_steps):
-                    with th.no_grad():
-                        actor_output, actor_state = self.actor.get_action(env_output, actor_state)
-                    env_output = env.step(actor_output["action"])
-
-                    for key in env_output:
-                        self.storage.storages[key][idx][t + 1, ...] = env_output[key]
-                    for key in actor_output:
-                        self.storage.storages[key][idx][t + 1, ...] = actor_output[key]
-
-                full_queue.put(idx)
-
-        except KeyboardInterrupt:
-            pass  # Return silently.
-        except Exception as e:
-            self.logger.error(f"Exception in worker process {actor_idx}!")
-            traceback.print_exc()
-            raise e
 
     def update(
         self,
@@ -337,7 +255,7 @@ class IMPALA(DistributedAgent):
             Training metrics.
         """
         with lock:
-            learner_outputs, _ = self.learner.get_action(batch, init_actor_states)
+            learner_outputs, _ = self.policy.learner.act(batch, init_actor_states)
 
             # Take final value function slice for bootstrapping.
             bootstrap_value = learner_outputs["baseline"][-1]
@@ -352,8 +270,8 @@ class IMPALA(DistributedAgent):
                 {
                     "discounts": discounts,
                     "bootstrap_value": bootstrap_value,
-                    "target_dist": self.learner.get_dist(learner_outputs["policy_outputs"]),
-                    "behavior_dist": self.learner.get_dist(batch["policy_outputs"]),
+                    "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),
+                    "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),
                     "values": learner_outputs["baseline"],
                 }
             )
@@ -364,13 +282,14 @@ class IMPALA(DistributedAgent):
             episode_returns = batch["episode_return"][batch["terminated"]]
             episode_steps = batch["episode_step"][batch["terminated"]]
 
-            self.opt.zero_grad()
+            self.policy.opt.zero_grad()
             total_loss.backward()
-            nn.utils.clip_grad_norm_(self.learner.parameters(), self.max_grad_norm)
-            self.opt.step()
+            nn.utils.clip_grad_norm_(self.policy.learner.parameters(), self.max_grad_norm)
+            self.policy.opt.step()
             self.lr_scheduler.step()
 
-            self.actor.load_state_dict(self.learner.state_dict())
+            self.policy.actor.load_state_dict(self.policy.learner.state_dict())
+
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
@@ -379,26 +298,3 @@ class IMPALA(DistributedAgent):
                 "baseline_loss": baseline_loss.item(),
                 "entropy_loss": entropy_loss.item(),
             }
-
-    def save(self) -> None:
-        """Save models."""
-        save_dir = Path.cwd() / "model"
-        save_dir.mkdir(exist_ok=True)
-        th.save(self.learner, save_dir / "agent.pth")
-
-        self.logger.info(f"Model saved at: {save_dir}")
-
-    def load(self, path: str) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-
-        Returns:
-            None.
-        """
-        self.logger.info(f"Loading Initial Parameters from {path}")
-        actor_params = th.load(os.path.join(path, "actor.pth"), map_location=self.device)
-        learner_params = th.load(os.path.join(path, "learner.pth"), map_location=self.device)
-        self.actor.load_state_dict(actor_params)
-        self.learner.load_state_dict(learner_params)

@@ -226,7 +226,7 @@ class ActorCritic(nn.Module):
             return tuple()
         return tuple(th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size) for _ in range(2))
 
-    def forward(
+    def act(
         self,
         inputs: Dict[str, th.Tensor],
         lstm_state: Tuple = (),
@@ -294,6 +294,23 @@ class ActorCritic(nn.Module):
             raise NotImplementedError("Unsupported action type!")
 
         return (dict(policy_outputs=policy_outputs, baseline=baseline, action=action), lstm_state)
+
+    def get_dist(self, outputs: th.Tensor) -> Distribution:
+        """Get action distribution.
+
+        Args:
+            outputs (th.Tensor): Policy outputs.
+
+        Returns:
+            Action distribution.
+        """
+        if self.action_type == "Discrete":
+            return self.dist(outputs)
+        elif self.action_type == "Box":
+            mu, logstd = outputs.chunk(2, dim=-1)
+            return self.dist(mu, logstd.exp())
+        else:
+            raise NotImplementedError("Unsupported action type!")
 
 
 class DistributedActorLearner(BasePolicy):
@@ -377,39 +394,8 @@ class DistributedActorLearner(BasePolicy):
         # build optimizers
         self.opt = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
     
-    def act(self,
-        inputs: Dict[str, th.Tensor],
-        lstm_state: Tuple = (),
-        training: bool = True,
-    ) -> Tuple[Dict[str, th.Tensor], Tuple[th.Tensor, ...]]:
-        """Get actions in training.
-
-        Args:
-            inputs (Dict[str, th.Tensor]): Inputs data that contains observations, last actions, ...
-            lstm_state (Tuple): Hidden states of LSTM.
-            training (bool): Whether in training mode.
-
-        Returns:
-            Actions.
-        """
-        return self.actor(inputs, lstm_state, training=training)
-    
-    def get_dist(self, outputs: th.Tensor) -> Distribution:
-        """Get action distribution.
-
-        Args:
-            outputs (th.Tensor): Policy outputs.
-
-        Returns:
-            Action distribution.
-        """
-        if self.action_type == "Discrete":
-            return self.dist(outputs)
-        elif self.action_type == "Box":
-            mu, logstd = outputs.chunk(2, dim=-1)
-            return self.dist(mu, logstd.exp())
-        else:
-            raise NotImplementedError("Unsupported action type!")
+    def to(self, device: th.device) -> None:
+        self.learner.to(device)
     
     def save(self, path: Path) -> None:
         """Save models.
@@ -433,4 +419,5 @@ class DistributedActorLearner(BasePolicy):
             None.
         """
         params = th.load(path, map_location=self.device)
-        self.load_state_dict(params)
+        self.actor.load_state_dict(params)
+        self.learner.load_state_dict(params)

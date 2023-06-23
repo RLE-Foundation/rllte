@@ -31,11 +31,6 @@ import torch as th
 
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
-from rllte.common.policies import OffPolicyDeterministicActorDoubleCritic, OffPolicyStochasticActorDoubleCritic
-from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.storage import NStepReplayStorage, VanillaReplayStorage
-from rllte.xplore.augmentation import Identity, RandomShift
-from rllte.xplore.distribution import SquashedNormal, TruncatedNormalNoise
 
 
 class OffPolicyAgent(BaseAgent):

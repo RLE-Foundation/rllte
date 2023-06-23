@@ -98,24 +98,18 @@ class DistributedStorage(BaseStorage):
     def add(self, *args) -> None:
         """Add sampled transitions into storage."""
 
-    @staticmethod
     def sample(
-        device: th.device,
-        batch_size: int,
+        self,
         free_queue: th.multiprocessing.SimpleQueue,
         full_queue: th.multiprocessing.SimpleQueue,
-        storages: Dict[str, list],
         init_actor_state_storages: List,
         lock=threading.Lock(),  # noqa B008
     ) -> Tuple[Dict, Generator[Any, Any, None]]:
         """Sample transitions from the storage.
 
         Args:
-            device (Device): Device (cpu, cuda, ...) on which the code should be run.
-            batch_size (int): The batch size.
             free_queue (Queue): Free queue for communication.
             full_queue (Queue): Full queue for communication.
-            storages (Dict[str, list]): A Dict of shared storages.
             init_actor_state_storages: (List[th.Tensor]): Initial states for LSTM.
             lock (Lock): Thread lock.
 
@@ -123,17 +117,17 @@ class DistributedStorage(BaseStorage):
             Batched samples.
         """
         with lock:
-            indices = [full_queue.get() for _ in range(batch_size)]
-        batch = {key: th.stack([storages[key][i] for i in indices], dim=1) for key in storages}
+            indices = [full_queue.get() for _ in range(self.batch_size)]
+        batch = {key: th.stack([self.storages[key][i] for i in indices], dim=1) for key in self.storages}
 
         init_actor_states = (th.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices]))
 
         for i in indices:
             free_queue.put(i)
 
-        batch = {key: tensor.to(device=th.device(device), non_blocking=True) for key, tensor in batch.items()}
+        batch = {key: tensor.to(device=self.device, non_blocking=True) for key, tensor in batch.items()}
         return batch, init_actor_states
 
     def update(self, *args) -> None:
         """Update the storage"""
-        raise NotImplementedError
+        return None
