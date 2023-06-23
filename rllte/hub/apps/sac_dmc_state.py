@@ -27,7 +27,7 @@ import argparse
 import os
 
 from rllte.env import make_dmc_env
-from rllte.xploit.agent import SAC
+from rllte.agent import SAC
 
 os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 

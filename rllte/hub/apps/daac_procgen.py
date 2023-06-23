@@ -26,7 +26,7 @@
 import argparse
 
 from rllte.env import make_procgen_env
-from rllte.xploit.agent import DAAC
+from rllte.agent import DAAC
 from rllte.xploit.encoder import EspeholtResidualEncoder
 
 parser = argparse.ArgumentParser()
