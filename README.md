@@ -108,7 +108,7 @@ For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8)
 ``` python
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
-from rllte.xploit.agent import DrQv2
+from rllte.agent import DrQv2
 
 if __name__ == "__main__":
     device = "cuda:0"
@@ -134,7 +134,7 @@ Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `D
 ``` python
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
-from rllte.xploit.agent import DrQv2
+from rllte.agent import DrQv2
 
 if __name__ == "__main__":
     device = "npu:0"

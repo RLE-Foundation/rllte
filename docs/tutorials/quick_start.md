@@ -8,7 +8,7 @@ it suffices to write a `train.py` like:
 ``` py title="train.py"
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
-from rllte.xploit.agent import DrQv2
+from rllte.agent import DrQv2
 
 if __name__ == "__main__":
     device = "cuda:0"
@@ -42,7 +42,7 @@ Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `c
 ``` py title="train.py"
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
-from rllte.xploit.agent import DrQv2
+from rllte.agent import DrQv2
 
 if __name__ == "__main__":
     device = "npu:0"
