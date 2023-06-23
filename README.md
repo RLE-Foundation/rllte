@@ -46,27 +46,30 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 100%">
 </div>
 
-- **[Common](https://docs.rllte.dev/common_index/)**: Base classes and auxiliary modules like logger and timer.
 
-- **[Xploit](https://docs.rllte.dev/xploit_index/)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
+- **[Agent](https://docs.rllte.dev/api/#agent-implemented-rl-agents-using-rllte-building-blocks)**: Implemented RL Agents using **rllte** building blocks.
+
+- **[Common](https://docs.rllte.dev/api/#common-base-classes-and-auxiliary-modules)**: Base classes and auxiliary modules.
+
+- **[Xploit](https://docs.rllte.dev/api/#xploit-modules-that-focus-on-exploitation-in-rl)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
     + **Encoder**: *Neural nework-based encoders for processing observations.*
-    + **Agent**: *Agents for interacting and learning.*
+    + **Policy**: *Policies for interaction and learning.*
     + **Storage**: *Storages for storing collected experiences.*
 
-- **[Xplore](https://docs.rllte.dev/xplore_index/)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
+- **[Xplore](https://docs.rllte.dev/api/#xplore-modules-that-focus-on-exploration-in-rl)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
     + **Augmentation**: *PyTorch.nn-like modules for observation augmentation.*
     + **Distribution**: *Distributions for sampling actions.*
     + **Reward**: *Intrinsic reward modules for enhancing exploration.*
 
-- **[Hub]()**: Reusable datasets and models.
+- **[Hub](https://docs.rllte.dev/benchmarks/)**: Fast training API and reusable benchmarks.
 
-- **[Env](https://docs.rllte.dev/env_index/)**: Packaged environments (e.g., Atari games) for fast invocation.
+- **[Env](https://docs.rllte.dev/api/#env-packaged-environments-eg-atari-games-for-fast-invocation)**: Packaged environments (e.g., Atari games) for fast invocation.
 
-- **[Evaluation](https://docs.rllte.dev/evaluation_index/)**: Reasonable and reliable metrics for algorithm evaluation.
+- **[Evaluation](https://docs.rllte.dev/tutorials/evaluation/)**: Reasonable and reliable metrics for algorithm evaluation.
 
-- **[Pre-training](https://docs.rllte.dev/pretraining_index/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
+- **[Pre-training](https://docs.rllte.dev/tutorials/pre-training/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 
-- **[Deployment](https://docs.rllte.dev/deployment_index/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
+- **[Deployment](https://docs.rllte.dev/tutorials/deployment/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
 For more detiled descriptions of these modules, see [https://docs.rllte.dev/api](https://docs.rllte.dev/api)
 
