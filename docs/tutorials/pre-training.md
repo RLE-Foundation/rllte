@@ -2,7 +2,7 @@
 Currently, **rllte** only supports online pre-training via intrinsic reward. To turn on the pre-training mode, 
 it suffices to write a `train.py` like:
 ```py title="train.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 from rllte.xplore.reward import RE3
 
@@ -41,7 +41,7 @@ Once the pre-training is finished, you can find the model parameters in the `pre
 load the parameters, just turn off the pre-training mode and write the `train.py` like
 
 ```py title="train.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 
 if __name__ == "__main__":

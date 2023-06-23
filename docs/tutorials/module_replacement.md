@@ -20,7 +20,7 @@ To address the problem, **rllte** has achieved complete decoupling of RL algorit
 ## Module Replacement
 For instance, we want to use [PPO](https://arxiv.org/pdf/1707.06347) agent to solve [Atari](https://www.jair.org/index.php/jair/article/download/10819/25823) games, it suffices to write `train.py` like:
 ``` py title="train.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 
 if __name__ == "__main__":
@@ -43,7 +43,7 @@ Run `train.py` and you'll see the following output:
 
 Suppose we want to use a `ResNet-based` encoder, it suffices to replace the encoder module using `.set` function:
 ``` py title="train.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 from rllte.xploit.encoder import EspeholtResidualEncoder
 
@@ -78,7 +78,7 @@ For more replaceable modules, please refer to [https://docs.rllte.dev/api/](http
 **rllte** is an open platform that supports custom modules. Just write a new module based on the `BaseClass`, then we can 
 insert it into an agent directly. Suppose we want to build a new encoder entitled `NewEncoder`. An example is
 ```py title="example.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 from rllte.common.base_encoder import BaseEncoder
 from gymnasium.spaces import Space

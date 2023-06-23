@@ -53,7 +53,7 @@ env = make_rllte_env(env_id=CustomEnv,
 ```
 After that, you can use the custom environment in application directly.
 ``` py title="train.py"
-from rllte.xploit.agent import DrQv2
+from rllte.agent import DrQv2
 from rllte.env.utils import make_rllte_env
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ implemented algorithms.
 ## Using Observation Augmentation
 **rllte** implements the augmentation modules via a PyTorch-NN manner, and both imaged-based and state-based observations are support. A code example is:
 ```py title="example.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 from rllte.xplore.augmentation import RandomCrop
 
@@ -45,7 +45,7 @@ Due to the large differences in the calculation of different intrinsic reward me
 Take RE3 for instance, it computes the intrinsic reward for each state based on the Euclidean distance between the state and 
 its $k$-nearest neighbor within a mini-batch. Thus it suffices to provide ***obs*** data to compute the reward. The following code provides a usage example of RE3:
 ``` py title="example.py"
-from rllte.xploit.agent import PPO
+from rllte.agent import PPO
 from rllte.env import make_atari_env
 from rllte.xplore.reward import RE3
 
