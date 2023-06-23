@@ -24,12 +24,12 @@
 
 
 import os
-import traceback
 import threading
 import time
+import traceback
 from collections import deque
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -188,14 +188,16 @@ class DistributedAgent(BaseAgent):  # type: ignore
         # get separate environments
         self.env = self.env.envs
 
-    def run(self,
-            env: Environment,
-            actor_idx: int,
-            free_queue: mp.SimpleQueue,
-            full_queue: mp.SimpleQueue,
-            init_actor_state_storages: List[th.Tensor]) -> None:
+    def run(  # noqa: c901
+        self,
+        env: Environment,
+        actor_idx: int,
+        free_queue: mp.SimpleQueue,
+        full_queue: mp.SimpleQueue,
+        init_actor_state_storages: List[th.Tensor],
+    ) -> None:
         """Sample function of each actor. Implemented by individual algorithms.
-        
+
         Args:
             env (Environment): A Gym-like environment wrapped by `Environment`.
             actor_idx (int): The index of actor.
@@ -309,7 +311,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path)
+            self.policy.load(init_model_path, self.device)
 
         """Training function"""
         global_step = 0

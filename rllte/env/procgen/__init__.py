@@ -28,10 +28,7 @@ from typing import Dict, Tuple
 import gymnasium as gym
 import numpy as np
 from gymnasium.spaces.box import Box
-from gymnasium.wrappers import (NormalizeReward, 
-                                RecordEpisodeStatistics, 
-                                TransformObservation, 
-                                TransformReward)
+from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
 from rllte.env.utils import TorchVecEnvWrapper
@@ -112,7 +109,7 @@ def make_procgen_env(
         num_levels=num_levels,
         start_level=start_level,
         distribution_mode=distribution_mode,
-        rand_seed=seed
+        rand_seed=seed,
     )
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))

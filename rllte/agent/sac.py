@@ -30,13 +30,13 @@ import numpy as np
 import torch as th
 from torch.nn import functional as F
 
-from rllte.common.utils import get_network_init
+from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
+from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyStochasticActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
 from rllte.xplore.distribution import SquashedNormal
-from rllte.agent import utils
 
 
 class SAC(OffPolicyAgent):
@@ -104,7 +104,7 @@ class SAC(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps
+            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -124,13 +124,11 @@ class SAC(OffPolicyAgent):
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = TassaCnnEncoder(observation_space=env.observation_space, 
-                                           feature_dim=feature_dim)
+            encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, 
-                                           feature_dim=feature_dim)
-        
+            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+
         # default distribution
         dist = SquashedNormal
 
@@ -148,10 +146,10 @@ class SAC(OffPolicyAgent):
 
         # default storage
         storage = VanillaReplayStorage(
-                observation_space=env.observation_space,
-                action_space=env.action_space,
-                device=device,
-                batch_size=batch_size,
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            batch_size=batch_size,
         )
 
         # set all the modules [essential operation!!!]

@@ -25,8 +25,8 @@
 
 import argparse
 
-from rllte.env import make_procgen_env
 from rllte.agent import PPO
+from rllte.env import make_procgen_env
 from rllte.xploit.encoder import EspeholtResidualEncoder
 
 parser = argparse.ArgumentParser()

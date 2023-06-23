@@ -26,8 +26,8 @@
 import argparse
 import os
 
-from rllte.env import make_dmc_env
 from rllte.agent import DrQv2
+from rllte.env import make_dmc_env
 
 os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 os.environ["MUJOCO_GL"] = "egl"

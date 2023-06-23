@@ -23,16 +23,17 @@
 # =============================================================================
 
 
-from abc import abstractmethod
-from typing import Tuple, Union, Type, Dict, Any, Optional, Callable
 from pathlib import Path
-from torch import nn
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+
 import gymnasium as gym
 import torch as th
+from torch import nn
+
 
 class BasePolicy(nn.Module):
     """Base class for all policies.
-    
+
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
@@ -45,15 +46,17 @@ class BasePolicy(nn.Module):
     Returns:
         Base policy instance.
     """
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 feature_dim: int,
-                 hidden_dim: int,
-                 opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-                 opt_kwargs: Optional[Dict[str, Any]] = None,
-                 init_method: Callable = nn.init.orthogonal_,
-                 ) -> None:
+
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        feature_dim: int,
+        hidden_dim: int,
+        opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_method: Callable = nn.init.orthogonal_,
+    ) -> None:
         super().__init__()
 
         assert feature_dim > 0, "The `feature_dim` should be positive!"
@@ -87,7 +90,6 @@ class BasePolicy(nn.Module):
         else:
             raise NotImplementedError("Unsupported action type!")
 
-    @abstractmethod
     def act(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
         """Select an action from the input observation.
 
@@ -98,12 +100,10 @@ class BasePolicy(nn.Module):
         Returns:
             Sampled actions, estimated values, ..., depends on specific algorithms.
         """
-    
-    @abstractmethod
+
     def freeze(self) -> None:
         """Freeze the policy."""
-    
-    @abstractmethod
+
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.
 
@@ -114,8 +114,7 @@ class BasePolicy(nn.Module):
         Returns:
             None.
         """
-    
-    @abstractmethod
+
     def load(self, path: str) -> None:
         """Load initial parameters.
 

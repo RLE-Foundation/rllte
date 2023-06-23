@@ -36,8 +36,8 @@ Vanilla replay storage.
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L80)
 ```python
 .add(
-   obs: Any, action: Any, reward: Any, terminated: Any, truncated: Any, info: Any,
-   next_obs: Any
+   obs: np.ndarray, action: np.ndarray, reward: np.ndarray, terminated: np.ndarray,
+   truncated: np.ndarray, info: Dict[str, Any], next_obs: np.ndarray
 )
 ```
 
@@ -47,13 +47,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (Any) : Observation.
-* **action** (Any) : Action.
-* **reward** (Any) : Reward.
-* **terminated** (Any) : Termination flag.
-* **truncated** (Any) : Truncation flag.
-* **info** (Any) : Additional information.
-* **next_obs** (Any) : Next observation.
+* **obs** (np.ndarray) : Observation.
+* **action** (np.ndarray) : Action.
+* **reward** (np.ndarray) : Reward.
+* **terminated** (np.ndarray) : Termination flag.
+* **truncated** (np.ndarray) : Truncation flag.
+* **info** (Dict[str, Any]) : Additional information.
+* **next_obs** (np.ndarray) : Next observation.
 
 
 **Returns**
@@ -61,7 +61,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L115)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L114)
 ```python
 .sample(
    step: int
@@ -82,7 +82,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L140)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L139)
 ```python
 .update(
    *args

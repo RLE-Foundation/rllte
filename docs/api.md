@@ -2,11 +2,7 @@
 <img src='/assets/images/structure.svg' style="width: 100%">
 </div>
 
-### <font color="#0053D6"><b>Common</b></font>: Base classes and auxiliary modules like trainer and logger.
-
-### <font color="#0053D6"><b>Xploit</b></font>: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
-+ **Agent**: *Agents for interacting and learning.*
-
+### <font color="#0053D6"><b>Agent</b></font>: Implemented RL Agents using **rllte** building blocks.
 <table>
 <thead>
   <tr>
@@ -125,6 +121,20 @@
     - **Discrete**: A list of possible actions, where each timestep only one of the actions can be used.
     - **MultiBinary**: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
+### <font color="#0053D6"><b>Common</b></font>: Base classes and auxiliary modules.
+
+### <font color="#0053D6"><b>Xploit</b></font>: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
+
++ **Policy**: *Policies for interaction and learning.*
+
+|Module|Remark|
+|:-|:-|
+|OnPolicySharedActorCritic|Actor-Critic networks with a shared encoder for on-policy algorithms.|
+|OnPolicyDecoupledActorCritic|Actor-Critic networks with two separate encoders for on-policy algorithms.|
+|OffPolicyDeterministicActorDoubleCritic|Deterministic actor network and double-critic network for off-policy algorithms.|
+|OffPolicyStochasticActorDoubleCritic|Stochastic actor network and double-critic network for off-policy algorithms.|
+|DistributedActorLearner|Actor-Learner for distributed algorithms.|
+
 + **Encoder**: *Neural nework-based encoders for processing observations.*
 
 |Module|Input|Reference|Target Task|
@@ -205,9 +215,6 @@
 
 See [Tutorials: Use Intrinsic Reward and Observation Augmentation](./tutorials/data_augmentation.md) for usage examples.
 
-### <font color="#0053D6"><b>Evaluation</b></font>: Reasonable and reliable metrics for algorithm <font color="#B80000"><b>evaluation</b></font>.
-See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
-
 ### <font color="#0053D6"><b>Env</b></font>: Packaged <font color="#B80000"><b>environments</b></font> (e.g., Atari games) for fast invocation.
 
 |Module|Name|Remark|Reference|
@@ -218,6 +225,12 @@ See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
 |make_minigrid_env|MiniGrid Games|Discrete control|[Minimalistic Gridworld Environment for Gymnasium](https://github.com/Farama-Foundation/Minigrid)|
 |make_procgen_env|Procgen Games|Discrete control|[Leveraging Procedural Generation to Benchmark Reinforcement Learning](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|
 |make_robosuite_env|Robosuite Robotics Environments|Continuous control|[Robosuite: A Modular Simulation Framework and Benchmark for Robot Learning](http://robosuite.ai/)|
+
+### <font color="#0053D6"><b>Hub</b></font>: Fast training API and reusable benchmarks.
+See [Benchmarks](./benchmarks.md).
+
+### <font color="#0053D6"><b>Evaluation</b></font>: Reasonable and reliable metrics for algorithm <font color="#B80000"><b>evaluation</b></font>.
+See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
 
 ### <font color="#0053D6"><b>Pre-training</b></font>: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
 

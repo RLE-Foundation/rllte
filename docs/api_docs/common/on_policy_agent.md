@@ -2,12 +2,12 @@
 
 
 ## OnPolicyAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L44)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L36)
 ```python 
 OnPolicyAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
-   eval_every_episodes: int = 10, shared_encoder: bool = True, **kwargs
+   eval_every_episodes: int = 10
 )
 ```
 
@@ -26,8 +26,6 @@ Trainer for on-policy algorithms.
 * **pretraining** (bool) : Turn on pre-training model or not.
 * **num_steps** (int) : The sample length of per rollout.
 * **eval_every_episodes** (int) : Evaluation interval.
-* **shared_encoder** (bool) : `True` for using a shared encoder, `False` for using two separate encoders.
-* **kwargs**  : Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
 
 **Returns**
@@ -39,16 +37,16 @@ On-policy agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L130)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L70)
 ```python
 .update()
 ```
 
 ---
-Update function of the agent. Implemented by individual algorithms.
+Update the agent. Implemented by individual algorithms.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L134)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L74)
 ```python
 .freeze()
 ```
@@ -57,7 +55,7 @@ Update function of the agent. Implemented by individual algorithms.
 Freeze the structure of the agent. Implemented by individual algorithms.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L138)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L83)
 ```python
 .mode(
    training: bool = True
@@ -78,7 +76,7 @@ Set the training mode.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L150)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L95)
 ```python
 .train(
    num_train_steps: int = 100000, init_model_path: Optional[str] = None
@@ -100,7 +98,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L272)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/on_policy_agent.py/#L217)
 ```python
 .eval()
 ```

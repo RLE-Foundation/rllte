@@ -6,7 +6,7 @@
 ```python 
 VanillaRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   num_steps: int = 256, num_envs: int = 8, batch_size: int = 64, discount: float = 0.99,
+   num_steps: int = 256, num_envs: int = 8, batch_size: int = 64, discount: float = 0.999,
    gae_lambda: float = 0.95
 )
 ```

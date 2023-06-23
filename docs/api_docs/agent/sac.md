@@ -2,12 +2,12 @@
 
 
 ## SAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L38)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L42)
 ```python 
 SAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 2000,
-   eval_every_steps: int = 5000, feature_dim: int = 50, batch_size: int = 1024,
+   eval_every_steps: int = 10000, feature_dim: int = 50, batch_size: int = 1024,
    lr: float = 0.0001, eps: float = 1e-08, hidden_dim: int = 1024,
    critic_target_tau: float = 0.005, update_every_steps: int = 2,
    log_std_range: Tuple[float, ...] = (-5.0, 2), betas: Tuple[float, ...] = (0.9,
@@ -19,7 +19,7 @@ SAC(
 
 ---
 Soft Actor-Critic (SAC) agent.
-When 'augmentation' module is invoked, this agent will transform into Data Regularized Q (DrQ) agent.
+When 'augmentation' module is invoked, this agent will transform into Data-Regularized Q (DrQ) agent.
 Based on: https://github.com/denisyarats/pytorch_sac
 
 
@@ -58,7 +58,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L123)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L166)
 ```python
 .alpha()
 ```
@@ -66,17 +66,8 @@ PPO agent instance.
 ---
 Get the temperature coefficient.
 
-### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L127)
-```python
-.freeze()
-```
-
----
-Freeze the structure of the agent.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L170)
 ```python
 .update()
 ```
@@ -85,7 +76,7 @@ Freeze the structure of the agent.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L217)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L243)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
@@ -116,7 +107,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/sac.py/#L291)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L317)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor, weights: th.Tensor

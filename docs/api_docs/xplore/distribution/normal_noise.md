@@ -36,7 +36,7 @@ Gaussian action noise instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L78)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L77)
 ```python
 .sample(
    clip: bool = False, sample_shape: th.Size = th.Size()
@@ -59,7 +59,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L100)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L99)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -81,7 +81,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L112)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L111)
 ```python
 .log_prob(
    value: th.Tensor
@@ -102,7 +102,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L123)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L122)
 ```python
 .entropy()
 ```
@@ -111,7 +111,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L127)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L126)
 ```python
 .reset(
    noiseless_action: th.Tensor, step: int = 0
@@ -133,7 +133,7 @@ Reset the noise instance.
 None.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L143)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L142)
 ```python
 .mean()
 ```
@@ -142,7 +142,7 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L148)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L147)
 ```python
 .mode()
 ```
@@ -151,7 +151,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L153)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L152)
 ```python
 .stddev()
 ```
@@ -160,7 +160,7 @@ Returns the mode of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L158)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L157)
 ```python
 .variance()
 ```

@@ -23,17 +23,19 @@
 # =============================================================================
 
 
-import os
 from pathlib import Path
-from typing import Tuple, Optional, Dict, Any, Type, Callable
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
 
-from rllte.common.base_distribution import BaseDistribution as Distribution
-from rllte.common.utils import ExportModel
+# from rllte.common.base_distribution import BaseDistribution as Distribution
+from torch.distributions import Distribution
+
 from rllte.common.base_policy import BasePolicy
+from rllte.common.utils import ExportModel
+
 
 class DoubleCritic(nn.Module):
     """Double critic network for DrQv2 and SAC.
@@ -101,15 +103,16 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
         Actor network instance.
     """
 
-    def __init__(self, 
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 feature_dim: int = 64, 
-                 hidden_dim: int = 1024,
-                 opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-                 opt_kwargs: Optional[Dict[str, Any]] = None,
-                 init_method: Callable = nn.init.orthogonal_,
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        feature_dim: int = 64,
+        hidden_dim: int = 1024,
+        opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_method: Callable = nn.init.orthogonal_,
+    ) -> None:
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -117,8 +120,9 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method)
-        
+            init_method=init_method,
+        )
+
         # build actor and critic
         self.actor = nn.Sequential(
             nn.LayerNorm(self.feature_dim),
@@ -131,13 +135,9 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
             nn.Tanh(),
         )
 
-        self.critic = DoubleCritic(action_dim=self.action_dim, 
-                                   feature_dim=self.feature_dim, 
-                                   hidden_dim=hidden_dim)
+        self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
 
-        self.critic_target = DoubleCritic(action_dim=self.action_dim, 
-                                          feature_dim=self.feature_dim, 
-                                          hidden_dim=self.hidden_dim)
+        self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
         # synchronize critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -147,7 +147,7 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
         Args:
             encoder (nn.Module): Encoder network.
             dist (Distribution): Distribution class.
-        
+
         Returns:
             None.
         """
@@ -163,8 +163,8 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), **self.opt_kwargs)
         self.actor_opt = th.optim.Adam(self.actor.parameters(), **self.opt_kwargs)
         self.critic_opt = th.optim.Adam(self.critic.parameters(), **self.opt_kwargs)
-        
-    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+
+    def act(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
@@ -218,14 +218,15 @@ class OffPolicyDeterministicActorDoubleCritic(BasePolicy):
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
             th.save(export_model, path / "agent.pth")
 
-    def load(self, path: str) -> None:
+    def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.
 
         Args:
             path (str): Import path.
+            device (th.device): Device to use.
 
         Returns:
             None.
         """
-        params = th.load(path, map_location=self.device)
+        params = th.load(path, map_location=device)
         self.load_state_dict(params)

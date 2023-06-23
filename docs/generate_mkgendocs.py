@@ -12,7 +12,9 @@ import ruamel.yaml
 from rllte import common
 from rllte import env
 from rllte import evaluation
-from rllte.xploit import encoder, agent, storage
+from rllte import agent
+from rllte.hub import datasets, models
+from rllte.xploit import encoder, policy, storage
 from rllte.xplore import distribution, reward, augmentation
 
 pages = {
@@ -23,7 +25,7 @@ pages = {
     'pages': []
 }
 
-for module in [common, encoder, agent, storage, 
+for module in [common, encoder, agent, storage, policy, datasets, models,
            reward, augmentation, distribution, env, evaluation]:
     last_file = None
     save_old = False

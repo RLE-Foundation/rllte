@@ -2,11 +2,11 @@
 
 
 ## BaseAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L53)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L54)
 ```python 
 BaseAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
-   device: str = 'cpu', pretraining: bool = False, feature_dim: int = 512
+   device: str = 'cpu', pretraining: bool = False
 )
 ```
 
@@ -74,12 +74,12 @@ Get NPU name.
 Check the compatibility of selected modules.
 
 ### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L207)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L208)
 ```python
 .set(
-   encoder: Optional[Any] = None, storage: Optional[Any] = None,
-   distribution: Optional[Any] = None, augmentation: Optional[Any] = None,
-   reward: Optional[Any] = None
+   encoder: Optional[Any] = None, policy: Optional[Any] = None,
+   storage: Optional[Any] = None, distribution: Optional[Any] = None,
+   augmentation: Optional[Any] = None, reward: Optional[Any] = None
 )
 ```
 
@@ -90,6 +90,7 @@ Set a module for the agent.
 **Args**
 
 * **encoder** (Optional[Any]) : An encoder of `rllte.xploit.encoder` or a custom encoder.
+* **policy** (Optional[Any]) : A policy of `rllte.xploit.policy` or a custom policy.
 * **storage** (Optional[Any]) : A storage of `rllte.xploit.storage` or a custom storage.
 * **distribution** (Optional[Any]) : A distribution of `rllte.xplore.distribution` or a custom distribution.
 * **augmentation** (Optional[Any]) : An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
@@ -100,8 +101,35 @@ Set a module for the agent.
 
 None.
 
+### .mode
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L258)
+```python
+.mode()
+```
+
+---
+Set the training mode.
+
+### .update
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L262)
+```python
+.update()
+```
+
+---
+Update the agent.
+
+### .freeze
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L266)
+```python
+.freeze()
+```
+
+---
+Freeze the structure of the agent.
+
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L248)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L270)
 ```python
 .train()
 ```
@@ -110,7 +138,7 @@ None.
 Training function.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L252)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L274)
 ```python
 .eval()
 ```

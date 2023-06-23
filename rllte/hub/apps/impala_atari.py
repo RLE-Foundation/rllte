@@ -26,8 +26,8 @@
 import argparse
 import os
 
-from rllte.env import make_atari_env
 from rllte.agent import IMPALA
+from rllte.env import make_atari_env
 
 os.environ["OMP_NUM_THREADS"] = "1"
 

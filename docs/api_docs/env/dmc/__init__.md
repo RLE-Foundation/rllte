@@ -2,7 +2,7 @@
 
 
 ### make_dmc_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/dmc/__init__.py/#L43)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/dmc/__init__.py/#L39)
 ```python
 .make_dmc_env(
    env_id: str = 'cartpole_balance', num_envs: int = 1, device: str = 'cpu', seed: int = 1,

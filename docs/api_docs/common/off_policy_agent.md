@@ -2,12 +2,12 @@
 
 
 ## OffPolicyAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L43)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L36)
 ```python 
 OffPolicyAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 2000,
-   eval_every_steps: int = 5000, **kwargs
+   eval_every_steps: int = 5000
 )
 ```
 
@@ -38,16 +38,16 @@ Off-policy agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L122)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L73)
 ```python
 .update()
 ```
 
 ---
-Update function of the agent. Implemented by individual algorithms.
+Update the agent. Implemented by individual algorithms.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L126)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L77)
 ```python
 .freeze()
 ```
@@ -56,7 +56,7 @@ Update function of the agent. Implemented by individual algorithms.
 Freeze the structure of the agent. Implemented by individual algorithms.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L130)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L86)
 ```python
 .mode(
    training: bool = True
@@ -77,7 +77,7 @@ Set the training mode.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L142)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L98)
 ```python
 .train(
    num_train_steps: int = 100000, init_model_path: Optional[str] = None
@@ -99,7 +99,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L245)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/off_policy_agent.py/#L203)
 ```python
 .eval()
 ```

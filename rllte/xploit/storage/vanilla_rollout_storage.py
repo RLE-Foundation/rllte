@@ -160,7 +160,6 @@ class VanillaRolloutStorage(BaseStorage):
         Returns:
             None.
         """
-        # TODO: add time limit
         gae = 0
         for step in reversed(range(self.num_steps)):
             if step == self.num_steps - 1:
@@ -170,6 +169,8 @@ class VanillaRolloutStorage(BaseStorage):
             next_non_terminal = 1.0 - self.terminateds[step + 1]
             delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
+            # time limit
+            gae = gae * (1.0 - self.truncateds[step + 1])
             self.advantages[step] = gae
 
         self.returns = self.advantages + self.values

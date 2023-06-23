@@ -2,7 +2,7 @@
 
 
 ## Timer
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L28)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L29)
 ```python 
 
 ```
@@ -16,7 +16,7 @@ The calculagraph class.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L36)
 ```python
 .reset()
 ```
@@ -25,7 +25,7 @@ The calculagraph class.
 Reset the calculagraph.
 
 ### .total_time
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L41)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/timer.py/#L43)
 ```python
 .total_time()
 ```

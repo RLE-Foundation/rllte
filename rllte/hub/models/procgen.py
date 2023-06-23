@@ -24,47 +24,43 @@
 
 
 import torch as th
-import pandas as pd
 from huggingface_hub import hf_hub_download
 from torch import nn
 
+
 class Procgen:
     """Trained models various RL algorithms on the full Procgen benchmark.
-        Environment link: https://github.com/openai/procgen
-        Number of environments: 16
-        Number of training steps: 25,000,000
-        Number of seeds: 10
-        Added algorithms: [PPO]
+    Environment link: https://github.com/openai/procgen
+    Number of environments: 16
+    Number of training steps: 25,000,000
+    Number of seeds: 10
+    Added algorithms: [PPO]
     """
 
     def __init__(self) -> None:
         pass
 
-    def load_models(self, 
-                    agent: str,
-                    env_id: str,
-                    seed: int,
-                    device: str = "cpu",
-                    ) -> nn.Module:
+    def load_models(
+        self,
+        agent: str,
+        env_id: str,
+        seed: int,
+        device: str = "cpu",
+    ) -> nn.Module:
         """Load the model from the hub.
-        
+
         Args:
             agent (str): The agent to load.
             env_id (str): The environment id to load.
             seed (int): The seed to load.
             device (str): The device to load the model on.
-        
+
         Returns:
             The loaded model.
         """
         model_file = f"{agent.lower()}_procgen_{env_id.lower()}_seed_{seed}.pth"
         subfolder = f"procgen/{agent}"
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=model_file, 
-            subfolder=subfolder
-        )
+        file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)
 
         return model.eval()

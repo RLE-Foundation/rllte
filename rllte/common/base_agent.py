@@ -74,7 +74,7 @@ class BaseAgent(ABC):
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
-        pretraining: bool = False
+        pretraining: bool = False,
     ) -> None:
         # change work dir
         path = Path.cwd() / "logs" / tag / datetime.now().strftime("%Y-%m-%d-%I-%M-%S")
@@ -229,8 +229,12 @@ class BaseAgent(ABC):
         """
         if encoder is not None:
             assert isinstance(encoder, Encoder), "The `encoder` must be a subclass of `BaseEncoder`!"
+            if self.encoder is not None:
+                assert (
+                    self.encoder.feature_dim == encoder.feature_dim
+                ), "The feature dimension of `encoder` must be equal to the previous one!"
             self.encoder = encoder
-        
+
         if policy is not None:
             assert isinstance(policy, Policy), "The `policy` must be a subclass of `BasePolicy`!"
             self.policy = policy

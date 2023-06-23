@@ -62,10 +62,7 @@ class OffPolicyAgent(BaseAgent):
         num_init_steps: int = 2000,
         eval_every_steps: int = 5000,
     ) -> None:
-        super().__init__(
-            env=env, eval_env=eval_env, tag=tag, seed=seed, 
-            device=device, pretraining=pretraining
-        )
+        super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
 
         self.eval_every_steps = eval_every_steps
         self.num_init_steps = num_init_steps
@@ -114,7 +111,7 @@ class OffPolicyAgent(BaseAgent):
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path)
+            self.policy.load(init_model_path, self.device)
 
         # reset the env
         episode_step, episode_reward = 0, 0

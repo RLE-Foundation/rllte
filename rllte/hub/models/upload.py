@@ -1,4 +1,5 @@
-from huggingface_hub import login, HfApi
+from huggingface_hub import HfApi, login
+
 login()
 
 api = HfApi()

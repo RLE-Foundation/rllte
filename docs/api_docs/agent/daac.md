@@ -2,7 +2,7 @@
 
 
 ## DAAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L39)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L43)
 ```python 
 DAAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -61,17 +61,8 @@ DAAC agent instance.
 **Methods:**
 
 
-### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L134)
-```python
-.freeze()
-```
-
----
-Freeze the structure of the agent.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/daac.py/#L154)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L185)
 ```python
 .update()
 ```

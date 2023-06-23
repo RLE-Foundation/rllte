@@ -2,7 +2,7 @@
 
 
 ## Categorical
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L33)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L32)
 ```python 
 Categorical(
    logits: th.Tensor
@@ -28,7 +28,7 @@ Categorical distribution instance.
 
 
 ### .probs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L51)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L50)
 ```python
 .probs()
 ```
@@ -37,7 +37,7 @@ Categorical distribution instance.
 Return probabilities.
 
 ### .logits
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L55)
 ```python
 .logits()
 ```
@@ -46,7 +46,7 @@ Return probabilities.
 Returns the unnormalized log probabilities.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L60)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L59)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -68,7 +68,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L72)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L71)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -89,7 +89,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L83)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L82)
 ```python
 .entropy()
 ```
@@ -98,7 +98,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L88)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L87)
 ```python
 .mode()
 ```
@@ -107,7 +107,7 @@ Returns the Shannon entropy of distribution.
 Returns the mode of the distribution.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L93)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L92)
 ```python
 .mean()
 ```
@@ -116,7 +116,7 @@ Returns the mode of the distribution.
 Returns the mean of the distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L97)
 ```python
 .stddev()
 ```
@@ -125,7 +125,7 @@ Returns the mean of the distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L103)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L102)
 ```python
 .variance()
 ```
@@ -134,7 +134,7 @@ Returns the standard deviation of the distribution.
 Returns the variance of the distribution.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L107)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L106)
 ```python
 .reset()
 ```
@@ -143,7 +143,7 @@ Returns the variance of the distribution.
 Reset the distribution.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L110)
 ```python
 .rsample(
    sample_shape: th.Size = ...

@@ -23,18 +23,20 @@
 # =============================================================================
 
 
-import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Type, Dict, Any, Optional, Callable, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
-import torch as th
 import gymnasium as gym
+import torch as th
 from torch import nn
 
-from rllte.common.utils import ExportModel
+# from rllte.common.base_distribution import BaseDistribution as Distribution
+from torch.distributions import Distribution
+
 from rllte.common.base_policy import BasePolicy
-from rllte.common.base_distribution import BaseDistribution as Distribution
+from rllte.common.utils import ExportModel
+
 
 class DiscreteActor(nn.Module):
     """Actor for `Discrete` tasks.
@@ -226,16 +228,17 @@ class OnPolicySharedActorCritic(BasePolicy):
         Actor-Critic network instance.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 feature_dim: int,
-                 hidden_dim: int,
-                 opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-                 opt_kwargs: Optional[Dict[str, Any]] = None,
-                 init_method: Callable = nn.init.orthogonal_,
-                 aux_critic: bool = False,
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        feature_dim: int,
+        hidden_dim: int,
+        opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_method: Callable = nn.init.orthogonal_,
+        aux_critic: bool = False,
+    ) -> None:
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -243,8 +246,8 @@ class OnPolicySharedActorCritic(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method
-            )
+            init_method=init_method,
+        )
 
         # choose an actor class based on action space type
         if self.action_type == "Discrete":
@@ -255,12 +258,11 @@ class OnPolicySharedActorCritic(BasePolicy):
             actor_class = MultiBinaryActor
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
         # build actor and critic
-        self.actor = actor_class(obs_shape=self.obs_shape, 
-                                 action_dim=self.action_dim, 
-                                 feature_dim=self.feature_dim, 
-                                 hidden_dim=self.hidden_dim)
+        self.actor = actor_class(
+            obs_shape=self.obs_shape, action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
 
         if len(self.obs_shape) > 1:
             self.critic = nn.Linear(self.feature_dim, 1)
@@ -275,14 +277,14 @@ class OnPolicySharedActorCritic(BasePolicy):
             )
         if aux_critic:
             self.aux_critic = deepcopy(self.critic)
-    
+
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
             dist (Distribution): Distribution class.
-        
+
         Returns:
             None.
         """
@@ -394,14 +396,15 @@ class OnPolicySharedActorCritic(BasePolicy):
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
             th.save(export_model, path / "agent.pth")
 
-    def load(self, path: str) -> None:
+    def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.
 
         Args:
             path (str): Import path.
+            device (th.device): Device to use.
 
         Returns:
             None.
         """
-        params = th.load(path, map_location=self.device)
+        params = th.load(path, map_location=device)
         self.load_state_dict(params)

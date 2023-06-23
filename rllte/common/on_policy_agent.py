@@ -33,6 +33,7 @@ import torch as th
 from rllte.common import utils
 from rllte.common.base_agent import BaseAgent
 
+
 class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
 
@@ -61,9 +62,7 @@ class OnPolicyAgent(BaseAgent):
         num_steps: int = 128,
         eval_every_episodes: int = 10,
     ) -> None:
-        super().__init__(
-            env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining
-        )
+        super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
         self.eval_every_episodes = eval_every_episodes
 
@@ -111,7 +110,7 @@ class OnPolicyAgent(BaseAgent):
         # load initial model parameters
         if init_model_path is not None:
             self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path)
+            self.policy.load(init_model_path, self.device)
 
         # reset the env
         episode_rewards = deque(maxlen=10)

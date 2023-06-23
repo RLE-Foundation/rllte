@@ -23,25 +23,21 @@
 # =============================================================================
 
 
-import os
 import threading
-import traceback
-from copy import deepcopy
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import gymnasium as gym
 import torch as th
-from torch import multiprocessing as mp
 from torch import nn
 from torch.nn import functional as F
 
+from rllte.common.distributed_agent import DistributedAgent
 from rllte.common.utils import get_network_init
-from rllte.common.distributed_agent import DistributedAgent, Environment
-from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.storage import DistributedStorage
 from rllte.xplore.distribution import Categorical, DiagonalGaussian
+
 
 class VTraceLoss:
     """V-trace loss function.
@@ -197,7 +193,7 @@ class IMPALA(DistributedAgent):
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
             encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-        
+
         # default distribution
         if self.action_type == "Discrete":
             dist = Categorical
@@ -205,7 +201,7 @@ class IMPALA(DistributedAgent):
             dist = DiagonalGaussian
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
         # create policy
         policy = DistributedActorLearner(
             observation_space=env.observation_space,
@@ -235,7 +231,6 @@ class IMPALA(DistributedAgent):
             distribution=dist,
             policy=policy,
         )
-
 
     def update(
         self,

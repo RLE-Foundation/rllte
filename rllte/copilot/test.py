@@ -1,7 +1,7 @@
-from transformers import T5ForConditionalGeneration, AutoTokenizer
+from transformers import AutoTokenizer, T5ForConditionalGeneration
 
 checkpoint = "./codet5p-770m-py"
-device = "cuda" # for GPU usage or "cpu" for CPU usage
+device = "cuda"  # for GPU usage or "cpu" for CPU usage
 
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 model = T5ForConditionalGeneration.from_pretrained(checkpoint).to(device)

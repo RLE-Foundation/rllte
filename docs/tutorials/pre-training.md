@@ -57,7 +57,7 @@ if __name__ == "__main__":
                 pretraining=False)
     # start training
     agent.train(num_train_steps=5000,
-                init_model_path="/export/yuanmingqi/code/rllte/logs/ppo_atari/2023-06-05-02-42-12/pretrained")
+                init_model_path="/export/yuanmingqi/code/rllte/logs/ppo_atari/2023-06-05-02-42-12/pretrained/pretrained.pth")
 ```
 Run `train.py` and you'll see the pre-trained model parameters are loaded:
 <div align=center>

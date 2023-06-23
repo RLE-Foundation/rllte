@@ -45,12 +45,12 @@ Vanilla rollout storage.
 Add sampled transitions into storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L102)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L101)
 ```python
 .sample(
-   device: th.device, batch_size: int, free_queue: th.multiprocessing.SimpleQueue,
-   full_queue: th.multiprocessing.SimpleQueue, storages: Dict[str, list],
-   init_actor_state_storages: List, lock = threading.Lock()
+   free_queue: th.multiprocessing.SimpleQueue,
+   full_queue: th.multiprocessing.SimpleQueue, init_actor_state_storages: List,
+   lock = threading.Lock()
 )
 ```
 
@@ -60,11 +60,8 @@ Sample transitions from the storage.
 
 **Args**
 
-* **device** (Device) : Device (cpu, cuda, ...) on which the code should be run.
-* **batch_size** (int) : The batch size.
 * **free_queue** (Queue) : Free queue for communication.
 * **full_queue** (Queue) : Full queue for communication.
-* **storages** (Dict[str, list]) : A Dict of shared storages.
 * **init_actor_state_storages**  : (List[th.Tensor]): Initial states for LSTM.
 * **lock** (Lock) : Thread lock.
 
@@ -74,7 +71,7 @@ Sample transitions from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L137)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L131)
 ```python
 .update(
    *args

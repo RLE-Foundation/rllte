@@ -23,20 +23,21 @@
 # =============================================================================
 
 
-import os
 import itertools
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Type, Dict, Any, Optional, Callable, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
-import torch as th
 import gymnasium as gym
+import torch as th
 from torch import nn
+
+# from rllte.common.base_distribution import BaseDistribution as Distribution
+from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from rllte.common.utils import ExportModel
 from rllte.common.base_policy import BasePolicy
-from rllte.common.base_distribution import BaseDistribution as Distribution
+from rllte.common.utils import ExportModel
 from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor, MultiBinaryActor
 
 
@@ -73,9 +74,9 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method
-            )
-        
+            init_method=init_method,
+        )
+
         # choose an actor class based on action space type
         if self.action_type == "Discrete":
             actor_class = DiscreteActor
@@ -87,10 +88,9 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             raise NotImplementedError("Unsupported action type!")
 
         # build actor and critic
-        self.actor = actor_class(obs_shape=self.obs_shape, 
-                                 action_dim=self.action_dim, 
-                                 feature_dim=self.feature_dim, 
-                                 hidden_dim=self.hidden_dim)
+        self.actor = actor_class(
+            obs_shape=self.obs_shape, action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
 
         if len(self.obs_shape) > 1:
             self.gae = nn.Linear(feature_dim + self.action_dim, 1)
@@ -118,7 +118,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         Args:
             encoder (nn.Module): Encoder network.
             dist (Distribution): Distribution class.
-        
+
         Returns:
             None.
         """
@@ -132,13 +132,10 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         # initialize parameters
         self.apply(self.init_method)
         # build optimizers
-        self.actor_params = itertools.chain(
-            self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters()
-        )
+        self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
         self.actor_opt = th.optim.Adam(self.actor_params, **self.opt_kwargs)
         self.critic_opt = th.optim.Adam(self.critic_params, **self.opt_kwargs)
-
 
     def act(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Get actions and estimated values for observations.
@@ -215,14 +212,15 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             export_model = ExportModel(encoder=self.actor_encoder, actor=self.actor)
             th.save(export_model, path / "agent.pth")
 
-    def load(self, path: str) -> None:
+    def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.
 
         Args:
             path (str): Import path.
+            device (th.device): Device to use.
 
         Returns:
             None.
         """
-        params = th.load(path, map_location=self.device)
+        params = th.load(path, map_location=device)
         self.load_state_dict(params)

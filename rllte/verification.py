@@ -25,8 +25,8 @@
 
 from termcolor import colored
 
-from rllte.env.utils import make_rllte_env
 from rllte.agent import PPO
+from rllte.env.utils import make_rllte_env
 
 if __name__ == "__main__":
     env = make_rllte_env(env_id="Acrobot-v1", num_envs=1, device="cpu")

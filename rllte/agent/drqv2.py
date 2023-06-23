@@ -29,14 +29,15 @@ import gymnasium as gym
 import torch as th
 from torch.nn import functional as F
 
-from rllte.common.utils import get_network_init
+from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
+from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyDeterministicActorDoubleCritic
 from rllte.xploit.storage import NStepReplayStorage
+from rllte.xplore.augmentation import Identity, RandomShift
 from rllte.xplore.distribution import TruncatedNormalNoise
-from rllte.xplore.augmentation import RandomShift, Identity
-from rllte.agent import utils
+
 
 class DrQv2(OffPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -93,7 +94,7 @@ class DrQv2(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps
+            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -105,12 +106,10 @@ class DrQv2(OffPolicyAgent):
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = TassaCnnEncoder(observation_space=env.observation_space, 
-                                           feature_dim=feature_dim)
+            encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, 
-                                           feature_dim=feature_dim)
+            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
 
         # default distribution
         dist = TruncatedNormalNoise(low=self.action_range[0], high=self.action_range[1])
@@ -128,10 +127,10 @@ class DrQv2(OffPolicyAgent):
 
         # default storage
         storage = NStepReplayStorage(
-                observation_space=env.observation_space,
-                action_space=env.action_space,
-                device=device,
-                batch_size=batch_size,
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            batch_size=batch_size,
         )
 
         # default augmentation
@@ -142,14 +141,7 @@ class DrQv2(OffPolicyAgent):
             aug = RandomShift(pad=4).to(self.device)
 
         # set all the modules [essential operation!!!]
-        self.set(
-            encoder=encoder,
-            policy=policy,
-            storage=storage,
-            distribution=dist,
-            augmentation=aug
-        )
-
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""

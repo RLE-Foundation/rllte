@@ -2,7 +2,7 @@
 
 
 ## DrQv2
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L37)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L41)
 ```python 
 DrQv2(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -50,17 +50,8 @@ DrQv2 agent instance.
 **Methods:**
 
 
-### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L104)
-```python
-.freeze()
-```
-
----
-Freeze the structure of the agent.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L120)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L154)
 ```python
 .update()
 ```
@@ -69,7 +60,7 @@ Freeze the structure of the agent.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L161)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L195)
 ```python
 .update_critic(
    obs: th.Tensor, action: th.Tensor, reward: th.Tensor, discount: th.Tensor,
@@ -95,7 +86,7 @@ Update the critic network.
 Critic loss metrics.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/drqv2.py/#L208)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L242)
 ```python
 .update_actor(
    obs: th.Tensor

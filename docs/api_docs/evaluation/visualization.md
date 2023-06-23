@@ -24,7 +24,7 @@ See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 * **metrics_dict** (Dict[str, Dict]) : The dictionary of various metrics of algorithms.
 * **metric_names** (List[str]) : Names of the metrics corresponding to `metrics_dict`.
 * **algorithms** (List[str]) : List of methods used for plotting.
-* **colors** (Optional[List[str]]) : Maps each method to a color. 
+* **colors** (Optional[List[str]]) : Maps each method to a color.
     If None, then this mapping is created based on `color_palette`.
 * **color_palette** (str) : `seaborn.color_palette` object for mapping each method to a color.
 * **max_ticks** (float) : Find nice tick locations with no more than `max_ticks`. Passed to `plt.MaxNLocator`.
@@ -68,15 +68,15 @@ See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 
 * **profile_dict** (Dict[str, List]) : A dictionary mapping a method to its performance.
 * **tau_list** (np.ndarray) : 1D numpy array of threshold values on which the profile is evaluated.
-* **use_non_linear_scaling** (bool) : Whether to scale the x-axis in proportion to the 
+* **use_non_linear_scaling** (bool) : Whether to scale the x-axis in proportion to the
     number of runs within any specified range.
 * **figsize** (Tuple[float]) : Size of the figure passed to `matplotlib.subplots`.
-* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then 
+* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then
     this mapping is created based on `color_palette`.
 * **color_palette** (str) : `seaborn.color_palette` object for mapping each method to a color.
 * **alpha** (float) : Changes the transparency of the shaded regions corresponding to the confidence intervals.
 * **xticks** (Optional[Iterable]) : The list of x-axis tick locations. Passing an empty list removes all xticks.
-* **yticks** (Optional[Iterable]) : The list of y-axis tick locations between 0 and 1. 
+* **yticks** (Optional[Iterable]) : The list of y-axis tick locations between 0 and 1.
     If None, defaults to `[0, 0.25, 0.5, 0.75, 1.0]`.
 * **xlabel** (str) : Label for the x-axis.
 * **ylabel** (str) : Label for the y-axis.
@@ -117,7 +117,7 @@ See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 * **pair_separator** (str) : Each algorithm pair name in dictionaries above is joined by a string separator.
     For example, if the pairs are specified as 'X;Y', then the separator corresponds to ';'. Defaults to ','.
 * **figsize** (Tuple[float]) : Size of the figure passed to `matplotlib.subplots`.
-* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then this mapping 
+* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then this mapping
     is created based on `color_palette`.
 * **color_palette** (str) : `seaborn.color_palette` object for mapping each method to a color.
 * **interval_height** (float) : Height of confidence intervals.
@@ -161,7 +161,7 @@ See https://docs.rllte.dev/tutorials/evaluation/ for usage tutorials.
 * **sampling_dict** (Dict[str, Dict]) : A dictionary of values with stratified confidence intervals in different frames.
 * **frames** (np.ndarray) : Array containing environment frames to mark on the x-axis.
 * **algorithms** (List[str]) : List of methods used for plotting.
-* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then this mapping 
+* **colors** (Optional[List[str]]) : Maps each method to a color. If None, then this mapping
     is created based on `color_palette`.
 * **color_palette** (str) : `seaborn.color_palette` object for mapping each method to a color.
 * **max_ticks** (float) : Find nice tick locations with no more than `max_ticks`. Passed to `plt.MaxNLocator`.

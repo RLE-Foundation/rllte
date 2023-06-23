@@ -30,12 +30,13 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.utils import get_network_init
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.xploit.policy import OnPolicySharedActorCritic
+from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import Categorical, Bernoulli, DiagonalGaussian
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+
 
 class PPO(OnPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
@@ -102,8 +103,9 @@ class PPO(OnPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_steps=num_steps,
-            eval_every_episodes=eval_every_episodes)
-        
+            eval_every_episodes=eval_every_episodes,
+        )
+
         # hyper parameters
         self.lr = lr
         self.eps = eps
@@ -118,12 +120,10 @@ class PPO(OnPolicyAgent):
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = MnihCnnEncoder(observation_space=env.observation_space, 
-                                     feature_dim=feature_dim)
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, 
-                                      feature_dim=feature_dim)
+            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
 
         # default distribution
         if self.action_type == "Discrete":
@@ -157,12 +157,7 @@ class PPO(OnPolicyAgent):
         )
 
         # set all the modules [essential operation!!!]
-        self.set(
-            encoder=encoder,
-            policy=policy,
-            storage=storage,
-            distribution=dist
-        )
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
@@ -209,7 +204,7 @@ class PPO(OnPolicyAgent):
                 if self.aug is not None:
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch_obs)
-                    new_batch_actions, _, _ = self.policy.get_action_and_value(obs=batch_obs)
+                    new_batch_actions, _, _ = self.policy.act(obs=batch_obs)
 
                     values_aug, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                     action_loss_aug = -log_probs_aug.mean()

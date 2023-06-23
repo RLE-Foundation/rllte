@@ -12,12 +12,11 @@
 Random Convolution operation for image augmentation. Note that imgs should be normalized and torch tensor.
 
 
-
 **Methods:**
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_convolution.py/#L38)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/augmentation/random_convolution.py/#L37)
 ```python
 .forward(
    x: th.Tensor

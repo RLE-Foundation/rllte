@@ -2,7 +2,7 @@
 
 
 ## DistributedAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L148)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L145)
 ```python 
 DistributedAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -39,26 +39,43 @@ Distributed agent instance.
 **Methods:**
 
 
-### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L240)
+### .run
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L191)
 ```python
-.act()
+.run(
+   env: Environment, actor_idx: int, free_queue: mp.SimpleQueue,
+   full_queue: mp.SimpleQueue, init_actor_state_storages: List[th.Tensor]
+)
 ```
 
 ---
-Act function of each actor. Implemented by individual algorithms.
+Sample function of each actor. Implemented by individual algorithms.
+
+
+**Args**
+
+* **env** (Environment) : A Gym-like environment wrapped by `Environment`.
+* **actor_idx** (int) : The index of actor.
+* **free_queue** (Queue) : Free queue for communication.
+* **full_queue** (Queue) : Full queue for communication.
+* **init_actor_state_storages** (List[Tensor]) : Initial states for LSTM.
+
+
+**Returns**
+
+None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L244)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L254)
 ```python
 .update()
 ```
 
 ---
-Update function of the learner. Implemented by individual algorithms.
+Update the agent. Implemented by individual algorithms.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L248)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L258)
 ```python
 .freeze()
 ```
@@ -67,7 +84,7 @@ Update function of the learner. Implemented by individual algorithms.
 Freeze the structure of the agent. Implemented by individual algorithms.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L252)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L267)
 ```python
 .mode(
    training: bool = True
@@ -88,7 +105,7 @@ Set the training mode.
 None.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L265)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L280)
 ```python
 .train(
    num_train_steps: int = 30000000, init_model_path: Optional[str] = None
@@ -110,7 +127,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L413)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/distributed_agent.py/#L424)
 ```python
 .eval()
 ```

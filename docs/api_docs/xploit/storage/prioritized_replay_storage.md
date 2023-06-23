@@ -60,8 +60,8 @@ Beta value.
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L86)
 ```python
 .add(
-   obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
-   truncated: th.Tensor, info: th.Tensor, next_obs: th.Tensor
+   obs: np.ndarray, action: np.ndarray, reward: np.ndarray, terminated: np.ndarray,
+   truncated: np.ndarray, info: Dict[str, Any], next_obs: np.ndarray
 )
 ```
 
@@ -71,13 +71,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (th.Tensor) : Observation.
-* **action** (th.Tensor) : Action.
-* **reward** (th.Tensor) : Reward.
-* **terminated** (th.Tensor) : Termination flag.
-* **truncated** (th.Tensor) : Truncation flag.
-* **info** (th.Tensor) : Additional information.
-* **next_obs** (th.Tensor) : Next observation.
+* **obs** (np.ndarray) : Observation.
+* **action** (np.ndarray) : Action.
+* **reward** (np.ndarray) : Reward.
+* **terminated** (np.ndarray) : Termination flag.
+* **truncated** (np.ndarray) : Truncation flag.
+* **info** (Dict[str, Any]) : Additional information.
+* **next_obs** (np.ndarray) : Next observation.
 
 
 **Returns**
@@ -85,7 +85,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L118)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L123)
 ```python
 .sample(
    step: int
@@ -106,7 +106,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L159)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L164)
 ```python
 .update(
    metrics: Dict

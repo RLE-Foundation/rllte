@@ -22,8 +22,8 @@
 # SOFTWARE.
 # =============================================================================
 
-from typing import Tuple
 import time
+from typing import Tuple
 
 
 class Timer:

@@ -61,7 +61,7 @@ Reset the noise instance.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L104)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L103)
 ```python
 .sample(
    clip: bool = False, sample_shape: th.Size = th.Size()
@@ -83,7 +83,7 @@ Generates a sample_shape shaped sample
 A sample_shape shaped sample.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L139)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L138)
 ```python
 .mean()
 ```
@@ -92,7 +92,7 @@ A sample_shape shaped sample.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L143)
 ```python
 .mode()
 ```
@@ -101,7 +101,7 @@ Returns the mean of the distribution.
 Returns the mode of the distribution.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L148)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L147)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -123,7 +123,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L160)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L159)
 ```python
 .log_prob(
    value: th.Tensor
@@ -144,7 +144,7 @@ Returns the log of the probability density/mass function evaluated at `value`.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L171)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L170)
 ```python
 .entropy()
 ```
@@ -153,7 +153,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L176)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L175)
 ```python
 .stddev()
 ```
@@ -162,7 +162,7 @@ Returns the Shannon entropy of distribution.
 Returns the standard deviation of the distribution.
 
 ### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L181)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L180)
 ```python
 .variance()
 ```

@@ -2,7 +2,7 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L37)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppo.py/#L40)
 ```python 
 PPO(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -56,17 +56,8 @@ PPO agent instance.
 **Methods:**
 
 
-### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L119)
-```python
-.freeze()
-```
-
----
-Freeze the structure of the agent.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/agent/ppo.py/#L133)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppo.py/#L167)
 ```python
 .update()
 ```

@@ -2,7 +2,7 @@
 
 
 ### make_procgen_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/procgen/__init__.py/#L78)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/procgen/__init__.py/#L81)
 ```python
 .make_procgen_env(
    env_id: str = 'bigfish', num_envs: int = 64, device: str = 'cpu', seed: int = 1,
