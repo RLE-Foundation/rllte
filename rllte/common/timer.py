@@ -22,7 +22,7 @@
 # SOFTWARE.
 # =============================================================================
 
-
+from typing import Tuple
 import time
 
 
@@ -33,7 +33,7 @@ class Timer:
         self._start_time = time.perf_counter()
         self._last_time = time.perf_counter()
 
-    def reset(self):
+    def reset(self) -> Tuple[float, float]:
         """Reset the calculagraph."""
         elapsed_time = time.perf_counter() - self._last_time
         self._last_time = time.perf_counter()
