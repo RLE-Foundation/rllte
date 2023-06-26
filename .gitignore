@@ -18,6 +18,7 @@
 *.lprof
 *.prof
 *.log
+*.json
 
 __pycache__/
 _build/
