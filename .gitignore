@@ -32,5 +32,6 @@ _build/
 /test_npu.py
 /train.py
 /checkpoints_in
+/rllte/copilot/g4f
 
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf
