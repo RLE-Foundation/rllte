@@ -70,7 +70,7 @@ extra:
 nav:
   - Overview: 
     - Overview: index.md
-    - Tenet: tenet.md
+    - Tenet: assets/pdf/tenet.pdf
     - Changelog: changelog.md
     - Contribution: contributing.md
     - License: license.md

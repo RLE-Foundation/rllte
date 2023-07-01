@@ -52,7 +52,7 @@ Available metrics:
 |`.aggregate_median`|Computes median of sample mean scores per task.|
 |`.aggregate_og`|Computes optimality gap across all runs and tasks.|
 |`.aggregate_iqm`|Computes the interquartile mean across runs and tasks.|
-|`.create_performance_profile`|Computes the performance profilies.|
+|`.create_performance_profile`|Computes the performance profiles.|
 
 ## Performance Comparison
 `Comparison` module allows you to compare the performance between two algorithms:

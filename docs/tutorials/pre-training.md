@@ -21,7 +21,7 @@ if __name__ == "__main__":
     re3 = RE3(observation_space=env.observation_space,
               action_space=env.action_space,
               device=device)
-    # set the new encoder
+    # set the reward module
     agent.set(reward=re3)
     # start training
     agent.train(num_train_steps=5000)
