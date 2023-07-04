@@ -134,7 +134,7 @@ class OnPolicyAgent(BaseAgent):
 
                 # pre-training mode
                 if self.pretraining:
-                    time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
+                    time_step = time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
 
                 # add transitions
                 self.storage.add(*time_step, **extra_policy_outputs)
@@ -146,7 +146,7 @@ class OnPolicyAgent(BaseAgent):
                     episode_steps.extend(eps_l)
 
                 # set the current observation
-                time_step._replace(observation=time_step.next_observation)
+                time_step = time_step._replace(observation=time_step.next_observation)
 
             # get the value estimation of the last step
             with th.no_grad():
@@ -227,7 +227,7 @@ class OnPolicyAgent(BaseAgent):
                 episode_steps.extend(eps_l)
             
             # set the current observation
-            time_step._replace(observation=time_step.next_observation)
+            time_step = time_step._replace(observation=time_step.next_observation)
 
         return {
             "step": self.global_step,
