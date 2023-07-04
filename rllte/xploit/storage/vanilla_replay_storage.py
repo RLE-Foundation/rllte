@@ -101,12 +101,13 @@ class VanillaReplayStorage(BaseStorage):
         Returns:
             None.
         """
-        np.copyto(self.obs[self.global_step], obs)
-        np.copyto(self.actions[self.global_step], action)
-        np.copyto(self.rewards[self.global_step], reward)
-        np.copyto(self.obs[(self.global_step + 1) % self.storage_size], next_obs)
-        np.copyto(self.terminateds[self.global_step], terminated)
-        np.copyto(self.truncateds[self.global_step], truncated)
+        # TODO: add parallel env support
+        np.copyto(self.obs[self.global_step], obs[0].cpu().numpy())
+        np.copyto(self.actions[self.global_step], action[0].cpu().numpy())
+        np.copyto(self.rewards[self.global_step], reward[0].cpu().numpy())
+        np.copyto(self.obs[(self.global_step + 1) % self.storage_size], next_obs[0].cpu().numpy())
+        np.copyto(self.terminateds[self.global_step], terminated[0].cpu().numpy())
+        np.copyto(self.truncateds[self.global_step], truncated[0].cpu().numpy())
 
         self.global_step = (self.global_step + 1) % self.storage_size
         self.full = self.full or self.global_step == 0

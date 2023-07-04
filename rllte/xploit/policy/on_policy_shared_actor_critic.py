@@ -299,7 +299,7 @@ class OnPolicySharedActorCritic(BasePolicy):
         # build optimizers
         self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
 
-    def act(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
+    def act(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -317,10 +317,10 @@ class OnPolicySharedActorCritic(BasePolicy):
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions, self.critic(h), log_probs
+            return actions.clamp(*self.action_range), {"values": self.critic(h), "log_probs": log_probs}
         else:
             actions = dist.mean
-            return actions
+            return actions.clamp(*self.action_range), {}
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.

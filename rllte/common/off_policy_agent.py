@@ -115,7 +115,7 @@ class OffPolicyAgent(BaseAgent):
 
         # reset the env
         episode_step, episode_reward = 0, 0
-        obs, info = self.env.reset(seed=self.seed)
+        time_step = self.env.reset(seed=self.seed)
         metrics = None
 
         # training loop
@@ -131,26 +131,20 @@ class OffPolicyAgent(BaseAgent):
                 if self.global_step <= self.num_init_steps:
                     action = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
                 else:
-                    action = self.policy.act(obs, training=True, step=self.global_step)
+                    action = self.policy.act(time_step.observation, training=True, step=self.global_step)
 
             # observe reward and next obs
-            next_obs, reward, terminated, truncated, info = self.env.step(action)
-            episode_reward += reward[0].cpu().numpy()
+            time_step = self.env.step(action)
+            episode_reward += time_step.reward.mean().item()
             episode_step += 1
             self.global_step += 1
 
-            # TODO: add parallel env support
-            # save transition
-            reward = th.zeros_like(reward) if self.pretraining else reward  # pre-training mode
-            self.storage.add(
-                obs=obs[0].cpu().numpy(),
-                action=action[0].cpu().numpy(),
-                reward=reward[0].cpu().numpy(),
-                terminated=terminated[0].cpu().numpy(),
-                truncated=truncated[0].cpu().numpy(),
-                info=info,
-                next_obs=next_obs[0].cpu().numpy(),
-            )
+            # pre-training mode
+            if self.pretraining:
+                time_step = time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
+
+            # add new transitions
+            self.storage.add(*time_step)
 
             # update agent
             if self.global_step >= self.num_init_steps:
@@ -159,7 +153,7 @@ class OffPolicyAgent(BaseAgent):
                 self.storage.update(metrics)
 
             # terminated or truncated
-            if terminated or truncated:
+            if time_step.terminated or time_step.truncated:
                 episode_time, total_time = self.timer.reset()
                 if metrics is not None:
                     train_metrics = {
@@ -179,7 +173,8 @@ class OffPolicyAgent(BaseAgent):
                 self.global_episode += 1
                 episode_step, episode_reward = 0, 0
 
-            obs = next_obs
+            # set the current observation
+            time_step = time_step._replace(observation=time_step.next_observation)
 
         # save model
         self.logger.info("Training Accomplished!")
@@ -201,28 +196,29 @@ class OffPolicyAgent(BaseAgent):
         """Evaluation function."""
         # reset the env
         step, episode, total_reward = 0, 0, 0
-        obs, info = self.eval_env.reset(seed=self.seed)
+        time_step = self.eval_env.reset(seed=self.seed)
 
-        # eval loop
+        # evaluation loop
         while episode <= self.num_eval_episodes:
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                action = self.policy.act(obs, training=False, step=self.global_step)
+                action = self.policy.act(time_step.observation, training=False, step=self.global_step)
 
             # observe reward and next obs
-            next_obs, reward, terminated, truncated, info = self.eval_env.step(action)
-            total_reward += reward[0].cpu().numpy()
+            time_step = self.eval_env.step(action)
+            total_reward += time_step.reward.mean().item()
             step += 1
 
             # terminated or truncated
-            if terminated or truncated:
+            if time_step.terminated or time_step.truncated:
                 # As the vector environments autoreset for a terminating and truncating sub-environments,
                 # the returned observation and info is not the final step's observation or info which
                 # is instead stored in info as `final_observation` and `final_info`. Therefore,
                 # we don't need to reset the env here.
                 episode += 1
 
-            obs = next_obs
+            # set the current observation
+            time_step = time_step._replace(observation=time_step.next_observation)
 
         return {
             "step": self.global_step,

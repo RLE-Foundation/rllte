@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Generator
+from typing import Generator, Dict
 
 import gymnasium as gym
 import torch as th
@@ -114,9 +114,10 @@ class VanillaRolloutStorage(BaseStorage):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
+        info: Dict,
         next_obs: th.Tensor,
         log_probs: th.Tensor,
-        values: th.Tensor,
+        values: th.Tensor
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -124,8 +125,9 @@ class VanillaRolloutStorage(BaseStorage):
             obs (th.Tensor): Observations.
             actions (th.Tensor): Actions.
             rewards (th.Tensor): Rewards.
-            terminateds (th.Tensor): Terminateds.
-            truncateds (th.Tensor): Truncateds.
+            terminateds (th.Tensor): Termination signals.
+            truncateds (th.Tensor): Truncation signals.
+            info (Dict): Extra information.
             next_obs (th.Tensor): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.

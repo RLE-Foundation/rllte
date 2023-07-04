@@ -319,14 +319,15 @@ class NStepReplayStorage(BaseStorage):
         Returns:
             None.
         """
+        # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs,
-            action=action,
-            reward=reward,
-            terminated=terminated,
-            truncated=truncated,
+            obs=obs[0].cpu().numpy(),
+            action=action[0].cpu().numpy(),
+            reward=reward[0].cpu().numpy(),
+            terminated=terminated[0].cpu().numpy(),
+            truncated=truncated[0].cpu().numpy(),
             info=info,
-            next_obs=next_obs,
+            next_obs=next_obs[0].cpu().numpy(),
         )
 
     @property

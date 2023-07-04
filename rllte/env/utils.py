@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, NamedTuple
 
 import gymnasium as gym
 import numpy as np
@@ -88,6 +88,52 @@ def make_rllte_env(
     return env
 
 
+class TimeStep(NamedTuple):
+    """Environment data of a time step.
+
+    Args:
+        observation (th.Tensor): Observation.
+        reward (th.Tensor): Reward.
+        action (th.Tensor): Action.
+        terminated (th.Tensor): Termination signal.
+        truncated (th.Tensor): Truncation signal.
+        info (Dict): Extra information.
+        next_observation (th.Tensor): Next observation.
+    
+    Returns:
+        TimeStep: A time step.
+    """
+    # Environment data.
+    observation: Optional[th.Tensor] = None
+    action: Optional[th.Tensor] = None
+    reward: Optional[th.Tensor] = None
+    terminated: Optional[th.Tensor] = None
+    truncated: Optional[th.Tensor] = None
+    info: Optional[Dict] = None
+    next_observation: Optional[th.Tensor] = None
+
+    def get_episode_statistics(self) -> Tuple[List, List]:
+        """Get the episode statistics.
+        """
+        indices = np.nonzero(self.info["episode"]["l"])
+        
+        return self.info["episode"]["r"][indices].tolist(), self.info["episode"]["l"][indices].tolist()
+
+    def __getitem__(self, attr: str) -> Tuple:
+        """Get the attribute of the time step.
+
+        Args:
+            attr (str): Attribute name.
+
+        Returns:
+            Tuple: Attribute value.
+        """
+        if isinstance(attr, str):
+            return getattr(self, attr)
+        else:
+            return tuple.__getitem__(self, attr)
+
+
 class TorchVecEnvWrapper(gym.Wrapper):
     """Env wrapper for outputting torch tensors.
 
@@ -107,12 +153,13 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
         self.num_envs = env.num_envs
+        self.current_obs = None
 
     def reset(
         self,
         seed: Optional[Union[int, List[int]]] = None,
         options: Optional[dict] = None,
-    ) -> Tuple[th.Tensor, Dict]:
+    ) -> TimeStep:
         """Reset all environments and return a batch of initial observations and info.
 
         Args:
@@ -120,22 +167,24 @@ class TorchVecEnvWrapper(gym.Wrapper):
             options (Optional[dict]): If to return the options.
 
         Returns:
-            A batch of observations and info from the vectorized environment.
+            A `TimeStep` instance that contains first observation and info.
         """
         obs, info = self.env.reset(seed=seed, options=options)
         obs = th.as_tensor(obs, device=self.device)
-        return obs, info
 
-    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
+        self.current_obs = obs
+        return TimeStep(observation=self.current_obs, info=info)
+
+    def step(self, action: th.Tensor) -> TimeStep:
         """Take an action for each environment.
 
         Args:
-            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
+            action (th.Tensor): element of :attr:`action_space` Batch of actions.
 
         Returns:
-            Batch of (observations, rewards, terminations, truncations, infos)
+            A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
         """
-        obs, reward, terminated, truncated, info = self.env.step(actions.cpu().numpy())
+        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy())
         obs = th.as_tensor(obs, device=self.device)
         reward = th.as_tensor(reward, dtype=th.float32, device=self.device)
         terminated = th.as_tensor(
@@ -149,8 +198,18 @@ class TorchVecEnvWrapper(gym.Wrapper):
             device=self.device,
         )
 
-        return obs, reward, terminated, truncated, info
+        time_step = TimeStep(observation=self.current_obs, 
+                             action=action, 
+                             reward=reward, 
+                             terminated=terminated, 
+                             truncated=truncated, 
+                             info=info,
+                             next_observation=obs)
 
+        # set current observation
+        self.current_obs = obs
+
+        return time_step
 
 class FrameStack(gym.Wrapper):
     """Observation wrapper that stacks the observations in a rolling manner.

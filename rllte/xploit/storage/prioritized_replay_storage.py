@@ -107,13 +107,14 @@ class PrioritizedReplayStorage(BaseStorage):
         Returns:
             None.
         """
+        # TODO: add parallel env support
         transition = (
-            obs,
-            action,
-            reward,
-            terminated,
-            truncated,
-            next_obs,
+            obs[0].cpu().numpy(),
+            action[0].cpu().numpy(),
+            reward[0].cpu().numpy(),
+            terminated[0].cpu().numpy(),
+            truncated[0].cpu().numpy(),
+            next_obs[0].cpu().numpy(),
         )
         max_prio = self.priorities.max() if self.storage else 1.0
         self.priorities[self.position] = max_prio

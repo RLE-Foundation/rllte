@@ -115,7 +115,8 @@ class OnPolicyAgent(BaseAgent):
         # reset the env
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
-        obs, info = self.env.reset(seed=self.seed)
+        # obs, info = self.env.reset(seed=self.seed)
+        time_step = self.env.reset(seed=self.seed)
         # Number of updates
         num_updates = num_train_steps // self.num_envs // self.num_steps
 
@@ -125,41 +126,34 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval()
                 self.logger.eval(msg=eval_metrics)
 
-            for _step in range(self.num_steps):
+            for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, values, log_probs = self.policy.act(obs, training=True)
+                    actions, extra_policy_outputs = self.policy.act(time_step.observation, training=True)
+                    time_step = self.env.step(actions)
 
-                (
-                    next_obs,
-                    rewards,
-                    terminateds,
-                    truncateds,
-                    infos,
-                ) = self.env.step(actions.clamp(*self.action_range))
-
-                if "episode" in infos:
-                    indices = np.nonzero(infos["episode"]["l"])
-                    episode_rewards.extend(infos["episode"]["r"][indices].tolist())
-                    episode_steps.extend(infos["episode"]["l"][indices].tolist())
+                # pre-training mode
+                if self.pretraining:
+                    time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
 
                 # add transitions
-                self.storage.add(
-                    obs=obs,
-                    actions=actions,
-                    rewards=th.zeros_like(rewards, device=self.device) if self.pretraining else rewards,  # pre-training mode
-                    terminateds=terminateds,
-                    truncateds=truncateds,
-                    next_obs=next_obs,
-                    log_probs=log_probs,
-                    values=values,
-                )
+                self.storage.add(*time_step, **extra_policy_outputs)
 
-                obs = next_obs
+                # get episode information
+                if "episode" in time_step.info:
+                    eps_r, eps_l = time_step.get_episode_statistics()
+                    episode_rewards.extend(eps_r)
+                    episode_steps.extend(eps_l)
+
+                # set the current observation
+                time_step._replace(observation=time_step.next_observation)
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(next_obs).detach()
+                last_values = self.policy.get_value(time_step.next_observation).detach()
+
+            # perform return and advantage estimation
+            self.storage.compute_returns_and_advantages(last_values)
 
             # compute intrinsic rewards
             if self.irs is not None:
@@ -171,17 +165,17 @@ class OnPolicyAgent(BaseAgent):
                     },
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
-                self.storage.rewards += intrinsic_rewards.to(self.device)
+                # only add the intrinsic rewards to the advantages and returns
+                self.storage.advantages += intrinsic_rewards.to(self.device)
+                self.storage.returns += intrinsic_rewards.to(self.device)
 
-            # perform return and advantage estimation
-            self.storage.compute_returns_and_advantages(last_values)
-
-            # agent update
+            # update the agent
             self.update()
 
             # update and reset buffer
             self.storage.update()
 
+            # log training information
             self.global_episode += 1
             self.global_step += self.num_envs * self.num_steps
             episode_time, total_time = self.timer.reset()
@@ -215,19 +209,25 @@ class OnPolicyAgent(BaseAgent):
 
     def eval(self) -> Dict[str, float]:
         """Evaluation function."""
-        obs, info = self.eval_env.reset(seed=self.seed)
+        # reset the env
+        time_step = self.eval_env.reset(seed=self.seed)
         episode_rewards = list()
         episode_steps = list()
 
+        # evaluation loop
         while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions = self.policy.act(obs, training=False)
-            obs, rewards, terminateds, truncateds, infos = self.eval_env.step(actions.clamp(*self.action_range))
+                actions, _ = self.policy.act(time_step.observation, training=False)
+                time_step = self.eval_env.step(actions)
 
-            if "episode" in infos:
-                indices = np.nonzero(infos["episode"]["l"])
-                episode_rewards.extend(infos["episode"]["r"][indices].tolist())
-                episode_steps.extend(infos["episode"]["l"][indices].tolist())
+            # get episode information
+            if "episode" in time_step.info:
+                eps_r, eps_l = time_step.get_episode_statistics()
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
+            
+            # set the current observation
+            time_step._replace(observation=time_step.next_observation)
 
         return {
             "step": self.global_step,

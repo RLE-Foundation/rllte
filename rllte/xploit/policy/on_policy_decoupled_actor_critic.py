@@ -137,7 +137,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         self.actor_opt = th.optim.Adam(self.actor_params, **self.opt_kwargs)
         self.critic_opt = th.optim.Adam(self.critic_params, **self.opt_kwargs)
 
-    def act(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
+    def act(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -155,10 +155,10 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions, self.critic(self.critic_encoder(obs)), log_probs
+            return actions.clamp(*self.action_range), {"values": self.critic(self.critic_encoder(obs)), "log_probs": log_probs}
         else:
             actions = dist.mean
-            return actions
+            return actions.clamp(*self.action_range), {}
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
