@@ -122,7 +122,6 @@ class OffPolicyAgent(BaseAgent):
         episode_steps = deque(maxlen=10)
         train_metrics = {}
         time_step = self.env.reset(seed=self.seed)
-        metrics = None
 
         # training loop
         while self.global_step <= num_train_steps:

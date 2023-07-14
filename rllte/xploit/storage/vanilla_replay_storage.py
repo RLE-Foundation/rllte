@@ -113,7 +113,6 @@ class VanillaReplayStorage(BaseStorage):
         Returns:
             None.
         """
-        # TODO: add parallel env support
         np.copyto(self.obs[self.global_step], obs.cpu().numpy())
         np.copyto(self.actions[self.global_step], actions.cpu().numpy())
         np.copyto(self.rewards[self.global_step], rewards.cpu().numpy())
