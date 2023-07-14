@@ -59,7 +59,7 @@ if __name__ == "__main__":
         hidden_dim=1024,
         critic_target_tau=0.005,
         update_every_steps=2,
-        network_init_method="orthogonal",
+        init_fn="orthogonal",
     )
     # storage = PrioritizedReplayStorage(
     #     observation_space=env.observation_space,

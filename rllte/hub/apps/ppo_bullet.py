@@ -67,7 +67,7 @@ if __name__ == "__main__":
         vf_coef=0.5,
         ent_coef=0.0,
         max_grad_norm=0.5,
-        network_init_method="orthogonal",
+        init_fn="orthogonal",
     )
     # training
     agent.train(num_train_steps=1000000)

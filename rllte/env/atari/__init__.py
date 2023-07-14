@@ -40,7 +40,7 @@ def make_atari_env(
     device: str = "cpu",
     seed: int = 1,
     frame_stack: int = 4,
-    distributed: bool = False,
+    parallel: bool = True,
 ) -> gym.Env:
     """Build Atari environments.
 
@@ -50,7 +50,8 @@ def make_atari_env(
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+            For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 
     Returns:
@@ -60,7 +61,7 @@ def make_atari_env(
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
-            if distributed:
+            if parallel:
                 env = TransformReward(env, lambda reward: np.sign(reward))
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
@@ -83,11 +84,11 @@ def make_atari_env(
         env_id = "ALE/" + env_id
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
 
-    if distributed:
-        envs = SyncVectorEnv(envs)
-    else:
+    if parallel:
         envs = AsyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
         envs = TransformReward(envs, lambda reward: np.sign(reward))
+    else:
+        envs = SyncVectorEnv(envs)
 
     return TorchVecEnvWrapper(envs, device)

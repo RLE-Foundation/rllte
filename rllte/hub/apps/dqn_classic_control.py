@@ -52,7 +52,7 @@ if __name__ == "__main__":
     )
     # create agent
     agent = DQN(
-        env=env,
+            env=env,
             eval_env=eval_env,
             tag=f"dqn_classic_control_{args.env_id}_seed_{args.seed}",
             seed=args.seed,
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             update_every_steps=10,
             target_update_freq=500,
             num_init_steps=10000,
-            network_init_method="orthogonal",
+            init_fn="orthogonal",
         )
     # training
     agent.train(num_train_steps=100000)

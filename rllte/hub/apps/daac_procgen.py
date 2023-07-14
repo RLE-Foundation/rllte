@@ -79,7 +79,7 @@ if __name__ == "__main__":
         ent_coef=0.01,
         adv_coef=0.05,
         max_grad_norm=0.5,
-        network_init_method="xavier_uniform",
+        init_fn="xavier_uniform",
     )
     encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
     agent.set(encoder=encoder)

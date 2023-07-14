@@ -67,7 +67,7 @@ def make_minigrid_env(
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
-    distributed: bool = False,
+    parallel: bool = True,
 ) -> gym.Env:
     """Build MiniGrid environments.
 
@@ -78,7 +78,8 @@ def make_minigrid_env(
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
-        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+            For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 
     Returns:
@@ -104,10 +105,11 @@ def make_minigrid_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    if distributed:
-        envs = SyncVectorEnv(envs)
-    else:
+
+    if parallel:
         envs = AsyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
+    else:
+        envs = SyncVectorEnv(envs)
 
     return TorchVecEnvWrapper(envs, device=device)
