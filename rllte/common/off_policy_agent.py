@@ -116,9 +116,9 @@ class OffPolicyAgent(BaseAgent):
             with th.no_grad(), utils.eval_mode(self):
                 # Initial exploration
                 if self.global_step <= self.num_init_steps:
-                    actions = self.policy.explore(time_step.observation)
+                    actions = self.policy.explore(time_step.observations)
                 else:
-                    actions = self.policy(time_step.observation, training=True, step=self.global_step)
+                    actions = self.policy(time_step.observations, training=True, step=self.global_step)
 
             # observe reward and next obs
             time_step = self.env.step(actions)
@@ -126,7 +126,7 @@ class OffPolicyAgent(BaseAgent):
 
             # pre-training mode
             if self.pretraining:
-                time_step = time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
+                time_step = time_step._replace(rewards=th.zeros_like(time_step.rewards, device=self.device))
 
             # add new transitions
             self.storage.add(*time_step)
@@ -162,7 +162,7 @@ class OffPolicyAgent(BaseAgent):
                 # we don't need to reset the env here.
 
             # set the current observation
-            time_step = time_step._replace(observation=time_step.next_observation)
+            time_step = time_step._replace(observations=time_step.next_observations)
 
         # save model
         self.logger.info("Training Accomplished!")
@@ -191,7 +191,7 @@ class OffPolicyAgent(BaseAgent):
         while len(episode_rewards) < self.num_eval_episodes:
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                actions = self.policy(time_step.observation, training=False, step=self.global_step)
+                actions = self.policy(time_step.observations, training=False, step=self.global_step)
 
             # observe reward and next obs
             time_step = self.eval_env.step(actions)
@@ -203,7 +203,7 @@ class OffPolicyAgent(BaseAgent):
                 episode_steps.extend(eps_l)
 
             # set the current observation
-            time_step = time_step._replace(observation=time_step.next_observation)
+            time_step = time_step._replace(observations=time_step.next_observations)
 
         return {
             "episode_length": np.mean(episode_steps),

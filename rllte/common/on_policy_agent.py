@@ -116,13 +116,13 @@ class OnPolicyAgent(BaseAgent):
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, extra_policy_outputs = self.policy(time_step.observation, training=True)
+                    actions, extra_policy_outputs = self.policy(time_step.observations, training=True)
                     # observe reward and next obs
                     time_step = self.env.step(actions)
 
                 # pre-training mode
                 if self.pretraining:
-                    time_step = time_step._replace(reward=th.zeros_like(time_step.reward, device=self.device))
+                    time_step = time_step._replace(rewards=th.zeros_like(time_step.rewards, device=self.device))
 
                 # add transitions
                 self.storage.add(*time_step, **extra_policy_outputs)
@@ -134,11 +134,11 @@ class OnPolicyAgent(BaseAgent):
                     episode_steps.extend(eps_l)
 
                 # set the current observation
-                time_step = time_step._replace(observation=time_step.next_observation)
+                time_step = time_step._replace(observations=time_step.next_observations)
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(time_step.next_observation).detach()
+                last_values = self.policy.get_value(time_step.next_observations).detach()
 
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
@@ -204,7 +204,7 @@ class OnPolicyAgent(BaseAgent):
         # evaluation loop
         while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy(time_step.observation, training=False)
+                actions, _ = self.policy(time_step.observations, training=False)
                 time_step = self.eval_env.step(actions)
 
             # get episode information
@@ -214,7 +214,7 @@ class OnPolicyAgent(BaseAgent):
                 episode_steps.extend(eps_l)
             
             # set the current observation
-            time_step = time_step._replace(observation=time_step.next_observation)
+            time_step = time_step._replace(observations=time_step.next_observations)
 
         return {
             "episode_length": np.mean(episode_steps),

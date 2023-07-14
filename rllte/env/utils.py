@@ -92,25 +92,25 @@ class TimeStep(NamedTuple):
     """Environment data of a time step.
 
     Args:
-        observation (th.Tensor): Observation.
-        reward (th.Tensor): Reward.
-        action (th.Tensor): Action.
-        terminated (th.Tensor): Termination signal.
-        truncated (th.Tensor): Truncation signal.
+        observations (th.Tensor): Observations.
+        rewards (th.Tensor): Rewards.
+        actions (th.Tensor): Actions.
+        terminateds (th.Tensor): Termination signal.
+        truncateds (th.Tensor): Truncation signal.
         info (Dict): Extra information.
-        next_observation (th.Tensor): Next observation.
+        next_observations (th.Tensor): Next observations.
     
     Returns:
         TimeStep: A time step.
     """
     # Environment data.
-    observation: Optional[th.Tensor] = None
-    action: Optional[th.Tensor] = None
-    reward: Optional[th.Tensor] = None
-    terminated: Optional[th.Tensor] = None
-    truncated: Optional[th.Tensor] = None
+    observations: Optional[th.Tensor] = None
+    actions: Optional[th.Tensor] = None
+    rewards: Optional[th.Tensor] = None
+    terminateds: Optional[th.Tensor] = None
+    truncateds: Optional[th.Tensor] = None
     info: Optional[Dict] = None
-    next_observation: Optional[th.Tensor] = None
+    next_observations: Optional[th.Tensor] = None
 
     def get_episode_statistics(self) -> Tuple[List, List]:
         """Get the episode statistics.
@@ -147,12 +147,11 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def __init__(self, env: VectorEnv, device: str) -> None:
         super().__init__(env)
-        self.device = th.device(device)
-
-        # TODO: Transform the original 'Box' space into Hydra supported type.
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
         self.num_envs = env.num_envs
+        self.device = th.device(device)
+        # container for current observations
         self.current_obs = None
 
     def reset(
@@ -173,43 +172,51 @@ class TorchVecEnvWrapper(gym.Wrapper):
         obs = th.as_tensor(obs, device=self.device)
 
         self.current_obs = obs
-        return TimeStep(observation=self.current_obs, info=info)
+        return TimeStep(observations=self.current_obs, info=info)
 
-    def step(self, action: th.Tensor) -> TimeStep:
+    def step(self, actions: th.Tensor) -> TimeStep:
         """Take an action for each environment.
 
         Args:
-            action (th.Tensor): element of :attr:`action_space` Batch of actions.
+            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
 
         Returns:
             A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
         """
-        obs, reward, terminated, truncated, info = self.env.step(action.cpu().numpy())
-        obs = th.as_tensor(obs, device=self.device)
-        reward = th.as_tensor(reward, dtype=th.float32, device=self.device)
-        terminated = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in terminated],
+        new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
+        # get real next observations
+        for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
+            if term or trunc:
+                new_obs[idx] = info['final_observation'][idx]
+
+        # convert to tensor
+        new_obs = th.as_tensor(new_obs, device=self.device)
+        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
+
+        terminateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in terminateds],
             dtype=th.float32,
             device=self.device,
         )
-        truncated = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in truncated],
+        truncateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in truncateds],
             dtype=th.float32,
             device=self.device,
         )
 
-        time_step = TimeStep(observation=self.current_obs, 
-                             action=action, 
-                             reward=reward, 
-                             terminated=terminated, 
-                             truncated=truncated, 
+        time_step = TimeStep(observations=self.current_obs, 
+                             actions=actions, 
+                             rewards=rewards, 
+                             terminateds=terminateds, 
+                             truncateds=truncateds,
                              info=info,
-                             next_observation=obs)
+                             next_observations=new_obs)
 
         # set current observation
-        self.current_obs = obs
+        self.current_obs = new_obs
 
         return time_step
+
 
 class FrameStack(gym.Wrapper):
     """Observation wrapper that stacks the observations in a rolling manner.
