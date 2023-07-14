@@ -23,6 +23,12 @@
 # =============================================================================
 
 
+from .ppo_like_policy import PPOLikePolicy as PPOLikePolicy
+from .daac_like_policy import DAACLikePolicy as DAACLikePolicy
+from .sac_like_policy import SACLikePolicy as SACLikePolicy
+from .ddpg_like_policy import DDPGLikePolicy as DDPGLikePolicy
+from .impala_like_policy import IMPALALikePolicy as IMPALALikePolicy
+
 from .distributed_actor_learner import DistributedActorLearner as DistributedActorLearner
 from .off_policy_deterministic_actor_double_critic import (
     OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic,

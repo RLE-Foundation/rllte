@@ -65,15 +65,19 @@ class OnPolicyAgent(BaseAgent):
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
         self.eval_every_episodes = eval_every_episodes
+        self.network_init_method = utils.get_network_init("orthogonal")
 
     def update(self) -> Dict[str, float]:
-        """Update the agent. Implemented by individual algorithms."""
+        """Update the agent. Implemented by individual algorithms.
+        """
         raise NotImplementedError
 
     def freeze(self) -> None:
         """Freeze the structure of the agent. Implemented by individual algorithms."""
         # freeze the policy
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
+        # initialize the policy
+        self.policy.apply(self.network_init_method)
         # to device
         self.policy.to(self.device)
         # set the training mode
@@ -124,12 +128,16 @@ class OnPolicyAgent(BaseAgent):
             # try to eval
             if (update % self.eval_every_episodes) == 0 and (self.eval_env is not None):
                 eval_metrics = self.eval()
-                self.logger.eval(msg=eval_metrics)
+                
+                # write to tensorboard
+                self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
+                self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
 
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, extra_policy_outputs = self.policy.act(time_step.observation, training=True)
+                    actions, extra_policy_outputs = self.policy(time_step.observation, training=True)
+                    # observe reward and next obs
                     time_step = self.env.step(actions)
 
                 # pre-training mode
@@ -170,26 +178,25 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
-            self.update()
+            train_metrics = self.update()
 
             # update and reset buffer
             self.storage.update()
 
             # log training information
-            self.global_episode += 1
+            self.global_episode += self.num_envs
             self.global_step += self.num_envs * self.num_steps
-            episode_time, total_time = self.timer.reset()
 
-            if len(episode_rewards) > 1:
-                train_metrics = {
-                    "step": self.global_step,
-                    "episode": self.global_episode * self.num_envs,
-                    "episode_length": np.mean(episode_steps),
-                    "episode_reward": np.mean(episode_rewards),
-                    "fps": self.num_steps * self.num_envs / episode_time,
-                    "total_time": total_time,
-                }
-                self.logger.train(msg=train_metrics)
+            if len(episode_rewards) > 0:
+                # write to tensorboard
+                total_time = self.timer.total_time()
+                for key in train_metrics.keys():
+                    self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
+                self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
+                self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
+                self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
+                self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
 
         # save model
         self.logger.info("Training Accomplished!")
@@ -217,7 +224,7 @@ class OnPolicyAgent(BaseAgent):
         # evaluation loop
         while len(episode_rewards) < self.num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy.act(time_step.observation, training=False)
+                actions, _ = self.policy(time_step.observation, training=False)
                 time_step = self.eval_env.step(actions)
 
             # get episode information
@@ -230,9 +237,6 @@ class OnPolicyAgent(BaseAgent):
             time_step = time_step._replace(observation=time_step.next_observation)
 
         return {
-            "step": self.global_step,
-            "episode": self.global_episode,
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),
-            "total_time": self.timer.total_time(),
         }

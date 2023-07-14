@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+from torch.utils.tensorboard import SummaryWriter
 
 import gymnasium as gym
 import numpy as np
@@ -49,7 +50,7 @@ from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewar
 from rllte.common.base_storage import BaseStorage as Storage
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer
-
+from rllte.common.utils import pretty_json
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -61,7 +62,6 @@ class BaseAgent(ABC):
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on pre-training model or not.
-        feature_dim (int): Number of features extracted by the encoder.
 
     Returns:
         Base agent instance.
@@ -84,6 +84,7 @@ class BaseAgent(ABC):
         # basic setup
         self.work_dir = Path.cwd()
         self.logger = Logger(log_dir=self.work_dir)
+        self.writer = SummaryWriter(log_dir=self.work_dir)
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
@@ -180,30 +181,46 @@ class BaseAgent(ABC):
     def check(self) -> None:
         """Check the compatibility of selected modules."""
         self.logger.debug("Checking the Compatibility of Modules...")
-        self.logger.debug(f"Selected Agent: {self.__class__.__name__}")
-        self.logger.debug(f"Selected Encoder: {self.encoder.__class__.__name__}")
-        self.logger.debug(f"Selected Policy: {self.policy.__class__.__name__}")
-        self.logger.debug(f"Selected Storage: {self.storage.__class__.__name__}")
+        self.logger.debug(f"Agent: {self.__class__.__name__}")
+        self.logger.debug(f"Encoder: {self.encoder.__class__.__name__}")
+        self.logger.debug(f"Policy: {self.policy.__class__.__name__}")
+        self.logger.debug(f"Storage: {self.storage.__class__.__name__}")
         # class for `Distribution` and instance for `Noise`
         dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
-        self.logger.debug(f"Selected Distribution: {dist_name}")
+        self.logger.debug(f"Distribution: {dist_name}")
 
+        # write to tensorboard
+        structure_dict = {
+            "Agent": self.__class__.__name__,
+            "Encoder": self.encoder.__class__.__name__,
+            "Policy": self.policy.__class__.__name__,
+            "Storage": self.storage.__class__.__name__,
+            "Distribution": dist_name,
+            "Augmentation": self.aug.__class__.__name__ if self.aug is not None else "None",
+            "Intrinsic Reward": self.irs.__class__.__name__ if self.irs is not None else "None",
+        }
+        self.writer.add_text("Agent Structure", pretty_json(structure_dict))
+
+        # check augmentation and intrinsic reward
         if self.aug is not None:
-            self.logger.debug(f"Use Augmentation: True, {self.aug.__class__.__name__}")
+            self.logger.debug(f"Augmentation: True, {self.aug.__class__.__name__}")
         else:
-            self.logger.debug("Use Augmentation: False")
+            self.logger.debug("Augmentation: False")
 
         if self.pretraining:
             assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if self.irs is not None:
-            self.logger.debug(f"Use Intrinsic Reward: True, {self.irs.__class__.__name__}")
+            self.logger.debug(f"Intrinsic Reward: True, {self.irs.__class__.__name__}")
         else:
-            self.logger.debug("Use Intrinsic Reward: False")
+            self.logger.debug("Intrinsic Reward: False")
 
         if self.pretraining:
             self.logger.info("Pre-training Mode On...")
         self.logger.debug("Check Accomplished. Start Training...")
+
+        # launch tensorboard
+        self.logger.info(f"Launch TensorBoard: \n\t`tensorboard --logdir {self.work_dir}`")
 
     def set(
         self,

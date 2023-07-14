@@ -34,15 +34,13 @@ from rllte.common.off_policy_agent import OffPolicyAgent
 from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import DDPGLikePolicy
-from rllte.xploit.storage import NStepReplayStorage
-from rllte.xplore.augmentation import RandomShift
+from rllte.xploit.storage import VanillaReplayStorage
 from rllte.xplore.distribution import TruncatedNormalNoise
 
 
-class DrQv2(OffPolicyAgent):
-    """Data Regularized Q-v2 (DrQv2) agent.
-        Based on: https://github.com/facebookresearch/drqv2
-
+class DDPG(OffPolicyAgent):
+    """Deep Deterministic Policy Gradient (DDPG) agent.
+        
     Args:
         env (gym.Env): A Gym-like environment for training.
         eval_env (gym.Env): A Gym-like environment for evaluation.
@@ -60,10 +58,11 @@ class DrQv2(OffPolicyAgent):
         hidden_dim (int): The size of the hidden layers.
         critic_target_tau: The critic Q-function soft-update rate.
         update_every_steps (int): The agent update frequency.
+        discount (float): Discount factor.
         network_init_method (str): Network initialization method name.
 
     Returns:
-        DrQv2 agent instance.
+        DDPG agent instance.
     """
 
     def __init__(
@@ -83,6 +82,7 @@ class DrQv2(OffPolicyAgent):
         hidden_dim: int = 1024,
         critic_target_tau: float = 0.01,
         update_every_steps: int = 2,
+        discount: float = 0.99,
         network_init_method: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -100,6 +100,7 @@ class DrQv2(OffPolicyAgent):
         self.lr = lr
         self.eps = eps
         self.critic_target_tau = critic_target_tau
+        self.discount = discount
         self.update_every_steps = update_every_steps
         self.network_init_method = get_network_init(network_init_method)
 
@@ -124,19 +125,16 @@ class DrQv2(OffPolicyAgent):
         )
 
         # default storage
-        storage = NStepReplayStorage(
+        storage = VanillaReplayStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            batch_size=batch_size,
             num_envs=self.num_envs,
+            batch_size=batch_size,
         )
 
-        # default augmentation
-        aug = RandomShift(pad=4).to(self.device)
-
         # set all the modules [essential operation!!!]
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
@@ -159,18 +157,17 @@ class DrQv2(OffPolicyAgent):
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
 
-        # obs augmentation
-        if self.aug is not None:
-            obs = self.aug(batch.obs)
-            next_obs = self.aug(batch.next_obs)
-
         # encode
         encoded_obs = self.policy.encoder(batch.obs)
         with th.no_grad():
             encoded_next_obs = self.policy.encoder(batch.next_obs)
 
         # update criitc
-        metrics.update(self.update_critic(encoded_obs, batch.actions, batch.rewards, batch.discounts, encoded_next_obs))
+        metrics.update(self.update_critic(encoded_obs, 
+                                          batch.actions, 
+                                          batch.rewards, 
+                                          batch.discount, 
+                                          encoded_next_obs))
 
         # update actor (do not udpate encoder)
         metrics.update(self.update_actor(encoded_obs.detach()))
@@ -185,8 +182,9 @@ class DrQv2(OffPolicyAgent):
         obs: th.Tensor,
         actions: th.Tensor,
         rewards: th.Tensor,
-        discount: th.Tensor,
-        next_obs: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        next_obs: th.Tensor
     ) -> Dict[str, float]:
         """Update the critic network.
 
@@ -194,21 +192,20 @@ class DrQv2(OffPolicyAgent):
             obs (th.Tensor): Observations.
             actions (th.Tensor): Actions.
             rewards (th.Tensor): Rewards.
-            discounts (th.Tensor): discounts.
+            terminateds (th.Tensor): Terminateds.
+            truncateds (th.Tensor): Truncateds.
             next_obs (th.Tensor): Next observations.
 
         Returns:
             Critic loss.
         """
-
         with th.no_grad():
             # sample actions
             dist = self.policy.get_dist(next_obs, step=self.global_step)
-
             next_action = dist.sample(clip=True)
             target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
             target_V = th.min(target_Q1, target_Q2)
-            target_Q = rewards + (discount * target_V)
+            target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
 
         Q1, Q2 = self.policy.critic(obs, actions)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
@@ -243,7 +240,7 @@ class DrQv2(OffPolicyAgent):
         Q1, Q2 = self.policy.critic(obs, action)
         Q = th.min(Q1, Q2)
 
-        actor_loss = -Q.mean()
+        actor_loss = - Q.mean()
 
         # optimize actor
         self.policy.actor_opt.zero_grad(set_to_none=True)

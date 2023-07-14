@@ -23,10 +23,13 @@
 # =============================================================================
 
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Dict
 
+import json
 import numpy as np
 import torch as th
+import gymnasium as gym
+
 from torch import nn
 
 
@@ -154,3 +157,51 @@ def to_numpy(xs: Tuple[th.Tensor, ...]) -> Tuple[np.ndarray, ...]:
     for x in xs:
         print(x.size())
     return tuple(x[0].cpu().numpy() for x in xs)
+
+
+def pretty_json(hp: Dict) -> str:
+    """Returns a pretty json string.
+
+    Args:
+        hp (Dict): Hyperparameters.
+
+    Returns:
+        Pretty json string.
+    """
+    json_hp = json.dumps(hp, indent=2)
+    return "".join("\t" + line for line in json_hp.splitlines(True))
+
+
+def process_env_info(observation_space: gym.Space, action_space: gym.Space) -> Tuple[Tuple, ...]:
+    """Process environment information.
+
+    Args:
+        observation_space (gym.Space): Observation space.
+        action_space (gym.Space): Action space.
+
+    Returns:
+        Observation and action space information.
+    """
+    obs_shape = observation_space.shape
+    if action_space.__class__.__name__ == "Discrete":
+        action_shape = action_space.shape
+        action_dim = int(action_space.n)
+        action_type = "Discrete"
+        action_range = [0, int(action_space.n) - 1]
+    elif action_space.__class__.__name__ == "Box":
+        action_shape = action_space.shape
+        action_dim = action_space.shape[0]
+        action_type = "Box"
+        action_range = [
+            float(action_space.low[0]),
+            float(action_space.high[0]),
+        ]
+    elif action_space.__class__.__name__ == "MultiBinary":
+        action_shape = action_space.shape
+        action_dim = action_space.shape[0]
+        action_type = "MultiBinary"
+        action_range = [0, 1]
+    else:
+        raise NotImplementedError("Unsupported action type!")
+    
+    return obs_shape, action_shape, action_dim, action_type, action_range

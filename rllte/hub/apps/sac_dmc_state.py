@@ -40,7 +40,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # create env
     env = make_dmc_env(
-        env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
+        env_id=args.env_id, num_envs=3, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
     )
     eval_env = make_dmc_env(
         env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True

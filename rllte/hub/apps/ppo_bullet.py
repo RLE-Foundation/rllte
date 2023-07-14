@@ -23,17 +23,51 @@
 # =============================================================================
 
 
-from .daac import DAAC as DAAC
-from .drqv2 import DrQv2 as DrQv2
-from .impala import IMPALA as IMPALA
-# from .ppo import PPO as PPO
-# from .sac import SAC as SAC
+import argparse
 
-# legacy algorithms
-from .legacy.ppo import PPO as PPO
-from .legacy.a2c import A2C as A2C
-from .legacy.sac import SAC as SAC
+from rllte.agent import PPO
+from rllte.env import make_bullet_env
 
-# augmented algorithms
-from .drac import DrAC as DrAC
-from .drdaac import DrDAAC as DrDAAC
+parser = argparse.ArgumentParser()
+parser.add_argument("--env-id", type=str, default="AntBulletEnv-v0")
+parser.add_argument("--device", type=str, default="cuda")
+parser.add_argument("--seed", type=int, default=1)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    # create env
+    env = make_bullet_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+    )
+    eval_env = make_bullet_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+    )
+    # create agent
+    feature_dim = 64
+    agent = PPO(
+        env=env,
+        eval_env=eval_env,
+        tag=f"ppo_bullet_{args.env_id}_seed_{args.seed}",
+        seed=args.seed,
+        device=args.device,
+        num_steps=2048,
+        feature_dim=feature_dim,
+        batch_size=64,
+        lr=2e-4,
+        eps=1e-5,
+        clip_range=0.2,
+        clip_range_vf=None,
+        n_epochs=10,
+        vf_coef=0.5,
+        ent_coef=0.0,
+        max_grad_norm=0.5,
+        network_init_method="orthogonal",
+    )
+    # training
+    agent.train(num_train_steps=1000000)

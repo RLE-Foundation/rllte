@@ -24,6 +24,7 @@
 
 
 from typing import Any, Dict, Tuple
+from collections import namedtuple
 
 import gymnasium as gym
 import numpy as np
@@ -31,6 +32,14 @@ import torch as th
 
 from rllte.common.base_storage import BaseStorage
 
+Batch = namedtuple(typename="Batch", field_names=[
+    "obs", 
+    "actions",
+    "rewards",
+    "terminateds",
+    "truncateds",
+    "next_obs"
+])
 
 class VanillaReplayStorage(BaseStorage):
     """Vanilla replay storage for off-policy algorithms.
@@ -40,6 +49,7 @@ class VanillaReplayStorage(BaseStorage):
         action_space (gym.Space): Action space.
         device (str): Device to store the data.
         storage_size (int): Storage size.
+        num_envs (int): The number of parallel environments.
         batch_size (int): Batch size.
 
     Returns:
@@ -52,24 +62,26 @@ class VanillaReplayStorage(BaseStorage):
         action_space: gym.Space,
         device: str = "cpu",
         storage_size: int = 1000000,
+        num_envs: int = 1,
         batch_size: int = 1024,
     ) -> None:
         super().__init__(observation_space, action_space, device)
-        self.storage_size = storage_size
+        # split the storage size for each environment
+        self.storage_size = max(storage_size // num_envs, 1)
+        self.num_envs = num_envs
         self.batch_size = batch_size
-
-        # the proprioceptive obs is stored as float32, pixels obs as uint8
-        obs_dtype = np.float32 if len(self.obs_shape) == 1 else np.uint8
-
-        self.obs = np.empty((storage_size, *self.obs_shape), dtype=obs_dtype)
+        
+        # data containers
+        self.obs = np.empty((self.storage_size, num_envs, *self.obs_shape), dtype=observation_space.dtype)
         if self.action_type == "Discrete":
-            self.actions = np.empty((storage_size, 1), dtype=np.float32)
-        if self.action_type == "Box":
-            self.actions = np.empty((storage_size, self.action_shape[0]), dtype=np.float32)
-        self.rewards = np.empty((storage_size, 1), dtype=np.float32)
-        self.terminateds = np.empty((storage_size, 1), dtype=np.float32)
-        self.truncateds = np.empty((storage_size, 1), dtype=np.float32)
+            self.actions = np.empty((self.storage_size, num_envs), dtype=np.int64)
+        else:
+            self.actions = np.empty((self.storage_size, num_envs, self.action_dim), dtype=action_space.dtype)
+        self.rewards = np.empty((self.storage_size, num_envs), dtype=np.float32)
+        self.terminateds = np.empty((self.storage_size, num_envs), dtype=np.float32)
+        self.truncateds = np.empty((self.storage_size, num_envs), dtype=np.float32)
 
+        # counter
         self.global_step = 0
         self.full = False
 
@@ -80,39 +92,39 @@ class VanillaReplayStorage(BaseStorage):
     def add(
         self,
         obs: np.ndarray,
-        action: np.ndarray,
-        reward: np.ndarray,
-        terminated: np.ndarray,
-        truncated: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        terminateds: np.ndarray,
+        truncateds: np.ndarray,
         info: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observation.
-            action (np.ndarray): Action.
-            reward (np.ndarray): Reward.
-            terminated (np.ndarray): Termination flag.
-            truncated (np.ndarray): Truncation flag.
+            obs (np.ndarray): Observations.
+            actions (np.ndarray): Actions.
+            rewards (np.ndarray): Rewards.
+            terminateds (np.ndarray): Termination flag.
+            truncateds (np.ndarray): Truncation flag.
             info (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observation.
+            next_obs (np.ndarray): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
-        np.copyto(self.obs[self.global_step], obs[0].cpu().numpy())
-        np.copyto(self.actions[self.global_step], action[0].cpu().numpy())
-        np.copyto(self.rewards[self.global_step], reward[0].cpu().numpy())
-        np.copyto(self.obs[(self.global_step + 1) % self.storage_size], next_obs[0].cpu().numpy())
-        np.copyto(self.terminateds[self.global_step], terminated[0].cpu().numpy())
-        np.copyto(self.truncateds[self.global_step], truncated[0].cpu().numpy())
+        np.copyto(self.obs[self.global_step], obs.cpu().numpy())
+        np.copyto(self.actions[self.global_step], actions.cpu().numpy())
+        np.copyto(self.rewards[self.global_step], rewards.cpu().numpy())
+        np.copyto(self.obs[(self.global_step + 1) % self.storage_size], next_obs.cpu().numpy())
+        np.copyto(self.terminateds[self.global_step], terminateds.cpu().numpy())
+        np.copyto(self.truncateds[self.global_step], truncateds.cpu().numpy())
 
         self.global_step = (self.global_step + 1) % self.storage_size
         self.full = self.full or self.global_step == 0
 
-    def sample(self, step: int) -> Tuple[th.Tensor, ...]:
+    def sample(self, step: int) -> Batch:
         """Sample from the storage.
 
         Args:
@@ -121,21 +133,30 @@ class VanillaReplayStorage(BaseStorage):
         Returns:
             Batched samples.
         """
-        indices = np.random.randint(
+        # get indices
+        batch_indices = np.random.randint(
             0,
             self.storage_size if self.full else self.global_step,
             size=self.batch_size,
         )
+        env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size, ))
 
-        obs = th.as_tensor(self.obs[indices], device=self.device).float()
-        actions = th.as_tensor(self.actions[indices], device=self.device).float()
-        rewards = th.as_tensor(self.rewards[indices], device=self.device).float()
-        next_obs = th.as_tensor(self.obs[(indices + 1) % self.storage_size], device=self.device).float()
-        terminateds = th.as_tensor(self.terminateds[indices], device=self.device).float()
-        truncateds = th.as_tensor(self.truncateds[indices], device=self.device).float()
-        weights = th.ones_like(terminateds, device=self.device)
+        # get batch data
+        obs = th.as_tensor(self.obs[batch_indices, env_indices, :], device=self.device).float()
+        actions = th.as_tensor(self.actions[batch_indices, env_indices, :], device=self.device).float()
+        rewards = th.as_tensor(self.rewards[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
+        next_obs = th.as_tensor(self.obs[(batch_indices + 1) % self.storage_size, env_indices, :], device=self.device).float()
+        terminateds = th.as_tensor(self.terminateds[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
+        truncateds = th.as_tensor(self.truncateds[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
 
-        return indices, obs, actions, rewards, terminateds, truncateds, next_obs, weights
+        return Batch(
+            obs=obs,
+            actions=actions,
+            rewards=rewards,
+            terminateds=terminateds,
+            truncateds=truncateds,
+            next_obs=next_obs
+        )
 
     def update(self, *args) -> None:
         """Update the storage if necessary."""

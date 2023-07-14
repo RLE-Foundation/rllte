@@ -28,9 +28,20 @@ from typing import Generator, Dict
 import gymnasium as gym
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
+from collections import namedtuple
 
 from rllte.common.base_storage import BaseStorage
 
+Batch = namedtuple(typename="Batch", field_names=[
+    "obs",
+    "actions",
+    "values",
+    "returns",
+    "terminateds",
+    "truncateds",
+    "old_log_probs",
+    "adv_targ",
+])
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
@@ -93,6 +104,8 @@ class VanillaRolloutStorage(BaseStorage):
             )
         else:
             raise NotImplementedError
+        
+        # data containers
         self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
         self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
@@ -105,6 +118,7 @@ class VanillaRolloutStorage(BaseStorage):
         self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
 
+        # counter
         self.global_step = 0
 
     def add(
@@ -192,13 +206,13 @@ class VanillaRolloutStorage(BaseStorage):
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
 
-            yield (
-                batch_obs,
-                batch_actions,
-                batch_values,
-                batch_returns,
-                batch_terminateds,
-                batch_truncateds,
-                batch_old_log_probs,
-                adv_targ,
+            yield Batch(
+                obs=batch_obs,
+                actions=batch_actions,
+                values=batch_values,
+                returns=batch_returns,
+                terminateds=batch_terminateds,
+                truncateds=batch_truncateds,
+                old_log_probs=batch_old_log_probs,
+                adv_targ=adv_targ
             )

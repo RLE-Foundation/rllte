@@ -25,12 +25,12 @@
 
 import argparse
 
-from rllte.agent import DAAC
+from rllte.agent import DrAC
 from rllte.env import make_procgen_env
 from rllte.xploit.encoder import EspeholtResidualEncoder
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="miner")
+parser.add_argument("--env-id", type=str, default="bigfish")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
 
@@ -59,10 +59,10 @@ if __name__ == "__main__":
     )
     # create agent
     feature_dim = 256
-    agent = DAAC(
+    agent = DrAC(
         env=env,
         eval_env=eval_env,
-        tag=f"daac_procgen_{args.env_id}_seed_{args.seed}",
+        tag=f"ppo_procgen_{args.env_id}_seed_{args.seed}",
         seed=args.seed,
         device=args.device,
         num_steps=256,
@@ -72,12 +72,9 @@ if __name__ == "__main__":
         eps=1e-5,
         clip_range=0.2,
         clip_range_vf=0.2,
-        policy_epochs=1,
-        value_epochs=9,
-        value_freq=3,
+        n_epochs=3,
         vf_coef=0.5,
         ent_coef=0.01,
-        adv_coef=0.05,
         max_grad_norm=0.5,
         network_init_method="xavier_uniform",
     )

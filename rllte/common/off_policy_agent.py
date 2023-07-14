@@ -25,8 +25,10 @@
 
 from pathlib import Path
 from typing import Dict, Optional
+from collections import deque
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 
 from rllte.common import utils
@@ -75,6 +77,8 @@ class OffPolicyAgent(BaseAgent):
         """Freeze the structure of the agent. Implemented by individual algorithms."""
         # freeze the policy
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
+        # initialize the policy
+        self.policy.apply(self.network_init_method)
         # to device
         self.policy.to(self.device)
         # set the training mode
@@ -114,7 +118,9 @@ class OffPolicyAgent(BaseAgent):
             self.policy.load(init_model_path, self.device)
 
         # reset the env
-        episode_step, episode_reward = 0, 0
+        episode_rewards = deque(maxlen=10)
+        episode_steps = deque(maxlen=10)
+        train_metrics = {}
         time_step = self.env.reset(seed=self.seed)
         metrics = None
 
@@ -123,21 +129,21 @@ class OffPolicyAgent(BaseAgent):
             # try to eval
             if (self.global_step % self.eval_every_steps) == 0 and (self.eval_env is not None):
                 eval_metrics = self.eval()
-                self.logger.eval(msg=eval_metrics)
+                # write to tensorboard
+                self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
+                self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
 
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
                 # Initial exploration
                 if self.global_step <= self.num_init_steps:
-                    action = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
+                    actions = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
                 else:
-                    action = self.policy.act(time_step.observation, training=True, step=self.global_step)
+                    actions = self.policy(time_step.observation, training=True, step=self.global_step)
 
             # observe reward and next obs
-            time_step = self.env.step(action)
-            episode_reward += time_step.reward.mean().item()
-            episode_step += 1
-            self.global_step += 1
+            time_step = self.env.step(actions)
+            self.global_step += self.num_envs
 
             # pre-training mode
             if self.pretraining:
@@ -148,30 +154,33 @@ class OffPolicyAgent(BaseAgent):
 
             # update agent
             if self.global_step >= self.num_init_steps:
-                metrics = self.update()
+                train_metrics = self.update()
                 # try to update storage
-                self.storage.update(metrics)
+                self.storage.update(train_metrics)
 
-            # terminated or truncated
-            if time_step.terminated or time_step.truncated:
-                episode_time, total_time = self.timer.reset()
-                if metrics is not None:
-                    train_metrics = {
-                        "step": self.global_step,
-                        "episode": self.global_episode,
-                        "episode_length": episode_step,
-                        "episode_reward": episode_reward,
-                        "fps": episode_step / episode_time,
-                        "total_time": total_time,
-                    }
-                    self.logger.train(msg=train_metrics)
+            # get episode information
+            if "episode" in time_step.info:
+                eps_r, eps_l = time_step.get_episode_statistics()
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
+                self.global_episode += len(eps_r)
+
+            # log training information
+            if len(episode_rewards) > 1:
+                # write to tensorboard
+                total_time = self.timer.total_time()
+                for key in train_metrics.keys():
+                    self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
+                self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
+                self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
+                self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
+                self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
 
                 # As the vector environments autoreset for a terminating and truncating sub-environments,
                 # the returned observation and info is not the final step's observation or info which
                 # is instead stored in info as `final_observation` and `final_info`. Therefore,
                 # we don't need to reset the env here.
-                self.global_episode += 1
-                episode_step, episode_reward = 0, 0
 
             # set the current observation
             time_step = time_step._replace(observation=time_step.next_observation)
@@ -195,35 +204,29 @@ class OffPolicyAgent(BaseAgent):
     def eval(self) -> Dict[str, float]:
         """Evaluation function."""
         # reset the env
-        step, episode, total_reward = 0, 0, 0
         time_step = self.eval_env.reset(seed=self.seed)
+        episode_rewards = list()
+        episode_steps = list()
 
         # evaluation loop
-        while episode <= self.num_eval_episodes:
+        while len(episode_rewards) < self.num_eval_episodes:
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                action = self.policy.act(time_step.observation, training=False, step=self.global_step)
+                actions = self.policy(time_step.observation, training=False, step=self.global_step)
 
             # observe reward and next obs
-            time_step = self.eval_env.step(action)
-            total_reward += time_step.reward.mean().item()
-            step += 1
+            time_step = self.eval_env.step(actions)
 
-            # terminated or truncated
-            if time_step.terminated or time_step.truncated:
-                # As the vector environments autoreset for a terminating and truncating sub-environments,
-                # the returned observation and info is not the final step's observation or info which
-                # is instead stored in info as `final_observation` and `final_info`. Therefore,
-                # we don't need to reset the env here.
-                episode += 1
+            # get episode information
+            if "episode" in time_step.info:
+                eps_r, eps_l = time_step.get_episode_statistics()
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
 
             # set the current observation
             time_step = time_step._replace(observation=time_step.next_observation)
 
         return {
-            "step": self.global_step,
-            "episode": self.global_episode,
-            "episode_length": step / episode,
-            "episode_reward": total_reward / episode,
-            "total_time": self.timer.total_time(),
+            "episode_length": np.mean(episode_steps),
+            "episode_reward": np.mean(episode_rewards),
         }
