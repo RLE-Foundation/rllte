@@ -53,6 +53,7 @@ class DAACLikePolicy(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -66,6 +67,7 @@ class DAACLikePolicy(BasePolicy):
         hidden_dim: int,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -74,6 +76,7 @@ class DAACLikePolicy(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
+            init_fn=init_fn,
         )
 
         # choose an actor class based on action space type
@@ -128,6 +131,8 @@ class DAACLikePolicy(BasePolicy):
         # set distribution
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
+        # initialize parameters
+        self.apply(self.init_fn)
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())

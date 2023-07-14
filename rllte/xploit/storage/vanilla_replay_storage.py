@@ -142,7 +142,7 @@ class VanillaReplayStorage(BaseStorage):
 
         # get batch data
         obs = th.as_tensor(self.obs[batch_indices, env_indices, :], device=self.device).float()
-        actions = th.as_tensor(self.actions[batch_indices, env_indices, :], device=self.device).float()
+        actions = th.as_tensor(self.actions[batch_indices, env_indices], device=self.device).float()
         rewards = th.as_tensor(self.rewards[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
         next_obs = th.as_tensor(self.obs[(batch_indices + 1) % self.storage_size, env_indices, :], device=self.device).float()
         terminateds = th.as_tensor(self.terminateds[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()

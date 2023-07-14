@@ -72,29 +72,6 @@ class OnPolicyAgent(BaseAgent):
         """
         raise NotImplementedError
 
-    def freeze(self) -> None:
-        """Freeze the structure of the agent. Implemented by individual algorithms."""
-        # freeze the policy
-        self.policy.freeze(encoder=self.encoder, dist=self.dist)
-        # initialize the policy
-        self.policy.apply(self.network_init_method)
-        # to device
-        self.policy.to(self.device)
-        # set the training mode
-        self.mode(training=True)
-
-    def mode(self, training: bool = True) -> None:
-        """Set the training mode.
-
-        Args:
-            training (bool): True (training) or False (evaluation).
-
-        Returns:
-            None.
-        """
-        self.training = training
-        self.policy.train(training)
-
     def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
         """Training function.
 
@@ -106,8 +83,11 @@ class OnPolicyAgent(BaseAgent):
             None.
         """
         # freeze the structure of the agent
-        self.freeze()
-
+        self.policy.freeze(encoder=self.encoder, dist=self.dist)
+        # to device
+        self.policy.to(self.device)
+        # set the training mode
+        self.mode(training=True)
         # final check
         self.check()
 

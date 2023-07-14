@@ -52,6 +52,7 @@ class SACLikePolicy(BasePolicy):
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
         log_std_range (Tuple): Range of log standard deviation.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor-Critic network.
@@ -66,6 +67,7 @@ class SACLikePolicy(BasePolicy):
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         log_std_range: Tuple = (-10, 2),
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -74,6 +76,7 @@ class SACLikePolicy(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
+            init_fn=init_fn,
         )
 
         # build actor and critic
@@ -86,10 +89,7 @@ class SACLikePolicy(BasePolicy):
         )
 
         self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-
         self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        # synchronize critic and target critic
-        self.critic_target.load_state_dict(self.critic.state_dict())
 
         self.log_std_min, self.log_std_max = log_std_range
 
@@ -109,6 +109,10 @@ class SACLikePolicy(BasePolicy):
         # set distribution
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
+        # initialize parameters
+        self.apply(self.init_fn)
+        # synchronize the parameters of critic and target critic
+        self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
         self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
         self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)

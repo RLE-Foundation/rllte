@@ -224,6 +224,7 @@ class PPOLikePolicy(BasePolicy):
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
         aux_critic (bool): Use auxiliary critic or not, for `PPG` agent.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -238,6 +239,7 @@ class PPOLikePolicy(BasePolicy):
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         aux_critic: bool = False,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -246,6 +248,7 @@ class PPOLikePolicy(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
+            init_fn=init_fn,
         )
 
         # choose an actor class based on action space type
@@ -293,6 +296,8 @@ class PPOLikePolicy(BasePolicy):
         # set distribution
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
+        # initialize parameters
+        self.apply(self.init_fn)
         # build optimizers
         self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
 

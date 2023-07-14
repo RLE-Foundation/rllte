@@ -31,7 +31,6 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import DDPGLikePolicy
 from rllte.xploit.storage import VanillaReplayStorage
@@ -59,7 +58,7 @@ class DDPG(OffPolicyAgent):
         critic_target_tau: The critic Q-function soft-update rate.
         update_every_steps (int): The agent update frequency.
         discount (float): Discount factor.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         DDPG agent instance.
@@ -83,7 +82,7 @@ class DDPG(OffPolicyAgent):
         critic_target_tau: float = 0.01,
         update_every_steps: int = 2,
         discount: float = 0.99,
-        network_init_method: str = "orthogonal",
+        init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
             env=env,
@@ -102,7 +101,6 @@ class DDPG(OffPolicyAgent):
         self.critic_target_tau = critic_target_tau
         self.discount = discount
         self.update_every_steps = update_every_steps
-        self.network_init_method = get_network_init(network_init_method)
 
         # default encoder
         if len(self.obs_shape) == 3:
@@ -122,6 +120,7 @@ class DDPG(OffPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
+            init_fn=init_fn
         )
 
         # default storage

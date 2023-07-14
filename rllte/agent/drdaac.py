@@ -31,7 +31,6 @@ import torch as th
 from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DAACLikePolicy
 from rllte.xploit.storage import VanillaRolloutStorage
@@ -67,7 +66,7 @@ class DrDAAC(OnPolicyAgent):
         aug_coef (float): Weighting coefficient of augmentation loss.
         adv_ceof (float): Weighting coefficient of advantage loss.
         max_grad_norm (float): Maximum norm of gradients.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         DAAC agent instance.
@@ -98,7 +97,7 @@ class DrDAAC(OnPolicyAgent):
         aug_coef: float = 0.1,
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
-        network_init_method: str = "xavier_uniform",
+        init_fn: str = "xavier_uniform",
     ) -> None:
         super().__init__(
             env=env,
@@ -124,7 +123,6 @@ class DrDAAC(OnPolicyAgent):
         self.aug_coef = aug_coef
         self.adv_coef = adv_coef
         self.max_grad_norm = max_grad_norm
-        self.network_init_method = get_network_init(network_init_method)
 
         # training track
         self.num_policy_updates = 0
@@ -155,6 +153,7 @@ class DrDAAC(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
+            init_fn=init_fn,
         )
 
         # default storage

@@ -99,6 +99,7 @@ class DQNLikePolicy(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor network instance.
@@ -112,6 +113,7 @@ class DQNLikePolicy(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -120,12 +122,11 @@ class DQNLikePolicy(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
+            init_fn=init_fn,
         )
 
         # build q-network and target q-network
         self.qnet = nn.Sequential(
-            nn.LayerNorm(self.feature_dim),
-            nn.Tanh(),
             nn.Linear(self.feature_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(self.hidden_dim, self.hidden_dim),
@@ -147,9 +148,10 @@ class DQNLikePolicy(BasePolicy):
         # set encoder
         assert encoder is not None, "Encoder should not be None!"
         self.encoder = encoder
-        # set distribution
-        assert dist is not None, "Distribution should not be None!"
-        self.dist = dist
+        # initialize parameters
+        self.apply(self.init_fn)
+        # synchronize the parameters of Q-network and target Q-network
+        self.qnet_target.load_state_dict(self.qnet.state_dict())
         # build optimizers
         self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
     

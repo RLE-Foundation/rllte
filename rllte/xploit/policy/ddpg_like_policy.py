@@ -99,6 +99,7 @@ class DDPGLikePolicy(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor network instance.
@@ -112,6 +113,7 @@ class DDPGLikePolicy(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -120,6 +122,7 @@ class DDPGLikePolicy(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
+            init_fn=init_fn,
         )
 
         # build actor and critic
@@ -135,10 +138,7 @@ class DDPGLikePolicy(BasePolicy):
         )
 
         self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
-
         self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        # synchronize critic and target critic
-        self.critic_target.load_state_dict(self.critic.state_dict())
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -156,6 +156,10 @@ class DDPGLikePolicy(BasePolicy):
         # set distribution
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
+        # initialize parameters
+        self.apply(self.init_fn)
+        # synchronize the parameters of critic and target critic
+        self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
         self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
         self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)

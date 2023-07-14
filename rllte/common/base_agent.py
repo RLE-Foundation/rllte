@@ -275,17 +275,21 @@ class BaseAgent(ABC):
             assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
             self.irs = reward
 
-    @abstractmethod
-    def mode(self) -> None:
-        """Set the training mode."""
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
+
+        Args:
+            training (bool): True (training) or False (evaluation).
+
+        Returns:
+            None.
+        """
+        self.training = training
+        self.policy.train(training)
 
     @abstractmethod
     def update(self) -> Dict[str, float]:
-        """Update the agent."""
-
-    @abstractmethod
-    def freeze(self) -> None:
-        """Freeze the structure of the agent."""
+        """Update function of the agent."""
 
     @abstractmethod
     def train(self) -> None:

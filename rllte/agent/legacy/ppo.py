@@ -31,7 +31,6 @@ import torch as th
 from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import PPOLikePolicy
 from rllte.xploit.storage import VanillaRolloutStorage
@@ -63,7 +62,7 @@ class PPO(OnPolicyAgent):
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
         max_grad_norm (float): Maximum norm of gradients.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         PPO agent instance.
@@ -90,7 +89,7 @@ class PPO(OnPolicyAgent):
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
         max_grad_norm: float = 0.5,
-        network_init_method: str = "orthogonal",
+        init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
             env=env,
@@ -112,7 +111,6 @@ class PPO(OnPolicyAgent):
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.max_grad_norm = max_grad_norm
-        self.network_init_method = get_network_init(network_init_method)
 
         # default encoder
         if len(self.obs_shape) == 3:
@@ -139,6 +137,7 @@ class PPO(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
+            init_fn=init_fn,
         )
 
         # default storage

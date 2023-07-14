@@ -66,7 +66,7 @@ class DAAC(OnPolicyAgent):
         ent_coef (float): Weighting coefficient of entropy bonus.
         adv_ceof (float): Weighting coefficient of advantage loss.
         max_grad_norm (float): Maximum norm of gradients.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         DAAC agent instance.
@@ -96,7 +96,7 @@ class DAAC(OnPolicyAgent):
         ent_coef: float = 0.01,
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
-        network_init_method: str = "xavier_uniform",
+        init_fn: str = "xavier_uniform",
     ) -> None:
         super().__init__(
             env=env,
@@ -121,7 +121,6 @@ class DAAC(OnPolicyAgent):
         self.ent_coef = ent_coef
         self.adv_coef = adv_coef
         self.max_grad_norm = max_grad_norm
-        self.network_init_method = get_network_init(network_init_method)
 
         # training track
         self.num_policy_updates = 0
@@ -152,6 +151,7 @@ class DAAC(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
+            init_fn=init_fn
         )
 
         # default storage

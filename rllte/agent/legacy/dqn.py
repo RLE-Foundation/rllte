@@ -32,7 +32,7 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
 from rllte.common.utils import get_network_init
-from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DQNLikePolicy
 from rllte.xploit.storage import VanillaReplayStorage
 
@@ -56,9 +56,10 @@ class DQN(OffPolicyAgent):
         eps (float): Term added to the denominator to improve numerical stability.
         hidden_dim (int): The size of the hidden layers.
         tau: The Q-function soft-update rate.
-        update_every_steps (int): The update frequency of target Q-network.
+        update_every_steps (int): The update frequency of the policy.
+        target_update_freq (int): The frequency of target Q-network update.
         discount (float): Discount factor.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         DQN agent instance.
@@ -80,9 +81,10 @@ class DQN(OffPolicyAgent):
         eps: float = 1e-8,
         hidden_dim: int = 1024,
         tau: float = 1.0,
-        update_every_steps: int = 1000,
+        update_every_steps: int = 4,
+        target_update_freq: int = 1000,
         discount: float = 0.99,
-        network_init_method: str = "orthogonal",
+        init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
             env=env,
@@ -101,11 +103,11 @@ class DQN(OffPolicyAgent):
         self.tau = tau
         self.discount = discount
         self.update_every_steps = update_every_steps
-        self.network_init_method = get_network_init(network_init_method)
+        self.target_update_freq = target_update_freq
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
             encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
@@ -118,6 +120,7 @@ class DQN(OffPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
+            init_fn=init_fn
         )
 
         # default storage
@@ -127,6 +130,7 @@ class DQN(OffPolicyAgent):
             device=device,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            storage_size=10000
         )
 
         # set all the modules [essential operation!!!]
@@ -134,6 +138,10 @@ class DQN(OffPolicyAgent):
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
+        metrics = {}
+        if self.global_step % self.update_every_steps != 0:
+            return metrics
+
         # sample a batch
         batch = self.storage.sample(self.global_step)
 
@@ -148,7 +156,7 @@ class DQN(OffPolicyAgent):
                 step=self.global_step,
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
-
+        
         # encode
         encoded_obs = self.policy.encoder(batch.obs)
         with th.no_grad():
@@ -164,19 +172,19 @@ class DQN(OffPolicyAgent):
 
         # compute current Q values
         q_values = self.policy.qnet(encoded_obs)
-        q_values = th.gather(q_values, dim=1, index=batch.actions.long())
+        q_values = th.gather(q_values, dim=1, index=batch.actions.unsqueeze(1).long())
         # following https://github.com/DLR-RM/stable-baselines3/blob/d68ff2e17f2f823e6f48d9eb9cee28ca563a2554/stable_baselines3/dqn/dqn.py
         # less sensitive to outliers
-        huber_loss = F.smooth_l1_loss(q_values, target_q_values)
+        huber_loss = F.mse_loss(q_values, target_q_values)
 
         # optimize the qnet
-        self.opt.zero_grad(set_to_none=True)
+        self.policy.opt.zero_grad(set_to_none=True)
         huber_loss.backward()
-        self.opt.step()
+        self.policy.opt.step()
 
         # udpate target qnet
-        if self.global_step % self.update_every_steps:
-            utils.soft_update_params(self.policy.qnet, self.policy.taret_qnet, self.critic_target_tau)
+        if self.global_step % self.target_update_freq:
+            utils.soft_update_params(self.policy.qnet, self.policy.qnet_target, self.tau)
 
         return {
             "Huber Loss": huber_loss.item(),

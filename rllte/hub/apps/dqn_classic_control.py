@@ -23,17 +23,50 @@
 # =============================================================================
 
 
-from .daac import DAAC as DAAC
-from .drqv2 import DrQv2 as DrQv2
-from .impala import IMPALA as IMPALA
+import argparse
 
-# legacy algorithms
-from .legacy.dqn import DQN as DQN
-from .legacy.ppo import PPO as PPO
-from .legacy.a2c import A2C as A2C
-from .legacy.sac import SAC as SAC
-from .legacy.ddpg import DDPG as DDPG
+from rllte.agent import DQN
+from rllte.env import make_rllte_env
 
-# augmented algorithms
-from .drac import DrAC as DrAC
-from .drdaac import DrDAAC as DrDAAC
+parser = argparse.ArgumentParser()
+parser.add_argument("--env-id", type=str, default="CartPole-v1")
+parser.add_argument("--device", type=str, default="cuda")
+parser.add_argument("--seed", type=int, default=1)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    # create env
+    env = make_rllte_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+        parallel=False,
+    )
+    eval_env = make_rllte_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+        parallel=False,
+    )
+    # create agent
+    agent = DQN(
+        env=env,
+            eval_env=eval_env,
+            tag=f"dqn_classic_control_{args.env_id}_seed_{args.seed}",
+            seed=args.seed,
+            device=args.device,
+            feature_dim=64,
+            batch_size=128,
+            lr=2.5e-4,
+            eps=1e-8,
+            hidden_dim=64,
+            tau=1.,
+            update_every_steps=10,
+            target_update_freq=500,
+            num_init_steps=10000,
+            network_init_method="orthogonal",
+        )
+    # training
+    agent.train(num_train_steps=100000)

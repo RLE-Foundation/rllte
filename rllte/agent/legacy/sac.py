@@ -32,7 +32,6 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import SACLikePolicy
 from rllte.xploit.storage import VanillaReplayStorage
@@ -65,7 +64,7 @@ class SAC(OffPolicyAgent):
         temperature (float): Initial temperature coefficient.
         fixed_temperature (bool): Fixed temperature or not.
         discount (float): Discount factor.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         PPO agent instance.
@@ -93,7 +92,7 @@ class SAC(OffPolicyAgent):
         temperature: float = 0.1,
         fixed_temperature: bool = False,
         discount: float = 0.99,
-        network_init_method: str = "orthogonal",
+        init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
             env=env,
@@ -114,7 +113,6 @@ class SAC(OffPolicyAgent):
         self.fixed_temperature = fixed_temperature
         self.discount = discount
         self.betas = betas
-        self.network_init_method = get_network_init(network_init_method)
 
         # target entropy
         self.target_entropy = -self.action_dim
@@ -140,6 +138,7 @@ class SAC(OffPolicyAgent):
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps, betas=betas),
             log_std_range=log_std_range,
+            init_fn=init_fn,
         )
 
         # default storage
