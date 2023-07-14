@@ -23,18 +23,11 @@
 # =============================================================================
 
 
+from .dqn_like_policy import DQNLikePolicy as DQNLikePolicy
 from .ppo_like_policy import PPOLikePolicy as PPOLikePolicy
 from .daac_like_policy import DAACLikePolicy as DAACLikePolicy
 from .sac_like_policy import SACLikePolicy as SACLikePolicy
 from .ddpg_like_policy import DDPGLikePolicy as DDPGLikePolicy
 from .impala_like_policy import IMPALALikePolicy as IMPALALikePolicy
-
+#
 from .distributed_actor_learner import DistributedActorLearner as DistributedActorLearner
-from .off_policy_deterministic_actor_double_critic import (
-    OffPolicyDeterministicActorDoubleCritic as OffPolicyDeterministicActorDoubleCritic,
-)
-from .off_policy_stochastic_actor_double_critic import (
-    OffPolicyStochasticActorDoubleCritic as OffPolicyStochasticActorDoubleCritic,
-)
-from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
-from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic

@@ -136,7 +136,7 @@ class OffPolicyAgent(BaseAgent):
             with th.no_grad(), utils.eval_mode(self):
                 # Initial exploration
                 if self.global_step <= self.num_init_steps:
-                    actions = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
+                    actions = self.policy.explore(time_step.observation)
                 else:
                     actions = self.policy(time_step.observation, training=True, step=self.global_step)
 

@@ -34,7 +34,7 @@ from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.off_policy_deterministic_actor_double_critic import DoubleCritic
+from rllte.xploit.policy.ddpg_like_policy import DoubleCritic
 
 
 class SACLikePolicy(BasePolicy):
@@ -110,9 +110,20 @@ class SACLikePolicy(BasePolicy):
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
         # build optimizers
-        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), **self.opt_kwargs)
-        self.actor_opt = th.optim.Adam(self.actor.parameters(), **self.opt_kwargs)
-        self.critic_opt = th.optim.Adam(self.critic.parameters(), **self.opt_kwargs)
+        self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+    
+    def explore(self, obs: th.Tensor) -> th.Tensor:
+        """Explore the environment and randomly generate actions.
+
+        Args:
+            obs (th.Tensor): Observation from the environment.
+
+        Returns:
+            Sampled actions.
+        """
+        return th.rand(size=(obs.size()[0], self.action_dim), device=obs.device).uniform_(-1.0, 1.0)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.
@@ -129,11 +140,11 @@ class SACLikePolicy(BasePolicy):
         dist = self.get_dist(obs=encoded_obs, step=step)
 
         if not training:
-            action = dist.mean
+            actions = dist.mean
         else:
-            action = dist.sample()
+            actions = dist.sample()
 
-        return action
+        return actions
 
     def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
         """Get sample distribution.

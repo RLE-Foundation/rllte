@@ -37,7 +37,7 @@ from torch.nn import functional as F
 
 from rllte.common.base_policy import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor, MultiBinaryActor
+from rllte.xploit.policy.ppo_like_policy import BoxActor, DiscreteActor, MultiBinaryActor
 
 
 class DAACLikePolicy(BasePolicy):

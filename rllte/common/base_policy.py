@@ -68,6 +68,16 @@ class BasePolicy(nn.Module):
         # get environment information
         self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
             process_env_info(observation_space, action_space)
+    
+    def explore(self, obs: th.Tensor) -> th.Tensor:
+        """Explore the environment and randomly generate actions.
+
+        Args:
+            obs (th.Tensor): Observation from the environment.
+
+        Returns:
+            Sampled actions.
+        """
 
     def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
         """Forward method.
