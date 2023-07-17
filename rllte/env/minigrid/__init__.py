@@ -31,7 +31,7 @@ from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper, DictObservationSpaceWrapper
 
-from rllte.env.utils import FrameStack, TorchVecEnvWrapper
+from rllte.env.utils import FrameStack, TorchVecEnvWrapper, TorchVecDictEnvWrapper
 
 
 class Minigrid2Image(gym.ObservationWrapper):
@@ -59,7 +59,7 @@ class Minigrid2Image(gym.ObservationWrapper):
         """Convert MiniGrid observation to image."""
         return np.transpose(observation["image"], axes=[2, 0, 1])
 
-class Transpose(gym.ObservationWrapper):
+class ImageTranspose(gym.ObservationWrapper):
     """Transpose observation from channels last to channels first.
 
     Args:
@@ -71,12 +71,13 @@ class Transpose(gym.ObservationWrapper):
 
     def __init__(self, env: gym.Env) -> None:
         gym.ObservationWrapper.__init__(self, env)
-        shape = env.observation_space["image"]
+        shape = env.observation_space["image"].shape
+        dtype = env.observation_space["image"].dtype
         self.observation_space["image"] = gym.spaces.Box(
             low=0,
             high=255,
             shape=(shape[2], shape[0], shape[1]),
-            dtype=self.observation_space.dtype,
+            dtype=dtype,
         )
 
     def observation(self, observation: Dict) -> np.ndarray:
@@ -124,7 +125,7 @@ def make_minigrid_env(
                 env = FrameStack(env, k=frame_stack)
             elif fully_numerical:
                 env = DictObservationSpaceWrapper(env)
-                env = Transpose(env)
+                env = ImageTranspose(env)
             else:
                 env = FlatObsWrapper(env)
 
@@ -143,4 +144,7 @@ def make_minigrid_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device=device)
+    if fully_numerical:
+        return TorchVecDictEnvWrapper(envs, device=device)
+    else:
+        return TorchVecEnvWrapper(envs, device=device)
