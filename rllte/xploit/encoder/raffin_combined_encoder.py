@@ -28,6 +28,7 @@ import torch as th
 from torch import nn
 
 from gymnasium import spaces
+from rllte.common.preprocessing import get_flattened_obs_dim
 from rllte.common.base_encoder import BaseEncoder
 from rllte.xploit.encoder.pathak_cnn_encoder import PathakCnnEncoder
 
@@ -57,7 +58,7 @@ class RaffinCombinedEncoder(BaseEncoder):
                 n_flatten += cnn_output_dim
             else:
                 sub_encoders[key] = nn.Identity()
-                n_flatten += spaces.flatdim(subspace)
+                n_flatten += get_flattened_obs_dim(subspace)
 
         self.trunk = nn.ModuleDict(sub_encoders)
         self.linear = nn.Linear(n_flatten, feature_dim)

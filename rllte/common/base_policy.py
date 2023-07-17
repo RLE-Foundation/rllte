@@ -25,7 +25,8 @@
 
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
-from rllte.common.utils import process_env_info, get_network_init
+from rllte.common.preprocessing import process_env_info
+from rllte.common.initialization import get_init_fn
 
 import gymnasium as gym
 import torch as th
@@ -59,14 +60,15 @@ class BasePolicy(nn.Module):
         init_fn: Optional[str] = None,
     ) -> None:
         super().__init__()
-
+        self.observation_space = observation_space
+        self.action_space = action_space
         assert feature_dim > 0, "The `feature_dim` should be positive!"
         assert hidden_dim > 0, "The `hidden_dim` should be positive!"
         self.feature_dim = feature_dim
         self.hidden_dim = hidden_dim
         self.opt_class = opt_class
         self.opt_kwargs = opt_kwargs
-        self.init_fn = get_network_init(init_fn)
+        self.init_fn = get_init_fn(init_fn)
 
         # get environment information
         self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \

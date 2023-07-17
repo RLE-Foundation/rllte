@@ -48,6 +48,7 @@ from rllte.common.base_encoder import BaseEncoder as Encoder
 from rllte.common.base_policy import BasePolicy as Policy
 from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.base_storage import BaseStorage as Storage
+from rllte.common.preprocessing import process_env_info
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer
 from rllte.common.utils import pretty_json
@@ -97,7 +98,11 @@ class BaseAgent(ABC):
         # env setup
         self.env = env
         self.eval_env = eval_env
-        self.get_env_info(env)
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+        self.num_envs = env.num_envs
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
+            process_env_info(self.observation_space, self.action_space)
 
         # set seed
         self.seed = seed
@@ -130,40 +135,6 @@ class BaseAgent(ABC):
         self.dist = None
         self.aug = None
         self.irs = None
-
-    def get_env_info(self, env: gym.Env) -> None:
-        """Get the environment information.
-
-        Args:
-            env (gym.Env): A Gym-like environment for training.
-
-        Returns:
-            None.
-        """
-        observation_space = env.observation_space
-        action_space = env.action_space
-        self.num_envs = env.num_envs
-        self.obs_shape = observation_space.shape
-        if action_space.__class__.__name__ == "Discrete":
-            self.action_shape = action_space.shape
-            self.action_dim = int(action_space.n)
-            self.action_type = "Discrete"
-            self.action_range = [0, int(action_space.n) - 1]
-        elif action_space.__class__.__name__ == "Box":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "Box"
-            self.action_range = [
-                float(action_space.low[0]),
-                float(action_space.high[0]),
-            ]
-        elif action_space.__class__.__name__ == "MultiBinary":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "MultiBinary"
-            self.action_range = [0, 1]
-        else:
-            raise NotImplementedError("Unsupported action type!")
 
     def get_npu_name(self) -> str:
         """Get NPU name."""

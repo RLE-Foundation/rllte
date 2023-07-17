@@ -29,7 +29,7 @@ from typing import Any
 import gymnasium as gym
 import torch as th
 
-from rllte.common.utils import process_env_info
+from rllte.common.preprocessing import process_env_info
 
 class BaseStorage(ABC):
     """Base class of storage module.
@@ -49,6 +49,8 @@ class BaseStorage(ABC):
         action_space: gym.Space,
         device: str = "cpu",
     ) -> None:
+        self.observation_space = observation_space
+        self.action_space = action_space
         # get environment information
         self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
             process_env_info(observation_space, action_space)

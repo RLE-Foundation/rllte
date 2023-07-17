@@ -43,8 +43,8 @@ Batch = namedtuple(typename="Batch", field_names=[
     "adv_targ",
 ])
 
-class VanillaRolloutStorage(BaseStorage):
-    """Vanilla rollout storage for on-policy algorithms.
+class DictRolloutStorage(BaseStorage):
+    """Dict Rollout storage for on-policy algorithms and dictionary observations.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
@@ -57,7 +57,7 @@ class VanillaRolloutStorage(BaseStorage):
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
-        Vanilla rollout storage.
+        Dict rollout storage.
     """
 
     def __init__(
@@ -72,6 +72,9 @@ class VanillaRolloutStorage(BaseStorage):
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device)
+
+        assert isinstance(self.obs_shape, dict), "DictRolloutStorage only support Dict observation space."
+
         self.num_steps = num_steps
         self.num_envs = num_envs
         self.batch_size = batch_size
@@ -79,11 +82,13 @@ class VanillaRolloutStorage(BaseStorage):
         self.gae_lambda = gae_lambda
 
         # data containers
-        self.obs = th.empty(
-            size=(num_steps + 1, num_envs, *self.obs_shape),
-            dtype=th.float32,
-            device=self.device,
-        )
+        self.obs = dict()
+        for key, shape in self.obs_shape.items():
+            self.obs[key] = th.empty(
+                size=(num_steps + 1, num_envs, *shape),
+                dtype=th.float32,
+                device=self.device,
+            )
         if self.action_type == "Discrete":
             self.actions = th.empty(
                 size=(num_steps, num_envs),
@@ -104,14 +109,14 @@ class VanillaRolloutStorage(BaseStorage):
             )
         else:
             raise NotImplementedError
-        
-        # data containers
         self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
         self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
+
         # first next_terminated
         self.terminateds[0].copy_(th.zeros(num_envs).to(self.device))
         self.truncateds[0].copy_(th.zeros(num_envs).to(self.device))
+
         # extra part
         self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
@@ -149,12 +154,21 @@ class VanillaRolloutStorage(BaseStorage):
         Returns:
             None.
         """
-        self.obs[self.global_step].copy_(obs)
+        for key in self.obs_shape.keys():
+            if isinstance(self.observation_space.spaces[key], gym.spaces.Discrete):
+                obs_ = obs[key].reshape((self.num_envs,) + self.obs_shape[key])
+                next_obs_ = next_obs[key].reshape((self.num_envs,) + self.obs_shape[key])
+            else:
+                obs_ = obs[key]
+                next_obs_ = next_obs[key]
+
+            self.obs[key][self.global_step].copy_(obs_)
+            self.obs[key][self.global_step + 1].copy_(next_obs_)
+
         self.actions[self.global_step].copy_(actions)
         self.rewards[self.global_step].copy_(rewards)
         self.terminateds[self.global_step + 1].copy_(terminateds)
         self.truncateds[self.global_step + 1].copy_(truncateds)
-        self.obs[self.global_step + 1].copy_(next_obs)
         self.log_probs[self.global_step].copy_(log_probs)
         self.values[self.global_step].copy_(values.flatten())
 
@@ -197,7 +211,7 @@ class VanillaRolloutStorage(BaseStorage):
         sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = self.obs[:-1].view(-1, *self.obs_shape)[indices]
+            batch_obs = {key: obs[:-1].view(-1, *self.obs_shape[key])[indices] for (key, obs) in self.obs.items()}
             batch_actions = self.actions.view(-1, *self.action_shape)[indices]
             batch_values = self.values.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]
