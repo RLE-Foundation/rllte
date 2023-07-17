@@ -61,7 +61,7 @@ def make_atari_env(
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
-            if parallel:
+            if not parallel:
                 env = TransformReward(env, lambda reward: np.sign(reward))
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
@@ -90,5 +90,6 @@ def make_atari_env(
         envs = TransformReward(envs, lambda reward: np.sign(reward))
     else:
         envs = SyncVectorEnv(envs)
+        envs = RecordEpisodeStatistics(envs)
 
     return TorchVecEnvWrapper(envs, device)

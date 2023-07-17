@@ -108,8 +108,8 @@ def make_minigrid_env(
 
     if parallel:
         envs = AsyncVectorEnv(envs)
-        envs = RecordEpisodeStatistics(envs)
     else:
         envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
 
     return TorchVecEnvWrapper(envs, device=device)

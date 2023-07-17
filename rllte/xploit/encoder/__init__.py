@@ -22,7 +22,7 @@
 # SOFTWARE.
 # =============================================================================
 
-
+from .raffin_combined_encoder import RaffinCombinedEncoder as RaffinCombinedEncoder
 from .espeholt_residual_encoder import EspeholtResidualEncoder as EspeholtResidualEncoder
 from .identity_encoder import IdentityEncoder as IdentityEncoder
 from .mnih_cnn_encoder import MnihCnnEncoder as MnihCnnEncoder
