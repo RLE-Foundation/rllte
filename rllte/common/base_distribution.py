@@ -30,7 +30,7 @@ class BaseDistribution(Distribution):
         In rllte, action noise is implemented as a distribution.
     """
     def __init__(self):
-        super().__init__()
+        super().__init__(validate_args=False)
 
     def reset(self) -> None:
         """Reset the distribution. This is useful for action noise."""

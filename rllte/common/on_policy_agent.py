@@ -65,7 +65,6 @@ class OnPolicyAgent(BaseAgent):
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
         self.eval_every_episodes = eval_every_episodes
-        self.network_init_method = utils.get_network_init("orthogonal")
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms.

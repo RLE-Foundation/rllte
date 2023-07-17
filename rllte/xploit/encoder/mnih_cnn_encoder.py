@@ -77,4 +77,4 @@ class MnihCnnEncoder(BaseEncoder):
             Encoded observation tensor.
         """
 
-        return self.trunk(obs / 255.0)
+        return self.trunk(obs)

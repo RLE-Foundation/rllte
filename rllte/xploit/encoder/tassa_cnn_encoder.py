@@ -76,4 +76,4 @@ class TassaCnnEncoder(BaseEncoder):
         Returns:
             Encoded observation tensor.
         """
-        return self.trunk(obs / 255.0 - 0.5)
+        return self.trunk(obs)
