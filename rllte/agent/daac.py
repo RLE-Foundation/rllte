@@ -31,9 +31,8 @@ import torch as th
 from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.policy import DAACLikePolicy
+from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
 
@@ -144,7 +143,7 @@ class DAAC(OnPolicyAgent):
             raise NotImplementedError("Unsupported action type!")
 
         # create policy
-        policy = DAACLikePolicy(
+        policy = OnPolicyDecoupledActorCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,

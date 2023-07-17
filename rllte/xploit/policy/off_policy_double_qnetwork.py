@@ -25,6 +25,7 @@
 
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple, Type
+from copy import deepcopy
 
 import gymnasium as gym
 import torch as th
@@ -34,15 +35,62 @@ from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.ddpg_like_policy import DoubleCritic
 
 
-class SACLikePolicy(BasePolicy):
-    """Stochastic actor network and double critic network for off-policy algortithms like `SAC`.
-        Here the 'self.dist' refers to an sampling distribution instance.
+class DoubleCritic(nn.Module):
+    """Double critic network for DrQv2 and SAC.
 
-        Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
-        Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
+    Args:
+        action_dim (int): Number of neurons for outputting actions.
+        feature_dim (int): Number of features accepted.
+        hidden_dim (int): Number of units per hidden layer.
+
+    Returns:
+        Critic network instance.
+    """
+
+    def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
+        super().__init__()
+
+        self.Q1 = nn.Sequential(
+            nn.Linear(feature_dim + action_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, 1),
+        )
+
+        self.Q2 = nn.Sequential(
+            nn.Linear(feature_dim + action_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def forward(self, obs: th.Tensor, action: th.Tensor) -> Tuple[th.Tensor, ...]:
+        """Value estimation.
+
+        Args:
+            obs (th.Tensor): Observations.
+            action (th.Tensor): Actions.
+
+        Returns:
+            Estimated values.
+        """
+        h_action = th.cat([obs, action], dim=-1)
+
+        q1 = self.Q1(h_action)
+        q2 = self.Q2(h_action)
+
+        return q1, q2
+
+
+class OffPolicyDoubleQNetwork(BasePolicy):
+    """Q-network for off-policy algortithms like `DQN`.
+
+        Structure: self.encoder (shared by actor and critic), self.qnet, self.qnet_target
+        Optimizers: self.opt -> (self.qnet, self.qnet_target)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -51,11 +99,10 @@ class SACLikePolicy(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        log_std_range (Tuple): Range of log standard deviation.
         init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
-        Actor-Critic network.
+        Actor network instance.
     """
 
     def __init__(
@@ -66,7 +113,6 @@ class SACLikePolicy(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        log_std_range: Tuple = (-10, 2),
         init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
@@ -79,19 +125,15 @@ class SACLikePolicy(BasePolicy):
             init_fn=init_fn,
         )
 
-        # build actor and critic
-        self.actor = nn.Sequential(
+        # build q-network and target q-network
+        self.qnet = nn.Sequential(
             nn.Linear(self.feature_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, 2 * self.action_dim),
+            nn.Linear(self.hidden_dim, self.action_dim),
         )
-
-        self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-
-        self.log_std_min, self.log_std_max = log_std_range
+        self.qnet_target = deepcopy(self.qnet)
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -106,17 +148,12 @@ class SACLikePolicy(BasePolicy):
         # set encoder
         assert encoder is not None, "Encoder should not be None!"
         self.encoder = encoder
-        # set distribution
-        assert dist is not None, "Distribution should not be None!"
-        self.dist = dist
         # initialize parameters
         self.apply(self.init_fn)
-        # synchronize the parameters of critic and target critic
-        self.critic_target.load_state_dict(self.critic.state_dict())
+        # synchronize the parameters of Q-network and target Q-network
+        self.qnet_target.load_state_dict(self.qnet.state_dict())
         # build optimizers
-        self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
     
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
@@ -127,9 +164,10 @@ class SACLikePolicy(BasePolicy):
         Returns:
             Sampled actions.
         """
-        return th.rand(size=(obs.size()[0], self.action_dim), device=obs.device).uniform_(-1.0, 1.0)
+        return th.randint(low=self.action_range[0], high=self.action_range[1], 
+                          size=(obs.size()[0], ), device=obs.device)
 
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
@@ -141,33 +179,9 @@ class SACLikePolicy(BasePolicy):
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
-
-        if not training:
-            actions = dist.mean
-        else:
-            actions = dist.sample()
+        actions = self.qnet(encoded_obs).argmax(dim=1).reshape(-1)
 
         return actions
-
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
-        """Get sample distribution.
-
-        Args:
-            obs (th.Tensor): Observations.
-            step (int): Global training step.
-
-        Returns:
-            Action distribution.
-        """
-        mu, log_std = self.actor(obs).chunk(2, dim=-1)
-
-        log_std = th.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1)
-
-        std = log_std.exp()
-
-        return self.dist(mu, std)
 
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.
@@ -182,7 +196,7 @@ class SACLikePolicy(BasePolicy):
         if pretraining:  # pretraining
             th.save(self.state_dict(), path / "pretrained.pth")
         else:
-            export_model = ExportModel(encoder=self.encoder, actor=self.actor)
+            export_model = ExportModel(encoder=self.encoder, actor=self.qnet)
             th.save(export_model, path / "agent.pth")
 
     def load(self, path: str, device: th.device) -> None:

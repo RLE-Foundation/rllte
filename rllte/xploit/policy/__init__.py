@@ -22,12 +22,12 @@
 # SOFTWARE.
 # =============================================================================
 
-
-from .dqn_like_policy import DQNLikePolicy as DQNLikePolicy
-from .ppo_like_policy import PPOLikePolicy as PPOLikePolicy
-from .daac_like_policy import DAACLikePolicy as DAACLikePolicy
-from .sac_like_policy import SACLikePolicy as SACLikePolicy
-from .ddpg_like_policy import DDPGLikePolicy as DDPGLikePolicy
-from .impala_like_policy import IMPALALikePolicy as IMPALALikePolicy
-#
+# on-policy
+from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic
+from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
+# off-policy
+from .off_policy_double_qnetwork import OffPolicyDoubleQNetwork as OffPolicyDoubleQNetwork
+from .off_policy_stoch_actor_double_critic import OffPolicyStochActorDoubleCritic as OffPolicyStochActorDoubleCritic
+from .off_policy_det_actor_double_critic import OffPolicyDetActorDoubleCritic as OffPolicyDetActorDoubleCritic
+# distributed
 from .distributed_actor_learner import DistributedActorLearner as DistributedActorLearner

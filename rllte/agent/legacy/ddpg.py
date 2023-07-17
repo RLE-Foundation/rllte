@@ -32,7 +32,7 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.policy import DDPGLikePolicy
+from rllte.xploit.policy import OffPolicyDetActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
 from rllte.xplore.distribution import TruncatedNormalNoise
 
@@ -113,7 +113,7 @@ class DDPG(OffPolicyAgent):
         dist = TruncatedNormalNoise(low=self.action_range[0], high=self.action_range[1])
 
         # create policy
-        policy = DDPGLikePolicy(
+        policy = OffPolicyDetActorDoubleCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,

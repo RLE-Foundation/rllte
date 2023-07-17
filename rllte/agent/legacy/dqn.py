@@ -31,9 +31,8 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
-from rllte.common.utils import get_network_init
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.policy import DQNLikePolicy
+from rllte.xploit.policy import OffPolicyDoubleQNetwork
 from rllte.xploit.storage import VanillaReplayStorage
 
 
@@ -113,7 +112,7 @@ class DQN(OffPolicyAgent):
             encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
 
         # create policy
-        policy = DQNLikePolicy(
+        policy = OffPolicyDoubleQNetwork(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,

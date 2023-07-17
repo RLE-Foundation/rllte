@@ -33,7 +33,7 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.policy import SACLikePolicy
+from rllte.xploit.policy import OffPolicyStochActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
 from rllte.xplore.distribution import SquashedNormal
 
@@ -130,7 +130,7 @@ class SAC(OffPolicyAgent):
         dist = SquashedNormal
 
         # create policy
-        policy = SACLikePolicy(
+        policy = OffPolicyStochActorDoubleCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,

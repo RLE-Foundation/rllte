@@ -85,7 +85,7 @@ class DoubleCritic(nn.Module):
         return q1, q2
 
 
-class DDPGLikePolicy(BasePolicy):
+class OffPolicyDetActorDoubleCritic(BasePolicy):
     """Deterministic actor network and double critic network for off-policy algortithms like `DrQv2`, `DDPG`.
         Here the 'self.dist' refers to an action noise instance.
 

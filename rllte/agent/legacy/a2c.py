@@ -32,7 +32,7 @@ from torch import nn
 
 from rllte.common.on_policy_agent import OnPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.policy import PPOLikePolicy
+from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
 
@@ -126,7 +126,7 @@ class A2C(OnPolicyAgent):
             raise NotImplementedError("Unsupported action type!")
 
         # create policy
-        policy = PPOLikePolicy(
+        policy = OnPolicySharedActorCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
