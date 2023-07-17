@@ -36,8 +36,6 @@ dependencies = [
   "gymnasium[accept-rom-license]==0.28.1",
   "torch==2.0.0",
   "torchvision==0.15.1",
-  "hydra-core==1.3.2",
-  "hydra-submitit-launcher==1.2.0",
   "opencv-python",
   "termcolor",
   "scipy>= 1.7.0",

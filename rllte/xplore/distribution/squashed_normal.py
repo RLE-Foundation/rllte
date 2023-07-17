@@ -129,21 +129,3 @@ class SquashedNormal(BaseDistribution):
             The log_prob value.
         """
         return self.dist.log_prob(actions)
-
-    def entropy(self) -> th.Tensor:
-        """Returns the Shannon entropy of distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement entropy!")
-
-    @property
-    def stddev(self) -> th.Tensor:
-        """Returns the standard deviation of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement stddev!")
-
-    @property
-    def variance(self) -> th.Tensor:
-        """Returns the variance of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement variance!")
-
-    def reset(self) -> None:
-        """Reset the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement reset!")

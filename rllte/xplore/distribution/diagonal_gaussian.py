@@ -102,10 +102,6 @@ class DiagonalGaussian(BaseDistribution):
         """
         return self.dist.log_prob(actions).sum(-1)
 
-    def reset(self) -> None:
-        """Reset the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement reset!")
-
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
         return self.dist.entropy()
