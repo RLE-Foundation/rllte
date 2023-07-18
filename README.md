@@ -1,5 +1,6 @@
 <div align=center>
-<img src='./docs/assets/images/logo_horizontal.svg' style="width: 100%">
+<br>
+<img src='./docs/assets/images/logo_horizontal.svg' style="width: 75%">
 
 RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
