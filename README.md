@@ -1,4 +1,3 @@
-# RLLTE: Long-Term Evolution Project of Reinforcement Learning
 <div align=center>
 <br>
 <img src='./docs/assets/images/logo_horizontal.svg' style="width: 75%">
