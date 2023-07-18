@@ -26,5 +26,14 @@
 from .daac import DAAC as DAAC
 from .drqv2 import DrQv2 as DrQv2
 from .impala import IMPALA as IMPALA
-from .ppo import PPO as PPO
-from .sac import SAC as SAC
+
+# legacy algorithms
+from .legacy.dqn import DQN as DQN
+from .legacy.ppo import PPO as PPO
+from .legacy.a2c import A2C as A2C
+from .legacy.sac import SAC as SAC
+from .legacy.ddpg import DDPG as DDPG
+
+# augmented algorithms
+from .drac import DrAC as DrAC
+from .drdaac import DrDAAC as DrDAAC

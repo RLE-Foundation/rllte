@@ -31,17 +31,14 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.off_policy_agent import OffPolicyAgent
-from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.policy import OffPolicyDetActorDoubleCritic
-from rllte.xploit.storage import NStepReplayStorage
-from rllte.xplore.augmentation import RandomShift
-from rllte.xplore.distribution import TruncatedNormalNoise
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.policy import OffPolicyDoubleQNetwork
+from rllte.xploit.storage import VanillaReplayStorage
 
 
-class DrQv2(OffPolicyAgent):
-    """Data Regularized Q-v2 (DrQv2) agent.
-        Based on: https://github.com/facebookresearch/drqv2
-
+class DQN(OffPolicyAgent):
+    """Deep Q-Network (DQN) agent.
+        
     Args:
         env (gym.Env): A Gym-like environment for training.
         eval_env (gym.Env): A Gym-like environment for evaluation.
@@ -57,12 +54,14 @@ class DrQv2(OffPolicyAgent):
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
         hidden_dim (int): The size of the hidden layers.
-        critic_target_tau: The critic Q-function soft-update rate.
-        update_every_steps (int): The agent update frequency.
+        tau: The Q-function soft-update rate.
+        update_every_steps (int): The update frequency of the policy.
+        target_update_freq (int): The frequency of target Q-network update.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
-        DrQv2 agent instance.
+        DQN agent instance.
     """
 
     def __init__(
@@ -76,12 +75,14 @@ class DrQv2(OffPolicyAgent):
         num_init_steps: int = 2000,
         eval_every_steps: int = 5000,
         feature_dim: int = 50,
-        batch_size: int = 256,
-        lr: float = 1e-4,
+        batch_size: int = 32,
+        lr: float = 1e-3,
         eps: float = 1e-8,
         hidden_dim: int = 1024,
-        critic_target_tau: float = 0.01,
-        update_every_steps: int = 2,
+        tau: float = 1.0,
+        update_every_steps: int = 4,
+        target_update_freq: int = 1000,
+        discount: float = 0.99,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -98,44 +99,41 @@ class DrQv2(OffPolicyAgent):
         # hyper parameters
         self.lr = lr
         self.eps = eps
-        self.critic_target_tau = critic_target_tau
+        self.tau = tau
+        self.discount = discount
         self.update_every_steps = update_every_steps
+        self.target_update_freq = target_update_freq
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]
             encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
 
-        # default distribution
-        dist = TruncatedNormalNoise(low=self.action_range[0], high=self.action_range[1])
-
         # create policy
-        policy = OffPolicyDetActorDoubleCritic(
+        policy = OffPolicyDoubleQNetwork(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn,
+            init_fn=init_fn
         )
 
         # default storage
-        storage = NStepReplayStorage(
+        storage = VanillaReplayStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            batch_size=batch_size,
             num_envs=self.num_envs,
+            batch_size=batch_size,
+            storage_size=10000
         )
 
-        # default augmentation
-        aug = RandomShift(pad=4).to(self.device)
-
         # set all the modules [essential operation!!!]
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
+        self.set(encoder=encoder, policy=policy, storage=storage)
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
@@ -157,99 +155,38 @@ class DrQv2(OffPolicyAgent):
                 step=self.global_step,
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
-
-        # obs augmentation
-        if self.aug is not None:
-            obs = self.aug(batch.observations)
-            next_obs = self.aug(batch.next_observations)
-        else:
-            obs = batch.observations
-            next_obs = batch.next_observations
-
+        
         # encode
-        encoded_obs = self.policy.encoder(obs)
+        encoded_obs = self.policy.encoder(batch.observations)
         with th.no_grad():
-            encoded_next_obs = self.policy.encoder(next_obs)
+            encoded_next_obs = self.policy.encoder(batch.next_observations)
 
-        # update criitc
-        metrics.update(self.update_critic(encoded_obs, batch.actions, batch.rewards, batch.discounts, encoded_next_obs))
-
-        # update actor (do not udpate encoder)
-        metrics.update(self.update_actor(encoded_obs.detach()))
-
-        # udpate critic target
-        utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
-
-        return metrics
-
-    def update_critic(
-        self,
-        obs: th.Tensor,
-        actions: th.Tensor,
-        rewards: th.Tensor,
-        discount: th.Tensor,
-        next_obs: th.Tensor,
-    ) -> Dict[str, float]:
-        """Update the critic network.
-
-        Args:
-            obs (th.Tensor): Observations.
-            actions (th.Tensor): Actions.
-            rewards (th.Tensor): Rewards.
-            discounts (th.Tensor): discounts.
-            next_obs (th.Tensor): Next observations.
-
-        Returns:
-            Critic loss.
-        """
-
+        # compute target Q values
         with th.no_grad():
-            # sample actions
-            dist = self.policy.get_dist(next_obs, step=self.global_step)
+            next_q_values = self.policy.qnet_target(encoded_next_obs)
+            next_q_values, _ = next_q_values.max(dim=1)
+            next_q_values = next_q_values.reshape(-1, 1)
+            # time limit mask
+            target_q_values = batch.rewards + (1.0 - batch.terminateds) * (1.0 - batch.truncateds) * self.discount * next_q_values
 
-            next_action = dist.sample(clip=True)
-            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
-            target_V = th.min(target_Q1, target_Q2)
-            target_Q = rewards + (discount * target_V)
+        # compute current Q values
+        q_values = self.policy.qnet(encoded_obs)
+        q_values = th.gather(q_values, dim=1, index=batch.actions.unsqueeze(1).long())
+        # following https://github.com/DLR-RM/stable-baselines3/blob/d68ff2e17f2f823e6f48d9eb9cee28ca563a2554/stable_baselines3/dqn/dqn.py
+        # less sensitive to outliers
+        huber_loss = F.mse_loss(q_values, target_q_values)
 
-        Q1, Q2 = self.policy.critic(obs, actions)
-        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+        # optimize the qnet
+        self.policy.opt.zero_grad(set_to_none=True)
+        huber_loss.backward()
+        self.policy.opt.step()
 
-        # optimize encoder and critic
-        self.policy.encoder_opt.zero_grad(set_to_none=True)
-        self.policy.critic_opt.zero_grad(set_to_none=True)
-        critic_loss.backward()
-        self.policy.critic_opt.step()
-        self.policy.encoder_opt.step()
+        # udpate target qnet
+        if self.global_step % self.target_update_freq:
+            utils.soft_update_params(self.policy.qnet, self.policy.qnet_target, self.tau)
 
         return {
-            "Critic Loss": critic_loss.item(),
-            "Q1": Q1.mean().item(),
-            "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item()
+            "Huber Loss": huber_loss.item(),
+            "Q": q_values.mean().item(),
+            "Target Q": target_q_values.mean().item()
         }
-
-    def update_actor(self, obs: th.Tensor) -> Dict[str, float]:
-        """Update the actor network.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Actor loss metrics.
-        """
-        # sample actions
-        dist = self.policy.get_dist(obs, step=self.global_step)
-        action = dist.sample(clip=True)
-
-        Q1, Q2 = self.policy.critic(obs, action)
-        Q = th.min(Q1, Q2)
-
-        actor_loss = -Q.mean()
-
-        # optimize actor
-        self.policy.actor_opt.zero_grad(set_to_none=True)
-        actor_loss.backward()
-        self.policy.actor_opt.step()
-
-        return {"Actor Loss": actor_loss.item()}

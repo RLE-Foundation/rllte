@@ -22,30 +22,36 @@
 # SOFTWARE.
 # =============================================================================
 
-
+from typing import Tuple
 import torch as th
-from torch import distributions as pyd
+import torch.distributions as pyd
 
 from rllte.common.base_distribution import BaseDistribution
 
 
-class DiagonalGaussian(BaseDistribution):
-    """Diagonal Gaussian distribution for 'Box' tasks.
+class MultiCategorical(BaseDistribution):
+    """Categorical distribution for sampling actions for 'MultiDiscrete' tasks.
 
     Args:
-        loc (th.Tensor): The mean of the distribution (often referred to as mu).
-        scale (th.Tensor): The standard deviation of the distribution (often referred to as sigma).
+        logits (Tuple[th.Tensor, ...]): The event log probabilities (unnormalized).
 
     Returns:
-        Squashed normal distribution instance.
+        Categorical distribution instance.
     """
 
-    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
+    def __init__(self, logits: Tuple[th.Tensor, ...]) -> None:
         super().__init__()
+        self.dist = [pyd.Categorical(logits=logits_) for logits_ in logits]
 
-        self.loc = loc
-        self.scale = scale
-        self.dist = pyd.Normal(loc=loc, scale=scale)
+    @property
+    def probs(self) -> Tuple[th.Tensor, ...]:
+        """Return probabilities."""
+        return (dist.probs for dist in self.dist)
+
+    @property
+    def logits(self) -> Tuple[th.Tensor, ...]:
+        """Returns the unnormalized log probabilities."""
+        return (dist.logits for dist in self.dist)
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
@@ -57,39 +63,7 @@ class DiagonalGaussian(BaseDistribution):
         Returns:
             A sample_shape shaped sample.
         """
-        return self.dist.sample(sample_shape)
-
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
-        """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of
-            reparameterized samples if the distribution parameters are batched.
-
-        Args:
-            sample_shape (th.Size): The size of the sample to be drawn.
-
-        Returns:
-            A sample_shape shaped sample.
-        """
-        return self.dist.rsample(sample_shape)
-
-    @property
-    def mean(self) -> th.Tensor:
-        """Returns the mean of the distribution."""
-        return self.loc
-
-    @property
-    def mode(self) -> th.Tensor:
-        """Returns the mode of the distribution."""
-        return self.loc
-
-    @property
-    def stddev(self) -> th.Tensor:
-        """Returns the standard deviation of the distribution."""
-        raise self.scale
-
-    @property
-    def variance(self) -> th.Tensor:
-        """Returns the variance of the distribution."""
-        return self.stddev.pow(2)
+        return th.stack([dist.sample() for dist in self.dist], dim=1)
 
     def log_prob(self, actions: th.Tensor) -> th.Tensor:
         """Returns the log of the probability density/mass function evaluated at actions.
@@ -100,8 +74,20 @@ class DiagonalGaussian(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return self.dist.log_prob(actions).sum(-1)
+        return th.stack([dist.log_prob(action) for dist, action in zip(self.dist, th.unbind(actions, dim=1))],
+                        dim=1
+                        ).sum(dim=1)
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""
-        return self.dist.entropy()
+        return th.stack([dist.entropy() for dist in self.dist], dim=1).sum(dim=1)
+
+    @property
+    def mode(self) -> th.Tensor:
+        """Returns the mode of the distribution."""
+        return th.stack([dist.probs.argmax(axis=-1) for dist in self.dist], dim=1)
+
+    @property
+    def mean(self) -> th.Tensor:
+        """Returns the mean of the distribution."""
+        return self.dist.probs.argmax(axis=-1)

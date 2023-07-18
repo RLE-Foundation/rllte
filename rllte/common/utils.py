@@ -23,10 +23,13 @@
 # =============================================================================
 
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Dict
 
+import json
 import numpy as np
 import torch as th
+import gymnasium as gym
+
 from torch import nn
 
 
@@ -84,64 +87,6 @@ class eval_mode:
         return False
 
 
-def get_network_init(method: str = "orthogonal") -> Callable:  # noqa: c901
-    """Returns a network initialization function.
-
-    Args:
-        method (str): Initialization method name.
-
-    Returns:
-        Initialization function.
-    """
-
-    def _identity(m):
-        """Identity initialization."""
-        pass
-
-    def _orthogonal(m):
-        """Orthogonal initialization."""
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight.data)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-        elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-            gain = nn.init.calculate_gain("relu")
-            nn.init.orthogonal_(m.weight.data, gain)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-
-    def _xavier_uniform(m):
-        """Xavier uniform initialization."""
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight.data)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-        elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-            nn.init.xavier_uniform_(m.weight.data)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-
-    def _xavier_normal(m):
-        """Xavier normal initialization."""
-        if isinstance(m, nn.Linear):
-            nn.init.orthogonal_(m.weight.data)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-        elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-            nn.init.xavier_normal_(m.weight.data)
-            if hasattr(m.bias, "data"):
-                m.bias.data.fill_(0.0)
-
-    if method == "orthogonal":
-        return _orthogonal
-    elif method == "xavier_normal":
-        return _xavier_normal
-    elif method == "xavier_uniform":
-        return _xavier_uniform
-    else:
-        return _identity
-
-
 def to_numpy(xs: Tuple[th.Tensor, ...]) -> Tuple[np.ndarray, ...]:
     """Converts torch tensors to numpy arrays.
 
@@ -154,3 +99,16 @@ def to_numpy(xs: Tuple[th.Tensor, ...]) -> Tuple[np.ndarray, ...]:
     for x in xs:
         print(x.size())
     return tuple(x[0].cpu().numpy() for x in xs)
+
+
+def pretty_json(hp: Dict) -> str:
+    """Returns a pretty json string.
+
+    Args:
+        hp (Dict): Hyperparameters.
+
+    Returns:
+        Pretty json string.
+    """
+    json_hp = json.dumps(hp, indent=2)
+    return "".join("\t" + line for line in json_hp.splitlines(True))

@@ -24,50 +24,50 @@
 
 
 import argparse
-import os
 
-from rllte.agent import SAC
-from rllte.env import make_dmc_env
-
-os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
+from rllte.agent import PPO
+from rllte.env import make_atari_env
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="finger_spin")
+parser.add_argument("--env-id", type=str, default="SpaceInvadersNoFrameskip-v4")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     # create env
-    env = make_dmc_env(
-        env_id=args.env_id, num_envs=3, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
+    env = make_atari_env(
+        env_id=args.env_id,
+        num_envs=8,
+        device=args.device,
+        seed=args.seed,
     )
-    eval_env = make_dmc_env(
-        env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
+    eval_env = make_atari_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
     )
     # create agent
-    agent = SAC(
+    feature_dim = 512
+    agent = PPO(
         env=env,
         eval_env=eval_env,
-        tag=f"sac_dmc_state_{args.env_id}_seed_{args.seed}",
+        tag=f"ppo_atari_{args.env_id}_seed_{args.seed}",
         seed=args.seed,
         device=args.device,
-        feature_dim=50,
-        batch_size=1024,
-        lr=0.0001,
-        eps=1e-8,
-        hidden_dim=1024,
-        critic_target_tau=0.005,
-        update_every_steps=2,
+        num_steps=128,
+        feature_dim=feature_dim,
+        batch_size=256,
+        lr=2.5e-4,
+        eps=1e-5,
+        clip_range=0.1,
+        clip_range_vf=0.1,
+        n_epochs=4,
+        vf_coef=0.5,
+        ent_coef=0.01,
+        max_grad_norm=0.5,
         init_fn="orthogonal",
     )
-    # storage = PrioritizedReplayStorage(
-    #     observation_space=env.observation_space,
-    #     action_space=env.action_space,
-    #     device=args.device,
-    #     storage_size=1000000,
-    #     batch_size=1024
-    # )
-    # agent.set(storage=storage)
     # training
-    agent.train(num_train_steps=250000)
+    agent.train(num_train_steps=50000000)

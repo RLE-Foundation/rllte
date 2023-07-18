@@ -90,20 +90,3 @@ class Bernoulli(BaseDistribution):
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
         return th.gt(self.dist.probs, 0.5).float()
-
-    @property
-    def stddev(self) -> th.Tensor:
-        """Returns the standard deviation of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement stddev!")
-
-    @property
-    def variance(self) -> th.Tensor:
-        """Returns the variance of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement variance!")
-
-    def reset(self) -> None:
-        """Reset the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement reset!")
-
-    def rsample(self, sample_shape: th.Size = ...) -> th.Tensor:  # B008
-        raise NotImplementedError(f"{self.__class__} does not implement rsample!")

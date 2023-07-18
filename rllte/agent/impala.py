@@ -32,7 +32,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from rllte.common.distributed_agent import DistributedAgent
-from rllte.common.utils import get_network_init
+from rllte.common.initialization import get_init_fn
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.storage import DistributedStorage
@@ -210,7 +210,7 @@ class IMPALA(DistributedAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.RMSprop,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_method=get_network_init(self.network_init_method),
+            init_method=get_init_fn(self.network_init_method),
             use_lstm=use_lstm,
         )
 

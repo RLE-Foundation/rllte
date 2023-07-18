@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+from torch.utils.tensorboard import SummaryWriter
 
 import gymnasium as gym
 import numpy as np
@@ -47,9 +48,10 @@ from rllte.common.base_encoder import BaseEncoder as Encoder
 from rllte.common.base_policy import BasePolicy as Policy
 from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.base_storage import BaseStorage as Storage
+from rllte.common.preprocessing import process_env_info
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer
-
+from rllte.common.utils import pretty_json
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -61,7 +63,6 @@ class BaseAgent(ABC):
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on pre-training model or not.
-        feature_dim (int): Number of features extracted by the encoder.
 
     Returns:
         Base agent instance.
@@ -84,6 +85,7 @@ class BaseAgent(ABC):
         # basic setup
         self.work_dir = Path.cwd()
         self.logger = Logger(log_dir=self.work_dir)
+        self.writer = SummaryWriter(log_dir=self.work_dir)
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
@@ -96,7 +98,11 @@ class BaseAgent(ABC):
         # env setup
         self.env = env
         self.eval_env = eval_env
-        self.get_env_info(env)
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+        self.num_envs = env.num_envs
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
+            process_env_info(self.observation_space, self.action_space)
 
         # set seed
         self.seed = seed
@@ -130,40 +136,6 @@ class BaseAgent(ABC):
         self.aug = None
         self.irs = None
 
-    def get_env_info(self, env: gym.Env) -> None:
-        """Get the environment information.
-
-        Args:
-            env (gym.Env): A Gym-like environment for training.
-
-        Returns:
-            None.
-        """
-        observation_space = env.observation_space
-        action_space = env.action_space
-        self.num_envs = env.num_envs
-        self.obs_shape = observation_space.shape
-        if action_space.__class__.__name__ == "Discrete":
-            self.action_shape = action_space.shape
-            self.action_dim = int(action_space.n)
-            self.action_type = "Discrete"
-            self.action_range = [0, int(action_space.n) - 1]
-        elif action_space.__class__.__name__ == "Box":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "Box"
-            self.action_range = [
-                float(action_space.low[0]),
-                float(action_space.high[0]),
-            ]
-        elif action_space.__class__.__name__ == "MultiBinary":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "MultiBinary"
-            self.action_range = [0, 1]
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
     def get_npu_name(self) -> str:
         """Get NPU name."""
         str_command = "npu-smi info"
@@ -180,30 +152,46 @@ class BaseAgent(ABC):
     def check(self) -> None:
         """Check the compatibility of selected modules."""
         self.logger.debug("Checking the Compatibility of Modules...")
-        self.logger.debug(f"Selected Agent: {self.__class__.__name__}")
-        self.logger.debug(f"Selected Encoder: {self.encoder.__class__.__name__}")
-        self.logger.debug(f"Selected Policy: {self.policy.__class__.__name__}")
-        self.logger.debug(f"Selected Storage: {self.storage.__class__.__name__}")
+        self.logger.debug(f"Agent: {self.__class__.__name__}")
+        self.logger.debug(f"Encoder: {self.encoder.__class__.__name__}")
+        self.logger.debug(f"Policy: {self.policy.__class__.__name__}")
+        self.logger.debug(f"Storage: {self.storage.__class__.__name__}")
         # class for `Distribution` and instance for `Noise`
         dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
-        self.logger.debug(f"Selected Distribution: {dist_name}")
+        self.logger.debug(f"Distribution: {dist_name}")
 
+        # write to tensorboard
+        structure_dict = {
+            "Agent": self.__class__.__name__,
+            "Encoder": self.encoder.__class__.__name__,
+            "Policy": self.policy.__class__.__name__,
+            "Storage": self.storage.__class__.__name__,
+            "Distribution": dist_name,
+            "Augmentation": self.aug.__class__.__name__ if self.aug is not None else "None",
+            "Intrinsic Reward": self.irs.__class__.__name__ if self.irs is not None else "None",
+        }
+        self.writer.add_text("Agent Structure", pretty_json(structure_dict))
+
+        # check augmentation and intrinsic reward
         if self.aug is not None:
-            self.logger.debug(f"Use Augmentation: True, {self.aug.__class__.__name__}")
+            self.logger.debug(f"Augmentation: True, {self.aug.__class__.__name__}")
         else:
-            self.logger.debug("Use Augmentation: False")
+            self.logger.debug("Augmentation: False")
 
         if self.pretraining:
             assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if self.irs is not None:
-            self.logger.debug(f"Use Intrinsic Reward: True, {self.irs.__class__.__name__}")
+            self.logger.debug(f"Intrinsic Reward: True, {self.irs.__class__.__name__}")
         else:
-            self.logger.debug("Use Intrinsic Reward: False")
+            self.logger.debug("Intrinsic Reward: False")
 
         if self.pretraining:
             self.logger.info("Pre-training Mode On...")
         self.logger.debug("Check Accomplished. Start Training...")
+
+        # launch tensorboard
+        self.logger.info(f"Launch TensorBoard: \n\t`tensorboard --logdir {self.work_dir}`")
 
     def set(
         self,
@@ -258,17 +246,21 @@ class BaseAgent(ABC):
             assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
             self.irs = reward
 
-    @abstractmethod
-    def mode(self) -> None:
-        """Set the training mode."""
+    def mode(self, training: bool = True) -> None:
+        """Set the training mode.
+
+        Args:
+            training (bool): True (training) or False (evaluation).
+
+        Returns:
+            None.
+        """
+        self.training = training
+        self.policy.train(training)
 
     @abstractmethod
     def update(self) -> Dict[str, float]:
-        """Update the agent."""
-
-    @abstractmethod
-    def freeze(self) -> None:
-        """Freeze the structure of the agent."""
+        """Update function of the agent."""
 
     @abstractmethod
     def train(self) -> None:
