@@ -1,7 +1,7 @@
 <div align=center>
 <br>
 <img src='./docs/assets/images/logo_horizontal.svg' style="width: 75%">
-
+<br>
 RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
 <h3> <a href=""> Paper </a> |
@@ -10,34 +10,24 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
 <a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
 
-<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD">
+<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-98.00%25-green"> 
 
 </div>
 
 **RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. 
 
-If you use **rllte** in your research, please cite this project like this:
-``` tex
-@software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
-  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
-  url = {https://github.com/RLE-Foundation/rllte},
-  year = {2023},
-}
-```
-
 # Contents
-- [Contents](#contents)
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Implemented Modules](#implemented-modules)
 - [Benchmark](#benchmark)
 - [API Documentation](#api-documentation)
+- [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
 
 # Overview
-For the project tenet, please read [Evolution Tenet](https://docs.rllte.dev/tenet).
+**RLLTE** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to provide development components and standards for RL research and applications. **RLLTE** is the first project that builds a complete ecosystem, and developers can perform task design, model training, evaluation, and deployment within one framework. For the project tenet, please read [Evolution Tenet](https://docs.rllte.dev/tenet).
 
 The highlight features of **rllte**:
 - 👨‍✈️ Large language model-empowered copilot;
@@ -327,6 +317,17 @@ View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rll
 
 # How To Contribute
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/rllte/blob/main/CONTRIBUTING.md) for guide first.
+
+# Cite the Project
+If you use **rllte** in your research, please cite this project like this:
+``` tex
+@software{rllte,
+  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
+  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
+  url = {https://github.com/RLE-Foundation/rllte},
+  year = {2023},
+}
+```
 
 # Acknowledgment
 This project is supported by [The Hong Kong Polytechnic University](http://www.polyu.edu.hk/), [Eastern Institute for Advanced Study](http://www.eias.ac.cn/), and [FLW-Foundation](FLW-Foundation). [EIAS HPC](https://hpc.eias.ac.cn/) provides a GPU computing platform, and [Ascend Community](https://www.hiascend.com/) provides an NPU computing platform for our testing. Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
