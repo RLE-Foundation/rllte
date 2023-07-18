@@ -12,9 +12,9 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
 <img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-98.00%25-green"> 
 
-</div>
+| [English](README.md) | [中文](docs/README-zh-Hans.md) |
 
-**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. 
+</div>
 
 # Contents
 - [Overview](#overview)
