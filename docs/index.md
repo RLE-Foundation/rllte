@@ -1,11 +1,19 @@
 <div align=center>
-<img src='./assets/images/rllte-logo.png' style="width: 45%">
+<br>
+<img src='./assets/images/logo_horizontal.svg' style="width: 75%">
+<br>
+
+<h3> <a href=""> Paper </a> |
+<a href="https://docs.rllte.dev/api/"> Documentation </a> |
+<a href="https://github.com/hpcaitech/ColossalAI/tree/main/examples"> Tutorials </a> |
+<a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
+<a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
+
+<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-98.00%25-green"> 
+
 </div>
 
-|<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI%20Package-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/🤗Benchmark-HuggingFace-%23FFD21E"> <img src="https://img.shields.io/badge/Pytorch-%3E%3D2.0.0-%23EF5739"> <img src="https://img.shields.io/badge/Hydra-1.3.2-%23E88444"> <img src="https://img.shields.io/badge/Gymnasium-%3E%3D0.28.1-brightgreen"> <img src="https://img.shields.io/badge/DMC Suite-1.0.11-blue"> <img src="https://img.shields.io/badge/Procgen-0.10.7-blueviolet"> <img src="https://img.shields.io/badge/2.2.1-MiniGrid-%23c8c8c8"> <img src="https://img.shields.io/badge/PyBullet-3.2.5-%236A94D4"> <img src="https://img.shields.io/badge/Robosuite-1.4.0-%23b51800">|
-|:-:|
-
-**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to track the latest research progress in reinforcement learning (RL) and provide stable and efficient baselines. In **rllte**, you can find everything you need in RL, such as training, evaluation, deployment, etc. The highlight features of **rllte**:
+**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to provide development components and standards for RL research and applications. **RLLTE** is the first project that builds a complete ecosystem, and developers can perform task design, model training, evaluation, and deployment within one framework. The highlight features of **rllte**:
 
 - 👨‍✈️ Large language model-empowered copilot;
 - ⏱️ Latest algorithms and tricks;
@@ -22,7 +30,7 @@ See the project structure below:
 <img src='./assets/images/structure.svg' style="width: 100%">
 </div>
 
-If you use **rllte** in your research, please cite this project like this:
+If you use **RLLTE** in your research, please cite this project like this:
 ``` tex
 @software{rllte,
   author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},

@@ -1,3 +1,4 @@
+# RLLTE: Long-Term Evolution Project of Reinforcement Learning
 <div align=center>
 <br>
 <img src='./docs/assets/images/logo_horizontal.svg' style="width: 75%">
@@ -20,7 +21,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Implemented Modules](#implemented-modules)
-- [Benchmark](#benchmark)
+- [Benchmarks](#benchmarks)
 - [API Documentation](#api-documentation)
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
@@ -309,8 +310,8 @@ For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs
 
 See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation) for usage examples.
 
-# Benchmark
-**rllte** provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
+# Benchmarks
+**RLLTE** provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
 
 # API Documentation
 View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
@@ -319,7 +320,7 @@ View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rll
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/rllte/blob/main/CONTRIBUTING.md) for guide first.
 
 # Cite the Project
-If you use **rllte** in your research, please cite this project like this:
+If you use **RLLTE** in your research, please cite this project like this:
 ``` tex
 @software{rllte,
   author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
