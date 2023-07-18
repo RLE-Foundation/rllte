@@ -1,9 +1,77 @@
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from abc import ABC, abstractmethod
 from typing import Any
+from collections import namedtuple
 
 import gymnasium as gym
 import torch as th
+import numpy as np
 
+from rllte.common.preprocessing import process_env_info
+
+
+VanillaReplayBatch = namedtuple(typename="VanillaReplayBatch", field_names=[
+    "observations", 
+    "actions",
+    "rewards",
+    "terminateds",
+    "truncateds",
+    "next_observations"
+])
+
+PrioritizedReplayBatch = namedtuple(typename="PrioritizedReplayBatch", field_names=[
+    "observations",
+    "actions",
+    "rewards",
+    "terminateds",
+    "truncateds",
+    "next_observations"
+    "indices",
+    "weights"
+])
+
+NStepReplayBatch = namedtuple(typename="NStepReplayBatch", field_names=[
+    "observations", 
+    "actions",
+    "rewards",
+    "discounts",
+    "next_observations"
+])
+
+VanillaRolloutBatch = namedtuple(typename="VanillaRolloutBatch", field_names=[
+    "observations",
+    "actions",
+    "values",
+    "returns",
+    "terminateds",
+    "truncateds",
+    "old_log_probs",
+    "adv_targ",
+])
 
 class BaseStorage(ABC):
     """Base class of storage module.
@@ -23,31 +91,24 @@ class BaseStorage(ABC):
         action_space: gym.Space,
         device: str = "cpu",
     ) -> None:
-        self.obs_shape = observation_space.shape
-        if action_space.__class__.__name__ == "Discrete":
-            self.action_shape = action_space.shape
-            self.action_dim = int(action_space.n)
-            self.action_type = "Discrete"
-            self.action_range = [0, int(action_space.n) - 1]
-
-        elif action_space.__class__.__name__ == "Box":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "Box"
-            self.action_range = [
-                float(action_space.low[0]),
-                float(action_space.high[0]),
-            ]
-
-        elif action_space.__class__.__name__ == "MultiBinary":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "MultiBinary"
-            self.action_range = [0, 1]
-        else:
-            raise NotImplementedError("Unsupported action type!")
-
+        self.observation_space = observation_space
+        self.action_space = action_space
+        # get environment information
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
+            process_env_info(observation_space, action_space)
+        # set device
         self.device = th.device(device)
+    
+    def to_torch(self, x: np.ndarray) -> th.Tensor:
+        """Convert numpy array to torch tensor.
+
+        Args:
+            x (np.ndarray): Numpy array.
+
+        Returns:
+            Torch tensor.
+        """
+        return th.as_tensor(x, device=self.device).float()
 
     @abstractmethod
     def add(self, *args) -> None:

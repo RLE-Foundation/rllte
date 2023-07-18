@@ -32,7 +32,6 @@ import gymnasium as gym
 import torch as th
 from torch import nn
 
-# from rllte.common.base_distribution import BaseDistribution as Distribution
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
@@ -42,7 +41,10 @@ from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, Discrete
 
 
 class OnPolicyDecoupledActorCritic(BasePolicy):
-    """Actor-Critic network using using separate encoders for on-policy algorithms like `DAAC`.
+    """Actor-Critic network for on-policy algorithms like `DAAC`.
+
+        Structure: self.actor_encoder, self.actor, self.critic_encoder, self.critic
+        Optimizers: self.actor_opt -> (self.actor_encoder, self.actor), self.critic_opt -> (self.critic_encoder, self.critic)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -51,7 +53,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_method (Callable): Initialization method.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -65,7 +67,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         hidden_dim: int,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_method: Callable = nn.init.orthogonal_,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -74,7 +76,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method,
+            init_fn=init_fn,
         )
 
         # choose an actor class based on action space type
@@ -130,14 +132,14 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
         # initialize parameters
-        self.apply(self.init_method)
+        self.apply(self.init_fn)
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
         self.actor_opt = th.optim.Adam(self.actor_params, **self.opt_kwargs)
         self.critic_opt = th.optim.Adam(self.critic_params, **self.opt_kwargs)
 
-    def act(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
+    def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -155,10 +157,10 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions, self.critic(self.critic_encoder(obs)), log_probs
+            return actions.clamp(*self.action_range), {"values": self.critic(self.critic_encoder(obs)), "log_probs": log_probs}
         else:
             actions = dist.mean
-            return actions
+            return actions.clamp(*self.action_range), {}
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.

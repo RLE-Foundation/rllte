@@ -22,16 +22,14 @@
 # SOFTWARE.
 # =============================================================================
 
-
 from collections import deque
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, NamedTuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
-
 
 def make_rllte_env(
     env_id: Union[str, Callable[..., gym.Env]],
@@ -78,14 +76,64 @@ def make_rllte_env(
 
     env_fns = [make_env(rank=i) for i in range(num_envs)]
     if parallel:
-        env = AsyncVectorEnv(env_fns)
+        envs = AsyncVectorEnv(env_fns)
     else:
-        env = SyncVectorEnv(env_fns)
+        envs = SyncVectorEnv(env_fns)
 
-    env = RecordEpisodeStatistics(env)
-    env = TorchVecEnvWrapper(env=env, device=device)
+    envs = RecordEpisodeStatistics(envs)
+    # check if the environment has dictionary observation space
+    if isinstance(envs.single_observation_space, gym.spaces.Dict):
+        envs = TorchVecDictEnvWrapper(env=envs, device=device)
+    else:
+        envs = TorchVecEnvWrapper(env=envs, device=device)
 
-    return env
+    return envs
+
+
+class TimeStep(NamedTuple):
+    """Environment data of a time step.
+
+    Args:
+        observations (th.Tensor): Observations.
+        rewards (th.Tensor): Rewards.
+        actions (th.Tensor): Actions.
+        terminateds (th.Tensor): Termination signal.
+        truncateds (th.Tensor): Truncation signal.
+        info (Dict): Extra information.
+        next_observations (th.Tensor): Next observations.
+    
+    Returns:
+        TimeStep: A time step.
+    """
+    # Environment data.
+    observations: Optional[th.Tensor] = None
+    actions: Optional[th.Tensor] = None
+    rewards: Optional[th.Tensor] = None
+    terminateds: Optional[th.Tensor] = None
+    truncateds: Optional[th.Tensor] = None
+    info: Optional[Dict] = None
+    next_observations: Optional[th.Tensor] = None
+
+    def get_episode_statistics(self) -> Tuple[List, List]:
+        """Get the episode statistics.
+        """
+        indices = np.nonzero(self.info["episode"]["l"])
+        
+        return self.info["episode"]["r"][indices].tolist(), self.info["episode"]["l"][indices].tolist()
+
+    def __getitem__(self, attr: str) -> Tuple:
+        """Get the attribute of the time step.
+
+        Args:
+            attr (str): Attribute name.
+
+        Returns:
+            Tuple: Attribute value.
+        """
+        if isinstance(attr, str):
+            return getattr(self, attr)
+        else:
+            return tuple.__getitem__(self, attr)
 
 
 class TorchVecEnvWrapper(gym.Wrapper):
@@ -101,18 +149,18 @@ class TorchVecEnvWrapper(gym.Wrapper):
 
     def __init__(self, env: VectorEnv, device: str) -> None:
         super().__init__(env)
-        self.device = th.device(device)
-
-        # TODO: Transform the original 'Box' space into Hydra supported type.
         self.observation_space = env.single_observation_space
         self.action_space = env.single_action_space
         self.num_envs = env.num_envs
+        self.device = th.device(device)
+        # container for current observations
+        self.current_obs = None
 
     def reset(
         self,
         seed: Optional[Union[int, List[int]]] = None,
         options: Optional[dict] = None,
-    ) -> Tuple[th.Tensor, Dict]:
+    ) -> TimeStep:
         """Reset all environments and return a batch of initial observations and info.
 
         Args:
@@ -120,37 +168,138 @@ class TorchVecEnvWrapper(gym.Wrapper):
             options (Optional[dict]): If to return the options.
 
         Returns:
-            A batch of observations and info from the vectorized environment.
+            A `TimeStep` instance that contains first observation and info.
         """
         obs, info = self.env.reset(seed=seed, options=options)
         obs = th.as_tensor(obs, device=self.device)
-        return obs, info
 
-    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, bool, Dict]:
+        self.current_obs = obs
+        return TimeStep(observations=self.current_obs, info=info)
+
+    def step(self, actions: th.Tensor) -> TimeStep:
         """Take an action for each environment.
 
         Args:
             actions (th.Tensor): element of :attr:`action_space` Batch of actions.
 
         Returns:
-            Batch of (observations, rewards, terminations, truncations, infos)
+            A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
         """
-        obs, reward, terminated, truncated, info = self.env.step(actions.cpu().numpy())
-        obs = th.as_tensor(obs, device=self.device)
-        reward = th.as_tensor(reward, dtype=th.float32, device=self.device)
-        terminated = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in terminated],
+        new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
+        # get real next observations
+        for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
+            if term or trunc:
+                new_obs[idx] = info['final_observation'][idx]
+
+        # convert to tensor
+        new_obs = th.as_tensor(new_obs, device=self.device)
+        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
+
+        terminateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in terminateds],
             dtype=th.float32,
             device=self.device,
         )
-        truncated = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in truncated],
+        truncateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in truncateds],
             dtype=th.float32,
             device=self.device,
         )
 
-        return obs, reward, terminated, truncated, info
+        time_step = TimeStep(observations=self.current_obs, 
+                             actions=actions, 
+                             rewards=rewards, 
+                             terminateds=terminateds, 
+                             truncateds=truncateds,
+                             info=info,
+                             next_observations=new_obs)
 
+        # set current observation
+        self.current_obs = new_obs
+
+        return time_step
+
+class TorchVecDictEnvWrapper(gym.Wrapper):
+    """Env wrapper for outputting torch tensors.
+
+    Args:
+        env (VectorEnv): The vectorized environments with dictionary observations.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+
+    Returns:
+        TorchVecEnvWrapper instance.
+    """
+
+    def __init__(self, env: VectorEnv, device: str) -> None:
+        super().__init__(env)
+        assert isinstance(env.single_observation_space, gym.spaces.Dict), \
+            f"Expected Dict observation space, got {type(env.single_observation_space)}"
+        self.observation_space = env.single_observation_space
+        self.action_space = env.single_action_space
+        self.num_envs = env.num_envs
+        self.device = th.device(device)
+        # container for current observations
+        self.current_obs = None
+
+    def reset(
+        self,
+        seed: Optional[Union[int, List[int]]] = None,
+        options: Optional[dict] = None,
+    ) -> TimeStep:
+        """Reset all environments and return a batch of initial observations and info.
+
+        Args:
+            seed (int): The environment reset seeds.
+            options (Optional[dict]): If to return the options.
+
+        Returns:
+            A `TimeStep` instance that contains first observation and info.
+        """
+        obs, info = self.env.reset(seed=seed, options=options)
+        obs = {key: th.as_tensor(item, device=self.device) for key, item in obs.items()}
+
+        self.current_obs = obs
+        return TimeStep(observations=self.current_obs, info=info)
+
+    def step(self, actions: th.Tensor) -> TimeStep:
+        """Take an action for each environment.
+
+        Args:
+            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
+
+        Returns:
+            A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
+        """
+        new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
+        # TODO: get real next observations
+
+        # convert to tensor
+        new_obs = {key: th.as_tensor(item, device=self.device) for key, item in new_obs.items()}
+        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
+
+        terminateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in terminateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+        truncateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in truncateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+
+        time_step = TimeStep(observations=self.current_obs, 
+                             actions=actions, 
+                             rewards=rewards, 
+                             terminateds=terminateds, 
+                             truncateds=truncateds,
+                             info=info,
+                             next_observations=new_obs)
+
+        # set current observation
+        self.current_obs = new_obs
+
+        return time_step
 
 class FrameStack(gym.Wrapper):
     """Observation wrapper that stacks the observations in a rolling manner.

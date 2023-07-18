@@ -25,8 +25,10 @@
 
 from pathlib import Path
 from typing import Dict, Optional
+from collections import deque
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 
 from rllte.common import utils
@@ -71,27 +73,6 @@ class OffPolicyAgent(BaseAgent):
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def freeze(self) -> None:
-        """Freeze the structure of the agent. Implemented by individual algorithms."""
-        # freeze the policy
-        self.policy.freeze(encoder=self.encoder, dist=self.dist)
-        # to device
-        self.policy.to(self.device)
-        # set the training mode
-        self.mode(training=True)
-
-    def mode(self, training: bool = True) -> None:
-        """Set the training mode.
-
-        Args:
-            training (bool): True (training) or False (testing).
-
-        Returns:
-            None.
-        """
-        self.training = training
-        self.policy.train(training)
-
     def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
         """Training function.
 
@@ -103,8 +84,11 @@ class OffPolicyAgent(BaseAgent):
             None.
         """
         # freeze the structure of the agent
-        self.freeze()
-
+        self.policy.freeze(encoder=self.encoder, dist=self.dist)
+        # to device
+        self.policy.to(self.device)
+        # set the training mode
+        self.mode(training=True)
         # final check
         self.check()
 
@@ -114,72 +98,71 @@ class OffPolicyAgent(BaseAgent):
             self.policy.load(init_model_path, self.device)
 
         # reset the env
-        episode_step, episode_reward = 0, 0
-        obs, info = self.env.reset(seed=self.seed)
-        metrics = None
+        episode_rewards = deque(maxlen=10)
+        episode_steps = deque(maxlen=10)
+        train_metrics = {}
+        time_step = self.env.reset(seed=self.seed)
 
         # training loop
         while self.global_step <= num_train_steps:
             # try to eval
             if (self.global_step % self.eval_every_steps) == 0 and (self.eval_env is not None):
                 eval_metrics = self.eval()
-                self.logger.eval(msg=eval_metrics)
+                # write to tensorboard
+                self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
+                self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
 
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
                 # Initial exploration
                 if self.global_step <= self.num_init_steps:
-                    action = th.rand(size=(self.num_envs, self.action_dim), device=self.device).uniform_(-1.0, 1.0)
+                    actions = self.policy.explore(time_step.observations)
                 else:
-                    action = self.policy.act(obs, training=True, step=self.global_step)
+                    actions = self.policy(time_step.observations, training=True, step=self.global_step)
 
             # observe reward and next obs
-            next_obs, reward, terminated, truncated, info = self.env.step(action)
-            episode_reward += reward[0].cpu().numpy()
-            episode_step += 1
-            self.global_step += 1
+            time_step = self.env.step(actions)
+            self.global_step += self.num_envs
 
-            # TODO: add parallel env support
-            # save transition
-            reward = th.zeros_like(reward) if self.pretraining else reward  # pre-training mode
-            self.storage.add(
-                obs=obs[0].cpu().numpy(),
-                action=action[0].cpu().numpy(),
-                reward=reward[0].cpu().numpy(),
-                terminated=terminated[0].cpu().numpy(),
-                truncated=truncated[0].cpu().numpy(),
-                info=info,
-                next_obs=next_obs[0].cpu().numpy(),
-            )
+            # pre-training mode
+            if self.pretraining:
+                time_step = time_step._replace(rewards=th.zeros_like(time_step.rewards, device=self.device))
+
+            # add new transitions
+            self.storage.add(*time_step)
 
             # update agent
             if self.global_step >= self.num_init_steps:
-                metrics = self.update()
+                train_metrics = self.update()
                 # try to update storage
-                self.storage.update(metrics)
+                self.storage.update(train_metrics)
 
-            # terminated or truncated
-            if terminated or truncated:
-                episode_time, total_time = self.timer.reset()
-                if metrics is not None:
-                    train_metrics = {
-                        "step": self.global_step,
-                        "episode": self.global_episode,
-                        "episode_length": episode_step,
-                        "episode_reward": episode_reward,
-                        "fps": episode_step / episode_time,
-                        "total_time": total_time,
-                    }
-                    self.logger.train(msg=train_metrics)
+            # get episode information
+            if "episode" in time_step.info:
+                eps_r, eps_l = time_step.get_episode_statistics()
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
+                self.global_episode += len(eps_r)
+
+            # log training information
+            if len(episode_rewards) > 1:
+                # write to tensorboard
+                total_time = self.timer.total_time()
+                for key in train_metrics.keys():
+                    self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
+                self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
+                self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
+                self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
+                self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
 
                 # As the vector environments autoreset for a terminating and truncating sub-environments,
                 # the returned observation and info is not the final step's observation or info which
                 # is instead stored in info as `final_observation` and `final_info`. Therefore,
                 # we don't need to reset the env here.
-                self.global_episode += 1
-                episode_step, episode_reward = 0, 0
 
-            obs = next_obs
+            # set the current observation
+            time_step = time_step._replace(observations=time_step.next_observations)
 
         # save model
         self.logger.info("Training Accomplished!")
@@ -200,34 +183,29 @@ class OffPolicyAgent(BaseAgent):
     def eval(self) -> Dict[str, float]:
         """Evaluation function."""
         # reset the env
-        step, episode, total_reward = 0, 0, 0
-        obs, info = self.eval_env.reset(seed=self.seed)
+        time_step = self.eval_env.reset(seed=self.seed)
+        episode_rewards = list()
+        episode_steps = list()
 
-        # eval loop
-        while episode <= self.num_eval_episodes:
+        # evaluation loop
+        while len(episode_rewards) < self.num_eval_episodes:
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                action = self.policy.act(obs, training=False, step=self.global_step)
+                actions = self.policy(time_step.observations, training=False, step=self.global_step)
 
             # observe reward and next obs
-            next_obs, reward, terminated, truncated, info = self.eval_env.step(action)
-            total_reward += reward[0].cpu().numpy()
-            step += 1
+            time_step = self.eval_env.step(actions)
 
-            # terminated or truncated
-            if terminated or truncated:
-                # As the vector environments autoreset for a terminating and truncating sub-environments,
-                # the returned observation and info is not the final step's observation or info which
-                # is instead stored in info as `final_observation` and `final_info`. Therefore,
-                # we don't need to reset the env here.
-                episode += 1
+            # get episode information
+            if "episode" in time_step.info:
+                eps_r, eps_l = time_step.get_episode_statistics()
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
 
-            obs = next_obs
+            # set the current observation
+            time_step = time_step._replace(observations=time_step.next_observations)
 
         return {
-            "step": self.global_step,
-            "episode": self.global_episode,
-            "episode_length": step / episode,
-            "episode_reward": total_reward / episode,
-            "total_time": self.timer.total_time(),
+            "episode_length": np.mean(episode_steps),
+            "episode_reward": np.mean(episode_rewards),
         }

@@ -83,10 +83,10 @@ def make_robosuite_env(
     num_envs: int = 1,
     device: str = "cpu",
     seed: int = 0,
-    distributed: bool = False,
     has_renderer: bool = False,
     has_offscreen_renderer: bool = False,
     use_camera_obs: bool = False,
+    parallel: bool = True,
 ) -> gym.Env:
     """Build Robosuite robotics environments.
 
@@ -95,12 +95,13 @@ def make_robosuite_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
-        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
         has_renderer (bool): If true, render the simulation state in
             a viewer instead of headless mode.
         has_offscreen_renderer (bool): True if using off-screen rendering.
         use_camera_obs (bool): True for using image observations.
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+            For `Distributed` algorithms, in which `SyncVectorEnv` is required
+            and reward clip will be used before environment vectorization.
 
     Returns:
         The vectorized environment.
@@ -126,10 +127,11 @@ def make_robosuite_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    if distributed:
-        envs = SyncVectorEnv(envs)
-    else:
+
+    if parallel:
         envs = AsyncVectorEnv(envs)
-        envs = RecordEpisodeStatistics(envs)
+    else:
+        envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
 
     return TorchVecEnvWrapper(envs, device=device)

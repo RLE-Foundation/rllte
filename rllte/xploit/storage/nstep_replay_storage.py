@@ -26,7 +26,7 @@
 import datetime
 import random
 import traceback
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from pathlib import Path
 from typing import Any, Dict, Iterator, Tuple
 
@@ -35,9 +35,8 @@ import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
-from rllte.common.base_storage import BaseStorage
+from rllte.common.base_storage import BaseStorage, NStepReplayBatch
 from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
-
 
 class ReplayStorage:
     """Replay storage for storing transitions.
@@ -215,7 +214,7 @@ class ReplayStorageDataset(IterableDataset):
             if not self._store_episode(eps_fn):
                 break
 
-    def _sample(self) -> Tuple:
+    def _sample(self) -> Tuple[np.ndarray, ...]:
         """Sample a transition from the storage."""
         try:
             self._try_fetch()
@@ -225,15 +224,16 @@ class ReplayStorageDataset(IterableDataset):
         episode = self._sample_episode()
         idx = np.random.randint(0, episode_len(episode) - self._nstep)
         obs = episode["observation"][idx]
-        action = episode["action"][idx]
+        actions = episode["action"][idx]
         next_obs = episode["observation"][idx + self._nstep]
-        reward = np.zeros_like(episode["reward"][idx])
-        discount = np.ones_like(episode["discount"][idx])
+        rewards = np.zeros_like(episode["reward"][idx])
+        discounts = np.ones_like(episode["discount"][idx])
         for i in range(self._nstep):
             step_reward = episode["reward"][idx + i]
-            reward += discount * step_reward
-            discount *= episode["discount"][idx + i] * self._discount
-        return (obs, action, reward, discount, next_obs)
+            rewards += discounts * step_reward
+            discounts *= episode["discount"][idx + i] * self._discount
+
+        return obs, actions, rewards, discounts, next_obs
 
     def __iter__(self) -> Iterator:
         while True:
@@ -249,6 +249,7 @@ class NStepReplayStorage(BaseStorage):
         action_space (gym.Space): Action space.
         device (str): Device to store replay data.
         storage_size (int): Max number of element in the storage.
+        num_envs (int): The number of parallel environments.
         batch_size (int): Batch size.
         num_workers (int): Subprocesses to use for data loading.
         pin_memory (bool): Pin memory or not.
@@ -267,6 +268,7 @@ class NStepReplayStorage(BaseStorage):
         action_space: gym.Space,
         device: str = "cpu",
         storage_size: int = 1000000,
+        num_envs: int = 1,
         batch_size: int = 256,
         num_workers: int = 4,
         pin_memory: bool = True,
@@ -276,6 +278,7 @@ class NStepReplayStorage(BaseStorage):
         save_snapshot: bool = False,
     ) -> None:
         super().__init__(observation_space=observation_space, action_space=action_space, device=device)
+        assert num_envs == 1, "NStepReplayStorage currently does not support parallel environments."
         # build storage
         self.replay_dir = Path.cwd() / "storage"
         self.replay_storage = ReplayStorage(self.replay_dir)
@@ -298,10 +301,10 @@ class NStepReplayStorage(BaseStorage):
     def add(
         self,
         obs: np.ndarray,
-        action: np.ndarray,
-        reward: np.ndarray,
-        terminated: np.ndarray,
-        truncated: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        terminateds: np.ndarray,
+        truncateds: np.ndarray,
         info: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
@@ -309,24 +312,25 @@ class NStepReplayStorage(BaseStorage):
 
         Args:
             obs (np.ndarray): Observation.
-            action (np.ndarray): Action.
-            reward (np.ndarray): Reward.
-            terminated (np.ndarray): Termination flag.
-            truncated (np.ndarray): Truncation flag.
+            actions (np.ndarray): Action.
+            rewards (np.ndarray): Reward.
+            terminateds (np.ndarray): Termination flag.
+            truncateds (np.ndarray): Truncation flag.
             info (Dict[str, Any]): Additional information.
             next_obs (np.ndarray): Next observation.
 
         Returns:
             None.
         """
+        # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs,
-            action=action,
-            reward=reward,
-            terminated=terminated,
-            truncated=truncated,
+            obs=obs[0].cpu().numpy(),
+            action=actions[0].cpu().numpy(),
+            reward=rewards[0].cpu().numpy(),
+            terminated=terminateds[0].cpu().numpy(),
+            truncated=truncateds[0].cpu().numpy(),
             info=info,
-            next_obs=next_obs,
+            next_obs=next_obs[0].cpu().numpy(),
         )
 
     @property
@@ -336,7 +340,7 @@ class NStepReplayStorage(BaseStorage):
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
 
-    def sample(self, step: int) -> Tuple:
+    def sample(self, step: int) -> NStepReplayBatch:
         """Sample from the storage.
 
         Args:
@@ -345,7 +349,15 @@ class NStepReplayStorage(BaseStorage):
         Returns:
             Sampled data.
         """
-        return next(self.replay_iter)
+        # to device
+        obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
+
+        return NStepReplayBatch(observations=self.to_torch(obs), 
+                                actions=self.to_torch(actions), 
+                                rewards=self.to_torch(rewards), 
+                                discounts=self.to_torch(discounts), 
+                                next_observations=self.to_torch(next_obs)
+                                )
 
     def update(self, *args) -> None:
         """Update the storage if necessary."""

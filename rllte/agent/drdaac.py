@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Generator
 
 import gymnasium as gym
 import numpy as np
@@ -35,10 +35,10 @@ from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+from rllte.xplore.augmentation import RandomCrop
 
-
-class DAAC(OnPolicyAgent):
-    """Decoupled Advantage Actor-Critic (DAAC) agent.
+class DrDAAC(OnPolicyAgent):
+    """Data-Regularized extension of Decoupled Advantage Actor-Critic (DAAC) agent.
         Based on: https://github.com/rraileanu/idaac
 
     Args:
@@ -63,6 +63,7 @@ class DAAC(OnPolicyAgent):
         value_epochs (int): Times of updating the value network.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
+        aug_coef (float): Weighting coefficient of augmentation loss.
         adv_ceof (float): Weighting coefficient of advantage loss.
         max_grad_norm (float): Maximum norm of gradients.
         init_fn (str): Parameters initialization method.
@@ -93,6 +94,7 @@ class DAAC(OnPolicyAgent):
         value_epochs: int = 9,
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
+        aug_coef: float = 0.1,
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
         init_fn: str = "xavier_uniform",
@@ -118,6 +120,7 @@ class DAAC(OnPolicyAgent):
         self.clip_range_vf = clip_range_vf
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
+        self.aug_coef = aug_coef
         self.adv_coef = adv_coef
         self.max_grad_norm = max_grad_norm
 
@@ -150,7 +153,7 @@ class DAAC(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn
+            init_fn=init_fn,
         )
 
         # default storage
@@ -163,8 +166,11 @@ class DAAC(OnPolicyAgent):
             batch_size=batch_size,
         )
 
+        # default augmentation
+        aug = RandomCrop(out=64).to(self.device)
+
         # set all the modules [essential operation!!!]
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
     def update(self) -> Dict[str, float]:
         """Update function that returns training metrics such as policy loss, value loss, etc..
@@ -187,13 +193,19 @@ class DAAC(OnPolicyAgent):
                 policy_loss = -th.min(surr1, surr2).mean()
                 adv_loss = (new_adv_preds.flatten() - batch.adv_targ).pow(2).mean()
 
+                # augmentation loss part
+                batch_obs_aug = self.aug(batch.observations)
+                new_batch_actions, _ = self.policy(obs=batch.observations)
+                _, _, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                policy_loss_aug = - log_probs_aug.mean()
+
                 # update
                 self.policy.actor_opt.zero_grad(set_to_none=True)
-                (adv_loss * self.adv_coef + policy_loss - entropy * self.ent_coef).backward()
+                (adv_loss * self.adv_coef + policy_loss - entropy * self.ent_coef + self.aug_coef * policy_loss_aug).backward()
                 nn.utils.clip_grad_norm_(self.policy.actor_params, self.max_grad_norm)
                 self.policy.actor_opt.step()
 
-                total_policy_loss.append(policy_loss.item())
+                total_policy_loss.append(policy_loss.item() + policy_loss_aug.item())
                 total_adv_loss.append(adv_loss.item())
                 total_entropy_loss.append(entropy.item())
 
@@ -214,13 +226,19 @@ class DAAC(OnPolicyAgent):
                         values_losses_clipped = (values_clipped - batch.returns).pow(2)
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
                     
+                    # augmentation loss part
+                    batch_obs_aug = self.aug(batch.observations)
+                    new_batch_actions, _ = self.policy(obs=batch.observations)
+                    _, values_aug, _, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
+                    value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
+
                     # update
                     self.policy.critic_opt.zero_grad(set_to_none=True)
-                    value_loss.backward()
+                    (value_loss + self.aug_coef * value_loss_aug).backward()
                     nn.utils.clip_grad_norm_(self.policy.critic_params, self.max_grad_norm)
                     self.policy.critic_opt.step()
 
-                    total_value_loss.append(value_loss.item())
+                    total_value_loss.append(value_loss.item() + value_loss_aug.item())
 
             self.prev_total_critic_loss = total_value_loss
         else:

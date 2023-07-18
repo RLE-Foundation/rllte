@@ -25,6 +25,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict
+from rllte.common.preprocessing import process_env_info
 
 import gymnasium as gym
 import torch as th
@@ -52,21 +53,9 @@ class BaseIntrinsicRewardModule(ABC):
         beta: float = 0.05,
         kappa: float = 0.000025,
     ) -> None:
-        self._obs_shape = observation_space.shape
-        if action_space.__class__.__name__ == "Discrete":
-            self._action_shape = action_space.shape
-            self._action_dim = action_space.n
-            self._action_type = "Discrete"
-        elif action_space.__class__.__name__ == "Box":
-            self._action_shape = action_space.shape
-            self._action_dim = action_space.shape[0]
-            self._action_type = "Box"
-        elif action_space.__class__.__name__ == "MultiBinary":
-            self._action_shape = action_space.shape
-            self._action_dim = action_space.shape[0]
-            self._action_type = "MultiBinary"
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        # get environment information
+        self._obs_shape, self._action_shape, self._action_dim, self._action_type, self._action_range = \
+            process_env_info(observation_space, action_space)
 
         self._device = th.device(device)
         self._beta = beta

@@ -31,7 +31,6 @@ import gymnasium as gym
 import torch as th
 from torch import nn
 
-# from rllte.common.base_distribution import BaseDistribution as Distribution
 from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy
@@ -212,7 +211,10 @@ class MultiBinaryActor(nn.Module):
 
 
 class OnPolicySharedActorCritic(BasePolicy):
-    """Actor-Critic network using a shared encoder for on-policy algorithms like `PPO`.
+    """Actor-Critic network for on-policy algorithms like `PPO` and `A2C`.
+
+        Structure: self.encoder (shared by actor and critic), self.actor, self.critic
+        Optimizers: self.opt -> (self.encoder, self.actor, self.critic)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -221,8 +223,8 @@ class OnPolicySharedActorCritic(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_method (Callable): Initialization method.
         aux_critic (bool): Use auxiliary critic or not, for `PPG` agent.
+        init_fn (Optional[str]): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -236,8 +238,8 @@ class OnPolicySharedActorCritic(BasePolicy):
         hidden_dim: int,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_method: Callable = nn.init.orthogonal_,
         aux_critic: bool = False,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__(
             observation_space=observation_space,
@@ -246,7 +248,7 @@ class OnPolicySharedActorCritic(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method,
+            init_fn=init_fn,
         )
 
         # choose an actor class based on action space type
@@ -295,11 +297,11 @@ class OnPolicySharedActorCritic(BasePolicy):
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
         # initialize parameters
-        self.apply(self.init_method)
+        self.apply(self.init_fn)
         # build optimizers
         self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
 
-    def act(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
+    def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -317,10 +319,10 @@ class OnPolicySharedActorCritic(BasePolicy):
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions, self.critic(h), log_probs
+            return actions.clamp(*self.action_range), {"values": self.critic(h), "log_probs": log_probs}
         else:
             actions = dist.mean
-            return actions
+            return actions.clamp(*self.action_range), {}
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.
@@ -351,34 +353,6 @@ class OnPolicySharedActorCritic(BasePolicy):
         entropy = dist.entropy().mean()
 
         return self.critic(h), log_probs, entropy
-
-    def get_dist_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
-        """Get probs and auxiliary estimated values for auxiliary phase update.
-
-        Args:
-            obs: Sampled observations.
-
-        Returns:
-            Sample distribution, estimated values, auxiliary estimated values.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        dist = self.dist(*policy_outputs)
-
-        return dist, self.critic(h.detach()), self.aux_critic(h)
-
-    def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Policy outputs like unnormalized probabilities for `Discrete` tasks.
-        """
-        h = self.encoder(obs)
-        policy_outputs = self.actor.get_policy_outputs(h)
-        return th.cat(policy_outputs, dim=1)
 
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.

@@ -26,10 +26,10 @@
 import io
 import random
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 import numpy as np
-
+import torch as th
 
 def episode_len(episode: Dict[str, np.ndarray]) -> int:
     """Returns the length of an episode.
@@ -91,3 +91,15 @@ def worker_init_fn(worker_id: int) -> None:
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed)
+
+def to_torch(xs: Tuple[np.ndarray, ...], device: th.device) -> Tuple[th.Tensor, ...]:
+    """Convert numpy arrays to torch tensors.
+
+    Args:
+        xs (Tuple[np.ndarray, ...]): Numpy arrays.
+        device (th.device): Device to store the tensors.
+
+    Returns:
+        Tuple[th.Tensor, ...]: Torch tensors.
+    """
+    return tuple(th.as_tensor(x, device=device).float() for x in xs)

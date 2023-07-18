@@ -132,7 +132,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE INFO".ljust(11, " "), "cyan", attrs=["bold"]) + "] - "
+        prefix = "[" + colored("RLLTE INFO.".ljust(11, " "), "cyan", attrs=["bold"]) + "] - "
         print(self.time_stamp + prefix + msg)
 
     def debug(self, msg: str) -> None:

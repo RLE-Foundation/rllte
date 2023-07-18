@@ -29,9 +29,9 @@ import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
-from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper
+from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper, DictObservationSpaceWrapper
 
-from rllte.env.utils import FrameStack, TorchVecEnvWrapper
+from rllte.env.utils import FrameStack, TorchVecEnvWrapper, TorchVecDictEnvWrapper
 
 
 class Minigrid2Image(gym.ObservationWrapper):
@@ -59,26 +59,56 @@ class Minigrid2Image(gym.ObservationWrapper):
         """Convert MiniGrid observation to image."""
         return np.transpose(observation["image"], axes=[2, 0, 1])
 
+class ImageTranspose(gym.ObservationWrapper):
+    """Transpose observation from channels last to channels first.
+
+    Args:
+        env (gym.Env): Environment to wrap.
+
+    Returns:
+        Minigrid2Image instance.
+    """
+
+    def __init__(self, env: gym.Env) -> None:
+        gym.ObservationWrapper.__init__(self, env)
+        shape = env.observation_space["image"].shape
+        dtype = env.observation_space["image"].dtype
+        self.observation_space["image"] = gym.spaces.Box(
+            low=0,
+            high=255,
+            shape=(shape[2], shape[0], shape[1]),
+            dtype=dtype,
+        )
+
+    def observation(self, observation: Dict) -> np.ndarray:
+        """Convert MiniGrid observation to image."""
+        observation["image"] = np.transpose(observation["image"], axes=[2, 0, 1])
+        return observation
 
 def make_minigrid_env(
     env_id: str = "MiniGrid-DoorKey-5x5-v0",
     num_envs: int = 8,
     fully_observable: bool = True,
+    fully_numerical: bool = False,
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
-    distributed: bool = False,
+    parallel: bool = True,
 ) -> gym.Env:
     """Build MiniGrid environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        fully_observable (bool): 'True' for using fully observable RGB image as observation.
+        fully_observable (bool): Fully observable gridworld using a compact grid encoding instead of the agent view.
+        fully_numerical (bool): Transforms the observation space (that has a textual component) to a fully numerical 
+            observation space, where the textual instructions are replaced by arrays representing the indices of each 
+            word in a fixed vocabulary.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
-        distributed (bool): For `Distributed` algorithms, in which `SyncVectorEnv` is required
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+            For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 
     Returns:
@@ -93,6 +123,9 @@ def make_minigrid_env(
                 env = FullyObsWrapper(env)
                 env = Minigrid2Image(env)
                 env = FrameStack(env, k=frame_stack)
+            elif fully_numerical:
+                env = DictObservationSpaceWrapper(env)
+                env = ImageTranspose(env)
             else:
                 env = FlatObsWrapper(env)
 
@@ -104,10 +137,14 @@ def make_minigrid_env(
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    if distributed:
-        envs = SyncVectorEnv(envs)
-    else:
-        envs = AsyncVectorEnv(envs)
-        envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device=device)
+    if parallel:
+        envs = AsyncVectorEnv(envs)
+    else:
+        envs = SyncVectorEnv(envs)
+    envs = RecordEpisodeStatistics(envs)
+
+    if fully_numerical:
+        return TorchVecDictEnvWrapper(envs, device=device)
+    else:
+        return TorchVecEnvWrapper(envs, device=device)

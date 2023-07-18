@@ -28,23 +28,12 @@ from typing import Generator, Dict
 import gymnasium as gym
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-from collections import namedtuple
 
-from rllte.common.base_storage import BaseStorage, VanillaReplayBatch
+from rllte.common.base_storage import VanillaRolloutBatch
+from rllte.xploit.storage.vanilla_rollout_storage import VanillaRolloutStorage
 
-Batch = namedtuple(typename="Batch", field_names=[
-    "obs",
-    "actions",
-    "values",
-    "returns",
-    "terminateds",
-    "truncateds",
-    "old_log_probs",
-    "adv_targ",
-])
-
-class VanillaRolloutStorage(BaseStorage):
-    """Vanilla rollout storage for on-policy algorithms.
+class DictRolloutStorage(VanillaRolloutStorage):
+    """Dict Rollout storage for on-policy algorithms and dictionary observations.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
@@ -57,7 +46,7 @@ class VanillaRolloutStorage(BaseStorage):
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
-        Vanilla rollout storage.
+        Dict rollout storage.
     """
 
     def __init__(
@@ -71,56 +60,20 @@ class VanillaRolloutStorage(BaseStorage):
         discount: float = 0.999,
         gae_lambda: float = 0.95,
     ) -> None:
-        super().__init__(observation_space, action_space, device)
-        self.num_steps = num_steps
-        self.num_envs = num_envs
-        self.batch_size = batch_size
-        self.discount = discount
-        self.gae_lambda = gae_lambda
+        super().__init__(observation_space, action_space, device, num_steps, num_envs, batch_size, discount, gae_lambda)
+
+        assert isinstance(self.obs_shape, dict), "DictRolloutStorage only support Dict observation space."
 
         # data containers
         ###########################################################################################################
-        self.observations = th.empty(
-            size=(num_steps + 1, num_envs, *self.obs_shape),
-            dtype=th.float32,
-            device=self.device,
-        )
-        if self.action_type == "Discrete":
-            self.actions = th.empty(
-                size=(num_steps, num_envs),
+        self.observations = dict()
+        for key, shape in self.obs_shape.items():
+            self.observations[key] = th.empty(
+                size=(num_steps + 1, num_envs, *shape),
                 dtype=th.float32,
                 device=self.device,
             )
-        elif self.action_type == "Box":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        elif self.action_type == "MultiBinary":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        else:
-            raise NotImplementedError
-        
-        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
-        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
-        # first next_terminated
-        self.terminateds[0].copy_(th.zeros(num_envs).to(self.device))
-        self.truncateds[0].copy_(th.zeros(num_envs).to(self.device))
-        # extra part
-        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         ###########################################################################################################
-
-        # counter
-        self.step = 0
 
     def add(
         self,
@@ -150,55 +103,32 @@ class VanillaRolloutStorage(BaseStorage):
         Returns:
             None.
         """
-        self.observations[self.step].copy_(observations)
+        for key in self.observations.keys():
+            if isinstance(self.observation_space.spaces[key], gym.spaces.Discrete):
+                obs_ = observations[key].reshape((self.num_envs,) + self.obs_shape[key])
+                next_obs_ = next_observations[key].reshape((self.num_envs,) + self.obs_shape[key])
+            else:
+                obs_ = observations[key]
+                next_obs_ = next_observations[key]
+
+            self.observations[key][self.step].copy_(obs_)
+            self.observations[key][self.step + 1].copy_(next_obs_)
+
         self.actions[self.step].copy_(actions)
         self.rewards[self.step].copy_(rewards)
         self.terminateds[self.step + 1].copy_(terminateds)
         self.truncateds[self.step + 1].copy_(truncateds)
-        self.observations[self.step + 1].copy_(next_observations)
         self.log_probs[self.step].copy_(log_probs)
         self.values[self.step].copy_(values.flatten())
 
         self.step = (self.step + 1) % self.num_steps
-
-    def update(self) -> None:
-        """Reset the terminal state of each env."""
-        self.terminateds[0].copy_(self.terminateds[-1])
-        self.truncateds[0].copy_(self.truncateds[-1])
-
-    def compute_returns_and_advantages(self, last_values: th.Tensor) -> None:
-        """Perform generalized advantage estimation (GAE).
-
-        Args:
-            last_values (th.Tensor): Estimated values of the last step.
-            gamma (float): Discount factor.
-            gae_lamdba (float): Coefficient of GAE.
-
-        Returns:
-            None.
-        """
-        gae = 0
-        for step in reversed(range(self.num_steps)):
-            if step == self.num_steps - 1:
-                next_values = last_values[:, 0]
-            else:
-                next_values = self.values[step + 1]
-            next_non_terminal = 1.0 - self.terminateds[step + 1]
-            delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
-            gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
-            # time limit
-            gae = gae * (1.0 - self.truncateds[step + 1])
-            self.advantages[step] = gae
-
-        self.returns = self.advantages + self.values
-        self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self) -> Generator:
         """Sample data from storage."""
         sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = self.observations[:-1].view(-1, *self.obs_shape)[indices]
+            batch_obs = {key: item[:-1].view(-1, *self.obs_shape[key])[indices] for (key, item) in self.observations.items()}
             batch_actions = self.actions.view(-1, *self.action_shape)[indices]
             batch_values = self.values.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]
@@ -207,7 +137,7 @@ class VanillaRolloutStorage(BaseStorage):
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
 
-            yield VanillaReplayBatch(
+            yield VanillaRolloutBatch(
                 observations=batch_obs,
                 actions=batch_actions,
                 values=batch_values,

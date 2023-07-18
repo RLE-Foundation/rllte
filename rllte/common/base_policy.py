@@ -25,6 +25,8 @@
 
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from rllte.common.preprocessing import process_env_info
+from rllte.common.initialization import get_init_fn
 
 import gymnasium as gym
 import torch as th
@@ -41,7 +43,7 @@ class BasePolicy(nn.Module):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_method (Callable): Initialization method.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Base policy instance.
@@ -55,43 +57,35 @@ class BasePolicy(nn.Module):
         hidden_dim: int,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_method: Callable = nn.init.orthogonal_,
+        init_fn: Optional[str] = None,
     ) -> None:
         super().__init__()
-
+        self.observation_space = observation_space
+        self.action_space = action_space
         assert feature_dim > 0, "The `feature_dim` should be positive!"
         assert hidden_dim > 0, "The `hidden_dim` should be positive!"
         self.feature_dim = feature_dim
         self.hidden_dim = hidden_dim
         self.opt_class = opt_class
         self.opt_kwargs = opt_kwargs
-        self.init_method = init_method
+        self.init_fn = get_init_fn(init_fn)
 
         # get environment information
-        self.obs_shape = observation_space.shape
-        if action_space.__class__.__name__ == "Discrete":
-            self.action_shape = action_space.shape
-            self.action_dim = int(action_space.n)
-            self.action_type = "Discrete"
-            self.action_range = [0, int(action_space.n) - 1]
-        elif action_space.__class__.__name__ == "Box":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "Box"
-            self.action_range = [
-                float(action_space.low[0]),
-                float(action_space.high[0]),
-            ]
-        elif action_space.__class__.__name__ == "MultiBinary":
-            self.action_shape = action_space.shape
-            self.action_dim = action_space.shape[0]
-            self.action_type = "MultiBinary"
-            self.action_range = [0, 1]
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
+            process_env_info(observation_space, action_space)
+    
+    def explore(self, obs: th.Tensor) -> th.Tensor:
+        """Explore the environment and randomly generate actions.
 
-    def act(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
-        """Select an action from the input observation.
+        Args:
+            obs (th.Tensor): Observation from the environment.
+
+        Returns:
+            Sampled actions.
+        """
+
+    def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
+        """Forward method.
 
         Args:
             obs (th.Tensor): Observation from the environment.

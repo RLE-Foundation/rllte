@@ -97,29 +97,6 @@ class TruncatedNormalNoise(BaseDistribution):
             noise = th.clamp(noise, -self.stddev_clip, self.stddev_clip)
         return self._clamp(noise + self.noiseless_action)
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
-        """Generates a sample_shape shaped sample or sample_shape shaped batch of
-            samples if the distribution parameters are batched.
-
-        Args:
-            sample_shape (th.Size): The size of the sample to be drawn.
-
-        Returns:
-            A sample_shape shaped sample.
-        """
-        raise NotImplementedError(f"{self.__class__} does not implement rsample!")
-
-    def log_prob(self, value: th.Tensor) -> th.Tensor:
-        """Returns the log of the probability density/mass function evaluated at `value`.
-
-        Args:
-            value (th.Tensor): The value to be evaluated.
-
-        Returns:
-            The log_prob value.
-        """
-        raise NotImplementedError(f"{self.__class__} does not implement log_prob!")
-
     def reset(self, noiseless_action: th.Tensor, step: int = 0) -> None:
         """Reset the noise instance.
 
@@ -144,17 +121,3 @@ class TruncatedNormalNoise(BaseDistribution):
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
         return self.noiseless_action
-
-    def entropy(self) -> th.Tensor:
-        """Returns the Shannon entropy of distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement entropy!")
-
-    @property
-    def stddev(self) -> th.Tensor:
-        """Returns the standard deviation of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement stddev!")
-
-    @property
-    def variance(self) -> th.Tensor:
-        """Returns the variance of the distribution."""
-        raise NotImplementedError(f"{self.__class__} does not implement variance!")

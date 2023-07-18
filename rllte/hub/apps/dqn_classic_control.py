@@ -24,50 +24,49 @@
 
 
 import argparse
-import os
 
-from rllte.agent import SAC
-from rllte.env import make_dmc_env
-
-os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
+from rllte.agent import DQN
+from rllte.env import make_rllte_env
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="finger_spin")
+parser.add_argument("--env-id", type=str, default="CartPole-v1")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     # create env
-    env = make_dmc_env(
-        env_id=args.env_id, num_envs=3, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
+    env = make_rllte_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+        parallel=False,
     )
-    eval_env = make_dmc_env(
-        env_id=args.env_id, num_envs=1, device=args.device, seed=args.seed, from_pixels=False, visualize_reward=True
+    eval_env = make_rllte_env(
+        env_id=args.env_id,
+        num_envs=1,
+        device=args.device,
+        seed=args.seed,
+        parallel=False,
     )
     # create agent
-    agent = SAC(
-        env=env,
-        eval_env=eval_env,
-        tag=f"sac_dmc_state_{args.env_id}_seed_{args.seed}",
-        seed=args.seed,
-        device=args.device,
-        feature_dim=50,
-        batch_size=1024,
-        lr=0.0001,
-        eps=1e-8,
-        hidden_dim=1024,
-        critic_target_tau=0.005,
-        update_every_steps=2,
-        init_fn="orthogonal",
-    )
-    # storage = PrioritizedReplayStorage(
-    #     observation_space=env.observation_space,
-    #     action_space=env.action_space,
-    #     device=args.device,
-    #     storage_size=1000000,
-    #     batch_size=1024
-    # )
-    # agent.set(storage=storage)
+    agent = DQN(
+            env=env,
+            eval_env=eval_env,
+            tag=f"dqn_classic_control_{args.env_id}_seed_{args.seed}",
+            seed=args.seed,
+            device=args.device,
+            feature_dim=64,
+            batch_size=128,
+            lr=2.5e-4,
+            eps=1e-8,
+            hidden_dim=64,
+            tau=1.,
+            update_every_steps=10,
+            target_update_freq=500,
+            num_init_steps=10000,
+            init_fn="orthogonal",
+        )
     # training
-    agent.train(num_train_steps=250000)
+    agent.train(num_train_steps=100000)
