@@ -178,7 +178,7 @@ class DAAC(OnPolicyAgent):
             for batch in self.storage.sample():
 
                 # evaluate sampled actions
-                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -201,7 +201,7 @@ class DAAC(OnPolicyAgent):
             for _ in range(self.value_epochs):
                 for batch in self.storage.sample():
                     # evaluate sampled actions
-                    _, new_values, _, _ = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                    _, new_values, _, _ = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                     # value loss part
                     if self.clip_range_vf is None:

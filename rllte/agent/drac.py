@@ -176,7 +176,7 @@ class DrAC(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in samples:
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -196,8 +196,8 @@ class DrAC(OnPolicyAgent):
                     value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                 # augmentation loss part
-                batch_obs_aug = self.aug(batch.obs)
-                new_batch_actions, _ = self.policy(obs=batch.obs)
+                batch_obs_aug = self.aug(batch.observations)
+                new_batch_actions, _ = self.policy(obs=batch.observations)
                 values_aug, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                 policy_loss_aug = - log_probs_aug.mean()
                 value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()

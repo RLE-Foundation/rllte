@@ -184,7 +184,7 @@ class DrDAAC(OnPolicyAgent):
             for batch in self.storage.sample():
 
                 # evaluate sampled actions
-                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -194,8 +194,8 @@ class DrDAAC(OnPolicyAgent):
                 adv_loss = (new_adv_preds.flatten() - batch.adv_targ).pow(2).mean()
 
                 # augmentation loss part
-                batch_obs_aug = self.aug(batch.obs)
-                new_batch_actions, _ = self.policy(obs=batch.obs)
+                batch_obs_aug = self.aug(batch.observations)
+                new_batch_actions, _ = self.policy(obs=batch.observations)
                 _, _, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                 policy_loss_aug = - log_probs_aug.mean()
 
@@ -213,7 +213,7 @@ class DrDAAC(OnPolicyAgent):
             for _ in range(self.value_epochs):
                 for batch in self.storage.sample():
                     # evaluate sampled actions
-                    _, new_values, _, _ = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                    _, new_values, _, _ = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                     # value loss part
                     if self.clip_range_vf is None:
@@ -227,8 +227,8 @@ class DrDAAC(OnPolicyAgent):
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
                     
                     # augmentation loss part
-                    batch_obs_aug = self.aug(batch.obs)
-                    new_batch_actions, _ = self.policy(obs=batch.obs)
+                    batch_obs_aug = self.aug(batch.observations)
+                    new_batch_actions, _ = self.policy(obs=batch.observations)
                     _, values_aug, _, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
                     value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
 

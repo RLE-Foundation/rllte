@@ -148,18 +148,18 @@ class DQN(OffPolicyAgent):
         if self.irs is not None:
             intrinsic_rewards = self.irs.compute_irs(
                 samples={
-                    "obs": batch.obs,
+                    "obs": batch.observations,
                     "actions": batch.actions,
-                    "next_obs": batch.next_obs,
+                    "next_obs": batch.next_observations,
                 },
                 step=self.global_step,
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
         
         # encode
-        encoded_obs = self.policy.encoder(batch.obs)
+        encoded_obs = self.policy.encoder(batch.observations)
         with th.no_grad():
-            encoded_next_obs = self.policy.encoder(batch.next_obs)
+            encoded_next_obs = self.policy.encoder(batch.next_observations)
 
         # compute target Q values
         with th.no_grad():

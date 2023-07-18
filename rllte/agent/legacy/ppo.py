@@ -163,7 +163,7 @@ class PPO(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)

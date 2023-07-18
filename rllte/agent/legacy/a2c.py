@@ -159,7 +159,7 @@ class A2C(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.obs, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
                 # policy loss part
                 policy_loss = -(batch.adv_targ * new_log_probs).mean()

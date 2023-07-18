@@ -150,9 +150,9 @@ class DrQv2(OffPolicyAgent):
         if self.irs is not None:
             intrinsic_rewards = self.irs.compute_irs(
                 samples={
-                    "obs": batch.obs,
+                    "obs": batch.observations,
                     "actions": batch.actions,
-                    "next_obs": batch.next_obs,
+                    "next_obs": batch.next_observations,
                 },
                 step=self.global_step,
             )
@@ -160,13 +160,16 @@ class DrQv2(OffPolicyAgent):
 
         # obs augmentation
         if self.aug is not None:
-            obs = self.aug(batch.obs)
-            next_obs = self.aug(batch.next_obs)
+            obs = self.aug(batch.observations)
+            next_obs = self.aug(batch.next_observations)
+        else:
+            obs = batch.observations
+            next_obs = batch.next_observations
 
         # encode
-        encoded_obs = self.policy.encoder(batch.obs)
+        encoded_obs = self.policy.encoder(obs)
         with th.no_grad():
-            encoded_next_obs = self.policy.encoder(batch.next_obs)
+            encoded_next_obs = self.policy.encoder(next_obs)
 
         # update criitc
         metrics.update(self.update_critic(encoded_obs, batch.actions, batch.rewards, batch.discounts, encoded_next_obs))
