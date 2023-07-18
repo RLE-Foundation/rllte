@@ -13,7 +13,9 @@
 
 </div>
 
-**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to provide development components and standards for RL research and applications. **RLLTE** is the first project that builds a complete ecosystem, and developers can perform task design, model training, evaluation, and deployment within one framework. The highlight features of **rllte**:
+**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to provide development components and standards for RL research and applications. **RLLTE** is the first project that builds a complete ecosystem, and developers can perform task design, model training, evaluation, and deployment within one framework. For the project tenet, please read [Evolution Tenet](https://docs.rllte.dev/tenet).
+
+The highlight features of **RLLTE**:
 
 - 👨‍✈️ Large language model-empowered copilot;
 - ⏱️ Latest algorithms and tricks;
