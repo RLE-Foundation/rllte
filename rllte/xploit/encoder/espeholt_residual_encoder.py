@@ -187,5 +187,5 @@ class EspeholtResidualEncoder(BaseEncoder):
         Returns:
             Encoded observation tensor.
         """
-        h = self.trunk(obs)
+        h = self.trunk(obs / 255.0)
         return h

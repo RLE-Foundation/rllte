@@ -78,4 +78,4 @@ class PathakCnnEncoder(BaseEncoder):
         Returns:
             Encoded observation tensor.
         """
-        return self.trunk(obs)
+        return self.trunk(obs / 255.0)

@@ -198,18 +198,28 @@ def is_image_space(observation_space: gym.Space,
     return False
 
 
-def get_preprocess_obs_fn(observation_space: gym.Space) -> Callable:
+def preprocess_obs(obs: th.Tensor, observation_space: gym.Space) -> Union[th.Tensor, Dict[str, th.Tensor]]:
     """Observations preprocessing function.
-        Based on: https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/preprocessing.py#L92
+        Borrowed from: https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/preprocessing.py#L92
 
     Args:
+        obs (th.Tensor): Observation.
         observation_space (gym.Space): Observation space.
 
     Returns:
         A function to preprocess observations.
     """
-    def _multi_discrete_to_one_hot(obs: np.array) -> th.Tensor:
-        obs = th.as_tensor(obs)
+    if isinstance(observation_space, spaces.Box):
+        if is_image_space(observation_space):
+            return obs.float() / 255.0
+        return obs.float()
+
+    elif isinstance(observation_space, spaces.Discrete):
+        # One hot encoding and convert to float to avoid errors
+        return F.one_hot(obs.long(), num_classes=observation_space.n).float()
+
+    elif isinstance(observation_space, spaces.MultiDiscrete):
+        # Tensor concatenation of one hot encodings of each Categorical sub-space
         return th.cat(
             [
                 F.one_hot(obs_.long(), num_classes=int(observation_space.nvec[idx])).float()
@@ -218,22 +228,16 @@ def get_preprocess_obs_fn(observation_space: gym.Space) -> Callable:
             dim=-1,
         ).view(obs.shape[0], sum(observation_space.nvec))
 
-    # Box observation space
-    if isinstance(observation_space, spaces.Box):
-        if is_image_space(observation_space):
-            # image-based observations
-            return lambda obs: th.as_tensor(obs) / 255.0
-        else:
-            # state-based observations
-            return lambda obs: th.as_tensor(obs, dtype=th.float32)
-    # Discrete observation space
-    elif isinstance(observation_space, spaces.Discrete):
-        return lambda obs: F.one_hot(th.as_tensor(obs).long(), num_classes=observation_space.n)
-    # MultiDiscrete observation space
-    elif isinstance(observation_space, spaces.MultiDiscrete):
-        return _multi_discrete_to_one_hot
-    # MultiBinary observation space
     elif isinstance(observation_space, spaces.MultiBinary):
-        return lambda obs: th.as_tensor(obs).float()
+        return obs.float()
+
+    elif isinstance(observation_space, spaces.Dict):
+        # Do not modify by reference the original observation
+        assert isinstance(obs, Dict), f"Expected dict, got {type(obs)}"
+        preprocessed_obs = {}
+        for key, _obs in obs.items():
+            preprocessed_obs[key] = preprocess_obs(_obs, observation_space[key])
+        return preprocessed_obs
+
     else:
         raise NotImplementedError(f"Preprocessing not implemented for {observation_space}")

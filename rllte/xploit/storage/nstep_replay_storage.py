@@ -35,17 +35,8 @@ import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
-from rllte.common.base_storage import BaseStorage
-from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn, to_torch
-
-Batch = namedtuple(typename="Batch", field_names=[
-    "obs", 
-    "actions",
-    "rewards",
-    "discounts",
-    "next_obs"
-])
-
+from rllte.common.base_storage import BaseStorage, NStepReplayBatch
+from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
 
 class ReplayStorage:
     """Replay storage for storing transitions.
@@ -223,7 +214,7 @@ class ReplayStorageDataset(IterableDataset):
             if not self._store_episode(eps_fn):
                 break
 
-    def _sample(self) -> Batch:
+    def _sample(self) -> Tuple[np.ndarray, ...]:
         """Sample a transition from the storage."""
         try:
             self._try_fetch()
@@ -349,7 +340,7 @@ class NStepReplayStorage(BaseStorage):
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
 
-    def sample(self, step: int) -> Batch:
+    def sample(self, step: int) -> NStepReplayBatch:
         """Sample from the storage.
 
         Args:
@@ -359,9 +350,14 @@ class NStepReplayStorage(BaseStorage):
             Sampled data.
         """
         # to device
-        obs, actions, rewards, discounts, next_obs = to_torch(next(self.replay_iter), self.device)
+        obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
 
-        return Batch(obs=obs, actions=actions, rewards=rewards, discounts=discounts, next_obs=next_obs)
+        return NStepReplayBatch(observations=self.to_torch(obs), 
+                                actions=self.to_torch(actions), 
+                                rewards=self.to_torch(rewards), 
+                                discounts=self.to_torch(discounts), 
+                                next_observations=self.to_torch(next_obs)
+                                )
 
     def update(self, *args) -> None:
         """Update the storage if necessary."""

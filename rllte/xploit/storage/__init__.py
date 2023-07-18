@@ -29,3 +29,4 @@ from .vanilla_replay_storage import VanillaReplayStorage as VanillaReplayStorage
 from .vanilla_rollout_storage import VanillaRolloutStorage as VanillaRolloutStorage
 from .dict_rollout_storage import DictRolloutStorage as DictRolloutStorage
 from .dict_replay_storage import DictReplayStorage as DictReplayStorage
+from .her_replay_storage import HerReplayStorage as HerReplayStorage

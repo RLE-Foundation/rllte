@@ -30,7 +30,7 @@ import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 from collections import namedtuple
 
-from rllte.common.base_storage import BaseStorage
+from rllte.common.base_storage import BaseStorage, VanillaReplayBatch
 
 Batch = namedtuple(typename="Batch", field_names=[
     "obs",
@@ -79,7 +79,8 @@ class VanillaRolloutStorage(BaseStorage):
         self.gae_lambda = gae_lambda
 
         # data containers
-        self.obs = th.empty(
+        ###########################################################################################################
+        self.observations = th.empty(
             size=(num_steps + 1, num_envs, *self.obs_shape),
             dtype=th.float32,
             device=self.device,
@@ -105,7 +106,6 @@ class VanillaRolloutStorage(BaseStorage):
         else:
             raise NotImplementedError
         
-        # data containers
         self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
         self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
@@ -117,48 +117,49 @@ class VanillaRolloutStorage(BaseStorage):
         self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
+        ###########################################################################################################
 
         # counter
-        self.global_step = 0
+        self.step = 0
 
     def add(
         self,
-        obs: th.Tensor,
+        observations: th.Tensor,
         actions: th.Tensor,
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
         info: Dict,
-        next_obs: th.Tensor,
+        next_observations: th.Tensor,
         log_probs: th.Tensor,
         values: th.Tensor
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (th.Tensor): Observations.
+            observations (th.Tensor): Observations.
             actions (th.Tensor): Actions.
             rewards (th.Tensor): Rewards.
             terminateds (th.Tensor): Termination signals.
             truncateds (th.Tensor): Truncation signals.
             info (Dict): Extra information.
-            next_obs (th.Tensor): Next observations.
+            next_observations (th.Tensor): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.
 
         Returns:
             None.
         """
-        self.obs[self.global_step].copy_(obs)
-        self.actions[self.global_step].copy_(actions)
-        self.rewards[self.global_step].copy_(rewards)
-        self.terminateds[self.global_step + 1].copy_(terminateds)
-        self.truncateds[self.global_step + 1].copy_(truncateds)
-        self.obs[self.global_step + 1].copy_(next_obs)
-        self.log_probs[self.global_step].copy_(log_probs)
-        self.values[self.global_step].copy_(values.flatten())
+        self.observations[self.step].copy_(observations)
+        self.actions[self.step].copy_(actions)
+        self.rewards[self.step].copy_(rewards)
+        self.terminateds[self.step + 1].copy_(terminateds)
+        self.truncateds[self.step + 1].copy_(truncateds)
+        self.observations[self.step + 1].copy_(next_observations)
+        self.log_probs[self.step].copy_(log_probs)
+        self.values[self.step].copy_(values.flatten())
 
-        self.global_step = (self.global_step + 1) % self.num_steps
+        self.step = (self.step + 1) % self.num_steps
 
     def update(self) -> None:
         """Reset the terminal state of each env."""
@@ -197,7 +198,7 @@ class VanillaRolloutStorage(BaseStorage):
         sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = self.obs[:-1].view(-1, *self.obs_shape)[indices]
+            batch_obs = self.observations[:-1].view(-1, *self.obs_shape)[indices]
             batch_actions = self.actions.view(-1, *self.action_shape)[indices]
             batch_values = self.values.view(-1)[indices]
             batch_returns = self.returns.view(-1)[indices]
@@ -206,8 +207,8 @@ class VanillaRolloutStorage(BaseStorage):
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
 
-            yield Batch(
-                obs=batch_obs,
+            yield VanillaReplayBatch(
+                observations=batch_obs,
                 actions=batch_actions,
                 values=batch_values,
                 returns=batch_returns,

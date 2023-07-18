@@ -30,7 +30,6 @@ import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
-from rllte.common.preprocessing import get_preprocess_obs_fn
 
 def make_rllte_env(
     env_id: Union[str, Callable[..., gym.Env]],
@@ -156,8 +155,6 @@ class TorchVecEnvWrapper(gym.Wrapper):
         self.device = th.device(device)
         # container for current observations
         self.current_obs = None
-        # observation preprocessing
-        self.preprocess_obs_fn = get_preprocess_obs_fn(self.observation_space)
 
     def reset(
         self,
@@ -174,8 +171,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
             A `TimeStep` instance that contains first observation and info.
         """
         obs, info = self.env.reset(seed=seed, options=options)
-        obs = self.preprocess_obs_fn(obs).to(self.device)
-        # obs = th.as_tensor(obs, device=self.device)
+        obs = th.as_tensor(obs, device=self.device)
 
         self.current_obs = obs
         return TimeStep(observations=self.current_obs, info=info)
@@ -196,8 +192,7 @@ class TorchVecEnvWrapper(gym.Wrapper):
                 new_obs[idx] = info['final_observation'][idx]
 
         # convert to tensor
-        new_obs = self.preprocess_obs_fn(new_obs).to(self.device)
-        # new_obs = th.as_tensor(new_obs, device=self.device)
+        new_obs = th.as_tensor(new_obs, device=self.device)
         rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
 
         terminateds = th.as_tensor(
@@ -245,11 +240,6 @@ class TorchVecDictEnvWrapper(gym.Wrapper):
         self.device = th.device(device)
         # container for current observations
         self.current_obs = None
-        # observation preprocessing
-        self.preprocess_obs_fn_dict = {}
-
-        for (key, subspace) in self.observation_space.spaces.items():
-            self.preprocess_obs_fn_dict[key] = get_preprocess_obs_fn(subspace)
 
     def reset(
         self,
@@ -266,8 +256,7 @@ class TorchVecDictEnvWrapper(gym.Wrapper):
             A `TimeStep` instance that contains first observation and info.
         """
         obs, info = self.env.reset(seed=seed, options=options)
-        for key, _obs in obs.items():
-            obs[key] = self.preprocess_obs_fn_dict[key](_obs).to(self.device)
+        obs = {key: th.as_tensor(item, device=self.device) for key, item in obs.items()}
 
         self.current_obs = obs
         return TimeStep(observations=self.current_obs, info=info)
@@ -282,14 +271,10 @@ class TorchVecDictEnvWrapper(gym.Wrapper):
             A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
         """
         new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
-        # get real next observations
-        for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
-            if term or trunc:
-                new_obs[idx] = info['final_observation'][idx]
+        # TODO: get real next observations
 
         # convert to tensor
-        for key, _obs in new_obs.items():
-            new_obs[key] = self.preprocess_obs_fn_dict[key](_obs).to(self.device)
+        new_obs = {key: th.as_tensor(item, device=self.device) for key, item in new_obs.items()}
         rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
 
         terminateds = th.as_tensor(

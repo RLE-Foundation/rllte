@@ -24,24 +24,15 @@
 
 
 from typing import Any, Dict, Tuple
-from collections import namedtuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.base_storage import BaseStorage
+from rllte.common.base_storage import VanillaReplayBatch
+from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
 
-Batch = namedtuple(typename="Batch", field_names=[
-    "obs", 
-    "actions",
-    "rewards",
-    "terminateds",
-    "truncateds",
-    "next_obs"
-])
-
-class DictReplayStorage(BaseStorage):
+class DictReplayStorage(VanillaReplayStorage):
     """Dict replay storage for off-policy algorithms and dictionary observations.
 
     Args:
@@ -65,80 +56,63 @@ class DictReplayStorage(BaseStorage):
         num_envs: int = 1,
         batch_size: int = 1024,
     ) -> None:
-        super().__init__(observation_space, action_space, device)
+        super().__init__(observation_space, action_space, device, storage_size, num_envs, batch_size)
 
         assert isinstance(self.obs_shape, dict), "DictReplayStorage only support Dict observation space."
-
-        # split the storage size for each environment
-        self.storage_size = max(storage_size // num_envs, 1)
-        self.num_envs = num_envs
-        self.batch_size = batch_size
         
         # data containers
-        self.obs = {
+        ###########################################################################################################
+        self.observations = {
             key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype) 
             for key, shape in self.obs_shape.items()
         }    
-
-        if self.action_type == "Discrete":
-            self.actions = np.empty((self.storage_size, num_envs), dtype=np.int64)
-        else:
-            self.actions = np.empty((self.storage_size, num_envs, self.action_dim), dtype=action_space.dtype)
-        self.rewards = np.empty((self.storage_size, num_envs), dtype=np.float32)
-        self.terminateds = np.empty((self.storage_size, num_envs), dtype=np.float32)
-        self.truncateds = np.empty((self.storage_size, num_envs), dtype=np.float32)
-
-        # counter
-        self.global_step = 0
-        self.full = False
-
-    def __len__(self) -> int:
-        """Return the number of transitions in storage."""
-        return self.storage_size if self.full else self.global_step
+        ###########################################################################################################
 
     def add(
         self,
-        obs: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        terminateds: np.ndarray,
-        truncateds: np.ndarray,
+        observations: Dict[str, th.Tensor],
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
         info: Dict[str, Any],
-        next_obs: np.ndarray,
+        next_observations: Dict[str, th.Tensor],
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (Dict[str, th.Tensor]): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             info (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observations.
+            next_observations (Dict[str, th.Tensor]): Next observations.
 
         Returns:
             None.
         """
-        for key in self.obs_shape.keys():
+        for key in self.observations.keys():
+            # broadcast (n_discrete,) to (n_discrete, 1)
             if isinstance(self.observation_space.spaces[key], gym.spaces.Discrete):
-                obs_ = obs[key].reshape((self.num_envs,) + self.obs_shape[key])
-                next_obs_ = next_obs[key].reshape((self.num_envs,) + self.obs_shape[key])
+                obs_ = observations[key].reshape((self.num_envs,) + self.obs_shape[key])
+                next_obs_ = next_observations[key].reshape((self.num_envs,) + self.obs_shape[key])
             else:
-                obs_ = obs[key]
-                next_obs_ = next_obs[key]
-            np.copyto(self.obs[key][self.global_step], obs_.cpu().numpy())
-            np.copyto(self.obs[key][(self.global_step + 1) % self.storage_size], next_obs_.cpu().numpy())
+                obs_ = observations[key]
+                next_obs_ = next_observations[key]
+            
+            np.copyto(self.observations[key][self.step], obs_.cpu().numpy())
+            np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
 
-        np.copyto(self.actions[self.global_step], actions.cpu().numpy())
-        np.copyto(self.rewards[self.global_step], rewards.cpu().numpy())
-        np.copyto(self.terminateds[self.global_step], terminateds.cpu().numpy())
-        np.copyto(self.truncateds[self.global_step], truncateds.cpu().numpy())
+        np.copyto(self.actions[self.step], actions.cpu().numpy())
+        np.copyto(self.rewards[self.step], rewards.cpu().numpy())
+        np.copyto(self.terminateds[self.step], terminateds.cpu().numpy())
+        np.copyto(self.truncateds[self.step], truncateds.cpu().numpy())
 
-        self.global_step = (self.global_step + 1) % self.storage_size
-        self.full = self.full or self.global_step == 0
+        self.step = (self.step + 1) % self.storage_size
+        self.full = self.full or self.step == 0
 
-    def sample(self, step: int) -> Batch:
+    def sample(self, step: int) -> VanillaReplayBatch:
         """Sample from the storage.
 
         Args:
@@ -147,33 +121,33 @@ class DictReplayStorage(BaseStorage):
         Returns:
             Batched samples.
         """
-        # get indices
-        batch_indices = np.random.randint(
-            0,
-            self.storage_size if self.full else self.global_step,
-            size=self.batch_size,
-        )
+        # get batch and env indices
+        if self.full:
+            batch_indices = (np.random.randint(1, self.storage_size, size=self.batch_size) + self.step) % self.storage_size
+        else:
+            batch_indices = np.random.randint(0, self.step, size=self.batch_size)
         env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size, ))
 
         # get batch data
-        obs = {}
-        next_obs = {}
-        for key in self.obs_shape.keys():
-            obs[key] = th.as_tensor(self.obs[key][batch_indices, env_indices, :], device=self.device).float()
-            next_obs = th.as_tensor(self.obs[key][(batch_indices + 1) % self.storage_size, env_indices, :], device=self.device).float()
+        obs = {self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
+        next_obs = {self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :] for key in self.observations.keys()}
 
-        actions = th.as_tensor(self.actions[batch_indices, env_indices], device=self.device).float()
-        rewards = th.as_tensor(self.rewards[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
-        terminateds = th.as_tensor(self.terminateds[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
-        truncateds = th.as_tensor(self.truncateds[batch_indices, env_indices].reshape(-1, 1), device=self.device).float()
+        actions = self.actions[batch_indices, env_indices]
+        rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)
+        terminateds = self.terminateds[batch_indices, env_indices].reshape(-1, 1)
+        truncateds = self.truncateds[batch_indices, env_indices].reshape(-1, 1)
 
-        return Batch(
-            obs=obs,
-            actions=actions,
-            rewards=rewards,
-            terminateds=terminateds,
-            truncateds=truncateds,
-            next_obs=next_obs
+        # convert to torch tensors
+        observations = {key: self.to_torch(item) for key, item in obs.items()}
+        next_observations = {key: self.to_torch(item) for key, item in next_obs.items()}
+
+        return VanillaReplayBatch(
+            observations=observations,
+            actions=self.to_torch(actions),
+            rewards=self.to_torch(rewards),
+            terminateds=self.to_torch(terminateds),
+            truncateds=self.to_torch(truncateds),
+            next_observations=next_observations
         )
 
     def update(self, *args) -> None:

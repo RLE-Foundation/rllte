@@ -28,7 +28,7 @@ import torch as th
 from torch import nn
 
 from gymnasium import spaces
-from rllte.common.preprocessing import get_flattened_obs_dim
+from rllte.common.preprocessing import get_flattened_obs_dim, preprocess_obs
 from rllte.common.base_encoder import BaseEncoder
 from rllte.xploit.encoder.pathak_cnn_encoder import PathakCnnEncoder
 
@@ -72,8 +72,10 @@ class RaffinCombinedEncoder(BaseEncoder):
         Returns:
             Encoded observation tensor.
         """
+        preprocessed_obs = preprocess_obs(obs)
         encoded_obs = []
+
         for key, sub_encoder in self.trunk.items():
-            encoded_obs.append(sub_encoder(obs[key]))
+            encoded_obs.append(sub_encoder(preprocessed_obs[key]))
 
         return self.linear(th.cat(encoded_obs, dim=1))

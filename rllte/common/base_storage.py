@@ -25,11 +25,53 @@
 
 from abc import ABC, abstractmethod
 from typing import Any
+from collections import namedtuple
 
 import gymnasium as gym
 import torch as th
+import numpy as np
 
 from rllte.common.preprocessing import process_env_info
+
+
+VanillaReplayBatch = namedtuple(typename="VanillaReplayBatch", field_names=[
+    "observations", 
+    "actions",
+    "rewards",
+    "terminateds",
+    "truncateds",
+    "next_observations"
+])
+
+PrioritizedReplayBatch = namedtuple(typename="PrioritizedReplayBatch", field_names=[
+    "observations",
+    "actions",
+    "rewards",
+    "terminateds",
+    "truncateds",
+    "next_observations"
+    "indices",
+    "weights"
+])
+
+NStepReplayBatch = namedtuple(typename="NStepReplayBatch", field_names=[
+    "observations", 
+    "actions",
+    "rewards",
+    "discounts",
+    "next_observations"
+])
+
+VanillaRolloutBatch = namedtuple(typename="VanillaRolloutBatch", field_names=[
+    "observations",
+    "actions",
+    "values",
+    "returns",
+    "terminateds",
+    "truncateds",
+    "old_log_probs",
+    "adv_targ",
+])
 
 class BaseStorage(ABC):
     """Base class of storage module.
@@ -56,6 +98,17 @@ class BaseStorage(ABC):
             process_env_info(observation_space, action_space)
         # set device
         self.device = th.device(device)
+    
+    def to_torch(self, x: np.ndarray) -> th.Tensor:
+        """Convert numpy array to torch tensor.
+
+        Args:
+            x (np.ndarray): Numpy array.
+
+        Returns:
+            Torch tensor.
+        """
+        return th.as_tensor(x, device=self.device).float()
 
     @abstractmethod
     def add(self, *args) -> None:

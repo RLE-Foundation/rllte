@@ -23,25 +23,14 @@
 # =============================================================================
 
 
-from collections import deque, namedtuple
+from collections import deque
 from typing import Any, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.base_storage import BaseStorage
-
-Batch = namedtuple(typename="Batch", field_names=[
-    "obs",
-    "actions",
-    "rewards",
-    "terminateds",
-    "truncateds",
-    "next_obs"
-    "indices",
-    "weights"
-])
+from rllte.common.base_storage import BaseStorage, PrioritizedReplayBatch
 
 class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
@@ -89,6 +78,7 @@ class PrioritizedReplayStorage(BaseStorage):
         self.position = 0
 
     def __len__(self) -> int:
+        """Return the number of transitions in storage."""
         return len(self.storage)
 
     def annealing_beta(self, step: int) -> float:
@@ -104,43 +94,43 @@ class PrioritizedReplayStorage(BaseStorage):
 
     def add(
         self,
-        obs: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        terminateds: np.ndarray,
-        truncateds: np.ndarray,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
         info: Dict[str, Any],
-        next_obs: np.ndarray,
+        next_observations: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             info (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observations.
+            next_observations (th.Tensor): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
         transition = (
-            obs[0].cpu().numpy(),
+            observations[0].cpu().numpy(),
             actions[0].cpu().numpy(),
             rewards[0].cpu().numpy(),
             terminateds[0].cpu().numpy(),
             truncateds[0].cpu().numpy(),
-            next_obs[0].cpu().numpy(),
+            next_observations[0].cpu().numpy(),
         )
         max_prio = self.priorities.max() if self.storage else 1.0
         self.priorities[self.position] = max_prio
         self.storage.append(transition)
         self.position = (self.position + 1) % self.storage_size
 
-    def sample(self, step: int) -> Batch:
+    def sample(self, step: int) -> PrioritizedReplayBatch:
         """Sample from the storage.
 
         Args:
@@ -174,23 +164,14 @@ class PrioritizedReplayStorage(BaseStorage):
         truncateds = np.expand_dims(np.stack(truncateds), 1)
         next_obs = np.stack(next_obs)
 
-        # to device
-        obs = th.as_tensor(obs, device=self.device).float()
-        actions = th.as_tensor(actions, device=self.device).float()
-        rewards = th.as_tensor(rewards, device=self.device).float()
-        next_obs = th.as_tensor(next_obs, device=self.device).float()
-        terminateds = th.as_tensor(terminateds, device=self.device).float()
-        truncateds = th.as_tensor(truncateds, device=self.device).float()
-        weights = th.as_tensor(weights, device=self.device).float()
-
-        return Batch(obs=obs,
-                     actions=actions,
-                     rewards=rewards,
-                     terminateds=terminateds,
-                     truncateds=truncateds,
-                     next_obs=next_obs,
-                     weights=weights,
-                     indices=indices)
+        return PrioritizedReplayBatch(observations=self.to_torch(obs),
+                                      actions=self.to_torch(actions),
+                                      rewards=self.to_torch(rewards),
+                                      terminateds=self.to_torch(terminateds),
+                                      truncateds=self.to_torch(truncateds),
+                                      next_observations=self.to_torch(next_obs),
+                                      weights=self.to_torch(weights),
+                                      indices=indices)
 
     def update(self, metrics: Dict) -> None:
         """Update the priorities.
