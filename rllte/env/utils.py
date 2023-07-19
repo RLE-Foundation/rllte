@@ -338,3 +338,105 @@ class FrameStack(gym.Wrapper):
     def _get_obs(self) -> np.ndarray:
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
+
+class DistributedWrapper:
+    """An env wrapper to adapt to the distributed trainer.
+
+    Args:
+        env (gym.Env): A Gym-like env.
+
+    Returns:
+        Processed env.
+    """
+
+    def __init__(self, env: gym.Env) -> None:
+        self.env = env
+        self.episode_return = None
+        self.episode_step = None
+        if env.action_space.__class__.__name__ == "Discrete":
+            self.action_type = "Discrete"
+            self.action_dim = 1
+        elif env.action_space.__class__.__name__ == "Box":
+            self.action_type = "Box"
+            self.action_dim = env.action_space.shape[0]
+        else:
+            raise NotImplementedError("Unsupported action type!")
+        
+    def reset(self, seed) -> Dict[str, th.Tensor]:
+        """Reset the environment."""
+        init_reward = th.zeros(1, 1)
+        init_last_action = th.zeros(1, self.action_dim, dtype=th.int64)
+        self.episode_return = th.zeros(1, 1)
+        self.episode_step = th.zeros(1, 1, dtype=th.int32)
+        init_terminated = th.ones(1, 1, dtype=th.uint8)
+        init_truncated = th.ones(1, 1, dtype=th.uint8)
+
+        obs, info = self.env.reset(seed=seed)
+        obs = self._format_obs(obs)
+
+        return dict(
+            observation=obs,
+            reward=init_reward,
+            terminated=init_terminated,
+            truncated=init_truncated,
+            episode_return=self.episode_return,
+            episode_step=self.episode_step,
+            last_action=init_last_action,
+        )
+
+    def step(self, action: th.Tensor) -> Dict[str, th.Tensor]:
+        """Step function that returns a dict consists of current and history observation and action.
+
+        Args:
+            action (th.Tensor): Action tensor.
+
+        Returns:
+            Step information dict.
+        """
+        if self.action_type == "Discrete":
+            _action = action.item()
+        elif self.action_type == "Box":
+            _action = action.squeeze(0).cpu().numpy()
+        else:
+            raise NotImplementedError("Unsupported action type!")
+
+        obs, reward, terminated, truncated, info = self.env.step(_action)
+        self.episode_step += 1
+        self.episode_return += reward
+        episode_step = self.episode_step
+        episode_return = self.episode_return
+        if terminated or truncated:
+            obs, info = self.env.reset()
+            self.episode_return = th.zeros(1, 1)
+            self.episode_step = th.zeros(1, 1, dtype=th.int32)
+
+        obs = self._format_obs(obs)
+        reward = th.as_tensor(reward, dtype=th.float32).view(1, 1)
+        terminated = th.as_tensor(terminated, dtype=th.uint8).view(1, 1)
+        truncated = th.as_tensor(truncated, dtype=th.uint8).view(1, 1)
+
+        return dict(
+            observation=obs,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
+            episode_return=episode_return,
+            episode_step=episode_step,
+            last_action=action,
+        )
+
+    def close(self) -> None:
+        """Close the environment."""
+        self.env.close()
+
+    def _format_obs(self, obs: np.ndarray) -> th.Tensor:
+        """Reformat the observation by adding an time dimension.
+
+        Args:
+            obs (np.ndarray): Observation.
+
+        Returns:
+            Formatted observation.
+        """
+        obs = th.from_numpy(np.array(obs))
+        return obs.view((1, 1, *obs.shape))

@@ -249,7 +249,7 @@ class HerReplayStorage(DictReplayStorage):
         )
 
 
-    def _sample_virtual(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> Batch:
+    def _sample_virtual(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> VanillaReplayBatch:
         """Get the samples with new goals and rewards.
         
         Args:

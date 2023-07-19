@@ -24,6 +24,7 @@
 
 import threading
 from typing import Any, Dict, Generator, List, Tuple
+from torch import multiprocessing as mp
 
 import gymnasium as gym
 import torch as th
@@ -31,8 +32,8 @@ import torch as th
 from rllte.common.base_storage import BaseStorage
 
 
-class DistributedStorage(BaseStorage):
-    """Distributed storage for distributed algorithms like IMPALA.
+class VanillaDistributedStorage(BaseStorage):
+    """Vanilla distributed storage for distributed algorithms like IMPALA.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
@@ -60,9 +61,11 @@ class DistributedStorage(BaseStorage):
         self.num_storages = num_storages
         self.batch_size = batch_size
 
+        # data containers
+        ###########################################################################################################
         if self.action_type == "Discrete":
             specs = dict(
-                obs=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
+                observation=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
                 reward=dict(size=(num_steps + 1,), dtype=th.float32),
                 terminated=dict(size=(num_steps + 1,), dtype=th.bool),
                 truncated=dict(size=(num_steps + 1,), dtype=th.bool),
@@ -76,7 +79,7 @@ class DistributedStorage(BaseStorage):
 
         elif self.action_type == "Box":
             specs = dict(
-                obs=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
+                observation=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
                 reward=dict(size=(num_steps + 1,), dtype=th.float32),
                 terminated=dict(size=(num_steps + 1,), dtype=th.bool),
                 truncated=dict(size=(num_steps + 1,), dtype=th.bool),
@@ -88,29 +91,47 @@ class DistributedStorage(BaseStorage):
                 action=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
             )
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"Unsupported action space {self.action_type}.")
+        ###########################################################################################################
 
+        # Create memory-shared storages.
         self.storages = {key: [] for key in specs}
         for _ in range(num_storages):
             for key in self.storages:
                 self.storages[key].append(th.empty(**specs[key]).share_memory_())
 
-    def add(self, *args) -> None:
-        """Add sampled transitions into storage."""
+    def add(self, 
+            idx: int,
+            timestep: int,
+            actor_output: Dict[str, Any],
+            env_output: Dict[str, Any],
+            ) -> None:
+        """Add sampled transitions into storage.
 
-    def sample(
-        self,
-        free_queue: th.multiprocessing.SimpleQueue,
-        full_queue: th.multiprocessing.SimpleQueue,
-        init_actor_state_storages: List,
-        lock=threading.Lock(),  # noqa B008
-    ) -> Tuple[Dict, Generator[Any, Any, None]]:
+        Args:
+            idx (int): The index of storage.
+            timestep (int): The timestep of rollout.
+            actor_output (Dict): Actor output.
+            env_output (Dict): Environment output.
+        
+        Returns:
+            None
+        """
+        for key in env_output:
+            self.storages[key][idx][timestep, ...] = env_output[key]
+        for key in actor_output:
+            self.storages[key][idx][timestep, ...] = actor_output[key]
+
+    def sample(self, # noqa B008
+               free_queue: mp.SimpleQueue, 
+               full_queue: mp.SimpleQueue, 
+               lock=threading.Lock()
+               ) -> Tuple[Dict, Generator[Any, Any, None]]:
         """Sample transitions from the storage.
 
         Args:
             free_queue (Queue): Free queue for communication.
             full_queue (Queue): Full queue for communication.
-            init_actor_state_storages: (List[th.Tensor]): Initial states for LSTM.
             lock (Lock): Thread lock.
 
         Returns:
@@ -120,13 +141,12 @@ class DistributedStorage(BaseStorage):
             indices = [full_queue.get() for _ in range(self.batch_size)]
         batch = {key: th.stack([self.storages[key][i] for i in indices], dim=1) for key in self.storages}
 
-        init_actor_states = (th.cat(ts, dim=1) for ts in zip(*[init_actor_state_storages[i] for i in indices]))
-
+        # serialize the data
         for i in indices:
             free_queue.put(i)
 
         batch = {key: tensor.to(device=self.device, non_blocking=True) for key, tensor in batch.items()}
-        return batch, init_actor_states
+        return batch
 
     def update(self, *args) -> None:
         """Update the storage"""

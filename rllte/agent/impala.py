@@ -24,7 +24,7 @@
 
 
 import threading
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, NamedTuple
 
 import gymnasium as gym
 import torch as th
@@ -32,10 +32,9 @@ from torch import nn
 from torch.nn import functional as F
 
 from rllte.common.distributed_agent import DistributedAgent
-from rllte.common.initialization import get_init_fn
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DistributedActorLearner
-from rllte.xploit.storage import DistributedStorage
+from rllte.xploit.storage import VanillaDistributedStorage
 from rllte.xplore.distribution import Categorical, DiagonalGaussian
 
 
@@ -134,7 +133,7 @@ class IMPALA(DistributedAgent):
         baseline_coef(float): Weighting coefficient of baseline value loss.
         max_grad_norm (float): Maximum norm of gradients.
         discount (float): Discount factor.
-        network_init_method (str): Network initialization method name.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         IMPALA agent instance.
@@ -161,7 +160,7 @@ class IMPALA(DistributedAgent):
         baseline_coef: float = 0.5,
         max_grad_norm: float = 40,
         discount: float = 0.99,
-        network_init_method: str = "identity",
+        init_fn: str = "identity",
     ) -> None:
         super().__init__(
             env=env,
@@ -185,7 +184,6 @@ class IMPALA(DistributedAgent):
         self.baseline_coef = baseline_coef
         self.max_grad_norm = max_grad_norm
         self.discount = discount
-        self.network_init_method = network_init_method
 
         # default encoder
         if len(self.obs_shape) == 3:
@@ -210,12 +208,12 @@ class IMPALA(DistributedAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.RMSprop,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_method=get_init_fn(self.network_init_method),
+            init_fn=init_fn,
             use_lstm=use_lstm,
         )
 
         # default storage
-        storage = DistributedStorage(
+        storage = VanillaDistributedStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
@@ -225,32 +223,21 @@ class IMPALA(DistributedAgent):
         )
 
         # set all the modules [essential operation!!!]
-        self.set(
-            encoder=encoder,
-            storage=storage,
-            distribution=dist,
-            policy=policy,
-        )
+        self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
-    def update(
-        self,
-        batch: Dict,
-        init_actor_states: Tuple[th.Tensor, ...],
-        lock=threading.Lock(),  # noqa B008
-    ) -> Dict[str, Tuple]:
+    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]: # noqa B008
         """
         Update the learner model.
 
         Args:
             batch (Batch): Batch samples.
-            init_actor_states (List[Tensor]): Initial states for LSTM.
             lock (Lock): Thread lock.
 
         Returns:
             Training metrics.
         """
         with lock:
-            learner_outputs, _ = self.policy.learner.act(batch, init_actor_states)
+            learner_outputs = self.policy.learner(batch)
 
             # Take final value function slice for bootstrapping.
             bootstrap_value = learner_outputs["baseline"][-1]
@@ -288,8 +275,8 @@ class IMPALA(DistributedAgent):
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
-                "total_loss": total_loss.item(),
-                "pg_loss": pg_loss.item(),
-                "baseline_loss": baseline_loss.item(),
-                "entropy_loss": entropy_loss.item(),
+                "Total Loss": total_loss.item(),
+                "Policy Loss": pg_loss.item(),
+                "Value Loss": baseline_loss.item(),
+                "Entropy Loss": entropy_loss.item(),
             }

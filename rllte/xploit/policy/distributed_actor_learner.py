@@ -1,160 +1,26 @@
-# =============================================================================
-# MIT License
-
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# =============================================================================
-
-
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, NamedTuple
+from collections import namedtuple
 
 import gymnasium as gym
 import torch as th
 from torch import nn
 from torch.nn import functional as F
+from torch.distributions import Distribution
 
-from rllte.common.base_distribution import BaseDistribution as Distribution
 from rllte.common.base_policy import BasePolicy
 from rllte.common.utils import ExportModel
+from rllte.xploit.policy.on_policy_shared_actor_critic import DiscreteActor, BoxActor
 
-
-class DiscreteActor(nn.Module):
-    """Actor for `Discrete` tasks.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        feature_dim: int,
-        hidden_dim: int,
-    ) -> None:
-        super().__init__()
-        if len(obs_shape) > 1:
-            self.actor = nn.Linear(feature_dim, action_dim)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.actor = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim),
-            )
-
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Unnormalized action probabilities.
-        """
-        logits = self.actor(obs)
-        return (logits,)
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Only for model inference.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Deterministic actions.
-        """
-        return self.actor(obs)
-
-
-class BoxActor(nn.Module):
-    """Actor for `Box` tasks.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        feature_dim: int,
-        hidden_dim: int,
-    ) -> None:
-        super().__init__()
-        if len(obs_shape) > 1:
-            self.actor_mu = nn.Linear(feature_dim, action_dim)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.actor_mu = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim),
-            )
-        self.actor_logstd = nn.Parameter(th.ones(1, action_dim))
-
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Mean and standard deviation of action distribution.
-        """
-        mu = self.actor_mu(obs)
-        logstd = self.actor_logstd.expand_as(mu)
-        return (mu, logstd.exp())
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Only for model inference.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Deterministic actions.
-        """
-        return self.actor_mu(obs)
-
+PolicyOutputs = namedtuple("PolicyOutputs", [
+    "policy_outputs", 
+    "baseline", 
+    "action"]
+)
 
 class ActorCritic(nn.Module):
-    """Actor network for IMPALA that supports LSTM module.
+    """Actor-Critic network for IMPALA.
 
     Args:
         obs_shape (Tuple): The data shape of observations.
@@ -164,7 +30,6 @@ class ActorCritic(nn.Module):
         action_range (List): Range of actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
-        use_lstm (bool): Whether to use LSTM module.
 
     Returns:
         Actor-Critic network.
@@ -179,21 +44,16 @@ class ActorCritic(nn.Module):
         action_range: List,
         feature_dim: int,
         hidden_dim: int = 512,
-        use_lstm: bool = False,
     ) -> None:
         super().__init__()
 
-        self.use_lstm = use_lstm
         self.action_shape = action_shape
         self.action_dim = action_dim
         self.action_range = action_range
         self.action_type = action_type
 
-        self.use_lstm = use_lstm
-        # feature_dim + one-hot of last action + last reward
-        lstm_output_size = feature_dim + action_dim + 1
-        if use_lstm:
-            self.lstm = nn.LSTM(lstm_output_size, lstm_output_size, 2)
+        # feature_dim + one-hot of last action + last reward        
+        mixed_feature_dim = feature_dim + action_dim + 1
 
         # build actor and critic
         if self.action_type == "Discrete":
@@ -203,79 +63,44 @@ class ActorCritic(nn.Module):
             actor_class = BoxActor
             self.policy_reshape_dim = action_dim * 2
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
 
         # build actor and critic
-        self.actor = actor_class(
-            obs_shape=obs_shape, action_dim=action_dim, feature_dim=lstm_output_size, hidden_dim=hidden_dim
-        )
-
+        self.actor = actor_class(obs_shape=obs_shape, 
+                                 action_dim=action_dim, 
+                                 feature_dim=mixed_feature_dim, 
+                                 hidden_dim=hidden_dim
+                                 )
         # baseline value function
-        self.critic = nn.Linear(lstm_output_size, 1)
+        self.critic = nn.Linear(mixed_feature_dim, 1)
 
-    def init_state(self, batch_size: int) -> Tuple[th.Tensor, ...]:
-        """Initialize the state of LSTM.
-
-        Args:
-            batch_size (int): Batch size of input data.
-
-        Returns:
-            Initial states.
-        """
-        if not self.use_lstm:
-            return tuple()
-        return tuple(th.zeros(self.lstm.num_layers, batch_size, self.lstm.hidden_size) for _ in range(2))
-
-    def act(
-        self,
-        inputs: Dict[str, th.Tensor],
-        lstm_state: Tuple = (),
-        training: bool = True,
-    ) -> Tuple[Dict[str, th.Tensor], Tuple[th.Tensor, ...]]:
+    def forward(self, inputs: Dict[str, th.Tensor], training: bool = True) -> Dict[str, th.Tensor]:
         """Get actions in training.
 
         Args:
             inputs (Dict[str, th.Tensor]): Inputs data that contains observations, last actions, ...
-            lstm_state (Tuple): Hidden states of LSTM.
             training (bool): Whether in training mode.
 
         Returns:
             Actions.
         """
-        x = inputs["obs"]  # [T, B, *obs_shape], T: rollout length, B: batch size
+        # [T, B, *obs_shape], T: rollout length, B: batch size
+        x = inputs["observation"]
         T, B, *_ = x.shape
-        # TODO: merge time and batch
+        # merge time and batch
         x = th.flatten(x, 0, 1)
-        # TODO: extract features from observations
+        # extract features from observations
         features = self.encoder(x)
-        # TODO: get one-hot last actions
-
+        # get one-hot last actions
         if self.action_type == "Discrete":
             encoded_actions = F.one_hot(inputs["last_action"].view(T * B), self.action_dim).float()
         else:
             encoded_actions = inputs["last_action"].view(T * B, self.action_dim)
-
-        lstm_input = th.cat([features, inputs["reward"].view(T * B, 1), encoded_actions], dim=-1)
-
-        if self.use_lstm:
-            lstm_input = lstm_input.view(T, B, -1)
-            lstm_output_list = []
-            notdone = (~inputs["terminated"]).float()
-            for input, nd in zip(lstm_input.unbind(), notdone.unbind()):
-                # Reset lstm state to zero whenever an episode ended.
-                # Make `done` broadcastable with (num_layers, B, hidden_size)
-                # states:
-                nd = nd.view(1, -1, 1)
-                lstm_state = tuple(nd * s for s in lstm_state)
-                output, lstm_state = self.lstm(input.unsqueeze(0), lstm_state)
-                lstm_output_list.append(output)
-            lstm_output = th.flatten(th.cat(lstm_output_list), 0, 1)
-        else:
-            lstm_output = lstm_input
-            lstm_state = tuple()
-
-        policy_outputs = self.actor.get_policy_outputs(lstm_output)
-        baseline = self.critic(lstm_output)
+        # merge features and one-hot last actions
+        mixed_features = th.cat([features, inputs["reward"].view(T * B, 1), encoded_actions], dim=-1)
+        # get policy outputs and baseline
+        policy_outputs = self.actor.get_policy_outputs(mixed_features)
+        baseline = self.critic(mixed_features)
         dist = self.dist(*policy_outputs)
 
         if training:
@@ -283,17 +108,17 @@ class ActorCritic(nn.Module):
         else:
             action = dist.mean
 
+        # reshape for policy outputs
         policy_outputs = th.cat(policy_outputs, dim=1).view(T, B, self.policy_reshape_dim)
         baseline = baseline.view(T, B)
-
         if self.action_type == "Discrete":
             action = action.view(T, B, *self.action_shape)
         elif self.action_type == "Box":
             action = action.view(T, B, *self.action_shape).squeeze(0).clamp(*self.action_range)
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
 
-        return (dict(policy_outputs=policy_outputs, baseline=baseline, action=action), lstm_state)
+        return dict(policy_outputs=policy_outputs, baseline=baseline, action=action)
 
     def get_dist(self, outputs: th.Tensor) -> Distribution:
         """Get action distribution.
@@ -310,11 +135,10 @@ class ActorCritic(nn.Module):
             mu, logstd = outputs.chunk(2, dim=-1)
             return self.dist(mu, logstd.exp())
         else:
-            raise NotImplementedError("Unsupported action type!")
-
+            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
 
 class DistributedActorLearner(BasePolicy):
-    """Actor network for IMPALA that supports LSTM module.
+    """Actor-Learner network for IMPALA.
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -323,7 +147,7 @@ class DistributedActorLearner(BasePolicy):
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
         opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_method (Callable): Initialization method.
+        init_fn (Optional[str]): Parameters initialization method.
         use_lstm (bool): Whether to use LSTM module.
 
     Returns:
@@ -338,7 +162,7 @@ class DistributedActorLearner(BasePolicy):
         hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_method: Callable = nn.init.orthogonal_,
+        init_fn: Optional[str] = None,
         use_lstm: bool = False,
     ) -> None:
         super().__init__(
@@ -348,9 +172,10 @@ class DistributedActorLearner(BasePolicy):
             hidden_dim=hidden_dim,
             opt_class=opt_class,
             opt_kwargs=opt_kwargs,
-            init_method=init_method,
+            init_fn=init_fn,
         )
 
+        # TODO: add support for LSTM
         self.actor = ActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
@@ -358,7 +183,6 @@ class DistributedActorLearner(BasePolicy):
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=self.feature_dim,
-            use_lstm=use_lstm,
         )
         self.learner = ActorCritic(
             obs_shape=self.obs_shape,
@@ -367,7 +191,6 @@ class DistributedActorLearner(BasePolicy):
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=self.feature_dim,
-            use_lstm=use_lstm,
         )
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
@@ -389,14 +212,24 @@ class DistributedActorLearner(BasePolicy):
         self.actor.dist = dist
         self.learner.dist = dist
         # initialize parameters
-        self.actor.apply(self.init_method)
-        self.learner.apply(self.init_method)
+        self.actor.apply(self.init_fn)
+        self.learner.apply(self.init_fn)
+        # synchronize the parameters of actor and learner
+        self.actor.load_state_dict(self.learner.state_dict())
         # share memory
         self.actor.share_memory()
         # build optimizers
         self.opt = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
 
     def to(self, device: th.device) -> None:
+        """Only move the learner to device, and keep actor in CPU.
+        
+        Args:
+            device (th.device): Device to use.
+
+        Returns:
+            None.
+        """
         self.learner.to(device)
 
     def save(self, path: Path) -> None:
