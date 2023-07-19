@@ -59,3 +59,8 @@ try:
     from .robosuite import make_robosuite_env as make_robosuite_env
 except Exception:
     pass
+
+try:
+    from .bitflipping import make_bitflipping_env as make_bitflipping_env
+except Exception:
+    pass
