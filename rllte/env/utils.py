@@ -135,6 +135,88 @@ class TimeStep(NamedTuple):
         else:
             return tuple.__getitem__(self, attr)
 
+class EnvPool2Torch(gym.Wrapper):
+    """Env wrapper for outputting torch tensors.
+
+    Args:
+        env (VectorEnv): The vectorized environments.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
+
+    Returns:
+        TorchVecEnvWrapper instance.
+    """
+
+    def __init__(self, env: VectorEnv, device: str) -> None:
+        super().__init__(env)
+        self.num_envs = env.num_envs
+        self.device = th.device(device)
+        # container for current observations
+        self.current_obs = None
+
+    def reset(
+        self,
+        seed: Optional[Union[int, List[int]]] = None,
+        options: Optional[dict] = None,
+    ) -> TimeStep:
+        """Reset all environments and return a batch of initial observations and info.
+
+        Args:
+            seed (int): The environment reset seeds.
+            options (Optional[dict]): If to return the options.
+
+        Returns:
+            A `TimeStep` instance that contains first observation and info.
+        """
+        obs, info = self.env.reset(seed=seed, options=options)
+        obs = th.as_tensor(obs, device=self.device)
+
+        self.current_obs = obs
+        return TimeStep(observations=self.current_obs, info=info)
+
+    def step(self, actions: th.Tensor) -> TimeStep:
+        """Take an action for each environment.
+
+        Args:
+            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
+
+        Returns:
+            A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
+        """
+        new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
+
+
+        # TODO: get real next observations
+        # for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
+        #     if term or trunc:
+        #         new_obs[idx] = info['final_observation'][idx]
+
+        # convert to tensor
+        new_obs = th.as_tensor(new_obs, device=self.device)
+        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
+
+        terminateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in terminateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+        truncateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in truncateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+
+        time_step = TimeStep(observations=self.current_obs, 
+                             actions=actions, 
+                             rewards=rewards, 
+                             terminateds=terminateds, 
+                             truncateds=truncateds,
+                             info=info,
+                             next_observations=new_obs)
+
+        # set current observation
+        self.current_obs = new_obs
+
+        return time_step
 
 class TorchVecEnvWrapper(gym.Wrapper):
     """Env wrapper for outputting torch tensors.
@@ -186,10 +268,12 @@ class TorchVecEnvWrapper(gym.Wrapper):
             A `TimeStep` instance that contains (observation, action, reward, termination, truncations, info, next_observation).
         """
         new_obs, rewards, terminateds, truncateds, info = self.env.step(actions.cpu().numpy())
-        # get real next observations
-        for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
-            if term or trunc:
-                new_obs[idx] = info['final_observation'][idx]
+
+
+        # TODO: get real next observations
+        # for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
+        #     if term or trunc:
+        #         new_obs[idx] = info['final_observation'][idx]
 
         # convert to tensor
         new_obs = th.as_tensor(new_obs, device=self.device)

@@ -90,4 +90,4 @@ class MultiCategorical(BaseDistribution):
     @property
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
-        return self.dist.probs.argmax(axis=-1)
+        return th.stack([dist.probs.argmax(axis=-1) for dist in self.dist], dim=1)

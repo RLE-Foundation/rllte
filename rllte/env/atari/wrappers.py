@@ -23,13 +23,107 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
+from collections import deque
 
 import gymnasium as gym
+from gymnasium.core import Env
 import numpy as np
+import envpool
+import time
 
-# The following wrappers are re-implemented based on https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
+class EnvPoolAsynchronous(gym.Wrapper):
+    """Build the environment with `envpool` and asynchronous mode.
 
+    Args:
+        env_id (str): Environment ID.
+        num_envs (int): Number of environments.
+        seed (int): Random seed.
+    
+    Returns:
+        EnvPoolAsynchronous instance.
+    """
+    def __init__(self, env_id: str, num_envs: int, seed: int) -> None:
+        env = envpool.make(env_id, 
+                           env_type="gymnasium", 
+                           num_envs=num_envs, 
+                           batch_size=num_envs,
+                           seed=seed,
+                           episodic_life=True,
+                           reward_clip=False)
+        super().__init__(env)
+        self.num_envs = num_envs
+        self.is_vector_env = True
+    
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment with `envpool`.
+        """
+        # send the initial reset signal to all envs
+        self.env.async_reset()
+        obs, rew, term, trunc, info = self.env.recv()
+        # run one step to get the initial observation
+        self.env.send(np.zeros(shape=(self.num_envs, )), info["env_id"])
+        return obs, info
+        
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment with `envpool`.
+
+        Args:
+            actions (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        obs, rew, term, trunc, info = self.env.recv()
+        self.env.send(actions, info["env_id"])
+
+        return obs, rew, term, trunc, info
+
+
+class EnvPoolSynchronous(gym.Wrapper):
+    """Build the environment with `envpool` and synchronous mode.
+
+    Args:
+        env_id (str): Environment ID.
+        num_envs (int): Number of environments.
+        seed (int): Random seed.
+    
+    Returns:
+        EnvPoolAsynchronous instance.
+    """
+    def __init__(self, env_id: str, num_envs: int, seed: int) -> None:
+        env = envpool.make(env_id, 
+                           env_type="gymnasium", 
+                           num_envs=num_envs, 
+                           batch_size=num_envs,
+                           seed=seed,
+                           episodic_life=True,
+                           reward_clip=False)
+        super().__init__(env)
+        self.num_envs = num_envs
+        self.is_vector_env = True
+    
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment with `envpool`.
+        """
+        return self.env.reset()
+        
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment with `envpool`.
+
+        Args:
+            actions (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        obs, rew, term, trunc, info = self.env.step(actions)
+
+        return obs, rew, term, trunc, info
+
+
+# The following wrappers are re-implemented based on 
+# https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
 
 class NoopResetEnv(gym.Wrapper):
     """Sample initial states by taking random number of no-ops on reset. No-op is assumed to be action 0.

@@ -9,40 +9,46 @@ from rllte.xplore.distribution import (
     OrnsteinUhlenbeckNoise,
     SquashedNormal,
     TruncatedNormalNoise,
+    MultiCategorical
 )
 
 
 @pytest.mark.parametrize(
     "dist_cls",
-    [Categorical, DiagonalGaussian, Bernoulli, NormalNoise, OrnsteinUhlenbeckNoise, SquashedNormal, TruncatedNormalNoise],
+    [Categorical, DiagonalGaussian, Bernoulli, NormalNoise, OrnsteinUhlenbeckNoise, SquashedNormal, TruncatedNormalNoise, MultiCategorical],
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_aug(dist_cls, device):
     device = th.device(device)
+    batch_size = 3
+    action_dim = 7
+
     if dist_cls in [Categorical, Bernoulli]:
-        inputs = th.rand(size=(1, 7), device=device)
-        dist = dist_cls(logits=inputs)
-        dist.sample()
-        print(dist.mean)
-
-        if dist_cls is Categorical:
-            dist.log_prob(actions=th.randint(1, 7, size=(1,), device=device).float())
-        if dist_cls is Bernoulli:
-            dist.log_prob(actions=th.randint(0, 2, size=(7,), device=device).float())
-
+        logits = th.rand(size=(batch_size, action_dim), device=device)
+        dist = dist_cls(logits=logits)
+        dist.log_prob(dist.sample())
+        dist.log_prob(dist.mean)
+        dist.entropy()
+    
+    if dist_cls in [MultiCategorical]:
+        logits = [th.rand(size=(batch_size, action_dim), device=device) for _ in range(4)]
+        dist = dist_cls(logits=logits)
+        dist.log_prob(dist.sample())
+        dist.log_prob(dist.mean)
+        dist.entropy()
+    
     if dist_cls in [DiagonalGaussian, SquashedNormal]:
-        mu = th.randn(size=(1, 17), device=device)
-        sigma = th.rand(size=(1, 17), device=device)
+        mu = th.randn(size=(batch_size, action_dim), device=device)
+        sigma = th.rand_like(mu)
         dist = dist_cls(loc=mu, scale=sigma)
-        dist.sample()
-        print(dist.mean)
-        dist.log_prob(actions=th.rand(1, 17, device=device))
+        dist.log_prob(dist.sample())
+        dist.log_prob(dist.mean)
 
     if dist_cls in [NormalNoise, OrnsteinUhlenbeckNoise, TruncatedNormalNoise]:
-        noiseless_action = th.rand(size=(1, 8), device=device)
+        noiseless_action = th.rand(size=(batch_size, action_dim), device=device)
         dist = dist_cls()
         dist.reset(noiseless_action, step=0)
         dist.sample()
-        print(dist.mean)
+        dist.mean
 
     print("Distribution test passed!")

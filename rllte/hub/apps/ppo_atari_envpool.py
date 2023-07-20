@@ -23,45 +23,45 @@
 # =============================================================================
 
 
-from .utils import make_rllte_env as make_rllte_env
+import argparse
 
-try:
-    from .atari import make_atari_env as make_atari_env
-    from .atari import make_envpool_atari_env as make_envpool_atari_env
-except Exception:
-    pass
+from rllte.agent import PPO
+from rllte.env import make_envpool_atari_env
 
-try:
-    from .bullet import make_bullet_env as make_bullet_env
-except Exception:
-    pass
+parser = argparse.ArgumentParser()
+parser.add_argument("--env-id", type=str, default="Pong-v5")
+parser.add_argument("--device", type=str, default="cuda")
+parser.add_argument("--seed", type=int, default=1)
 
-try:
-    from .dmc import make_dmc_env as make_dmc_env
-except Exception:
-    pass
-
-try:
-    from .minigrid import make_minigrid_env as make_minigrid_env
-except Exception:
-    pass
-
-try:
-    from .multibinary import make_multibinary_env as make_multibinary_env
-except Exception:
-    pass
-
-try:
-    from .procgen import make_procgen_env as make_procgen_env
-except Exception:
-    pass
-
-try:
-    from .robosuite import make_robosuite_env as make_robosuite_env
-except Exception:
-    pass
-
-try:
-    from .bitflipping import make_bitflipping_env as make_bitflipping_env
-except Exception:
-    pass
+if __name__ == "__main__":
+    args = parser.parse_args()
+    # create env
+    env = make_envpool_atari_env(
+        env_id=args.env_id,
+        num_envs=8,
+        device=args.device,
+        seed=args.seed,
+        parallel=True,
+    )
+    # create agent
+    feature_dim = 512
+    agent = PPO(
+        env=env,
+        tag=f"ppo_atari_envpool__{args.env_id}_seed_{args.seed}",
+        seed=args.seed,
+        device=args.device,
+        num_steps=128,
+        feature_dim=feature_dim,
+        batch_size=256,
+        lr=2.5e-4,
+        eps=1e-5,
+        clip_range=0.1,
+        clip_range_vf=0.1,
+        n_epochs=4,
+        vf_coef=0.5,
+        ent_coef=0.01,
+        max_grad_norm=0.5,
+        init_fn="orthogonal",
+    )
+    # training
+    agent.train(num_train_steps=50000000)

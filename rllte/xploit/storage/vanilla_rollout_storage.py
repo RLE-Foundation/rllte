@@ -30,18 +30,7 @@ import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 from collections import namedtuple
 
-from rllte.common.base_storage import BaseStorage, VanillaReplayBatch
-
-Batch = namedtuple(typename="Batch", field_names=[
-    "obs",
-    "actions",
-    "values",
-    "returns",
-    "terminateds",
-    "truncateds",
-    "old_log_probs",
-    "adv_targ",
-])
+from rllte.common.base_storage import BaseStorage, VanillaRolloutBatch
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
@@ -207,7 +196,7 @@ class VanillaRolloutStorage(BaseStorage):
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
 
-            yield VanillaReplayBatch(
+            yield VanillaRolloutBatch(
                 observations=batch_obs,
                 actions=batch_actions,
                 values=batch_values,

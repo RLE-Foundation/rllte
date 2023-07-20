@@ -9,12 +9,13 @@ from rllte.xploit.encoder import (
     PathakCnnEncoder,
     TassaCnnEncoder,
     VanillaMlpEncoder,
+    RaffinCombinedEncoder
 )
 
 
 @pytest.mark.parametrize(
     "encoder_cls",
-    [IdentityEncoder, VanillaMlpEncoder, EspeholtResidualEncoder, TassaCnnEncoder, PathakCnnEncoder, MnihCnnEncoder],
+    [IdentityEncoder, VanillaMlpEncoder, EspeholtResidualEncoder, TassaCnnEncoder, PathakCnnEncoder, MnihCnnEncoder, RaffinCombinedEncoder]
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_encoder(encoder_cls, device):
