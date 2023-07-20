@@ -22,7 +22,7 @@
 # SOFTWARE.
 # =============================================================================
 
-
+import warnings
 import datetime
 import random
 import traceback
@@ -278,7 +278,7 @@ class NStepReplayStorage(BaseStorage):
         save_snapshot: bool = False,
     ) -> None:
         super().__init__(observation_space=observation_space, action_space=action_space, device=device)
-        assert num_envs == 1, "NStepReplayStorage currently does not support parallel environments."
+        warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
         # build storage
         self.replay_dir = Path.cwd() / "storage"
         self.replay_storage = ReplayStorage(self.replay_dir)

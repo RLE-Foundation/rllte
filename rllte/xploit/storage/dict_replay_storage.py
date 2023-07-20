@@ -129,8 +129,8 @@ class DictReplayStorage(VanillaReplayStorage):
         env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size, ))
 
         # get batch data
-        obs = {self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
-        next_obs = {self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :] for key in self.observations.keys()}
+        obs = {key: self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
+        next_obs = {key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :] for key in self.observations.keys()}
 
         actions = self.actions[batch_indices, env_indices]
         rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)

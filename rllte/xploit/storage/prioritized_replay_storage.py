@@ -29,6 +29,7 @@ from typing import Any, Dict, Tuple
 import gymnasium as gym
 import numpy as np
 import torch as th
+import warnings
 
 from rllte.common.base_storage import BaseStorage, PrioritizedReplayBatch
 
@@ -66,7 +67,7 @@ class PrioritizedReplayStorage(BaseStorage):
     ) -> None:
         super().__init__(observation_space, action_space, device)
         # TODO: add support for parallel environments
-        assert num_envs == 1, "PrioritizedReplayStorage currently does not support parallel environments!"
+        warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
         self.storage_size = storage_size
         self.num_envs = num_envs
         self.batch_size = batch_size

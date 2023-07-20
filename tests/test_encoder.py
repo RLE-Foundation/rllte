@@ -1,7 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env import make_dmc_env
+from rllte.env import make_dmc_env, make_minigrid_env
 from rllte.xploit.encoder import (
     EspeholtResidualEncoder,
     IdentityEncoder,
@@ -19,15 +19,18 @@ from rllte.xploit.encoder import (
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_encoder(encoder_cls, device):
+    num_envs = 3
     if encoder_cls in [IdentityEncoder, VanillaMlpEncoder]:
-        env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device)
+        envs = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device, num_envs=num_envs)
+    elif encoder_cls in [RaffinCombinedEncoder]:
+        envs = make_minigrid_env(num_envs=num_envs, device=device, fully_numerical=True, fully_observable=False)
     else:
-        env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device)
+        envs = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device, num_envs=num_envs)
 
     device = th.device(device)
-    encoder = encoder_cls(observation_space=env.observation_space, feature_dim=50).to(device)
+    encoder = encoder_cls(observation_space=envs.observation_space, feature_dim=50).to(device)
 
-    obs = th.as_tensor(env.observation_space.sample(), device=device).unsqueeze(0)
-    obs = encoder(obs)
+    time_step = envs.reset()
+    encoder(time_step.observations)
 
     print("Encoder test passed!")

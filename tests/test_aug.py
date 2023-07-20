@@ -19,8 +19,7 @@ from rllte.xplore.augmentation import (
 )
 
 
-@pytest.mark.parametrize(
-    "aug_cls",
+@pytest.mark.parametrize("aug_cls",
     [
         GrayScale,
         Identity,
@@ -38,9 +37,9 @@ from rllte.xplore.augmentation import (
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_image_augmentation(aug_cls, device):
     env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device)
-    obs, info = env.reset()
+    time_step = env.reset()
     aug = aug_cls().to(th.device(device))
-    aug(obs / 255.0)
+    aug(time_step.observations / 255.0)
 
     print("Image augmentation test passed!")
 
@@ -49,8 +48,8 @@ def test_image_augmentation(aug_cls, device):
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_state_augmentation(aug_cls, device):
     env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device)
-    obs, info = env.reset()
+    time_step = env.reset()
     aug = aug_cls().to(th.device(device))
-    aug(obs)
+    aug(time_step.observations)
 
     print("State augmentation test passed!")

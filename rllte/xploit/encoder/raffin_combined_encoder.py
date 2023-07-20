@@ -72,7 +72,7 @@ class RaffinCombinedEncoder(BaseEncoder):
         Returns:
             Encoded observation tensor.
         """
-        preprocessed_obs = preprocess_obs(obs)
+        preprocessed_obs = preprocess_obs(obs, self.observation_space)
         encoded_obs = []
 
         for key, sub_encoder in self.trunk.items():

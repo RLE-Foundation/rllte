@@ -1,33 +1,50 @@
 import pytest
 import torch as th
 
-from rllte.env import make_atari_env, make_bullet_env, make_dmc_env, make_minigrid_env, make_procgen_env, make_robosuite_env
+from rllte.env import (make_atari_env, 
+                       make_bullet_env, 
+                       make_dmc_env, 
+                       make_minigrid_env, 
+                       make_procgen_env, 
+                       make_robosuite_env,
+                       make_bitflipping_env
+                       )
+from rllte.env import (make_envpool_atari_env
+                       )
 
 
-@pytest.mark.parametrize(
-    "env_cls", [make_atari_env, make_minigrid_env, make_procgen_env, make_dmc_env, make_bullet_env, make_robosuite_env]
+@pytest.mark.parametrize("env_cls", [
+    make_atari_env, 
+    make_minigrid_env, 
+    make_procgen_env, 
+    make_dmc_env, 
+    make_bullet_env, 
+    make_robosuite_env,
+    make_bitflipping_env,
+    make_envpool_atari_env
+    ]
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
-def test_discrete_env(env_cls, device):
+@pytest.mark.parametrize("parallel", [True, False])
+def test_discrete_env(env_cls, device, parallel):
+    num_envs = 3
     if env_cls in [make_procgen_env, make_dmc_env]:
-        env = env_cls(device=device, num_envs=1)
+        env = env_cls(device=device, num_envs=num_envs)
     else:
-        env = env_cls(device=device, num_envs=1, distributed=True)
-    obs, info = env.reset()
+        env = env_cls(device=device, num_envs=num_envs, parallel=parallel)
+    time_step = env.reset()
 
     print(env.observation_space, env.action_space)
 
-    for _step in range(10):
+    for _ in range(10):
         action = env.action_space.sample()
 
-        if env_cls in [make_atari_env, make_minigrid_env, make_procgen_env]:
-            action = th.randint(0, env.action_space.n, (1,)).to(device)
+        if env_cls in [make_atari_env, make_minigrid_env, make_procgen_env, make_envpool_atari_env, make_bitflipping_env]:
+            action = th.randint(0, env.action_space.n, (num_envs,)).to(device)
         else:
-            action = th.rand(size=(1, env.action_space.shape[0])).to(device)
+            action = th.rand(size=(num_envs, env.action_space.shape[0])).to(device)
 
-        obs, reward, terminated, truncated, info = env.step(action)
-        if "episode" in info:
-            print(info["episode"])
+        time_step = env.step(action)
     env.close()
 
     print("Environment test passed!")

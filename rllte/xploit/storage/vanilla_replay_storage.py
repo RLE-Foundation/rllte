@@ -63,7 +63,9 @@ class VanillaReplayStorage(BaseStorage):
         
         # data containers
         ###########################################################################################################
-        self.observations = np.empty((self.storage_size, num_envs, *self.obs_shape), dtype=observation_space.dtype)
+        # initialize this container later, for `DictReplayStorage`
+        if not isinstance(self.observation_space, gym.spaces.Dict):
+            self.observations = np.empty((self.storage_size, num_envs, *self.obs_shape), dtype=observation_space.dtype)
         if self.action_type == "Discrete":
             self.actions = np.empty((self.storage_size, num_envs), dtype=np.int64)
         else:

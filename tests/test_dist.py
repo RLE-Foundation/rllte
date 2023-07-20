@@ -13,10 +13,14 @@ from rllte.xplore.distribution import (
 )
 
 
-@pytest.mark.parametrize(
-    "dist_cls",
-    [Categorical, DiagonalGaussian, Bernoulli, NormalNoise, OrnsteinUhlenbeckNoise, SquashedNormal, TruncatedNormalNoise, MultiCategorical],
-)
+@pytest.mark.parametrize("dist_cls", [Categorical, 
+                                      DiagonalGaussian, 
+                                      Bernoulli, 
+                                      NormalNoise, 
+                                      OrnsteinUhlenbeckNoise, 
+                                      SquashedNormal, 
+                                      TruncatedNormalNoise, 
+                                      MultiCategorical])
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_aug(dist_cls, device):
     device = th.device(device)

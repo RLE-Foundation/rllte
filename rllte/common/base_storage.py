@@ -49,7 +49,7 @@ PrioritizedReplayBatch = namedtuple(typename="PrioritizedReplayBatch", field_nam
     "rewards",
     "terminateds",
     "truncateds",
-    "next_observations"
+    "next_observations",
     "indices",
     "weights"
 ])

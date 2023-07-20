@@ -69,11 +69,13 @@ class VanillaRolloutStorage(BaseStorage):
 
         # data containers
         ###########################################################################################################
-        self.observations = th.empty(
-            size=(num_steps + 1, num_envs, *self.obs_shape),
-            dtype=th.float32,
-            device=self.device,
-        )
+        # initialize this container later, for `DictRolloutStorage`
+        if not isinstance(self.observation_space, gym.spaces.Dict):
+            self.observations = th.empty(
+                size=(num_steps + 1, num_envs, *self.obs_shape),
+                dtype=th.float32,
+                device=self.device,
+            )
         if self.action_type == "Discrete":
             self.actions = th.empty(
                 size=(num_steps, num_envs),
