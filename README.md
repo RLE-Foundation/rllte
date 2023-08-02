@@ -19,7 +19,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 # Contents
 - [Overview](#overview)
 - [Quick Start](#quick-start)
-- [Implemented Modules](#implemented-modules-part)
+- [Implemented Modules (Part)](#implemented-modules-part)
 - [Benchmarks](#benchmarks)
 - [API Documentation](#api-documentation)
 - [Cite the Project](#cite-the-project)
@@ -46,7 +46,7 @@ See the project structure below:
 </div>
 
 
-- **[Agent](https://docs.rllte.dev/api/#agent-implemented-rl-agents-using-rllte-building-blocks)**: Implemented RL Agents using **rllte** building blocks.
+- **[Agent](https://docs.rllte.dev/api/#agent-implemented-rl-agents-using-rllte-building-blocks)**: Implemented RL algorithms using **RLLTE** modules.
 
 - **[Common](https://docs.rllte.dev/api/#common-base-classes-and-auxiliary-modules)**: Base classes and auxiliary modules.
 
@@ -70,7 +70,7 @@ See the project structure below:
 
 - **[Deployment](https://docs.rllte.dev/tutorials/deployment/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
 
-For more detiled descriptions of these modules, see [https://docs.rllte.dev/api](https://docs.rllte.dev/api)
+For more detiled descriptions of these modules, see [API Documentation](https://docs.rllte.dev/api)
 
 # Quick Start
 ## Installation
@@ -101,7 +101,7 @@ pip install -e . # basic installation
 pip install -e .[envs] # for pre-defined environments
 ```
 
-For more detailed installation instruction, see [https://docs.rllte.dev/getting_started](https://docs.rllte.dev/getting_started).
+For more detailed installation instruction, see [Getting Started](https://docs.rllte.dev/getting_started).
 
 ## Start Training
 ### On NVIDIA GPU
@@ -132,7 +132,7 @@ Run `train.py` and you will see the following output:
 </div>
 
 ### On HUAWEI NPU
-Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `DrQv2` with `NpuDrQv2`:
+Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `cuda` with `npu`:
 ``` python
 # import `env` and `agent` api
 from rllte.env import make_dmc_env 
@@ -156,9 +156,9 @@ Then you will see the following output:
 <img src='./docs/assets/images/rl_training_npu.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
-> Please refer to [Implemented Modules](#implemented-modules) for the compatibility of NPU.
+> Please refer to [Implemented Modules](#implemented-modules-part) for the compatibility of NPU.
 
-For more detailed tutorials, see [https://docs.rllte.dev/tutorials](https://docs.rllte.dev/tutorials).
+For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
 
 # Implemented Modules (Part)
 ## RL Agents
