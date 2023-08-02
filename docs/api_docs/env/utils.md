@@ -2,7 +2,7 @@
 
 
 ### make_rllte_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L36)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L34)
 ```python
 .make_rllte_env(
    env_id: Union[str, Callable[..., gym.Env]], num_envs: int = 1, seed: int = 1,

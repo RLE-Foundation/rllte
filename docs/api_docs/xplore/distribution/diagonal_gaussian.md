@@ -129,17 +129,8 @@ Returns the log of the probability density/mass function evaluated at actions.
 
 The log_prob value.
 
-### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L105)
-```python
-.reset()
-```
-
----
-Reset the distribution.
-
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L109)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/diagonal_gaussian.py/#L105)
 ```python
 .entropy()
 ```

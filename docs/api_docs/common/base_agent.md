@@ -2,7 +2,7 @@
 
 
 ## BaseAgent
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L54)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L56)
 ```python 
 BaseAgent(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -23,7 +23,6 @@ Base class of the agent.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **pretraining** (bool) : Turn on pre-training model or not.
-* **feature_dim** (int) : Number of features extracted by the encoder.
 
 
 **Returns**
@@ -34,29 +33,8 @@ Base agent instance.
 **Methods:**
 
 
-### .get_env_info
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L133)
-```python
-.get_env_info(
-   env: gym.Env
-)
-```
-
----
-Get the environment information.
-
-
-**Args**
-
-* **env** (gym.Env) : A Gym-like environment for training.
-
-
-**Returns**
-
-None.
-
 ### .get_npu_name
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L167)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L140)
 ```python
 .get_npu_name()
 ```
@@ -65,7 +43,7 @@ None.
 Get NPU name.
 
 ### .check
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L180)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L153)
 ```python
 .check()
 ```
@@ -74,7 +52,7 @@ Get NPU name.
 Check the compatibility of selected modules.
 
 ### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L208)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L197)
 ```python
 .set(
    encoder: Optional[Any] = None, policy: Optional[Any] = None,
@@ -102,34 +80,37 @@ Set a module for the agent.
 None.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L258)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L250)
 ```python
-.mode()
+.mode(
+   training: bool = True
+)
 ```
 
 ---
 Set the training mode.
 
+
+**Args**
+
+* **training** (bool) : True (training) or False (evaluation).
+
+
+**Returns**
+
+None.
+
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L262)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L263)
 ```python
 .update()
 ```
 
 ---
-Update the agent.
-
-### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L266)
-```python
-.freeze()
-```
-
----
-Freeze the structure of the agent.
+Update function of the agent.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L270)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L267)
 ```python
 .train()
 ```
@@ -138,7 +119,7 @@ Freeze the structure of the agent.
 Training function.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L274)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_agent.py/#L271)
 ```python
 .eval()
 ```

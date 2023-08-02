@@ -2,7 +2,7 @@
 
 
 ## SAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L42)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L41)
 ```python 
 SAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -12,21 +12,20 @@ SAC(
    critic_target_tau: float = 0.005, update_every_steps: int = 2,
    log_std_range: Tuple[float, ...] = (-5.0, 2), betas: Tuple[float, ...] = (0.9,
    0.999), temperature: float = 0.1, fixed_temperature: bool = False,
-   discount: float = 0.99, network_init_method: str = 'orthogonal'
+   discount: float = 0.99, init_fn: str = 'orthogonal'
 )
 ```
 
 
 ---
 Soft Actor-Critic (SAC) agent.
-When 'augmentation' module is invoked, this agent will transform into Data-Regularized Q (DrQ) agent.
 Based on: https://github.com/denisyarats/pytorch_sac
 
 
 **Args**
 
 * **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **eval_env** (Optional[gym.Env]) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -45,7 +44,7 @@ Based on: https://github.com/denisyarats/pytorch_sac
 * **temperature** (float) : Initial temperature coefficient.
 * **fixed_temperature** (bool) : Fixed temperature or not.
 * **discount** (float) : Discount factor.
-* **network_init_method** (str) : Network initialization method name.
+* **init_fn** (str) : Parameters initialization method.
 
 
 
@@ -58,7 +57,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L166)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L162)
 ```python
 .alpha()
 ```
@@ -67,7 +66,7 @@ PPO agent instance.
 Get the temperature coefficient.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L170)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L166)
 ```python
 .update()
 ```
@@ -76,12 +75,11 @@ Get the temperature coefficient.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L243)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L212)
 ```python
 .update_critic(
-   obs: th.Tensor, action: th.Tensor, reward: th.Tensor, terminated: th.Tensor,
-   truncateds: th.Tensor, next_obs: th.Tensor, weights: th.Tensor,
-   aug_obs: th.Tensor, aug_next_obs: th.Tensor
+   obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
+   truncateds: th.Tensor, next_obs: th.Tensor
 )
 ```
 
@@ -92,25 +90,22 @@ Update the critic network.
 **Args**
 
 * **obs** (th.Tensor) : Observations.
-* **action** (th.Tensor) : Actions.
-* **reward** (th.Tensor) : Rewards.
-* **terminated** (th.Tensor) : Terminateds.
+* **actions** (th.Tensor) : Actions.
+* **rewards** (th.Tensor) : Rewards.
+* **terminateds** (th.Tensor) : Terminateds.
 * **truncateds** (th.Tensor) : Truncateds.
 * **next_obs** (th.Tensor) : Next observations.
-* **weights** (th.Tensor) : Batch sample weights.
-* **aug_obs** (th.Tensor) : Augmented observations.
-* **aug_next_obs** (th.Tensor) : Augmented next observations.
 
 
 **Returns**
 
-Critic loss metrics.
+Critic loss.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/sac.py/#L317)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L261)
 ```python
 .update_actor_and_alpha(
-   obs: th.Tensor, weights: th.Tensor
+   obs: th.Tensor
 )
 ```
 
@@ -121,9 +116,8 @@ Update the actor network and temperature.
 **Args**
 
 * **obs** (th.Tensor) : Observations.
-* **weights** (th.Tensor) : Batch sample weights.
 
 
 **Returns**
 
-Actor loss metrics.
+Policy loss.

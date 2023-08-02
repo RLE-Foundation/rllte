@@ -1,10 +1,10 @@
 #
 
 
-## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L35)
+## DictRolloutStorage
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L35)
 ```python 
-VanillaRolloutStorage(
+DictRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
    num_steps: int = 256, num_envs: int = 8, batch_size: int = 64, discount: float = 0.999,
    gae_lambda: float = 0.95
@@ -13,7 +13,7 @@ VanillaRolloutStorage(
 
 
 ---
-Vanilla rollout storage for on-policy algorithms.
+Dict Rollout storage for on-policy algorithms and dictionary observations.
 
 
 **Args**
@@ -30,14 +30,14 @@ Vanilla rollout storage for on-policy algorithms.
 
 **Returns**
 
-Vanilla rollout storage.
+Dict rollout storage.
 
 
 **Methods:**
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L116)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L78)
 ```python
 .add(
    observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
@@ -67,40 +67,8 @@ Add sampled transitions into storage.
 
 None.
 
-### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L155)
-```python
-.update()
-```
-
----
-Reset the terminal state of each env.
-
-### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L160)
-```python
-.compute_returns_and_advantages(
-   last_values: th.Tensor
-)
-```
-
----
-Perform generalized advantage estimation (GAE).
-
-
-**Args**
-
-* **last_values** (th.Tensor) : Estimated values of the last step.
-* **gamma** (float) : Discount factor.
-* **gae_lamdba** (float) : Coefficient of GAE.
-
-
-**Returns**
-
-None.
-
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L187)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L126)
 ```python
 .sample()
 ```

@@ -104,15 +104,15 @@ nav:
 
     - Agent:
       - Legacy:
-        - PPO: api_docs/agent/ppo.md
-        - A2C: api_docs/agent/a2c.md
-        - DQN: api_docs/agent/dqn.md
-        - SAC: api_docs/agent/sac.md
-        - DDPG: api_docs/agent/drqv2.md
+        - PPO: api_docs/agent/legacy/ppo.md
+        - A2C: api_docs/agent/legacy/a2c.md
+        - DQN: api_docs/agent/legacy/dqn.md
+        - SAC: api_docs/agent/legacy/sac.md
+        - DDPG: api_docs/agent/legacy/ddpg.md
       - Current:
         - DrQv2: api_docs/agent/drqv2.md
         - DAAC: api_docs/agent/daac.md
-        - DrAC: api_docs/agent/ppo.md
+        - DrAC: api_docs/agent/drac.md
         - DrDAAC: api_docs/agent/drdaac.md
         - IMPALA: api_docs/agent/impala.md
 
@@ -120,8 +120,9 @@ nav:
       - policy: 
         - OnPolicySharedActorCritic: api_docs/xploit/policy/on_policy_shared_actor_critic.md
         - OnPolicyDecoupledActorCritic: api_docs/xploit/policy/on_policy_decoupled_actor_critic.md
-        - OffPolicyDeterministicActorDoubleCritic: api_docs/xploit/policy/off_policy_deterministic_actor_double_critic.md
-        - OffPolicyStochasticActorDoubleCritic: api_docs/xploit/policy/off_policy_stochastic_actor_double_critic.md
+        - OffPolicyDoubleQNetwork: api_docs/xploit/policy/off_policy_double_qnetwork.md
+        - OffPolicyDeterministicActorDoubleCritic: api_docs/xploit/policy/off_policy_det_actor_double_critic.md
+        - OffPolicyStochasticActorDoubleCritic: api_docs/xploit/policy/off_policy_stoch_actor_double_critic.md
         - DistributedActorLearner: api_docs/xploit/policy/distributed_actor_learner.md
 
       - encoder:
@@ -194,6 +195,7 @@ nav:
       - Packaged Environments:
         - make_atari_env: api_docs/env/atari/__init__.md
         - make_bullet_env: api_docs/env/bullet/__init__.md
+        - make_bitflipping_env: api_docs/env/bitflipping/__init__.md
         - make_dmc_env: api_docs/env/dmc/__init__.md
         - make_minigrid_env: api_docs/env/minigrid/__init__.md
         - make_multibinary_env: api_docs/env/multibinary/__init__.md
@@ -206,3 +208,6 @@ nav:
       - Comparison: api_docs/evaluation/comparison.md
       - Performance: api_docs/evaluation/performance.md
       - Visualization: api_docs/evaluation/visualization.md
+
+  - Benchmarks: benchmarks.md
+  - Copilot: copilot.md

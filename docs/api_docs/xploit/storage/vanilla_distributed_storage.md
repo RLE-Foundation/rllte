@@ -1,10 +1,10 @@
 #
 
 
-## DistributedStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L34)
+## VanillaDistributedStorage
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L35)
 ```python 
-DistributedStorage(
+VanillaDistributedStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
    num_steps: int = 100, num_storages: int = 80, batch_size: int = 32
 )
@@ -12,7 +12,7 @@ DistributedStorage(
 
 
 ---
-Distributed storage for distributed algorithms like IMPALA.
+Vanilla distributed storage for distributed algorithms like IMPALA.
 
 
 **Args**
@@ -34,23 +34,35 @@ Vanilla rollout storage.
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L103)
 ```python
 .add(
-   *args
+   idx: int, timestep: int, actor_output: Dict[str, Any], env_output: Dict[str,
+   Any]
 )
 ```
 
 ---
 Add sampled transitions into storage.
 
+
+**Args**
+
+* **idx** (int) : The index of storage.
+* **timestep** (int) : The timestep of rollout.
+* **actor_output** (Dict) : Actor output.
+* **env_output** (Dict) : Environment output.
+
+
+**Returns**
+
+None
+
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L101)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L125)
 ```python
 .sample(
-   free_queue: th.multiprocessing.SimpleQueue,
-   full_queue: th.multiprocessing.SimpleQueue, init_actor_state_storages: List,
-   lock = threading.Lock()
+   free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock = threading.Lock()
 )
 ```
 
@@ -62,7 +74,6 @@ Sample transitions from the storage.
 
 * **free_queue** (Queue) : Free queue for communication.
 * **full_queue** (Queue) : Full queue for communication.
-* **init_actor_state_storages**  : (List[th.Tensor]): Initial states for LSTM.
 * **lock** (Lock) : Thread lock.
 
 
@@ -71,7 +82,7 @@ Sample transitions from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/distributed_storage.py/#L131)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L151)
 ```python
 .update(
    *args

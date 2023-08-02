@@ -9,7 +9,7 @@ conda create -n rllte python=3.8
 ```
 
 ### with pip <small>recommended</small>
-**rllte** has been published as a Python package in [PyPi](https://pypi.org/project/rllte/) and can be installed with `pip`, ideally by using a virtual environment. Open up a terminal and install **rllte** with:
+**RLLTE** has been published as a Python package in [PyPi](https://pypi.org/project/rllte/) and can be installed with `pip`, ideally by using a virtual environment. Open up a terminal and install **RLLTE** with:
 
 ``` shell
 pip install rllte-core # basic installation
@@ -28,7 +28,7 @@ pip install -e .[envs] # for pre-defined environments
 ```
 
 ## PyTorch Installation
-**rllte** currently supports two kinds of computing devices for acceleration, namely [NVIDIA GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/) and [HUAWEI NPU](https://www.hiascend.com/). Thus users need to install different versions PyTorch for adapting to different devices.
+**RLLTE** currently supports two kinds of computing devices for acceleration, namely [NVIDIA GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/) and [HUAWEI NPU](https://www.hiascend.com/). Thus users need to install different versions PyTorch for adapting to different devices.
 ### with NVIDIA GPU
 Open up a terminal and install PyTorch with:
 ``` sh

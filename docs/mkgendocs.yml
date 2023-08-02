@@ -3,6 +3,24 @@ templates_dir:
 repo: https://github.com/RLE-Foundation/rllte
 version: main
 pages:
+  - page: common/preprocessing.md
+    source: rllte/common/preprocessing.py
+    functions:
+      - process_env_info
+      - process_observation_space
+      - process_action_space
+      - get_flattened_obs_dim
+      - is_image_space_channels_first
+      - is_image_space
+      - preprocess_obs
+  - page: common/initialization.md
+    source: rllte/common/initialization.py
+    functions:
+      - get_init_fn
+      - _xavier_normal
+      - _xavier_uniform
+      - _orthogonal
+      - _identity
   - page: common/base_agent.md
     source: rllte/common/base_agent.py
     classes:
@@ -67,6 +85,10 @@ pages:
     source: rllte/xploit/encoder/pathak_cnn_encoder.py
     classes:
       - PathakCnnEncoder
+  - page: xploit/encoder/raffin_combined_encoder.md
+    source: rllte/xploit/encoder/raffin_combined_encoder.py
+    classes:
+      - RaffinCombinedEncoder
   - page: xploit/encoder/tassa_cnn_encoder.md
     source: rllte/xploit/encoder/tassa_cnn_encoder.py
     classes:
@@ -75,10 +97,30 @@ pages:
     source: rllte/xploit/encoder/vanilla_mlp_encoder.py
     classes:
       - VanillaMlpEncoder
+  - page: agent/legacy/a2c.md
+    source: rllte/agent/legacy/a2c.py
+    classes:
+      - A2C
   - page: agent/daac.md
     source: rllte/agent/daac.py
     classes:
       - DAAC
+  - page: agent/legacy/ddpg.md
+    source: rllte/agent/legacy/ddpg.py
+    classes:
+      - DDPG
+  - page: agent/legacy/dqn.md
+    source: rllte/agent/legacy/dqn.py
+    classes:
+      - DQN
+  - page: agent/drac.md
+    source: rllte/agent/drac.py
+    classes:
+      - DrAC
+  - page: agent/drdaac.md
+    source: rllte/agent/drdaac.py
+    classes:
+      - DrDAAC
   - page: agent/drqv2.md
     source: rllte/agent/drqv2.py
     classes:
@@ -87,18 +129,26 @@ pages:
     source: rllte/agent/impala.py
     classes:
       - IMPALA
-  - page: agent/ppo.md
-    source: rllte/agent/ppo.py
+  - page: agent/legacy/ppo.md
+    source: rllte/agent/legacy/ppo.py
     classes:
       - PPO
-  - page: agent/sac.md
-    source: rllte/agent/sac.py
+  - page: agent/legacy/sac.md
+    source: rllte/agent/legacy/sac.py
     classes:
       - SAC
-  - page: xploit/storage/distributed_storage.md
-    source: rllte/xploit/storage/distributed_storage.py
+  - page: xploit/storage/dict_replay_storage.md
+    source: rllte/xploit/storage/dict_replay_storage.py
     classes:
-      - DistributedStorage
+      - DictReplayStorage
+  - page: xploit/storage/dict_rollout_storage.md
+    source: rllte/xploit/storage/dict_rollout_storage.py
+    classes:
+      - DictRolloutStorage
+  - page: xploit/storage/her_replay_storage.md
+    source: rllte/xploit/storage/her_replay_storage.py
+    classes:
+      - HerReplayStorage
   - page: xploit/storage/nstep_replay_storage.md
     source: rllte/xploit/storage/nstep_replay_storage.py
     classes:
@@ -107,6 +157,10 @@ pages:
     source: rllte/xploit/storage/prioritized_replay_storage.py
     classes:
       - PrioritizedReplayStorage
+  - page: xploit/storage/vanilla_distributed_storage.md
+    source: rllte/xploit/storage/vanilla_distributed_storage.py
+    classes:
+      - VanillaDistributedStorage
   - page: xploit/storage/vanilla_replay_storage.md
     source: rllte/xploit/storage/vanilla_replay_storage.py
     classes:
@@ -119,14 +173,18 @@ pages:
     source: rllte/xploit/policy/distributed_actor_learner.py
     classes:
       - DistributedActorLearner
-  - page: xploit/policy/off_policy_deterministic_actor_double_critic.md
-    source: rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py
+  - page: xploit/policy/off_policy_det_actor_double_critic.md
+    source: rllte/xploit/policy/off_policy_det_actor_double_critic.py
     classes:
-      - OffPolicyDeterministicActorDoubleCritic
-  - page: xploit/policy/off_policy_stochastic_actor_double_critic.md
-    source: rllte/xploit/policy/off_policy_stochastic_actor_double_critic.py
+      - OffPolicyDetActorDoubleCritic
+  - page: xploit/policy/off_policy_double_qnetwork.md
+    source: rllte/xploit/policy/off_policy_double_qnetwork.py
     classes:
-      - OffPolicyStochasticActorDoubleCritic
+      - OffPolicyDoubleQNetwork
+  - page: xploit/policy/off_policy_stoch_actor_double_critic.md
+    source: rllte/xploit/policy/off_policy_stoch_actor_double_critic.py
+    classes:
+      - OffPolicyStochActorDoubleCritic
   - page: xploit/policy/on_policy_decoupled_actor_critic.md
     source: rllte/xploit/policy/on_policy_decoupled_actor_critic.py
     classes:
@@ -251,6 +309,10 @@ pages:
     source: rllte/xplore/distribution/diagonal_gaussian.py
     classes:
       - DiagonalGaussian
+  - page: xplore/distribution/multi_categorical.md
+    source: rllte/xplore/distribution/multi_categorical.py
+    classes:
+      - MultiCategorical
   - page: xplore/distribution/normal_noise.md
     source: rllte/xplore/distribution/normal_noise.py
     classes:
@@ -267,10 +329,10 @@ pages:
     source: rllte/xplore/distribution/truncated_normal_noise.py
     classes:
       - TruncatedNormalNoise
-  - page: env/atari/__init__.md
-    source: rllte/env/atari/__init__.py
+  - page: env/bitflipping/__init__.md
+    source: rllte/env/bitflipping/__init__.py
     functions:
-      - make_atari_env
+      - make_bitflipping_env
   - page: env/bullet/__init__.md
     source: rllte/env/bullet/__init__.py
     functions:
@@ -279,6 +341,11 @@ pages:
     source: rllte/env/dmc/__init__.py
     functions:
       - make_dmc_env
+  - page: env/atari/__init__.md
+    source: rllte/env/atari/__init__.py
+    functions:
+      - make_atari_env
+      - make_envpool_atari_env
   - page: env/minigrid/__init__.md
     source: rllte/env/minigrid/__init__.py
     functions:

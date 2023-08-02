@@ -1,21 +1,23 @@
 #
 
 
-## OffPolicyDeterministicActorDoubleCritic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L87)
+## OffPolicyDetActorDoubleCritic
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L88)
 ```python 
-OffPolicyDeterministicActorDoubleCritic(
+OffPolicyDetActorDoubleCritic(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int = 64,
    hidden_dim: int = 1024, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-   opt_kwargs: Optional[Dict[str, Any]] = None,
-   init_method: Callable = nn.init.orthogonal_
+   opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: Optional[str] = None
 )
 ```
 
 
 ---
-Deterministic actor network and double critic network for DrQv2.
+Deterministic actor network and double critic network for off-policy algortithms like `DrQv2`, `DDPG`.
 Here the 'self.dist' refers to an action noise instance.
+
+Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
+Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
 
 
 **Args**
@@ -26,7 +28,7 @@ Here the 'self.dist' refers to an action noise instance.
 * **hidden_dim** (int) : Number of units per hidden layer.
 * **opt_class** (Type[th.optim.Optimizer]) : Optimizer class.
 * **opt_kwargs** (Optional[Dict[str, Any]]) : Optimizer keyword arguments.
-* **init_method** (Callable) : Initialization method.
+* **init_fn** (Optional[str]) : Parameters initialization method.
 
 
 **Returns**
@@ -38,7 +40,7 @@ Actor network instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L143)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -59,10 +61,31 @@ Freeze all the elements like `encoder` and `dist`.
 
 None.
 
-### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L167)
+### .explore
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L168)
 ```python
-.act(
+.explore(
+   obs: th.Tensor
+)
+```
+
+---
+Explore the environment and randomly generate actions.
+
+
+**Args**
+
+* **obs** (th.Tensor) : Observation from the environment.
+
+
+**Returns**
+
+Sampled actions.
+
+### .forward
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L179)
+```python
+.forward(
    obs: th.Tensor, training: bool = True, step: int = 0
 )
 ```
@@ -83,7 +106,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .get_dist
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L188)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L200)
 ```python
 .get_dist(
    obs: th.Tensor, step: int
@@ -105,7 +128,7 @@ Get sample distribution.
 RLLTE distribution.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L205)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L217)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -127,10 +150,10 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_deterministic_actor_double_critic.py/#L221)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L233)
 ```python
 .load(
-   path: str
+   path: str, device: th.device
 )
 ```
 
@@ -141,6 +164,7 @@ Load initial parameters.
 **Args**
 
 * **path** (str) : Import path.
+* **device** (th.device) : Device to use.
 
 
 **Returns**

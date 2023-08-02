@@ -1,31 +1,30 @@
 #
 
 
-## PPO
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppo.py/#L40)
+## DrAC
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drac.py/#L40)
 ```python 
-PPO(
+DrAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
    lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 512, clip_range: float = 0.1,
    clip_range_vf: float = 0.1, n_epochs: int = 4, vf_coef: float = 0.5,
    ent_coef: float = 0.01, aug_coef: float = 0.1, max_grad_norm: float = 0.5,
-   network_init_method: str = 'orthogonal'
+   init_fn: str = 'orthogonal'
 )
 ```
 
 
 ---
-Proximal Policy Optimization (PPO) agent.
-When the `augmentation` module is invoked, this agent will transform into Data Regularized Actor-Critic (DrAC) agent.
-Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
+Data Regularized Actor-Critic (DrAC) agent.
+Based on: https://github.com/rraileanu/auto-drac
 
 
 **Args**
 
 * **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **eval_env** (Optional[gym.Env]) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -44,23 +43,36 @@ Based on: https://github.com/yuanmingqi/pytorch-a2c-ppo-acktr-gail
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **aug_coef** (float) : Weighting coefficient of augmentation loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
-* **network_init_method** (str) : Network initialization method name.
+* **init_fn** (str) : Parameters initialization method.
 
 
 
 **Returns**
 
-PPO agent instance.
+DrAC agent instance.
 
 
 **Methods:**
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppo.py/#L167)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drac.py/#L162)
 ```python
-.update()
+.update(
+   samples: Generator
+)
 ```
 
 ---
-Update the agent and return training metrics such as actor loss, critic_loss, etc.
+Update function.
+
+
+**Args**
+
+* **samples** (Generator) : A generator of samples.
+
+
+**Returns**
+
+* Training metrics such as policy loss, value loss, etc.
+

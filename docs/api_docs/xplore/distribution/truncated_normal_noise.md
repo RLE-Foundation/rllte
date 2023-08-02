@@ -59,51 +59,8 @@ samples if the distribution parameters are batched.
 
 A sample_shape shaped sample.
 
-### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L100)
-```python
-.rsample(
-   sample_shape: th.Size = th.Size()
-)
-```
-
----
-Generates a sample_shape shaped sample or sample_shape shaped batch of
-samples if the distribution parameters are batched.
-
-
-**Args**
-
-* **sample_shape** (th.Size) : The size of the sample to be drawn.
-
-
-**Returns**
-
-A sample_shape shaped sample.
-
-### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L112)
-```python
-.log_prob(
-   value: th.Tensor
-)
-```
-
----
-Returns the log of the probability density/mass function evaluated at `value`.
-
-
-**Args**
-
-* **value** (th.Tensor) : The value to be evaluated.
-
-
-**Returns**
-
-The log_prob value.
-
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L123)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L100)
 ```python
 .reset(
    noiseless_action: th.Tensor, step: int = 0
@@ -125,7 +82,7 @@ Reset the noise instance.
 None.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L139)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L116)
 ```python
 .mean()
 ```
@@ -134,37 +91,10 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L121)
 ```python
 .mode()
 ```
 
 ---
 Returns the mode of the distribution.
-
-### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L148)
-```python
-.entropy()
-```
-
----
-Returns the Shannon entropy of distribution.
-
-### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L153)
-```python
-.stddev()
-```
-
----
-Returns the standard deviation of the distribution.
-
-### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L158)
-```python
-.variance()
-```
-
----
-Returns the variance of the distribution.

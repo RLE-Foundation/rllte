@@ -6,7 +6,7 @@
 ```python
 .make_multibinary_env(
    env_id: str = 'multibinary_state', num_envs: int = 1, device: str = 'cpu', seed: int = 0,
-   distributed: bool = False
+   parallel: bool = True
 )
 ```
 
@@ -20,7 +20,8 @@ Build environments with `MultiBinary` action space for testing.
 * **num_envs** (int) : Number of environments.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **seed** (int) : Random seed.
-* **distributed** (bool) : For `Distributed` algorithms, in which `SyncVectorEnv` is required
+* **parallel** (bool) : `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+    For `Distributed` algorithms, in which `SyncVectorEnv` is required
     and reward clip will be used before environment vectorization.
 
 

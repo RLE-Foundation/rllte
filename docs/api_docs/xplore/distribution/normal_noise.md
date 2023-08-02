@@ -149,21 +149,3 @@ Returns the mean of the distribution.
 
 ---
 Returns the mode of the distribution.
-
-### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L152)
-```python
-.stddev()
-```
-
----
-Returns the standard deviation of the distribution.
-
-### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/normal_noise.py/#L157)
-```python
-.variance()
-```
-
----
-Returns the variance of the distribution.

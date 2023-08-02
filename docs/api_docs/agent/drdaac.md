@@ -1,23 +1,24 @@
 #
 
 
-## DAAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L40)
+## DrDAAC
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L40)
 ```python 
-DAAC(
+DrDAAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
    lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 256, clip_range: float = 0.2,
    clip_range_vf: float = 0.2, policy_epochs: int = 1, value_freq: int = 1,
    value_epochs: int = 9, vf_coef: float = 0.5, ent_coef: float = 0.01,
-   adv_coef: float = 0.25, max_grad_norm: float = 0.5, init_fn: str = 'xavier_uniform'
+   aug_coef: float = 0.1, adv_coef: float = 0.25, max_grad_norm: float = 0.5,
+   init_fn: str = 'xavier_uniform'
 )
 ```
 
 
 ---
-Decoupled Advantage Actor-Critic (DAAC) agent.
+Data-Regularized extension of Decoupled Advantage Actor-Critic (DAAC) agent.
 Based on: https://github.com/rraileanu/idaac
 
 
@@ -43,6 +44,7 @@ Based on: https://github.com/rraileanu/idaac
 * **value_epochs** (int) : Times of updating the value network.
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
+* **aug_coef** (float) : Weighting coefficient of augmentation loss.
 * **adv_ceof** (float) : Weighting coefficient of advantage loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
 * **init_fn** (str) : Parameters initialization method.
@@ -58,7 +60,7 @@ DAAC agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L169)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L175)
 ```python
 .update()
 ```

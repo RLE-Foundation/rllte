@@ -1,30 +1,29 @@
 #
 
 
-## DAAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L40)
+## A2C
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L40)
 ```python 
-DAAC(
+A2C(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
-   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 256, clip_range: float = 0.2,
-   clip_range_vf: float = 0.2, policy_epochs: int = 1, value_freq: int = 1,
-   value_epochs: int = 9, vf_coef: float = 0.5, ent_coef: float = 0.01,
-   adv_coef: float = 0.25, max_grad_norm: float = 0.5, init_fn: str = 'xavier_uniform'
+   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 512, n_epochs: int = 4,
+   vf_coef: float = 0.5, ent_coef: float = 0.01, aug_coef: float = 0.1,
+   max_grad_norm: float = 0.5, init_fn: str = 'orthogonal'
 )
 ```
 
 
 ---
-Decoupled Advantage Actor-Critic (DAAC) agent.
-Based on: https://github.com/rraileanu/idaac
+Advantage Actor-Critic (A2C) agent.
+Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 
 
 **Args**
 
 * **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **eval_env** (Optional[gym.Env]) : A Gym-like environment for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -36,14 +35,9 @@ Based on: https://github.com/rraileanu/idaac
 * **lr** (float) : The learning rate.
 * **eps** (float) : Term added to the denominator to improve numerical stability.
 * **hidden_dim** (int) : The size of the hidden layers.
-* **clip_range** (float) : Clipping parameter.
-* **clip_range_vf** (float) : Clipping parameter for the value function.
-* **policy_epochs** (int) : Times of updating the policy network.
-* **value_freq** (int) : Update frequency of the value network.
-* **value_epochs** (int) : Times of updating the value network.
+* **n_epochs** (int) : Times of updating the policy.
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
-* **adv_ceof** (float) : Weighting coefficient of advantage loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
 * **init_fn** (str) : Parameters initialization method.
 
@@ -51,14 +45,14 @@ Based on: https://github.com/rraileanu/idaac
 
 **Returns**
 
-DAAC agent instance.
+A2C agent instance.
 
 
 **Methods:**
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L169)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L152)
 ```python
 .update()
 ```

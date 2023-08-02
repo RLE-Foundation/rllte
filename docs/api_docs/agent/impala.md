@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L116)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L111)
 ```python 
 IMPALA(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -10,7 +10,7 @@ IMPALA(
    num_storages: int = 60, feature_dim: int = 512, batch_size: int = 4, lr: float = 0.0004,
    eps: float = 0.01, hidden_dim: int = 512, use_lstm: bool = False, ent_coef: float = 0.01,
    baseline_coef: float = 0.5, max_grad_norm: float = 40, discount: float = 0.99,
-   network_init_method: str = 'identity'
+   init_fn: str = 'identity'
 )
 ```
 
@@ -41,7 +41,7 @@ Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/mo
 * **baseline_coef** (float) : Weighting coefficient of baseline value loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
 * **discount** (float) : Discount factor.
-* **network_init_method** (str) : Network initialization method name.
+* **init_fn** (str) : Parameters initialization method.
 
 
 
@@ -54,10 +54,10 @@ IMPALA agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L240)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L228)
 ```python
 .update(
-   batch: Dict, init_actor_states: Tuple[th.Tensor, ...], lock = threading.Lock()
+   batch: Dict, lock = threading.Lock()
 )
 ```
 
@@ -68,7 +68,6 @@ Update the learner model.
 **Args**
 
 * **batch** (Batch) : Batch samples.
-* **init_actor_states** (List[Tensor]) : Initial states for LSTM.
 * **lock** (Lock) : Thread lock.
 
 

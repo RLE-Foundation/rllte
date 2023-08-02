@@ -1,5 +1,5 @@
 ## Software
-To ensure that **rllte** is installed correctly, we can verify the installation by running a single training script:
+To ensure that **RLLTE** is installed correctly, we can verify the installation by running a single training script:
 ``` shell
 python -m rllte.verification
 ```

@@ -110,39 +110,3 @@ the score of the base distribution and the log abs det jacobian.
 **Returns**
 
 The log_prob value.
-
-### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L133)
-```python
-.entropy()
-```
-
----
-Returns the Shannon entropy of distribution.
-
-### .stddev
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L138)
-```python
-.stddev()
-```
-
----
-Returns the standard deviation of the distribution.
-
-### .variance
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L143)
-```python
-.variance()
-```
-
----
-Returns the variance of the distribution.
-
-### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L147)
-```python
-.reset()
-```
-
----
-Reset the distribution.

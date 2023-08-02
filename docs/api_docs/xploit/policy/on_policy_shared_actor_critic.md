@@ -2,19 +2,22 @@
 
 
 ## OnPolicySharedActorCritic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L212)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L213)
 ```python 
 OnPolicySharedActorCritic(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int,
    hidden_dim: int, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-   opt_kwargs: Optional[Dict[str, Any]] = None,
-   init_method: Callable = nn.init.orthogonal_, aux_critic: bool = False
+   opt_kwargs: Optional[Dict[str, Any]] = None, aux_critic: bool = False,
+   init_fn: Optional[str] = None
 )
 ```
 
 
 ---
-Actor-Critic network using a shared encoder for on-policy algorithms like `PPO`.
+Actor-Critic network for on-policy algorithms like `PPO` and `A2C`.
+
+Structure: self.encoder (shared by actor and critic), self.actor, self.critic
+Optimizers: self.opt -> (self.encoder, self.actor, self.critic)
 
 
 **Args**
@@ -25,8 +28,8 @@ Actor-Critic network using a shared encoder for on-policy algorithms like `PPO`.
 * **hidden_dim** (int) : Number of units per hidden layer.
 * **opt_class** (Type[th.optim.Optimizer]) : Optimizer class.
 * **opt_kwargs** (Optional[Dict[str, Any]]) : Optimizer keyword arguments.
-* **init_method** (Callable) : Initialization method.
 * **aux_critic** (bool) : Use auxiliary critic or not, for `PPG` agent.
+* **init_fn** (Optional[str]) : Parameters initialization method.
 
 
 **Returns**
@@ -38,7 +41,7 @@ Actor-Critic network instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L279)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L283)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -59,10 +62,10 @@ Freeze all the elements like `encoder` and `dist`.
 
 None.
 
-### .act
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L300)
+### .forward
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L304)
 ```python
-.act(
+.forward(
    obs: th.Tensor, training: bool = True
 )
 ```
@@ -83,7 +86,7 @@ Sampled actions, estimated values, and log of probabilities for observations whe
 else only deterministic actions.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L323)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L327)
 ```python
 .get_value(
    obs: th.Tensor
@@ -104,7 +107,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .evaluate_actions
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L334)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L338)
 ```python
 .evaluate_actions(
    obs: th.Tensor, actions: th.Tensor = None
@@ -125,50 +128,8 @@ Evaluate actions according to the current policy given the observations.
 
 Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
 
-### .get_dist_and_aux_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L353)
-```python
-.get_dist_and_aux_value(
-   obs: th.Tensor
-)
-```
-
----
-Get probs and auxiliary estimated values for auxiliary phase update.
-
-
-**Args**
-
-* **obs**  : Sampled observations.
-
-
-**Returns**
-
-Sample distribution, estimated values, auxiliary estimated values.
-
-### .get_policy_outputs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L368)
-```python
-.get_policy_outputs(
-   obs: th.Tensor
-)
-```
-
----
-Get policy outputs for training.
-
-
-**Args**
-
-* **obs** (th.Tensor) : Observations.
-
-
-**Returns**
-
-Policy outputs like unnormalized probabilities for `Discrete` tasks.
-
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L381)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L357)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -190,10 +151,10 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L397)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L373)
 ```python
 .load(
-   path: str
+   path: str, device: th.device
 )
 ```
 
@@ -204,6 +165,7 @@ Load initial parameters.
 **Args**
 
 * **path** (str) : Import path.
+* **device** (th.device) : Device to use.
 
 
 **Returns**

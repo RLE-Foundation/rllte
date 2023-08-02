@@ -21,7 +21,7 @@ Added algorithms: [PPO]
 
 
 ### .load_scores
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L44)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L45)
 ```python
 .load_scores()
 ```
@@ -30,7 +30,7 @@ Added algorithms: [PPO]
 Returns final performance.
 
 ### .load_curves
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L61)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L59)
 ```python
 .load_curves()
 ```
@@ -38,9 +38,9 @@ Returns final performance.
 ---
 Returns learning curves using a Dict of arrays:
 curves = {
-    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...}, 
+    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
 },
-    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...}, 
+    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
 },
 ...
 ---

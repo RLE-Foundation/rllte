@@ -1,10 +1,10 @@
 #
 
 
-## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L34)
+## DictReplayStorage
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L35)
 ```python 
-VanillaReplayStorage(
+DictReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
    storage_size: int = 1000000, num_envs: int = 1, batch_size: int = 1024
 )
@@ -12,7 +12,7 @@ VanillaReplayStorage(
 
 
 ---
-Vanilla replay storage for off-policy algorithms.
+Dict replay storage for off-policy algorithms and dictionary observations.
 
 
 **Args**
@@ -27,19 +27,19 @@ Vanilla replay storage for off-policy algorithms.
 
 **Returns**
 
-Vanilla replay storage.
+Dict replay storage.
 
 
 **Methods:**
 
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L86)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L71)
 ```python
 .add(
-   observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
+   observations: Dict[str, th.Tensor], actions: th.Tensor, rewards: th.Tensor,
    terminateds: th.Tensor, truncateds: th.Tensor, info: Dict[str, Any],
-   next_observations: th.Tensor
+   next_observations: Dict[str, th.Tensor]
 )
 ```
 
@@ -49,13 +49,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **observations** (th.Tensor) : Observations.
+* **observations** (Dict[str, th.Tensor]) : Observations.
 * **actions** (th.Tensor) : Actions.
 * **rewards** (th.Tensor) : Rewards.
 * **terminateds** (th.Tensor) : Termination flag.
 * **truncateds** (th.Tensor) : Truncation flag.
 * **info** (Dict[str, Any]) : Additional information.
-* **next_observations** (th.Tensor) : Next observations.
+* **next_observations** (Dict[str, th.Tensor]) : Next observations.
 
 
 **Returns**
@@ -63,7 +63,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L120)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L115)
 ```python
 .sample(
    step: int
@@ -84,7 +84,7 @@ Sample from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L153)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L153)
 ```python
 .update(
    *args

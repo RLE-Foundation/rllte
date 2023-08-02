@@ -21,8 +21,9 @@
 
 
 !!! abstract "Policy: *Policies for interaction and learning.*"
-    - [OnPolicySharedActorCritic]()
+    - OnPolicySharedActorCritic
     - OnPolicyDecoupledActorCritic
+    - OffPolicyDoubleQNetwork
     - OffPolicyDeterministicActorDoubleCritic
     - OffPolicyStochasticActorDoubleCritic
     - DistributedActorLearner
