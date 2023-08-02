@@ -239,26 +239,27 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
                 if len(episode_rewards) > 0:
                     episode_time, total_time = self.timer.reset()
+                    
                     # write to tensorboard
-                    for key in train_metrics.keys():
-                        if "Loss" in key:
-                            self.writer.add_scalar(f"Training/{key}", train_metrics[key], global_step)
-                    self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), global_step)
-                    self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), global_step)
-                    self.writer.add_scalar("Training/Number of Episodes", global_episode, global_step)
-                    self.writer.add_scalar('Training/FPS', (global_step - start_step) / episode_time, global_step)
-                    self.writer.add_scalar('Training/Total Time', total_time, global_step)
+                    # for key in train_metrics.keys():
+                    #     if "Loss" in key:
+                    #         self.writer.add_scalar(f"Training/{key}", train_metrics[key], global_step)
+                    # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), global_step)
+                    # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), global_step)
+                    # self.writer.add_scalar("Training/Number of Episodes", global_episode, global_step)
+                    # self.writer.add_scalar('Training/FPS', (global_step - start_step) / episode_time, global_step)
+                    # self.writer.add_scalar('Training/Total Time', total_time, global_step)
 
-                    # train_metrics = {
-                    #     "step": global_step,
-                    #     "episode": global_episode,
-                    #     "episode_length": np.mean(episode_steps),
-                    #     "episode_reward": np.mean(episode_rewards),
-                    #     "fps": (global_step - start_step) / episode_time,
-                    #     "total_time": total_time,
-                    # }
-                    # self.logger.train(msg=train_metrics)
-                    # log_times += 1
+                    train_metrics = {
+                        "step": global_step,
+                        "episode": global_episode,
+                        "episode_length": np.mean(episode_steps),
+                        "episode_reward": np.mean(episode_rewards),
+                        "fps": (global_step - start_step) / episode_time,
+                        "total_time": total_time,
+                    }
+                    self.logger.train(msg=train_metrics)
+                    log_times += 1
 
                 # if log_times % 50 == 0:
                 #     episode_time, total_time = self.timer.reset()

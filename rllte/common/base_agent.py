@@ -85,7 +85,8 @@ class BaseAgent(ABC):
         # basic setup
         self.work_dir = Path.cwd()
         self.logger = Logger(log_dir=self.work_dir)
-        self.writer = SummaryWriter(log_dir=self.work_dir)
+        # TODO: Is tensorboard necessary?
+        # self.writer = SummaryWriter(log_dir=self.work_dir)
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
@@ -161,16 +162,16 @@ class BaseAgent(ABC):
         self.logger.debug(f"Distribution: {dist_name}")
 
         # write to tensorboard
-        structure_dict = {
-            "Agent": self.__class__.__name__,
-            "Encoder": self.encoder.__class__.__name__,
-            "Policy": self.policy.__class__.__name__,
-            "Storage": self.storage.__class__.__name__,
-            "Distribution": dist_name,
-            "Augmentation": self.aug.__class__.__name__ if self.aug is not None else "None",
-            "Intrinsic Reward": self.irs.__class__.__name__ if self.irs is not None else "None",
-        }
-        self.writer.add_text("Agent Structure", pretty_json(structure_dict))
+        # structure_dict = {
+        #     "Agent": self.__class__.__name__,
+        #     "Encoder": self.encoder.__class__.__name__,
+        #     "Policy": self.policy.__class__.__name__,
+        #     "Storage": self.storage.__class__.__name__,
+        #     "Distribution": dist_name,
+        #     "Augmentation": self.aug.__class__.__name__ if self.aug is not None else "None",
+        #     "Intrinsic Reward": self.irs.__class__.__name__ if self.irs is not None else "None",
+        # }
+        # self.writer.add_text("Agent Structure", pretty_json(structure_dict))
 
         # check augmentation and intrinsic reward
         if self.aug is not None:
@@ -191,7 +192,7 @@ class BaseAgent(ABC):
         self.logger.debug("Check Accomplished. Start Training...")
 
         # launch tensorboard
-        self.logger.info(f"Launch TensorBoard: \n\t`tensorboard --logdir {self.work_dir}`")
+        # self.logger.info(f"Launch TensorBoard: \n\t`tensorboard --logdir {self.work_dir}`")
 
     def set(
         self,

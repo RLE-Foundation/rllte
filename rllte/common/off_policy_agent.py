@@ -108,9 +108,13 @@ class OffPolicyAgent(BaseAgent):
             # try to eval
             if (self.global_step % self.eval_every_steps) == 0 and (self.eval_env is not None):
                 eval_metrics = self.eval()
+
+                # log to console
+                self.logger.eval(msg=eval_metrics)
+
                 # write to tensorboard
-                self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
-                self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
+                # self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
+                # self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
 
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
@@ -146,15 +150,27 @@ class OffPolicyAgent(BaseAgent):
 
             # log training information
             if len(episode_rewards) > 1:
-                # write to tensorboard
                 total_time = self.timer.total_time()
-                for key in train_metrics.keys():
-                    self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
-                self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
-                self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
-                self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
-                self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
-                self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
+
+                # log to console
+                train_metrics.update({
+                    "step": self.global_step,
+                    "episode": self.global_episode,
+                    "episode_length": np.mean(episode_steps),
+                    "episode_reward": np.mean(episode_rewards),
+                    "fps": self.global_step / total_time,
+                    "total_time": total_time,
+                })
+                self.logger.train(msg=train_metrics)
+
+                # write to tensorboard
+                # for key in train_metrics.keys():
+                #     self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
+                # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
+                # self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
+                # self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
+                # self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
 
                 # As the vector environments autoreset for a terminating and truncating sub-environments,
                 # the returned observation and info is not the final step's observation or info which
@@ -206,6 +222,9 @@ class OffPolicyAgent(BaseAgent):
             time_step = time_step._replace(observations=time_step.next_observations)
 
         return {
+            "step": self.global_step,
+            "episode": self.global_episode,
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),
+            "total_time": self.timer.total_time()
         }

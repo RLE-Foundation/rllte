@@ -99,16 +99,22 @@ nav:
       - Auxiliaries:
         - Logger: api_docs/common/logger.md
         - Timer: api_docs/common/timer.md
-    
+        - Preprocessing: api_docs/common/preprocessing.md
+        - Initialization: api_docs/common/initialization.md
+
     - Agent:
-      - SAC: api_docs/agent/sac.md
-      - DrQ: api_docs/agent/sac.md
-      - DrQv2: api_docs/agent/drqv2.md
-      - DDPG: api_docs/agent/drqv2.md
-      - DAAC: api_docs/agent/daac.md
-      - PPO: api_docs/agent/ppo.md
-      - DrAC: api_docs/agent/ppo.md
-      - IMPALA: api_docs/agent/impala.md
+      - Legacy:
+        - PPO: api_docs/agent/ppo.md
+        - A2C: api_docs/agent/a2c.md
+        - DQN: api_docs/agent/dqn.md
+        - SAC: api_docs/agent/sac.md
+        - DDPG: api_docs/agent/drqv2.md
+      - Current:
+        - DrQv2: api_docs/agent/drqv2.md
+        - DAAC: api_docs/agent/daac.md
+        - DrAC: api_docs/agent/ppo.md
+        - DrDAAC: api_docs/agent/drdaac.md
+        - IMPALA: api_docs/agent/impala.md
 
     - Xploit:
       - policy: 
@@ -125,13 +131,17 @@ nav:
         - PathakCnnEncoder: api_docs/xploit/encoder/pathak_cnn_encoder.md
         - VanillaMlpEncoder: api_docs/xploit/encoder/vanilla_mlp_encoder.md
         - IdentityEncoder: api_docs/xploit/encoder/identity_encoder.md
+        - RaffinCombinedEncoder: api_docs/xploit/encoder/raffin_combined_encoder.md
 
       - storage:
-        - DistributedStorage: api_docs/xploit/storage/distributed_storage.md
+        - VanillaDistributedStorage: api_docs/xploit/storage/vanilla_distributed_storage.md
         - VanillaRolloutStorage: api_docs/xploit/storage/vanilla_rollout_storage.md
         - VanillaReplayStorage: api_docs/xploit/storage/vanilla_replay_storage.md
+        - DictRolloutStorage: api_docs/xploit/storage/dict_rollout_storage.md
+        - DictReplayStorage: api_docs/xploit/storage/dict_replay_storage.md
         - NStepReplayStorage: api_docs/xploit/storage/nstep_replay_storage.md
         - PrioritizedReplayStorage: api_docs/xploit/storage/prioritized_replay_storage.md
+        - HerReplayStorage: api_docs/xploit/storage/her_replay_storage.md
 
     - Xplore:
       - reward:
@@ -163,6 +173,7 @@ nav:
       - distribution:
         - Bernoulli: api_docs/xplore/distribution/bernoulli.md
         - Categorical: api_docs/xplore/distribution/categorical.md
+        - MultiCategorical: api_docs/xplore/distribution/multi_categorical.md
         - DiagonalGaussian: api_docs/xplore/distribution/diagonal_gaussian.md
         - SquashedNormal: api_docs/xplore/distribution/squashed_normal.md
         - NormalNoise: api_docs/xplore/distribution/normal_noise.md
@@ -188,14 +199,10 @@ nav:
         - make_multibinary_env: api_docs/env/multibinary/__init__.md
         - make_procgen_env: api_docs/env/procgen/__init__.md
         - make_robosuite_env: api_docs/env/robosuite/__init__.md
+        - make_envpool_atari_env: api_docs/env/atari/__init__.md
       - make_rllte_env: api_docs/env/utils.md
     
     - Evaluation:
       - Comparison: api_docs/evaluation/comparison.md
       - Performance: api_docs/evaluation/performance.md
       - Visualization: api_docs/evaluation/visualization.md
-
-    - Pre-training: tutorials/pre-training.md
-    
-    - Deployment: tutorials/deployment.md
-  - Benchmarks: benchmarks.md

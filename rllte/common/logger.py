@@ -47,6 +47,14 @@ EVAL_MSG_FORMAT = [
     ("total_time", "T", "time"),
 ]
 
+NUMBER_OF_METRIC_SPACES = 14
+NUMBER_OF_PREFIX_SPACES = 5
+
+INFO_PREFIX = "[" + colored("INFO.".ljust(NUMBER_OF_PREFIX_SPACES, " "), "blue", attrs=["bold"]) + "] - "
+DEBUG_PREFIX = "[" + colored("DEBUG".ljust(NUMBER_OF_PREFIX_SPACES, " "), "yellow", attrs=["bold"]) + "] - "
+ERROR_PREFIX = "[" + colored("ERROR".ljust(NUMBER_OF_PREFIX_SPACES, " "), "white", attrs=["bold"]) + "] - "
+TRAIN_PREFIX = "[" + colored("TRAIN".ljust(NUMBER_OF_PREFIX_SPACES, " "), "red", attrs=["bold"]) + "] - "
+EVAL_PREFIX = "[" + colored("EVAL.".ljust(NUMBER_OF_PREFIX_SPACES, " "), "green", attrs=["bold"]) + "] - "
 
 class Logger:
     """The logger class.
@@ -100,7 +108,7 @@ class Logger:
         pieces = []
         for key, disp_key, ty in TRAIN_MSG_FORMAT:
             value = msg.get(key, 0)
-            pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
+            pieces.append(self._format(disp_key, value, ty).ljust(NUMBER_OF_METRIC_SPACES, " "))
         return " | ".join(pieces)
 
     def parse_eval_msg(self, msg: Dict) -> str:
@@ -115,7 +123,7 @@ class Logger:
         pieces = []
         for key, disp_key, ty in EVAL_MSG_FORMAT:
             value = msg.get(key, 0)
-            pieces.append(self._format(disp_key, value, ty).ljust(14, " "))
+            pieces.append(self._format(disp_key, value, ty).ljust(NUMBER_OF_METRIC_SPACES, " "))
         return " | ".join(pieces)
 
     @property
@@ -132,8 +140,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE INFO.".ljust(11, " "), "cyan", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + msg)
+        print(self.time_stamp + INFO_PREFIX + msg)
 
     def debug(self, msg: str) -> None:
         """Output msg with 'debug' level.
@@ -144,8 +151,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE DEBUG".ljust(11, " "), "yellow", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + msg)
+        print(self.time_stamp + DEBUG_PREFIX + msg)
 
     def error(self, msg: str) -> None:
         """Output msg with 'error' level.
@@ -156,8 +162,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE ERROR".ljust(11, " "), "white", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + msg)
+        print(self.time_stamp + ERROR_PREFIX + msg)
 
     def train(self, msg: Dict) -> None:
         """Output msg with 'train' level.
@@ -168,8 +173,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE TRAIN".ljust(11, " "), "red", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + self.parse_train_msg(msg))
+        print(self.time_stamp + TRAIN_PREFIX + self.parse_train_msg(msg))
         # save data
         self._dump_to_csv(self._train_file, msg, self._train_file_write_header)
         self._train_file_write_header = False
@@ -183,8 +187,7 @@ class Logger:
         Returns:
             None.
         """
-        prefix = "[" + colored("RLLTE EVAL.".ljust(11, " "), "green", attrs=["bold"]) + "] - "
-        print(self.time_stamp + prefix + self.parse_eval_msg(msg))
+        print(self.time_stamp + EVAL_PREFIX + self.parse_eval_msg(msg))
         # save data
         self._dump_to_csv(self._eval_file, msg, self._eval_file_write_header)
         self._eval_file_write_header = False
