@@ -45,32 +45,7 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 100%">
 </div>
 
-
-- **[Agent](https://docs.rllte.dev/api/#agent-implemented-rl-agents-using-rllte-building-blocks)**: Implemented RL algorithms using **RLLTE** modules.
-
-- **[Common](https://docs.rllte.dev/api/#common-base-classes-and-auxiliary-modules)**: Base classes and auxiliary modules.
-
-- **[Xploit](https://docs.rllte.dev/api/#xploit-modules-that-focus-on-exploitation-in-rl)**: Modules that focus on <font color="#B80000"><b>exploitation</b></font> in RL.
-    + **Encoder**: *Neural nework-based encoders for processing observations.*
-    + **Policy**: *Policies for interaction and learning.*
-    + **Storage**: *Storages for storing collected experiences.*
-
-- **[Xplore](https://docs.rllte.dev/api/#xplore-modules-that-focus-on-exploration-in-rl)**: Modules that focus on <font color="#B80000"><b>exploration</b></font> in RL.
-    + **Augmentation**: *PyTorch.nn-like modules for observation augmentation.*
-    + **Distribution**: *Distributions for sampling actions.*
-    + **Reward**: *Intrinsic reward modules for enhancing exploration.*
-
-- **[Hub](https://docs.rllte.dev/benchmarks/)**: Fast training API and reusable benchmarks.
-
-- **[Env](https://docs.rllte.dev/api/#env-packaged-environments-eg-atari-games-for-fast-invocation)**: Packaged environments (e.g., Atari games) for fast invocation.
-
-- **[Evaluation](https://docs.rllte.dev/tutorials/evaluation/)**: Reasonable and reliable metrics for algorithm evaluation.
-
-- **[Pre-training](https://docs.rllte.dev/tutorials/pre-training/)**: Methods of <font color="#B80000"><b>pre-training</b></font> in RL.
-
-- **[Deployment](https://docs.rllte.dev/tutorials/deployment/)**: Methods of <font color="#B80000"><b>model deployment</b></font> in RL.
-
-For more detiled descriptions of these modules, see [API Documentation](https://docs.rllte.dev/api)
+For more detiled descriptions of these modules, see [API Documentation](https://docs.rllte.dev/api).
 
 # Quick Start
 ## Installation
