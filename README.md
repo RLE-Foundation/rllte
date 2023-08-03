@@ -91,7 +91,6 @@ For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8)
 
 ``` python
 # import `env` and `agent` api
-# import `env` and `agent` api
 from rllte.env import make_dmc_env 
 from rllte.agent import DrQv2
 

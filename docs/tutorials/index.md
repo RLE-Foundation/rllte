@@ -1,4 +1,4 @@
-Welcome to **RLLTE** tutorials!👋👋👋
+# WELCOME TO RLLTE TUTORIALS 👋👋👋
 
 - [Quick Start](./quick_start.md)
 - [Decoupling Algorithms by Module Replacement](./module_replacement.md)

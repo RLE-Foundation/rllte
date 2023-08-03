@@ -79,8 +79,7 @@ nav:
     - Installation: getting_started.md
     - Verification: verification.md
   
-  - Tutorials: 
-    - Overview: tutorials/index.md
+  - Tutorials: tutorials/index.md
 
   - API Documentation:
     - Overview: api.md
