@@ -91,6 +91,7 @@ For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8)
 
 ``` python
 # import `env` and `agent` api
+# import `env` and `agent` api
 from rllte.env import make_dmc_env 
 from rllte.agent import DrQv2
 
@@ -98,49 +99,24 @@ if __name__ == "__main__":
     device = "cuda:0"
     # create env, `eval_env` is optional
     env = make_dmc_env(env_id="cartpole_balance", device=device)
-    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
     # create agent
-    agent = DrQv2(env=env, 
-                  eval_env=eval_env, 
-                  device='cuda',
-                  tag="drqv2_dmc_pixel")
+    agent = DrQv2(env=env, device=device, tag="drqv2_dmc_pixel")
     # start training
-    agent.train(num_train_steps=5000)
+    agent.train(num_train_steps=500000)
 ```
 Run `train.py` and you will see the following output:
 
 <div align=center>
-<img src='./docs/assets/images/rl_training_gpu.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='./docs/assets/images/rl_training_gpu.gif' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### On HUAWEI NPU
 Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `cuda` with `npu`:
 ``` python
-# import `env` and `agent` api
-from rllte.env import make_dmc_env 
-from rllte.agent import DrQv2
-
-if __name__ == "__main__":
-    device = "npu:0"
-    # create env, `eval_env` is optional
-    env = make_dmc_env(env_id="cartpole_balance", device=device)
-    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
-    # create agent
-    agent = DrQv2(env=env, 
-                  eval_env=eval_env, 
-                  device='cuda',
-                  tag="drqv2_dmc_pixel")
-    # start training
-    agent.train(num_train_steps=5000)
+device = "cuda:0" -> device = "npu:0"
 ```
-Then you will see the following output:
-<div align=center>
-<img src='./docs/assets/images/rl_training_npu.png' style="filter: drop-shadow(0px 0px 7px #000);">
-</div>
 
-> Please refer to [Implemented Modules](#implemented-modules-part) for the compatibility of NPU.
-
-For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
+Please refer to [Implemented Modules](#implemented-modules-part) for the compatibility of NPU. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
 
 # Implemented Modules (Part)
 ## RL Agents

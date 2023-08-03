@@ -63,9 +63,11 @@ class OffPolicyAgent(BaseAgent):
         pretraining: bool = False,
         num_init_steps: int = 2000,
         eval_every_steps: int = 5000,
+        **kwargs
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
 
+        self.log_interval = kwargs.get("log_interval", 1000)
         self.eval_every_steps = eval_every_steps
         self.num_init_steps = num_init_steps
 
@@ -100,7 +102,7 @@ class OffPolicyAgent(BaseAgent):
         # reset the env
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
-        train_metrics = {}
+        metrics = {}
         time_step = self.env.reset(seed=self.seed)
 
         # training loop
@@ -137,9 +139,9 @@ class OffPolicyAgent(BaseAgent):
 
             # update agent
             if self.global_step >= self.num_init_steps:
-                train_metrics = self.update()
+                metrics = self.update()
                 # try to update storage
-                self.storage.update(train_metrics)
+                self.storage.update(metrics)
 
             # get episode information
             if "episode" in time_step.info:
@@ -149,23 +151,23 @@ class OffPolicyAgent(BaseAgent):
                 self.global_episode += len(eps_r)
 
             # log training information
-            if len(episode_rewards) > 1:
+            if len(episode_rewards) > 1 and (self.global_step % self.log_interval) == 0:
                 total_time = self.timer.total_time()
 
                 # log to console
-                train_metrics.update({
+                train_metrics = {
                     "step": self.global_step,
                     "episode": self.global_episode,
                     "episode_length": np.mean(episode_steps),
                     "episode_reward": np.mean(episode_rewards),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
-                })
+                }
                 self.logger.train(msg=train_metrics)
 
                 # write to tensorboard
-                # for key in train_metrics.keys():
-                #     self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                # for key in metrics.keys():
+                #     self.writer.add_scalar(f"Training/{key}", metrics[key], self.global_step)
                 # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
                 # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
                 # self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)

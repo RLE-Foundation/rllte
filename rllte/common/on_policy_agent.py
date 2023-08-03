@@ -159,7 +159,7 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
-            train_metrics = self.update()
+            metrics = self.update()
 
             # update and reset buffer
             self.storage.update()
@@ -172,19 +172,19 @@ class OnPolicyAgent(BaseAgent):
                 total_time = self.timer.total_time()
 
                 # log to console
-                train_metrics.update({
+                train_metrics = {
                     "step": self.global_step,
                     "episode": self.global_episode,
                     "episode_length": np.mean(episode_steps),
                     "episode_reward": np.mean(episode_rewards),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
-                })
+                }
                 self.logger.train(msg=train_metrics)
 
                 # write to tensorboard
-                # for key in train_metrics.keys():
-                #     self.writer.add_scalar(f"Training/{key}", train_metrics[key], self.global_step)
+                # for key in metrics.keys():
+                #     self.writer.add_scalar(f"Training/{key}", metrics[key], self.global_step)
                 # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
                 # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
                 # self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)

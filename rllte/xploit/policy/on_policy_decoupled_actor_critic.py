@@ -159,10 +159,10 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions.clamp(*self.action_range), {"values": self.critic(self.critic_encoder(obs)), "log_probs": log_probs}
+            return actions, {"values": self.critic(self.critic_encoder(obs)), "log_probs": log_probs}
         else:
             actions = dist.mean
-            return actions.clamp(*self.action_range), {}
+            return actions, {}
 
     def get_value(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values for observations.

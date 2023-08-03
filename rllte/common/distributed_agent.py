@@ -179,18 +179,18 @@ class DistributedAgent(BaseAgent):  # type: ignore
         # training tracker
         global_step = 0
         global_episode = 0
-        train_metrics = dict()
+        metrics = dict()
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
 
         def sample_and_update(lock=threading.Lock()):  # noqa B008
             """Thread target for the learning process."""
-            nonlocal global_step, global_episode, train_metrics
+            nonlocal global_step, global_episode, metrics
             while global_step < num_train_steps:
                 # sample batch
                 batch = self.storage.sample(free_queue=free_queue, full_queue=full_queue)
                 # update agent
-                train_metrics = self.update(batch=batch)
+                metrics = self.update(batch=batch)
                 with lock:
                     global_step += self.num_steps * self.batch_size
                     global_episode += self.batch_size
@@ -233,17 +233,17 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 start_step = global_step
                 time.sleep(5)
 
-                if train_metrics.get("episode_returns"):
-                    episode_rewards.extend(train_metrics["episode_returns"])
-                    episode_steps.extend(train_metrics["episode_steps"])
+                if metrics.get("episode_returns"):
+                    episode_rewards.extend(metrics["episode_returns"])
+                    episode_steps.extend(metrics["episode_steps"])
 
                 if len(episode_rewards) > 0:
                     episode_time, total_time = self.timer.reset()
                     
                     # write to tensorboard
-                    # for key in train_metrics.keys():
+                    # for key in metrics.keys():
                     #     if "Loss" in key:
-                    #         self.writer.add_scalar(f"Training/{key}", train_metrics[key], global_step)
+                    #         self.writer.add_scalar(f"Training/{key}", metrics[key], global_step)
                     # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), global_step)
                     # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), global_step)
                     # self.writer.add_scalar("Training/Number of Episodes", global_episode, global_step)

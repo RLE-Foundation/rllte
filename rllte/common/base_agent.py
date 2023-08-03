@@ -29,7 +29,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import gymnasium as gym
 import numpy as np
@@ -51,7 +51,9 @@ from rllte.common.base_storage import BaseStorage as Storage
 from rllte.common.preprocessing import process_env_info
 from rllte.common.logger import Logger
 from rllte.common.timer import Timer
-from rllte.common.utils import pretty_json
+# from rllte.common.utils import pretty_json
+
+NUMBER_OF_SPACES = 17
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -94,7 +96,9 @@ class BaseAgent(ABC):
         self.global_step = 0
         self.global_episode = 0
         self.logger.info("Invoking RLLTE Engine...")
-        self.logger.info(f"Experiment Tag: {tag}")
+        # sep line
+        self.logger.info("=" * 80)
+        self.logger.info(f"{'Tag'.ljust(NUMBER_OF_SPACES)} : {tag}")
 
         # env setup
         self.env = env
@@ -122,12 +126,11 @@ class BaseAgent(ABC):
             pynvml.nvmlInit()
             handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
             device_name = pynvml.nvmlDeviceGetName(handle)
-            self.logger.info(f"Running on {device_name}...")
         elif "npu" in device:
-            npu_name = self.get_npu_name()
-            self.logger.info(f"Running on HUAWEI Ascend {npu_name}...")
+            device_name = f"HUAWEI Ascend {self.get_npu_name()}"
         else:
-            self.logger.info("Running on CPU...")
+            device_name = "CPU"
+        self.logger.info(f"{'Device'.ljust(NUMBER_OF_SPACES)} : {device_name}")
 
         # placeholder for Encoder, Storage, Distribution, Augmentation, Reward
         self.encoder = None
@@ -152,14 +155,13 @@ class BaseAgent(ABC):
 
     def check(self) -> None:
         """Check the compatibility of selected modules."""
-        self.logger.debug("Checking the Compatibility of Modules...")
-        self.logger.debug(f"Agent: {self.__class__.__name__}")
-        self.logger.debug(f"Encoder: {self.encoder.__class__.__name__}")
-        self.logger.debug(f"Policy: {self.policy.__class__.__name__}")
-        self.logger.debug(f"Storage: {self.storage.__class__.__name__}")
+        self.logger.debug(f"{'Agent'.ljust(NUMBER_OF_SPACES)} : {self.__class__.__name__}")
+        self.logger.debug(f"{'Encoder'.ljust(NUMBER_OF_SPACES)} : {self.encoder.__class__.__name__}")
+        self.logger.debug(f"{'Policy'.ljust(NUMBER_OF_SPACES)} : {self.policy.__class__.__name__}")
+        self.logger.debug(f"{'Storage'.ljust(NUMBER_OF_SPACES)} : {self.storage.__class__.__name__}")
         # class for `Distribution` and instance for `Noise`
         dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
-        self.logger.debug(f"Distribution: {dist_name}")
+        self.logger.debug(f"{'Distribution'.ljust(NUMBER_OF_SPACES)} : {dist_name}")
 
         # write to tensorboard
         # structure_dict = {
@@ -175,21 +177,23 @@ class BaseAgent(ABC):
 
         # check augmentation and intrinsic reward
         if self.aug is not None:
-            self.logger.debug(f"Augmentation: True, {self.aug.__class__.__name__}")
+            self.logger.debug(f"{'Augmentation'.ljust(NUMBER_OF_SPACES)} : True, {self.aug.__class__.__name__}")
         else:
-            self.logger.debug("Augmentation: False")
+            self.logger.debug(f"{'Augmentation'.ljust(NUMBER_OF_SPACES)} : False")
 
         if self.pretraining:
             assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
 
         if self.irs is not None:
-            self.logger.debug(f"Intrinsic Reward: True, {self.irs.__class__.__name__}")
+            self.logger.debug(f"{'Intrinsic Reward'.ljust(NUMBER_OF_SPACES)} : True, {self.irs.__class__.__name__}")
         else:
-            self.logger.debug("Intrinsic Reward: False")
+            self.logger.debug(f"{'Intrinsic Reward'.ljust(NUMBER_OF_SPACES)} : False")
 
         if self.pretraining:
-            self.logger.info("Pre-training Mode On...")
-        self.logger.debug("Check Accomplished. Start Training...")
+            self.logger.info(f"{'Pre-training Mode'.ljust(NUMBER_OF_SPACES)} : On")
+
+        # sep line
+        self.logger.debug("=" * 80)
 
         # launch tensorboard
         # self.logger.info(f"Launch TensorBoard: \n\t`tensorboard --logdir {self.work_dir}`")
