@@ -1,37 +1,40 @@
-<div align=center>
+---
+hide:
+  - toc
+---
+
+# **RLLTE: Long-Term Evolution Project of Reinforcement Learning**
+
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ShVdiHHyXFM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <br>
-<img src='./assets/images/logo_horizontal.svg' style="width: 75%">
-<br>
-
-<h3> <a href=""> Paper </a> |
-<a href="https://docs.rllte.dev/api/"> Documentation </a> |
-<a href="https://github.com/hpcaitech/ColossalAI/tree/main/examples"> Tutorials </a> |
-<a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
-<a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
-
-<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-98.00%25-green"> 
-
+An introduction to RLLTE.
 </div>
 
-**RLLTE: Long-Term Evolution Project of Reinforcement Learning** is inspired by the long-term evolution (LTE) standard project in telecommunications, which aims to provide development components and standards for RL research and applications. **RLLTE** is the first project that builds a complete ecosystem, and developers can perform task design, model training, evaluation, and deployment within one framework. For the project tenet, please read [Evolution Tenet](https://docs.rllte.dev/tenet).
-
-The highlight features of **RLLTE**:
-
-- 👨‍✈️ Large language model-empowered copilot;
-- ⏱️ Latest algorithms and tricks;
-- 📕 Standard and sophisticated modules for redevelopment;
-- 🧱 Highly modularized design for complete decoupling of RL algorithms;
+---
+## **Why RLLTE?**
+- 🔥 Inspired by the long-term evolution (LTE) standard project in telecommunications;
+- 🏞️ Complete ecosystem for task design, model training, evaluation, and deployment (TensorRT, CANN, ...);
+- 🧱 Module-oriented design for complete decoupling of RL algorithms;
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
-- 🛠️ Support RL model engineering deployment (TensorRT, CANN, ...);
 - 💾 Large number of reusable benchmarks (See [rllte-hub](https://hub.rllte.dev));
+- 👨‍✈️ Large language model-empowered copilot.
 
-See the project structure below:
-<div align=center>
-<img src='./assets/images/structure.svg' style="width: 100%">
+## **A `PyTorch` for RL**
+RLLTE decouples RL algorithms into minimum primitives and provide standard modules for development. 
+
+See [Fast Algorithm Development]() for detailed examples.
+<div align=left>
+<img src='./assets/images/structure.svg' style="width: 80%">
 </div>
 
+
+## **Project Evolution**
+The evolution of RLLTE comprises two aspects: modules and algorithms.
+
+## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:
 ``` tex
 @software{rllte,

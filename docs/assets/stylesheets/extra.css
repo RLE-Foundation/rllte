@@ -3,10 +3,17 @@
 }
 
 [data-md-color-scheme="rllte"] {
-    --md-primary-fg-color:        rgb(0,83,214);
+    --md-primary-fg-color: rgb(0,83,214);
     --md-accent-fg-color: rgb(0,83,174);
     --md-typeset-a-color: rgb(0,83,214);
   }  
+
+[data-md-color-scheme="white"] {
+  --md-primary-fg-color: rgb(255,255,255);
+  --md-accent-fg-color: rgb(0,83,174);
+  --md-typeset-a-color: rgb(0,83,214);
+  --md-default-fg-color--light: #000000de;
+}  
 
 /* .color a:hover{
     color: rgb(0,83,214);

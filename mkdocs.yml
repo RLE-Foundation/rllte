@@ -1,14 +1,14 @@
-site_name: "RLLTE"
+site_name: "CORE"
 site_url: https://docs.rllte.dev/
 copyright: Copyright &copy; 2023 Reinforcement Learning Evolution Foundation
 theme:
   name: material
-  logo: assets/images/icon.svg
-  favicon: assets/images/icon.svg
+  logo: assets/images/logo_horizontal.svg
+  favicon: assets/images/rllte-favicon.png
   palette:
-    - scheme: rllte
-      primary: rllte
-      accent: rllte
+    - scheme: white
+      primary: white
+      accent: white
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -65,7 +65,7 @@ extra:
     - icon: fontawesome/solid/paper-plane
       link: friedrichyuan19990827@gmail.com
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/rllte/
+      link: https://pypi.org/project/rllte-core/
   
 nav:
   - Overview: 
