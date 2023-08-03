@@ -30,7 +30,9 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. **RLLTE** is **not** designed to provide specific RL algorithms but a toolkit for producing algorithms.
 
 <div align="center">
-<img src='./docs/assets/images/youtube.png' style="width: 100%">
+<a href="https://youtu.be/ShVdiHHyXFM" rel="nofollow">
+<img src='./docs/assets/images/youtube.png' style="width: 70%">
+</a>
 <br>
 An introduction to RLLTE.
 </div>
