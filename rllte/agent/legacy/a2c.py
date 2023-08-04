@@ -84,7 +84,6 @@ class A2C(OnPolicyAgent):
         n_epochs: int = 4,
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
-        aug_coef: float = 0.1,
         max_grad_norm: float = 0.5,
         init_fn: str = "orthogonal",
     ) -> None:
@@ -105,7 +104,6 @@ class A2C(OnPolicyAgent):
         self.n_epochs = n_epochs
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
-        self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
 
         # default encoder

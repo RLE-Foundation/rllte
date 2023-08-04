@@ -1,23 +1,8 @@
-# Decoupling Algorithms by Module Replacement
+# Module Replacement for An Implemented Algorithm
 
-## Decoupling Algorithms
-The actual performance of an RL algorithm is affected by various factors (e.g., different network architectures and experience usage 
-strategies), which are difficult to quantify.
+**RLLTE** allows developers to replace settled modules of implemented algorithms to make performance comparison and algorithm improvement.
 
-> Huang S, Dossa R F J, Raffin A, et al. The 37 Implementation Details of Proximal Policy Optimization[J]. The ICLR Blog Track 2023, 2022.
-
-To address the problem, **rllte** has achieved complete decoupling of RL algorithms, and you can replace the following five parts using built-in or customized modules:
-
-- **Encoder**: Moudles for processing observations and extracting features.
-- **Storage**: Modules for storing and replaying collected experiences.
-- **Distribution**: Modules for sampling actions.
-- **Augmentation**: Modules for observations augmentation.
-- **Reward**: Intrinsic reward modules for enhancing exploration.
-
-!!! info
-    Despite **rllte** supports module replacement, it is not **mandatory** and will not affect the use of native algorithms.
-
-## Module Replacement
+## Use built-in modules
 For instance, we want to use [PPO](https://arxiv.org/pdf/1707.06347) agent to solve [Atari](https://www.jair.org/index.php/jair/article/download/10819/25823) games, it suffices to write `train.py` like:
 ``` py title="train.py"
 from rllte.agent import PPO
@@ -37,9 +22,27 @@ if __name__ == "__main__":
     agent.train(num_train_steps=5000)
 ```
 Run `train.py` and you'll see the following output:
-<div align=center>
-<img src='../../assets/images/module_replacement1.png' style="filter: drop-shadow(0px 0px 7px #000);">
-</div>
+``` sh
+[08/04/2023 03:45:54 PM] - [INFO.] - Invoking RLLTE Engine...
+[08/04/2023 03:45:54 PM] - [INFO.] - ================================================================================
+[08/04/2023 03:45:54 PM] - [INFO.] - Tag               : ppo_atari
+[08/04/2023 03:45:54 PM] - [INFO.] - Device            : NVIDIA GeForce RTX 3090
+[08/04/2023 03:45:55 PM] - [DEBUG] - Agent             : PPO
+[08/04/2023 03:45:55 PM] - [DEBUG] - Encoder           : MnihCnnEncoder
+[08/04/2023 03:45:55 PM] - [DEBUG] - Policy            : OnPolicySharedActorCritic
+[08/04/2023 03:45:55 PM] - [DEBUG] - Storage           : VanillaRolloutStorage
+[08/04/2023 03:45:55 PM] - [DEBUG] - Distribution      : Categorical
+[08/04/2023 03:45:55 PM] - [DEBUG] - Augmentation      : False
+[08/04/2023 03:45:55 PM] - [DEBUG] - Intrinsic Reward  : False
+[08/04/2023 03:45:55 PM] - [DEBUG] - ================================================================================
+[08/04/2023 03:45:56 PM] - [EVAL.] - S: 0           | E: 0           | L: 23          | R: 24.000      | T: 0:00:02    
+[08/04/2023 03:45:57 PM] - [TRAIN] - S: 1024        | E: 8           | L: 44          | R: 99.000      | FPS: 346.187   | T: 0:00:02    
+[08/04/2023 03:45:58 PM] - [TRAIN] - S: 2048        | E: 16          | L: 58          | R: 207.000     | FPS: 514.168   | T: 0:00:03    
+[08/04/2023 03:45:59 PM] - [TRAIN] - S: 3072        | E: 24          | L: 43          | R: 70.000      | FPS: 619.411   | T: 0:00:04    
+[08/04/2023 03:46:00 PM] - [TRAIN] - S: 4096        | E: 32          | L: 43          | R: 67.000      | FPS: 695.523   | T: 0:00:05    
+[08/04/2023 03:46:00 PM] - [INFO.] - Training Accomplished!
+[08/04/2023 03:46:00 PM] - [INFO.] - Model saved at: /export/yuanmingqi/code/rllte/logs/ppo_atari/2023-08-04-03-45-54/model
+```
 
 Suppose we want to use a `ResNet-based` encoder, it suffices to replace the encoder module using `.set` function:
 ``` py title="train.py"
@@ -69,12 +72,24 @@ if __name__ == "__main__":
     agent.train(num_train_steps=5000)
 ```
 Run `train.py` and you'll see the old `MnihCnnEncoder` has been replaced by `EspeholtResidualEncoder`:
-<div align=center>
-<img src='../../assets/images/module_replacement2.png' style="filter: drop-shadow(0px 0px 7px #000);">
-</div>
+``` sh
+[08/04/2023 03:46:38 PM] - [INFO.] - Invoking RLLTE Engine...
+[08/04/2023 03:46:38 PM] - [INFO.] - ================================================================================
+[08/04/2023 03:46:38 PM] - [INFO.] - Tag               : ppo_atari
+[08/04/2023 03:46:38 PM] - [INFO.] - Device            : NVIDIA GeForce RTX 3090
+[08/04/2023 03:46:38 PM] - [DEBUG] - Agent             : PPO
+[08/04/2023 03:46:38 PM] - [DEBUG] - Encoder           : EspeholtResidualEncoder
+[08/04/2023 03:46:38 PM] - [DEBUG] - Policy            : OnPolicySharedActorCritic
+[08/04/2023 03:46:38 PM] - [DEBUG] - Storage           : VanillaRolloutStorage
+[08/04/2023 03:46:38 PM] - [DEBUG] - Distribution      : Categorical
+[08/04/2023 03:46:38 PM] - [DEBUG] - Augmentation      : False
+[08/04/2023 03:46:38 PM] - [DEBUG] - Intrinsic Reward  : False
+[08/04/2023 03:46:38 PM] - [DEBUG] - ================================================================================
+...
+```
 For more replaceable modules, please refer to [https://docs.rllte.dev/api/](https://docs.rllte.dev/api/).
 
-## Using Custom Modules
+## Using custom modules
 **rllte** is an open platform that supports custom modules. Just write a new module based on the `BaseClass`, then we can 
 insert it into an agent directly. Suppose we want to build a new encoder entitled `NewEncoder`. An example is
 ```py title="example.py"
@@ -139,7 +154,19 @@ if __name__ == "__main__":
     agent.train(num_train_steps=5000)
 ```
 Run `example.py` and you'll see the old `MnihCnnEncoder` has been replaced by `CustomEncoder`:
-<div align=center>
-<img src='../../assets/images/module_replacement3.png' style="filter: drop-shadow(0px 0px 7px #000);">
-</div>
+``` sh
+[08/04/2023 03:47:24 PM] - [INFO.] - Invoking RLLTE Engine...
+[08/04/2023 03:47:24 PM] - [INFO.] - ================================================================================
+[08/04/2023 03:47:24 PM] - [INFO.] - Tag               : ppo_atari
+[08/04/2023 03:47:24 PM] - [INFO.] - Device            : NVIDIA GeForce RTX 3090
+[08/04/2023 03:47:24 PM] - [DEBUG] - Agent             : PPO
+[08/04/2023 03:47:24 PM] - [DEBUG] - Encoder           : CustomEncoder
+[08/04/2023 03:47:24 PM] - [DEBUG] - Policy            : OnPolicySharedActorCritic
+[08/04/2023 03:47:24 PM] - [DEBUG] - Storage           : VanillaRolloutStorage
+[08/04/2023 03:47:24 PM] - [DEBUG] - Distribution      : Categorical
+[08/04/2023 03:47:24 PM] - [DEBUG] - Augmentation      : False
+[08/04/2023 03:47:24 PM] - [DEBUG] - Intrinsic Reward  : False
+[08/04/2023 03:47:24 PM] - [DEBUG] - ================================================================================
+...
+```
 As for customizing modules like `Storage` and `Distribution`, etc., users should consider compatibility with specific algorithms.

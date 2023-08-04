@@ -148,9 +148,9 @@ class OnPolicyAgent(BaseAgent):
             if self.irs is not None:
                 intrinsic_rewards = self.irs.compute_irs(
                     samples={
-                        "obs": self.storage.obs[:-1],
+                        "obs": self.storage.observations[:-1],
                         "actions": self.storage.actions,
-                        "next_obs": self.storage.obs[1:],
+                        "next_obs": self.storage.observations[1:],
                     },
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
