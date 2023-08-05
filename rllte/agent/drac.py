@@ -159,14 +159,8 @@ class DrAC(OnPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
-    def update(self, samples: Generator) -> Dict[str, float]:
-        """Update function.
-        
-        Args:
-            samples (Generator): A generator of samples.
-        
-        Returns:
-            Dict[str, float]: Training metrics such as policy loss, value loss, etc.
+    def update(self) -> Dict[str, float]:
+        """Update function that returns training metrics such as policy loss, value loss, etc..
         """
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
@@ -174,7 +168,7 @@ class DrAC(OnPolicyAgent):
         total_aug_loss = [0.0]
 
         for _ in range(self.n_epochs):
-            for batch in samples:
+            for batch in self.storage.sample():
                 # evaluate sampled actions
                 new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 

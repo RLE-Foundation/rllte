@@ -1,7 +1,7 @@
 # Custom Environment
 
-## Defining the Environment
-To use custom environments in **rllte**, it suffices to follow the [gymnasium](https://gymnasium.farama.org/) interface and prepare your environment following [Tutorials: Make Your Own Custom Environment](https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#). A example is:
+## Environment definition
+To use custom environments in **RLLTE**, it suffices to follow the [gymnasium](https://gymnasium.farama.org/) interface and prepare your environment following [Tutorials: Make Your Own Custom Environment](https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#). A example is:
 ``` py title="example.py"
 import gymnasium as gym
 import numpy as np
@@ -42,7 +42,7 @@ class CustomEnv(gym.Env):
 ```
 
 ## Use `make_rllte_env`
-In **rllte**, the environments are assumed to be ***vectorized*** and a `make_rllte_env` function is used to warp the environments:
+In **RLLTE**, the environments are assumed to be ***vectorized*** and a `make_rllte_env` function is used to warp the environments:
 ``` py title="example.py"
 from rllte.env.utils import make_rllte_env
 # create vectorized environments

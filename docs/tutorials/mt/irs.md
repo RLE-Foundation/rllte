@@ -1,6 +1,6 @@
 # Intrinsic Reward Shaping for Enhancing Exploration
 
-Since **RLLTE** decouples RL algorithms into minimum primitives from the perspective of exploitation and exploration, intrinsic reward shaping is supported by default. Due to the large differences in the calculation of different intrinsic reward methods, rllte has the following rules:
+Since **RLLTE** decouples RL algorithms into minimum primitives from the perspective of exploitation and exploration, intrinsic reward shaping is supported by default. Due to the large differences in the calculation of different intrinsic reward methods, **RLLTE** has the following rules:
 
 1. The environments are assumed to be ***vectorized***;
 2. The ***compute_irs*** function of each intrinsic reward module has a mandatory argument ***samples***, which is a dict like:
@@ -11,6 +11,35 @@ Since **RLLTE** decouples RL algorithms into minimum primitives from the perspec
 
 Take RE3 for instance, it computes the intrinsic reward for each state based on the Euclidean distance between the state and 
 its $k$-nearest neighbor within a mini-batch. Thus it suffices to provide ***obs*** data to compute the reward. The following code provides a usage example of RE3:
+``` py title="example.py"
+from rllte.xplore.reward import RE3
+from rllte.env import make_dmc_env
+import torch as th
+
+if __name__ == '__main__':
+    num_envs = 7
+    num_steps = 128
+    # create env
+    env = make_dmc_env(env_id="cartpole_balance", num_envs=num_envs)
+    print(env.observation_space, env.action_space)
+    # create RE3 instance
+    re3 = RE3(
+        observation_space=env.observation_space,
+        action_space=env.action_space
+    )
+    # compute intrinsic rewards
+    obs = th.rand(size=(num_steps, num_envs, *env.observation_space.shape))
+    intrinsic_rewards = re3.compute_irs(samples={'obs': obs})
+    
+    print(intrinsic_rewards.shape, type(intrinsic_rewards))
+    print(intrinsic_rewards)
+
+# Output:
+# {'shape': [9, 84, 84]} {'shape': [1], 'type': 'Box', 'range': [-1.0, 1.0]}
+# torch.Size([128, 7]) <class 'torch.Tensor'>
+```
+
+You can also invoke the intrinsic reward module in all the implemented algorithms directly by `.set` function:
 ``` py title="example.py"
 from rllte.agent import PPO
 from rllte.env import make_atari_env

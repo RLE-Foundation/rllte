@@ -1,12 +1,7 @@
-# Model Evaluation
-**rllte** provides evaluation methods based on:
-
-> [Agarwal R, Schwarzer M, Castro P S, et al. Deep reinforcement learning at the edge of the statistical precipice[J]. Advances in neural information processing systems, 2021, 34: 29304-29320.](https://proceedings.neurips.cc/paper/2021/file/f514cec81cb148559cf475e7426eed5e-Paper.pdf)
-
-We reconstruct and improve the code of the official repository [rliable](https://github.com/google-research/rliable), achieving higher convenience and efficiency.
+# Metrics Visualization
 
 ## Download Data
-- Suppose we want to evaluate algorithm performance on the [Procgen](https://github.com/openai/procgen) benchmark. First, download the data from 
+Suppose we want to visualize algorithm performance on the [Procgen](https://github.com/openai/procgen) benchmark. First, download the data from 
 [rllte-hub](https://hub.rllte.dev/):
 ``` py title="example.py"
 # load packages
@@ -31,48 +26,6 @@ for algo in procgen_scores.keys():
 # dict_keys(['PPG', 'MixReg', 'PPO', 'IDAAC', 'PLR', 'UCB-DrAC'])
 ```
 For each algorithm, this will return a `NdArray` of size (`10` x `16`) where scores[n][m] represent the score on run `n` of task `m`.
-
-## Performance Evaluation
-Import the performance evaluator:
-``` py title="example.py"
-perf = Performance(scores=ppo_norm_scores['PPO'], 
-                   get_ci=True # get confidence intervals
-                   )
-perf.aggregate_mean()
-
-# Output:
-# Computing confidence interval for aggregate MEAN...
-# (1.0, array([[0.9737281 ], [1.02564405]]))
-```
-Available metrics:
-
-|Metric|Remark|
-|:-|:-|
-|`.aggregate_mean`|Computes mean of sample mean scores per task.|
-|`.aggregate_median`|Computes median of sample mean scores per task.|
-|`.aggregate_og`|Computes optimality gap across all runs and tasks.|
-|`.aggregate_iqm`|Computes the interquartile mean across runs and tasks.|
-|`.create_performance_profile`|Computes the performance profiles.|
-
-## Performance Comparison
-`Comparison` module allows you to compare the performance between two algorithms:
-``` py title="example.py"
-comp = Comparison(scores_x=ppo_norm_scores['PPG'],
-                  scores_y=ppo_norm_scores['PPO'],
-                  get_ci=True)
-comp.compute_poi()
-
-# Output:
-# Computing confidence interval for PoI...
-# (0.8153125, array([[0.779375  ], [0.85000781]]))
-```
-This indicates the overall probability of imporvement of `PPG` over `PPO` is `0.8153125`.
-
-Available metrics:
-
-|Metric|Remark|
-|:-|:-|
-|`.compute_poi`|Compute the overall probability of imporvement of algorithm `X` over `Y`.|
 
 ## Visualization
 ### `.plot_interval_estimates`
@@ -111,9 +64,9 @@ fig.savefig('./plot_interval_estimates2.png', format='png', bbox_inches='tight')
 ```
 The output figures are:
 <div align=center>
-<img src='../../assets/images/plot_interval_estimates1.png' style="filter: drop-shadow(0px 0px 7px #000);">
-<img src='../../assets/images/plot_interval_estimates2.png' style="filter: drop-shadow(0px 0px 7px #000);">
-<img src='../../assets/images/plot_interval_estimates3.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_interval_estimates1.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_interval_estimates2.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_interval_estimates3.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 
@@ -136,7 +89,7 @@ fig.savefig('./plot_probability_improvement.png', format='png', bbox_inches='tig
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_probability_improvement.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_probability_improvement.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### `.plot_performance_profile`
@@ -158,7 +111,7 @@ fig.savefig('./plot_performance_profile.png', format='png', bbox_inches='tight')
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_performance_profile.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_performance_profile.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
 
 ### `.plot_sample_efficiency_curve`
@@ -195,5 +148,5 @@ fig.savefig('./plot_sample_efficiency_curve.png', format='png', bbox_inches='tig
 ```
 The output figure is:
 <div align=center>
-<img src='../../assets/images/plot_sample_efficiency_curve.png' style="filter: drop-shadow(0px 0px 7px #000);">
+<img src='../../../assets/images/plot_sample_efficiency_curve.png' style="filter: drop-shadow(0px 0px 7px #000);">
 </div>
