@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Callable, Tuple, Dict
+from typing import Callable, Tuple, Dict, List
 
 import json
 import numpy as np
@@ -112,3 +112,17 @@ def pretty_json(hp: Dict) -> str:
     """
     json_hp = json.dumps(hp, indent=2)
     return "".join("\t" + line for line in json_hp.splitlines(True))
+
+
+def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
+    """Get the episode statistics.
+
+    Args:
+        infos (Dict): Information.
+    
+    Returns:
+        Episode rewards and lengths.
+    """
+    indices = np.nonzero(infos["episode"]["l"])
+        
+    return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()

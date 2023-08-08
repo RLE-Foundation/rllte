@@ -92,7 +92,6 @@ class BaseAgent(ABC):
         self.timer = Timer()
         self.device = th.device(device)
         self.pretraining = pretraining
-        self.num_eval_episodes = 10
         self.global_step = 0
         self.global_episode = 0
         self.logger.info("Invoking RLLTE Engine...")
@@ -268,9 +267,32 @@ class BaseAgent(ABC):
         """Update function of the agent."""
 
     @abstractmethod
-    def train(self) -> None:
-        """Training function."""
+    def train(self, 
+              num_train_steps: int, 
+              init_model_path: Optional[str], 
+              log_interval: int, 
+              eval_interval: int,
+              num_eval_episodes: int) -> None:
+        """Training function.
+        
+        Args:
+            num_train_steps (int): The number of training steps.
+            init_model_path (Optional[str]): The path of the initial model.
+            log_interval (int): The interval of logging.
+            eval_interval (int): The interval of evaluation.
+            num_eval_episodes (int): The number of evaluation episodes.
+        
+        Returns:
+            None.
+        """
 
     @abstractmethod
-    def eval(self) -> Optional[Dict[str, float]]:
-        """Evaluation function."""
+    def eval(self, num_eval_episodes: int) -> Optional[Dict[str, float]]:
+        """Evaluation function.
+        
+        Args:
+            num_eval_episodes (int): The number of evaluation episodes.
+        
+        Returns:
+            The evaluation results.
+        """

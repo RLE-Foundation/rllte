@@ -31,7 +31,7 @@ from gymnasium.spaces.box import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from rllte.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import Gymnasium2Torch
 
 
 class AdapterEnv(gym.Wrapper):
@@ -117,4 +117,4 @@ def make_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return TorchVecEnvWrapper(envs, device)
+    return Gymnasium2Torch(envs, device)

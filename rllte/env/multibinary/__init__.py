@@ -30,7 +30,7 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import Gymnasium2Torch
 
 
 class StateEnv(gym.Env):
@@ -157,4 +157,4 @@ def make_multibinary_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device=device)
+    return Gymnasium2Torch(envs, device=device)
