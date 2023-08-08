@@ -30,7 +30,7 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.on_policy_agent import OnPolicyAgent
+from rllte.common.prototype import OnPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage

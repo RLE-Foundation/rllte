@@ -31,7 +31,7 @@ import torch as th
 from torch import nn
 from torch.distributions import Distribution
 
-from rllte.common.base_policy import BasePolicy
+from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 from rllte.xploit.policy.off_policy_det_actor_double_critic import DoubleCritic
 

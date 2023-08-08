@@ -29,7 +29,7 @@ import gymnasium as gym
 import torch as th
 from torch import multiprocessing as mp
 
-from rllte.common.base_storage import BaseStorage
+from rllte.common.prototype import BaseStorage
 
 
 class VanillaDistributedStorage(BaseStorage):

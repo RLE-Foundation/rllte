@@ -27,7 +27,7 @@ from typing import Tuple
 import torch as th
 import torch.distributions as pyd
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
 
 
 class MultiCategorical(BaseDistribution):

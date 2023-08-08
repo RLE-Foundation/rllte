@@ -31,7 +31,7 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.distributed_agent import DistributedAgent
+from rllte.common.prototype import DistributedAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.storage import VanillaDistributedStorage

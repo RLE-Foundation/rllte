@@ -27,7 +27,7 @@ import gymnasium as gym
 import torch as th
 from torch import nn
 
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 from rllte.common.preprocessing import get_flattened_obs_dim, preprocess_obs
 from rllte.xploit.encoder.pathak_cnn_encoder import PathakCnnEncoder
 

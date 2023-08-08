@@ -22,16 +22,5 @@
 # SOFTWARE.
 # =============================================================================
 
-
-from .base_agent import BaseAgent as BaseAgent
-from .base_augmentation import BaseAugmentation as BaseAugmentation
-from .base_distribution import BaseDistribution as BaseDistribution
-from .base_encoder import BaseEncoder as BaseEncoder
-from .base_policy import BasePolicy as BasePolicy
-from .base_reward import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
-from .base_storage import BaseStorage as BaseStorage
-from .distributed_agent import DistributedAgent as DistributedAgent
 from .logger import Logger as Logger
-from .off_policy_agent import OffPolicyAgent as OffPolicyAgent
-from .on_policy_agent import OnPolicyAgent as OnPolicyAgent
 from .timer import Timer as Timer

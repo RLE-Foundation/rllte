@@ -29,7 +29,7 @@ import gymnasium as gym
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from rllte.common.base_storage import BaseStorage, VanillaRolloutBatch
+from rllte.common.prototype import BaseStorage, VanillaRolloutBatch
 
 
 class VanillaRolloutStorage(BaseStorage):

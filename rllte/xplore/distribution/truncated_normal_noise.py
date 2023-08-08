@@ -27,7 +27,7 @@ import torch as th
 import torch.distributions as pyd
 from torch.distributions.utils import _standard_normal
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
 from rllte.xplore.distribution import utils
 
 

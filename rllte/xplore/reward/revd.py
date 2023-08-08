@@ -30,7 +30,7 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.base_reward import BaseIntrinsicRewardModule
+from rllte.common.prototype import BaseIntrinsicRewardModule
 
 
 class Encoder(nn.Module):

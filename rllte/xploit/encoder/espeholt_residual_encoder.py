@@ -30,7 +30,7 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 
 
 class Conv2d_tf(nn.Conv2d):

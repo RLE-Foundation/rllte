@@ -31,7 +31,7 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.base_storage import BaseStorage, PrioritizedReplayBatch
+from rllte.common.prototype import BaseStorage, PrioritizedReplayBatch
 
 
 class PrioritizedReplayStorage(BaseStorage):

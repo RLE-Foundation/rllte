@@ -27,7 +27,7 @@ import gymnasium as gym
 import torch as th
 from torch import nn
 
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 
 
 class TassaCnnEncoder(BaseEncoder):

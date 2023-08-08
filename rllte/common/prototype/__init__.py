@@ -22,44 +22,15 @@
 # SOFTWARE.
 # =============================================================================
 
-
-import gymnasium as gym
-import torch as th
-from torch import nn
-
-from rllte.common.prototype import BaseEncoder
-
-
-class VanillaMlpEncoder(BaseEncoder):
-    """Multi layer perceptron (MLP) for processing state-based inputs.
-
-    Args:
-        observation_space (gym.Space): Observation space.
-        feature_dim (int): Number of features extracted.
-        hidden_dim (int): Number of hidden units in the hidden layer.
-
-    Returns:
-        Mlp-based encoder instance.
-    """
-
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        feature_dim: int = 64,
-        hidden_dim: int = 64,
-    ) -> None:
-        super().__init__(observation_space, feature_dim)
-
-        input_dim = observation_space.shape[0]
-        self.trunk = nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, feature_dim), nn.Tanh())
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Forward method implementation.
-
-        Args:
-            obs (th.Tensor): Observation tensor.
-
-        Returns:
-            Encoded observation tensor.
-        """
-        return self.trunk(obs)
+# primitives
+from .base_agent import BaseAgent as BaseAgent
+from .base_augmentation import BaseAugmentation as BaseAugmentation
+from .base_distribution import BaseDistribution as BaseDistribution
+from .base_encoder import BaseEncoder as BaseEncoder
+from .base_policy import BasePolicy as BasePolicy
+from .base_reward import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
+from .base_storage import BaseStorage as BaseStorage
+# agent prototypes
+from .distributed_agent import DistributedAgent as DistributedAgent
+from .off_policy_agent import OffPolicyAgent as OffPolicyAgent
+from .on_policy_agent import OnPolicyAgent as OnPolicyAgent

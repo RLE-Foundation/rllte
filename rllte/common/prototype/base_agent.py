@@ -35,9 +35,6 @@ import numpy as np
 import pynvml
 import torch as th
 
-# from torch.utils.tensorboard import SummaryWriter
-
-
 # try to load torch_npu
 try:
     import torch_npu as torch_npu  # type: ignore
@@ -46,12 +43,12 @@ try:
 except Exception:
     NPU_AVAILABLE = False
 
-from rllte.common.base_augmentation import BaseAugmentation as Augmentation
-from rllte.common.base_distribution import BaseDistribution as Distribution
-from rllte.common.base_encoder import BaseEncoder as Encoder
-from rllte.common.base_policy import BasePolicy as Policy
-from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
-from rllte.common.base_storage import BaseStorage as Storage
+from rllte.common.prototype.base_augmentation import BaseAugmentation as Augmentation
+from rllte.common.prototype.base_distribution import BaseDistribution as Distribution
+from rllte.common.prototype.base_encoder import BaseEncoder as Encoder
+from rllte.common.prototype.base_policy import BasePolicy as Policy
+from rllte.common.prototype.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
+from rllte.common.prototype.base_storage import BaseStorage as Storage
 from rllte.common.logger import Logger
 from rllte.common.preprocessing import process_env_info
 from rllte.common.timer import Timer

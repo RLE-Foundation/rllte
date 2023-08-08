@@ -9,7 +9,7 @@ from torch import nn
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from rllte.common.base_policy import BasePolicy
+from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor
 

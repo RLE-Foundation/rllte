@@ -31,7 +31,7 @@ import torch as th
 from torch.nn import functional as F
 
 from rllte.agent import utils
-from rllte.common.off_policy_agent import OffPolicyAgent
+from rllte.common.prototype import OffPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyStochActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage

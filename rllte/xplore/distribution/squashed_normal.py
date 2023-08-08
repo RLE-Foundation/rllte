@@ -29,7 +29,7 @@ import torch as th
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
 
 
 class TanhTransform(pyd.transforms.Transform):
