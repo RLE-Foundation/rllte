@@ -86,26 +86,14 @@ class OnPolicyAgent(BaseAgent):
         Returns:
             None.
         """
-        # freeze the structure of the agent
-        self.policy.freeze(encoder=self.encoder, dist=self.dist)
-        # to device
-        self.policy.to(self.device)
-        # set the training mode
-        self.mode(training=True)
-        # final check
-        self.check()
-
-        # load initial model parameters
-        if init_model_path is not None:
-            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path, self.device)
+        # freeze the agent and get ready for training
+        self.freeze(init_model_path=init_model_path)
 
         # reset the env
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
-        # obs, info = self.env.reset(seed=self.seed)
-        time_step = self.env.reset(seed=self.seed)
-        # Number of updates
+        obs, infos = self.env.reset(seed=self.seed)
+        # get number of updates
         num_updates = num_train_steps // self.num_envs // self.num_steps
 
         for update in range(num_updates):
@@ -114,37 +102,33 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
-                
-                # write to tensorboard
-                # self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
-                # self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
 
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, extra_policy_outputs = self.policy(time_step.observations, training=True)
-                    # observe reward and next obs
-                    time_step = self.env.step(actions)
+                    actions, extra_policy_outputs = self.policy(obs, training=True)
+                    # observe rewards and next obs
+                    next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
                 # pre-training mode
                 if self.pretraining:
-                    time_step = time_step._replace(rewards=th.zeros_like(time_step.rewards, device=self.device))
+                    rews = th.zeros_like(rews, device=self.device)
 
                 # add transitions
-                self.storage.add(*time_step, **extra_policy_outputs)
+                self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
 
                 # get episode information
-                if "episode" in time_step.info:
-                    eps_r, eps_l = time_step.get_episode_statistics()
+                if "episode" in infos:
+                    eps_r, eps_l = utils.get_episode_statistics(infos)
                     episode_rewards.extend(eps_r)
                     episode_steps.extend(eps_l)
 
                 # set the current observation
-                time_step = time_step._replace(observations=time_step.next_observations)
+                obs = next_obs
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(time_step.next_observations).detach()
+                last_values = self.policy.get_value(next_obs).detach()
 
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
@@ -187,15 +171,6 @@ class OnPolicyAgent(BaseAgent):
                 }
                 self.logger.train(msg=train_metrics)
 
-                # write to tensorboard
-                # for key in metrics.keys():
-                #     self.writer.add_scalar(f"Training/{key}", metrics[key], self.global_step)
-                # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
-                # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
-                # self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
-                # self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
-                # self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
-
         # save model
         self.logger.info("Training Accomplished!")
         if self.pretraining:  # pretraining
@@ -222,24 +197,24 @@ class OnPolicyAgent(BaseAgent):
             The evaluation results.
         """
         # reset the env
-        time_step = self.eval_env.reset(seed=self.seed)
+        obs, infos = self.eval_env.reset(seed=self.seed)
         episode_rewards = list()
         episode_steps = list()
 
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy(time_step.observations, training=False)
-                time_step = self.eval_env.step(actions)
+                actions, _ = self.policy(obs, training=False)
+                next_obs, rews, terms, truncs, infos = self.eval_env.step(actions)
 
             # get episode information
-            if "episode" in time_step.info:
-                eps_r, eps_l = time_step.get_episode_statistics()
+            if "episode" in infos:
+                eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
             
             # set the current observation
-            time_step = time_step._replace(observations=time_step.next_observations)
+            obs = next_obs
 
         return {
             "step": self.global_step,

@@ -139,24 +139,26 @@ class DistributedAgent(BaseAgent):  # type: ignore
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self, num_train_steps: int = 30000000, init_model_path: Optional[str] = None) -> None:  # noqa: c901
+    def train(self, 
+              num_train_steps: int, 
+              init_model_path: Optional[str] = None, 
+              log_interval: int = 1, 
+              eval_interval: int = 5000,
+              num_eval_episodes: int = 10) -> None:
         """Training function.
-
+        
         Args:
-            num_train_steps (int): Number of training steps.
-            init_model_path (Optional[str]): Path of Iinitial model parameters.
-
+            num_train_steps (int): The number of training steps.
+            init_model_path (Optional[str]): The path of the initial model.
+            log_interval (int): The interval of logging.
+            eval_interval (int): The interval of evaluation.
+            num_eval_episodes (int): The number of evaluation episodes.
+        
         Returns:
             None.
         """
-        # freeze the structure of the agent
-        self.policy.freeze(encoder=self.encoder, dist=self.dist)
-        # to device
-        self.policy.to(self.device)
-        # set the training mode
-        self.mode(training=True)
-        # final check
-        self.check()
+        # freeze the agent and get ready for training
+        self.freeze(init_model_path=init_model_path)
 
         def lr_lambda(epoch: int = 0) -> float:
             """Function for learning rate scheduler.
@@ -170,11 +172,6 @@ class DistributedAgent(BaseAgent):  # type: ignore
             return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
         # set learning rate scheduler
         self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.opt, lr_lambda)
-
-        # load initial model parameters
-        if init_model_path is not None:
-            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path, self.device)
 
         # training tracker
         global_step = 0
@@ -239,16 +236,6 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
                 if len(episode_rewards) > 0:
                     episode_time, total_time = self.timer.reset()
-                    
-                    # write to tensorboard
-                    # for key in metrics.keys():
-                    #     if "Loss" in key:
-                    #         self.writer.add_scalar(f"Training/{key}", metrics[key], global_step)
-                    # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), global_step)
-                    # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), global_step)
-                    # self.writer.add_scalar("Training/Number of Episodes", global_episode, global_step)
-                    # self.writer.add_scalar('Training/FPS', (global_step - start_step) / episode_time, global_step)
-                    # self.writer.add_scalar('Training/Total Time', total_time, global_step)
 
                     train_metrics = {
                         "step": global_step,
@@ -261,15 +248,15 @@ class DistributedAgent(BaseAgent):  # type: ignore
                     self.logger.train(msg=train_metrics)
                     log_times += 1
 
-                # if log_times % 50 == 0:
+                # if log_times % eval_interval == 0:
                 #     episode_time, total_time = self.timer.reset()
-                #     test_metrics = self.test()
-                #     test_metrics.update({
+                #     eval_metrics = self.eval(num_eval_episodes)
+                #     eval_metrics.update({
                 #         "step": global_step,
                 #         "episode": global_episode,
                 #         "total_time": total_time,
                 #         })
-                #     self.logger.test(msg=test_metrics)
+                #     self.logger.eval(msg=eval_metrics)
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.
@@ -289,15 +276,22 @@ class DistributedAgent(BaseAgent):  # type: ignore
             for actor in actor_pool:
                 actor.join(timeout=1)
 
-    def eval(self) -> Dict[str, float]:
-        """Evaluation function."""
+    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+        """Evaluation function.
+        
+        Args:
+            num_eval_episodes (int): The number of evaluation episodes.
+        
+        Returns:
+            The evaluation results.
+        """
         env = DistributedWrapper(self.eval_env.envs[0])
         seed = self.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
         env_output = env.reset(seed)
 
         episode_rewards = list()
         episode_steps = list()
-        while len(episode_rewards) < self.num_eval_episodes:
+        while len(episode_rewards) < num_eval_episodes:
             with th.no_grad():
                 actor_output = self.policy.actor(env_output, training=False)
             env_output = env.step(actor_output["action"])

@@ -82,7 +82,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
-        info: Dict,
+        infos: Dict,
         next_observations: th.Tensor,
         log_probs: th.Tensor,
         values: th.Tensor
@@ -95,7 +95,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
             rewards (th.Tensor): Rewards.
             terminateds (th.Tensor): Termination signals.
             truncateds (th.Tensor): Truncation signals.
-            info (Dict): Extra information.
+            infos (Dict): Extra information.
             next_observations (th.Tensor): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.

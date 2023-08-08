@@ -89,25 +89,13 @@ class OffPolicyAgent(BaseAgent):
         Returns:
             None.
         """
-        # freeze the structure of the agent
-        self.policy.freeze(encoder=self.encoder, dist=self.dist)
-        # to device
-        self.policy.to(self.device)
-        # set the training mode
-        self.mode(training=True)
-        # final check
-        self.check()
-
-        # load initial model parameters
-        if init_model_path is not None:
-            self.logger.info(f"Loading Initial Parameters from {init_model_path}...")
-            self.policy.load(init_model_path, self.device)
+        # freeze the agent and get ready for training
+        self.freeze(init_model_path=init_model_path)
 
         # reset the env
         episode_rewards = deque(maxlen=10)
         episode_steps = deque(maxlen=10)
-        metrics = {}
-        time_step = self.env.reset(seed=self.seed)
+        obs, infos = self.env.reset(seed=self.seed)
 
         # training loop
         while self.global_step <= num_train_steps:
@@ -118,28 +106,24 @@ class OffPolicyAgent(BaseAgent):
                 # log to console
                 self.logger.eval(msg=eval_metrics)
 
-                # write to tensorboard
-                # self.writer.add_scalar("Evaluation/Average Episode Reward", eval_metrics["episode_reward"], self.global_step)
-                # self.writer.add_scalar("Evaluation/Average Episode Length", eval_metrics["episode_length"], self.global_step)
-
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
                 # Initial exploration
                 if self.global_step <= self.num_init_steps:
-                    actions = self.policy.explore(time_step.observations)
+                    actions = self.policy.explore(obs)
                 else:
-                    actions = self.policy(time_step.observations, training=True, step=self.global_step)
+                    actions = self.policy(obs, training=True, step=self.global_step)
 
             # observe reward and next obs
-            time_step = self.env.step(actions)
+            next_obs, rews, terms, truncs, infos = self.env.step(actions)
             self.global_step += self.num_envs
 
             # pre-training mode
             if self.pretraining:
-                time_step = time_step._replace(rewards=th.zeros_like(time_step.rewards, device=self.device))
+                rews = th.zeros_like(rews, device=self.device)
 
             # add new transitions
-            self.storage.add(*time_step)
+            self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs)
 
             # update agent
             if self.global_step >= self.num_init_steps:
@@ -148,8 +132,8 @@ class OffPolicyAgent(BaseAgent):
                 self.storage.update(metrics)
 
             # get episode information
-            if "episode" in time_step.info:
-                eps_r, eps_l = time_step.get_episode_statistics()
+            if "episode" in infos:
+                eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
                 self.global_episode += len(eps_r)
@@ -169,22 +153,13 @@ class OffPolicyAgent(BaseAgent):
                 }
                 self.logger.train(msg=train_metrics)
 
-                # write to tensorboard
-                # for key in metrics.keys():
-                #     self.writer.add_scalar(f"Training/{key}", metrics[key], self.global_step)
-                # self.writer.add_scalar('Training/Average Episode Reward', np.mean(episode_rewards), self.global_step)
-                # self.writer.add_scalar('Training/Average Episode Length', np.mean(episode_steps), self.global_step)
-                # self.writer.add_scalar("Training/Number of Episodes", self.global_episode, self.global_step)
-                # self.writer.add_scalar('Training/FPS', self.global_step / total_time, self.global_step)
-                # self.writer.add_scalar('Training/Total Time', total_time, self.global_step)
-
                 # As the vector environments autoreset for a terminating and truncating sub-environments,
                 # the returned observation and info is not the final step's observation or info which
                 # is instead stored in info as `final_observation` and `final_info`. Therefore,
                 # we don't need to reset the env here.
 
             # set the current observation
-            time_step = time_step._replace(observations=time_step.next_observations)
+            obs = next_obs
 
         # save model
         self.logger.info("Training Accomplished!")
@@ -202,30 +177,37 @@ class OffPolicyAgent(BaseAgent):
         if self.eval_env is not None:
             self.eval_env.close()
 
-    def eval(self) -> Dict[str, float]:
-        """Evaluation function."""
+    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+        """Evaluation function.
+        
+        Args:
+            num_eval_episodes (int): The number of evaluation episodes.
+        
+        Returns:
+            The evaluation results.
+        """
         # reset the env
-        time_step = self.eval_env.reset(seed=self.seed)
+        obs, infos = self.eval_env.reset(seed=self.seed)
         episode_rewards = list()
         episode_steps = list()
 
         # evaluation loop
-        while len(episode_rewards) < self.num_eval_episodes:
+        while len(episode_rewards) < num_eval_episodes:
             # sample actions
             with th.no_grad(), utils.eval_mode(self):
-                actions = self.policy(time_step.observations, training=False, step=self.global_step)
+                actions = self.policy(obs, training=False, step=self.global_step)
 
             # observe reward and next obs
-            time_step = self.eval_env.step(actions)
+            next_obs, rews, terms, truncs, infos = self.eval_env.step(actions)
 
             # get episode information
-            if "episode" in time_step.info:
-                eps_r, eps_l = time_step.get_episode_statistics()
+            if "episode" in infos:
+                eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
 
             # set the current observation
-            time_step = time_step._replace(observations=time_step.next_observations)
+            obs = next_obs
 
         return {
             "step": self.global_step,

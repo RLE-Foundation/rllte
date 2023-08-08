@@ -65,7 +65,7 @@ class ReplayStorage:
         reward: np.ndarray,
         terminated: np.ndarray,
         truncated: np.ndarray,
-        info: Dict[str, Any],
+        infos: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
         """Add a new transition to the storage.
@@ -76,7 +76,7 @@ class ReplayStorage:
             reward (float): Reward.
             terminated (bool): Termination flag.
             truncated (bool): Truncation flag.
-            info (Dict): Additional information.
+            infos (Dict): Additional information.
             next_obs (np.ndarray): Next observation.
 
         Returns:
@@ -91,7 +91,7 @@ class ReplayStorage:
 
         if terminated or truncated:
             # final next observation
-            self._current_episode["observation"].append(info["final_observation"][0])
+            self._current_episode["observation"].append(infos["final_observation"][0])
             episode = dict()
             for key in self._current_episode.keys():
                 episode[key] = np.array(self._current_episode[key])
@@ -305,7 +305,7 @@ class NStepReplayStorage(BaseStorage):
         rewards: np.ndarray,
         terminateds: np.ndarray,
         truncateds: np.ndarray,
-        info: Dict[str, Any],
+        infos: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
         """Add sampled transitions into storage.
@@ -316,7 +316,7 @@ class NStepReplayStorage(BaseStorage):
             rewards (np.ndarray): Reward.
             terminateds (np.ndarray): Termination flag.
             truncateds (np.ndarray): Truncation flag.
-            info (Dict[str, Any]): Additional information.
+            infos (Dict[str, Any]): Additional information.
             next_obs (np.ndarray): Next observation.
 
         Returns:
@@ -329,7 +329,7 @@ class NStepReplayStorage(BaseStorage):
             reward=rewards[0].cpu().numpy(),
             terminated=terminateds[0].cpu().numpy(),
             truncated=truncateds[0].cpu().numpy(),
-            info=info,
+            infos=infos,
             next_obs=next_obs[0].cpu().numpy(),
         )
 

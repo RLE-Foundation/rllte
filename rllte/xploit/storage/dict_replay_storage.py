@@ -75,7 +75,7 @@ class DictReplayStorage(VanillaReplayStorage):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
-        info: Dict[str, Any],
+        infos: Dict[str, Any],
         next_observations: Dict[str, th.Tensor],
     ) -> None:
         """Add sampled transitions into storage.
@@ -86,7 +86,7 @@ class DictReplayStorage(VanillaReplayStorage):
             rewards (th.Tensor): Rewards.
             terminateds (th.Tensor): Termination flag.
             truncateds (th.Tensor): Truncation flag.
-            info (Dict[str, Any]): Additional information.
+            infos (Dict[str, Any]): Additional information.
             next_observations (Dict[str, th.Tensor]): Next observations.
 
         Returns:

@@ -25,6 +25,7 @@
 
 from typing import Callable, Tuple, Dict, List
 
+import os
 import json
 import numpy as np
 import torch as th
@@ -126,3 +127,16 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
     indices = np.nonzero(infos["episode"]["l"])
         
     return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+
+def get_npu_name() -> str:
+    """Get NPU name."""
+    str_command = "npu-smi info"
+    out = os.popen(str_command)
+    text_content = out.read()
+    out.close()
+    lines = text_content.split("\n")
+    npu_name_line = lines[6]
+    name_part = npu_name_line.split("|")[1]
+    npu_name = name_part.split()[-1]
+
+    return npu_name
