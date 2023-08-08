@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional, Generator
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -151,8 +151,7 @@ class PPO(OnPolicyAgent):
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
         total_entropy_loss = [0.0]
@@ -160,7 +159,9 @@ class PPO(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)

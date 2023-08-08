@@ -24,7 +24,7 @@
 
 
 import threading
-from typing import Dict, Optional, Tuple, NamedTuple
+from typing import Dict, Optional, Tuple
 
 import gymnasium as gym
 import torch as th
@@ -225,7 +225,7 @@ class IMPALA(DistributedAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
-    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]: # noqa B008
+    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]:  # noqa B008
         """
         Update the learner model.
 

@@ -51,7 +51,6 @@ class DrQv2(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
-        eval_every_steps (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -74,7 +73,6 @@ class DrQv2(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 5000,
         feature_dim: int = 50,
         batch_size: int = 256,
         lr: float = 1e-4,
@@ -92,7 +90,6 @@ class DrQv2(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -226,7 +223,7 @@ class DrQv2(OffPolicyAgent):
             "Critic Loss": critic_loss.item(),
             "Q1": Q1.mean().item(),
             "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item()
+            "Target Q": target_Q.mean().item(),
         }
 
     def update_actor(self, obs: th.Tensor) -> Dict[str, float]:

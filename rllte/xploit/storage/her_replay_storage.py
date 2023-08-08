@@ -23,15 +23,15 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Callable
 from copy import deepcopy
+from typing import Any, Callable, Dict, Optional
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.xploit.storage.dict_replay_storage import DictReplayStorage
 from rllte.common.base_storage import VanillaReplayBatch
+from rllte.xploit.storage.dict_replay_storage import DictReplayStorage
 
 
 class HerReplayStorage(DictReplayStorage):
@@ -49,7 +49,7 @@ class HerReplayStorage(DictReplayStorage):
         num_goals (int): The number of goals to sample.
         reward_fn (Callable): Function to compute new rewards based on state and goal, whose definition is
             same as https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/envs/bit_flipping_env.py#L190
-        copy_info_dict (bool) whether to copy the info dictionary and pass it to compute_reward() method. 
+        copy_info_dict (bool) whether to copy the info dictionary and pass it to compute_reward() method.
 
     Returns:
         Dict replay storage.
@@ -65,8 +65,8 @@ class HerReplayStorage(DictReplayStorage):
         batch_size: int = 1024,
         goal_selection_strategy: str = "future",
         num_goals: int = 4,
-        reward_fn: Callable = None,
-        copy_info_dict: bool = False
+        reward_fn: Optional[Callable] = None,
+        copy_info_dict: bool = False,
     ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, num_envs, batch_size)
 
@@ -80,8 +80,8 @@ class HerReplayStorage(DictReplayStorage):
         ###########################################################################################################
         # don't use memory optimization
         self.next_observations = {
-            key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype) 
-            for key, shape in self.obs_shape.items()
+            key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype)
+            for key, shape in self.obs_shape.items() # type: ignore
         }
         ###########################################################################################################
 
@@ -145,7 +145,7 @@ class HerReplayStorage(DictReplayStorage):
 
         Args:
             env_idx (int): Index of the environment.
-        
+
         Returns:
             None.
         """
@@ -158,7 +158,6 @@ class HerReplayStorage(DictReplayStorage):
         self.ep_length[episode_indices, env_idx] = episode_end - episode_start
         # update the current episode start
         self._current_ep_start[env_idx] = self.step
-        
 
     def sample(self, step: int) -> VanillaReplayBatch:
         """Sample from the storage.
@@ -176,7 +175,7 @@ class HerReplayStorage(DictReplayStorage):
                 "Unable to sample before the end of the first episode. We recommend choosing a value "
                 "for num_init_steps that is greater than the maximum number of timesteps in the environment."
             )
-        
+
         # get vaild indices
         valid_indices = np.flatnonzero(is_valid)
         sampled_indices = np.random.choice(valid_indices, size=self.batch_size, replace=True)
@@ -212,13 +211,12 @@ class HerReplayStorage(DictReplayStorage):
             rewards=rewards,
             terminateds=terminateds,
             truncateds=truncateds,
-            next_observations=next_observations
+            next_observations=next_observations,
         )
-        
-    
+
     def _sample_real(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> VanillaReplayBatch:
         """Get real samples from the storage.
-        
+
         Args:
             batch_indices (np.ndarray): Batch indices of transitions.
             env_indices (np.ndarray): Environment indices.
@@ -245,13 +243,12 @@ class HerReplayStorage(DictReplayStorage):
             rewards=self.to_torch(rewards),
             terminateds=self.to_torch(terminateds),
             truncateds=self.to_torch(truncateds),
-            next_observations=next_observations
+            next_observations=next_observations,
         )
-
 
     def _sample_virtual(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> VanillaReplayBatch:
         """Get the samples with new goals and rewards.
-        
+
         Args:
             batch_indices (np.ndarray): Batch indices of transitions.
             env_indices (np.ndarray): Environment indices.
@@ -290,9 +287,9 @@ class HerReplayStorage(DictReplayStorage):
             next_obs["achieved_goal"],
             # here we use the new desired goal
             obs["desired_goal"],
-            infos
+            infos,
         )
-        
+
         # convert to torch tensor
         observations = {key: self.to_torch(item) for key, item in obs.items()}
         next_observations = {key: self.to_torch(item) for key, item in next_obs.items()}
@@ -303,13 +300,12 @@ class HerReplayStorage(DictReplayStorage):
             rewards=self.to_torch(rewards),
             terminateds=self.to_torch(terminateds),
             truncateds=self.to_torch(truncateds),
-            next_observations=next_observations
+            next_observations=next_observations,
         )
-
 
     def _sample_goals(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> np.ndarray:
         """Sample goals based on goal_selection_strategy.
-        
+
         Args:
             batch_indices (np.ndarray): Batch indices of transitions.
             env_indices (np.ndarray): Environment indices.

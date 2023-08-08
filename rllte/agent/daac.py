@@ -147,7 +147,7 @@ class DAAC(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn
+            init_fn=init_fn,
         )
 
         # default storage
@@ -164,8 +164,7 @@ class DAAC(OnPolicyAgent):
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_adv_loss = [0.0]
         total_value_loss = [0.0]
@@ -173,9 +172,10 @@ class DAAC(OnPolicyAgent):
 
         for _ in range(self.policy_epochs):
             for batch in self.storage.sample():
-
                 # evaluate sampled actions
-                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -210,7 +210,7 @@ class DAAC(OnPolicyAgent):
                         values_losses = (new_values.flatten() - batch.returns).pow(2)
                         values_losses_clipped = (values_clipped - batch.returns).pow(2)
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
-                    
+
                     # update
                     self.policy.critic_opt.zero_grad(set_to_none=True)
                     value_loss.backward()

@@ -1,23 +1,20 @@
+from collections import namedtuple
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, NamedTuple
-from collections import namedtuple
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.nn import functional as F
 from torch.distributions import Distribution
+from torch.nn import functional as F
 
 from rllte.common.base_policy import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.on_policy_shared_actor_critic import DiscreteActor, BoxActor
+from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor
 
-PolicyOutputs = namedtuple("PolicyOutputs", [
-    "policy_outputs", 
-    "baseline", 
-    "action"]
-)
+PolicyOutputs = namedtuple("PolicyOutputs", ["policy_outputs", "baseline", "action"])
+
 
 class ActorCritic(nn.Module):
     """Actor-Critic network for IMPALA.
@@ -27,7 +24,7 @@ class ActorCritic(nn.Module):
         action_shape (Tuple): The data shape of actions.
         action_dim (int): Number of neurons for outputting actions.
         action_type (str): Type of actions.
-        action_range (List): Range of actions.
+        action_range (Tuple): Range of actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
 
@@ -41,7 +38,7 @@ class ActorCritic(nn.Module):
         action_shape: Tuple,
         action_dim: int,
         action_type: str,
-        action_range: List,
+        action_range: Tuple,
         feature_dim: int,
         hidden_dim: int = 512,
     ) -> None:
@@ -52,7 +49,7 @@ class ActorCritic(nn.Module):
         self.action_range = action_range
         self.action_type = action_type
 
-        # feature_dim + one-hot of last action + last reward        
+        # feature_dim + one-hot of last action + last reward
         mixed_feature_dim = feature_dim + action_dim + 1
 
         # build actor and critic
@@ -66,11 +63,9 @@ class ActorCritic(nn.Module):
             raise NotImplementedError(f"Unsupported action type {self.action_type}.")
 
         # build actor and critic
-        self.actor = actor_class(obs_shape=obs_shape, 
-                                 action_dim=action_dim, 
-                                 feature_dim=mixed_feature_dim, 
-                                 hidden_dim=hidden_dim
-                                 )
+        self.actor = actor_class(
+            obs_shape=obs_shape, action_dim=action_dim, feature_dim=mixed_feature_dim, hidden_dim=hidden_dim
+        )
         # baseline value function
         self.critic = nn.Linear(mixed_feature_dim, 1)
 
@@ -136,6 +131,7 @@ class ActorCritic(nn.Module):
             return self.dist(mu, logstd.exp())
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}.")
+
 
 class DistributedActorLearner(BasePolicy):
     """Actor-Learner network for IMPALA.
@@ -223,7 +219,7 @@ class DistributedActorLearner(BasePolicy):
 
     def to(self, device: th.device) -> None:
         """Only move the learner to device, and keep actor in CPU.
-        
+
         Args:
             device (th.device): Device to use.
 

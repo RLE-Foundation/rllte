@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
@@ -31,6 +31,7 @@ import torch as th
 
 from rllte.common.base_storage import VanillaReplayBatch
 from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
+
 
 class DictReplayStorage(VanillaReplayStorage):
     """Dict replay storage for off-policy algorithms and dictionary observations.
@@ -59,13 +60,13 @@ class DictReplayStorage(VanillaReplayStorage):
         super().__init__(observation_space, action_space, device, storage_size, num_envs, batch_size)
 
         assert isinstance(self.obs_shape, dict), "DictReplayStorage only support Dict observation space."
-        
+
         # data containers
         ###########################################################################################################
         self.observations = {
-            key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype) 
+            key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype)
             for key, shape in self.obs_shape.items()
-        }    
+        }
         ###########################################################################################################
 
     def add(
@@ -100,7 +101,7 @@ class DictReplayStorage(VanillaReplayStorage):
             else:
                 obs_ = observations[key]
                 next_obs_ = next_observations[key]
-            
+
             np.copyto(self.observations[key][self.step], obs_.cpu().numpy())
             np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
 
@@ -126,11 +127,14 @@ class DictReplayStorage(VanillaReplayStorage):
             batch_indices = (np.random.randint(1, self.storage_size, size=self.batch_size) + self.step) % self.storage_size
         else:
             batch_indices = np.random.randint(0, self.step, size=self.batch_size)
-        env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size, ))
+        env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size,))
 
         # get batch data
         obs = {key: self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
-        next_obs = {key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :] for key in self.observations.keys()}
+        next_obs = {
+            key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :]
+            for key in self.observations.keys()
+        }
 
         actions = self.actions[batch_indices, env_indices]
         rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)
@@ -147,7 +151,7 @@ class DictReplayStorage(VanillaReplayStorage):
             rewards=self.to_torch(rewards),
             terminateds=self.to_torch(terminateds),
             truncateds=self.to_torch(truncateds),
-            next_observations=next_observations
+            next_observations=next_observations,
         )
 
     def update(self, *args) -> None:

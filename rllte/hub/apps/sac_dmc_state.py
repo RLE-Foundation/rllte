@@ -28,7 +28,6 @@ import os
 
 from rllte.agent import SAC
 from rllte.env import make_dmc_env
-from rllte.xploit.storage import PrioritizedReplayStorage
 
 os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
 

@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional, Generator
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -87,13 +87,8 @@ class A2C(OnPolicyAgent):
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
-            env=env,
-            eval_env=eval_env,
-            tag=tag,
-            seed=seed,
-            device=device,
-            pretraining=pretraining,
-            num_steps=num_steps)
+            env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining, num_steps=num_steps
+        )
 
         # hyper parameters
         self.lr = lr
@@ -128,7 +123,7 @@ class A2C(OnPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn
+            init_fn=init_fn,
         )
 
         # default storage
@@ -145,8 +140,7 @@ class A2C(OnPolicyAgent):
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
         total_entropy_loss = [0.0]
@@ -154,7 +148,9 @@ class A2C(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 policy_loss = -(batch.adv_targ * new_log_probs).mean()

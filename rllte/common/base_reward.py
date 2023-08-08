@@ -25,10 +25,11 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict
-from rllte.common.preprocessing import process_env_info
 
 import gymnasium as gym
 import torch as th
+
+from rllte.common.preprocessing import process_env_info
 
 
 class BaseIntrinsicRewardModule(ABC):
@@ -54,8 +55,9 @@ class BaseIntrinsicRewardModule(ABC):
         kappa: float = 0.000025,
     ) -> None:
         # get environment information
-        self._obs_shape, self._action_shape, self._action_dim, self._action_type, self._action_range = \
-            process_env_info(observation_space, action_space)
+        self._obs_shape, self._action_shape, self._action_dim, self._action_type, self._action_range = process_env_info(
+            observation_space, action_space
+        )
 
         self._device = th.device(device)
         self._beta = beta

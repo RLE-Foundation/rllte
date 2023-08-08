@@ -25,12 +25,11 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-
 from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy

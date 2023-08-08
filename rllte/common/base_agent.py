@@ -29,16 +29,19 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
-# from torch.utils.tensorboard import SummaryWriter
 
 import gymnasium as gym
 import numpy as np
 import pynvml
 import torch as th
 
+# from torch.utils.tensorboard import SummaryWriter
+
+
 # try to load torch_npu
 try:
     import torch_npu as torch_npu  # type: ignore
+
     NPU_AVAILABLE = True
 except Exception:
     NPU_AVAILABLE = False
@@ -49,12 +52,13 @@ from rllte.common.base_encoder import BaseEncoder as Encoder
 from rllte.common.base_policy import BasePolicy as Policy
 from rllte.common.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.base_storage import BaseStorage as Storage
-from rllte.common.preprocessing import process_env_info
 from rllte.common.logger import Logger
+from rllte.common.preprocessing import process_env_info
 from rllte.common.timer import Timer
 from rllte.common.utils import get_npu_name
 
 NUMBER_OF_SPACES = 17
+
 
 class BaseAgent(ABC):
     """Base class of the agent.
@@ -111,15 +115,16 @@ class BaseAgent(ABC):
             self.device_name = f"HUAWEI Ascend {get_npu_name()}"
         else:
             self.device_name = "CPU"
-        
+
         # env setup
         self.env = env
         self.eval_env = eval_env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
         self.num_envs = env.num_envs
-        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
-            process_env_info(self.observation_space, self.action_space)
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = process_env_info(
+            self.observation_space, self.action_space
+        )
 
         # set seed
         self.seed = seed
@@ -194,7 +199,6 @@ class BaseAgent(ABC):
         # sep line
         self.logger.debug("=" * 80)
 
-
     def set(
         self,
         encoder: Optional[Any] = None,
@@ -248,7 +252,6 @@ class BaseAgent(ABC):
             assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
             self.irs = reward
 
-
     def mode(self, training: bool = True) -> None:
         """Set the training mode.
 
@@ -261,40 +264,39 @@ class BaseAgent(ABC):
         self.training = training
         self.policy.train(training)
 
-
     @abstractmethod
     def update(self) -> Dict[str, float]:
         """Update function of the agent."""
 
-
     @abstractmethod
-    def train(self, 
-              num_train_steps: int, 
-              init_model_path: Optional[str], 
-              log_interval: int, 
-              eval_interval: int,
-              num_eval_episodes: int) -> None:
+    def train(
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str],
+        log_interval: int,
+        eval_interval: int,
+        num_eval_episodes: int,
+    ) -> None:
         """Training function.
-        
+
         Args:
             num_train_steps (int): The number of training steps.
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             None.
         """
 
-
     @abstractmethod
     def eval(self, num_eval_episodes: int) -> Optional[Dict[str, float]]:
         """Evaluation function.
-        
+
         Args:
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             The evaluation results.
         """

@@ -23,14 +23,14 @@
 # =============================================================================
 
 
-from typing import Generator, Dict
+from typing import Dict, Generator
 
 import gymnasium as gym
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-from collections import namedtuple
 
 from rllte.common.base_storage import BaseStorage, VanillaRolloutBatch
+
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
@@ -96,7 +96,7 @@ class VanillaRolloutStorage(BaseStorage):
             )
         else:
             raise NotImplementedError
-        
+
         self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
         self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
@@ -123,7 +123,7 @@ class VanillaRolloutStorage(BaseStorage):
         infos: Dict,
         next_observations: th.Tensor,
         log_probs: th.Tensor,
-        values: th.Tensor
+        values: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -206,5 +206,5 @@ class VanillaRolloutStorage(BaseStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ
+                adv_targ=adv_targ,
             )

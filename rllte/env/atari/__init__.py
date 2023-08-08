@@ -28,26 +28,21 @@ from typing import Callable
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
-from gymnasium.wrappers import (FrameStack, 
-                                GrayScaleObservation, 
-                                RecordEpisodeStatistics, 
-                                ResizeObservation, 
-                                TransformReward)
+from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
 
-from rllte.env.atari.wrappers import (EpisodicLifeEnv, 
-                                      FireResetEnv, 
-                                      MaxAndSkipEnv, 
-                                      NoopResetEnv, 
-                                      EnvPoolAsynchronous, 
-                                      EnvPoolSynchronous)
+from rllte.env.atari.wrappers import (
+    EnvPoolAsynchronous,
+    EnvPoolSynchronous,
+    EpisodicLifeEnv,
+    FireResetEnv,
+    MaxAndSkipEnv,
+    NoopResetEnv,
+)
 from rllte.env.utils import Gymnasium2Torch
 
+
 def make_envpool_atari_env(
-    env_id: str = "Alien-v5",
-    num_envs: int = 8,
-    device: str = "cpu",
-    seed: int = 1,
-    parallel: bool = True
+    env_id: str = "Alien-v5", num_envs: int = 8, device: str = "cpu", seed: int = 1, parallel: bool = True
 ) -> gym.Env:
     """Build Atari environments with `envpool`.
 
@@ -56,7 +51,7 @@ def make_envpool_atari_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
             For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
     """
@@ -64,11 +59,11 @@ def make_envpool_atari_env(
         envs = EnvPoolAsynchronous(env_id, num_envs, seed)
     else:
         envs = EnvPoolSynchronous(env_id, num_envs, seed)
-    
+
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return Gymnasium2Torch(envs, device)
+    return Gymnasium2Torch(envs, device, envpool=True)
 
 
 def make_atari_env(
@@ -87,7 +82,7 @@ def make_atari_env(
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
             For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 

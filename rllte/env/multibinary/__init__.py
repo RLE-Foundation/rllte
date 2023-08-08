@@ -116,11 +116,7 @@ class PixelEnv(gym.Env):
 
 
 def make_multibinary_env(
-    env_id: str = "multibinary_state", 
-    num_envs: int = 1, 
-    device: str = "cpu", 
-    seed: int = 0,
-    parallel: bool = True
+    env_id: str = "multibinary_state", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
 ) -> gym.Env:
     """Build environments with `MultiBinary` action space for testing.
 
@@ -129,7 +125,7 @@ def make_multibinary_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
             For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 

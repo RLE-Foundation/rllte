@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Generator, Dict
+from typing import Dict, Generator
 
 import gymnasium as gym
 import torch as th
@@ -31,6 +31,7 @@ from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from rllte.common.base_storage import VanillaRolloutBatch
 from rllte.xploit.storage.vanilla_rollout_storage import VanillaRolloutStorage
+
 
 class DictRolloutStorage(VanillaRolloutStorage):
     """Dict Rollout storage for on-policy algorithms and dictionary observations.
@@ -85,7 +86,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
         infos: Dict,
         next_observations: th.Tensor,
         log_probs: th.Tensor,
-        values: th.Tensor
+        values: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -145,5 +146,5 @@ class DictRolloutStorage(VanillaRolloutStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ
+                adv_targ=adv_targ,
             )

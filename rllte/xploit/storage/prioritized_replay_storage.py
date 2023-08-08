@@ -23,19 +23,20 @@
 # =============================================================================
 
 
+import warnings
 from collections import deque
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-import warnings
 
 from rllte.common.base_storage import BaseStorage, PrioritizedReplayBatch
 
+
 class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
-        Since the storage updates the priorities of the samples based on the TD error, users 
+        Since the storage updates the priorities of the samples based on the TD error, users
         should include the `indices` and `weights` in the returned information of the `.update`
         method of the agent. An example is:
             return {"indices": indices, "weights": weights, ..., "Actor Loss": actor_loss, ...}
@@ -144,9 +145,9 @@ class PrioritizedReplayStorage(BaseStorage):
             priorities = self.priorities
         else:
             priorities = self.priorities[: self.position]
-        
+
         # compute probabilities and sample indices
-        probs = priorities ** self.alpha
+        probs = priorities**self.alpha
         probs /= probs.sum()
         indices = np.random.choice(len(self.storage), self.batch_size, p=probs)
 
@@ -165,14 +166,16 @@ class PrioritizedReplayStorage(BaseStorage):
         truncateds = np.expand_dims(np.stack(truncateds), 1)
         next_obs = np.stack(next_obs)
 
-        return PrioritizedReplayBatch(observations=self.to_torch(obs),
-                                      actions=self.to_torch(actions),
-                                      rewards=self.to_torch(rewards),
-                                      terminateds=self.to_torch(terminateds),
-                                      truncateds=self.to_torch(truncateds),
-                                      next_observations=self.to_torch(next_obs),
-                                      weights=self.to_torch(weights),
-                                      indices=indices)
+        return PrioritizedReplayBatch(
+            observations=self.to_torch(obs),
+            actions=self.to_torch(actions),
+            rewards=self.to_torch(rewards),
+            terminateds=self.to_torch(terminateds),
+            truncateds=self.to_torch(truncateds),
+            next_observations=self.to_torch(next_obs),
+            weights=self.to_torch(weights),
+            indices=indices,
+        )
 
     def update(self, metrics: Dict) -> None:
         """Update the priorities.

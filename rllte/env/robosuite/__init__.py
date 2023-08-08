@@ -99,7 +99,7 @@ def make_robosuite_env(
             a viewer instead of headless mode.
         has_offscreen_renderer (bool): True if using off-screen rendering.
         use_camera_obs (bool): True for using image observations.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
             For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
 

@@ -23,13 +23,14 @@
 # =============================================================================
 
 from collections import deque
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, NamedTuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
+
 
 def make_rllte_env(
     env_id: Union[str, Callable[..., gym.Env]],
@@ -107,7 +108,7 @@ class Gymnasium2Torch(gym.Wrapper):
             self.observation_space = env.single_observation_space
             self.action_space = env.single_action_space
 
-        if isinstance(env.single_observation_space, gym.spaces.Dict):
+        if isinstance(self.observation_space, gym.spaces.Dict):
             self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
         else:
             self._format_obs = lambda x: th.as_tensor(x, device=self.device)
@@ -219,7 +220,7 @@ class DistributedWrapper:
             self.action_dim = env.action_space.shape[0]
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
     def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
         init_reward = th.zeros(1, 1)

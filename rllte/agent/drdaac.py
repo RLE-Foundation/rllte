@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional, Generator
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -34,8 +34,9 @@ from rllte.common.on_policy_agent import OnPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
 from rllte.xplore.augmentation import RandomCrop
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+
 
 class DrDAAC(OnPolicyAgent):
     """Data-Regularized extension of Decoupled Advantage Actor-Critic (DAAC) agent.
@@ -170,8 +171,7 @@ class DrDAAC(OnPolicyAgent):
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
     def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_adv_loss = [0.0]
         total_value_loss = [0.0]
@@ -179,9 +179,10 @@ class DrDAAC(OnPolicyAgent):
 
         for _ in range(self.policy_epochs):
             for batch in self.storage.sample():
-
                 # evaluate sampled actions
-                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_adv_preds, _, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -194,7 +195,7 @@ class DrDAAC(OnPolicyAgent):
                 batch_obs_aug = self.aug(batch.observations)
                 new_batch_actions, _ = self.policy(obs=batch.observations)
                 _, _, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
-                policy_loss_aug = - log_probs_aug.mean()
+                policy_loss_aug = -log_probs_aug.mean()
 
                 # update
                 self.policy.actor_opt.zero_grad(set_to_none=True)
@@ -222,7 +223,7 @@ class DrDAAC(OnPolicyAgent):
                         values_losses = (new_values.flatten() - batch.returns).pow(2)
                         values_losses_clipped = (values_clipped - batch.returns).pow(2)
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
-                    
+
                     # augmentation loss part
                     batch_obs_aug = self.aug(batch.observations)
                     new_batch_actions, _ = self.policy(obs=batch.observations)

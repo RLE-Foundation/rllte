@@ -23,14 +23,12 @@
 # =============================================================================
 
 
-from typing import Callable, Tuple, Dict, List
-
-import os
 import json
+import os
+from typing import Dict, List, Tuple
+
 import numpy as np
 import torch as th
-import gymnasium as gym
-
 from torch import nn
 
 
@@ -120,13 +118,14 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
 
     Args:
         infos (Dict): Information.
-    
+
     Returns:
         Episode rewards and lengths.
     """
     indices = np.nonzero(infos["episode"]["l"])
-        
+
     return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+
 
 def get_npu_name() -> str:
     """Get NPU name."""

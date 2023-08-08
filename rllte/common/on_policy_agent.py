@@ -64,25 +64,26 @@ class OnPolicyAgent(BaseAgent):
         self.num_steps = num_steps
 
     def update(self) -> Dict[str, float]:
-        """Update the agent. Implemented by individual algorithms.
-        """
+        """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self, 
-              num_train_steps: int, 
-              init_model_path: Optional[str] = None, 
-              log_interval: int = 1, 
-              eval_interval: int = 100,
-              num_eval_episodes: int = 10) -> None:
+    def train(
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str] = None,
+        log_interval: int = 1,
+        eval_interval: int = 100,
+        num_eval_episodes: int = 10,
+    ) -> None:
         """Training function.
-        
+
         Args:
             num_train_steps (int): The number of training steps.
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             None.
         """
@@ -148,7 +149,7 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
-            metrics = self.update()
+            self.update()
 
             # update and reset buffer
             self.storage.update()
@@ -189,10 +190,10 @@ class OnPolicyAgent(BaseAgent):
 
     def eval(self, num_eval_episodes: int) -> Dict[str, float]:
         """Evaluation function.
-        
+
         Args:
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             The evaluation results.
         """
@@ -212,7 +213,7 @@ class OnPolicyAgent(BaseAgent):
                 eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
-            
+
             # set the current observation
             obs = next_obs
 
@@ -221,5 +222,5 @@ class OnPolicyAgent(BaseAgent):
             "episode": self.global_episode,
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),
-            "total_time": self.timer.total_time()
+            "total_time": self.timer.total_time(),
         }

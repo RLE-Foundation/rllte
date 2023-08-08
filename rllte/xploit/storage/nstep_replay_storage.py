@@ -22,11 +22,11 @@
 # SOFTWARE.
 # =============================================================================
 
-import warnings
 import datetime
 import random
 import traceback
-from collections import defaultdict, namedtuple
+import warnings
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterator, Tuple
 
@@ -37,6 +37,7 @@ from torch.utils.data import IterableDataset
 
 from rllte.common.base_storage import BaseStorage, NStepReplayBatch
 from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
+
 
 class ReplayStorage:
     """Replay storage for storing transitions.
@@ -352,12 +353,13 @@ class NStepReplayStorage(BaseStorage):
         # to device
         obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
 
-        return NStepReplayBatch(observations=self.to_torch(obs), 
-                                actions=self.to_torch(actions), 
-                                rewards=self.to_torch(rewards), 
-                                discounts=self.to_torch(discounts), 
-                                next_observations=self.to_torch(next_obs)
-                                )
+        return NStepReplayBatch(
+            observations=self.to_torch(obs),
+            actions=self.to_torch(actions),
+            rewards=self.to_torch(rewards),
+            discounts=self.to_torch(discounts),
+            next_observations=self.to_torch(next_obs),
+        )
 
     def update(self, *args) -> None:
         """Update the storage if necessary."""

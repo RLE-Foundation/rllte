@@ -56,6 +56,7 @@ ERROR_PREFIX = "[" + colored("ERROR".ljust(NUMBER_OF_PREFIX_SPACES, " "), "white
 TRAIN_PREFIX = "[" + colored("TRAIN".ljust(NUMBER_OF_PREFIX_SPACES, " "), "red", attrs=["bold"]) + "] - "
 EVAL_PREFIX = "[" + colored("EVAL.".ljust(NUMBER_OF_PREFIX_SPACES, " "), "green", attrs=["bold"]) + "] - "
 
+
 class Logger:
     """The logger class.
 

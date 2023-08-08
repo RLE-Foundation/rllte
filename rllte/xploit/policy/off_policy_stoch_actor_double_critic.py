@@ -24,12 +24,11 @@
 
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-
 from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy
@@ -117,7 +116,7 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
         self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
         self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
-    
+
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
 

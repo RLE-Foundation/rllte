@@ -25,10 +25,12 @@
 
 from torch.distributions import Distribution
 
+
 class BaseDistribution(Distribution):
     """Abstract base class of distributions.
-        In rllte, action noise is implemented as a distribution.
+    In rllte, action noise is implemented as a distribution.
     """
+
     def __init__(self):
         super().__init__(validate_args=False)
 

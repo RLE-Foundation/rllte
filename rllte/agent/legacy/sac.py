@@ -51,7 +51,6 @@ class SAC(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
-        eval_every_steps (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -79,7 +78,6 @@ class SAC(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 10000,
         feature_dim: int = 50,
         batch_size: int = 1024,
         lr: float = 1e-4,
@@ -102,7 +100,6 @@ class SAC(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -216,7 +213,7 @@ class SAC(OffPolicyAgent):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
-        next_obs: th.Tensor
+        next_obs: th.Tensor,
     ) -> Dict[str, float]:
         """Update the critic network.
 
@@ -240,9 +237,8 @@ class SAC(OffPolicyAgent):
             # time limit mask
             target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
 
-
         Q1, Q2 = self.policy.critic(obs, actions)
-        critic_loss  = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
         self.policy.encoder_opt.zero_grad(set_to_none=True)
@@ -255,7 +251,7 @@ class SAC(OffPolicyAgent):
             "Critic Loss": critic_loss.item(),
             "Q1": Q1.mean().item(),
             "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item()
+            "Target Q": target_Q.mean().item(),
         }
 
     def update_actor_and_alpha(self, obs: th.Tensor) -> Dict[str, float]:
@@ -274,7 +270,7 @@ class SAC(OffPolicyAgent):
         Q1, Q2 = self.policy.critic(obs, action)
         Q = th.min(Q1, Q2)
 
-        actor_loss  = (self.alpha.detach() * log_prob - Q).mean()
+        actor_loss = (self.alpha.detach() * log_prob - Q).mean()
 
         # optimize actor
         self.policy.actor_opt.zero_grad(set_to_none=True)

@@ -23,14 +23,13 @@
 # =============================================================================
 
 
-from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type
 from copy import deepcopy
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-
 from torch.distributions import Distribution
 
 from rllte.common.base_policy import BasePolicy
@@ -154,7 +153,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         self.qnet_target.load_state_dict(self.qnet.state_dict())
         # build optimizers
         self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
-    
+
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
 
@@ -164,8 +163,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         Returns:
             Sampled actions.
         """
-        return th.randint(low=self.action_range[0], high=self.action_range[1], 
-                          size=(obs.size()[0], ), device=obs.device)
+        return th.randint(low=self.action_range[0], high=self.action_range[1], size=(obs.size()[0],), device=obs.device)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.

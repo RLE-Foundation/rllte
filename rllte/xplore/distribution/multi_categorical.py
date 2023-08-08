@@ -23,6 +23,7 @@
 # =============================================================================
 
 from typing import Tuple
+
 import torch as th
 import torch.distributions as pyd
 
@@ -44,14 +45,14 @@ class MultiCategorical(BaseDistribution):
         self.dist = [pyd.Categorical(logits=logits_) for logits_ in logits]
 
     @property
-    def probs(self) -> Tuple[th.Tensor, ...]:
+    def probs(self) -> Tuple[th.Tensor, ...]: 
         """Return probabilities."""
-        return (dist.probs for dist in self.dist)
+        return (dist.probs for dist in self.dist) # type: ignore
 
     @property
-    def logits(self) -> Tuple[th.Tensor, ...]:
+    def logits(self) -> Tuple[th.Tensor, ...]: 
         """Returns the unnormalized log probabilities."""
-        return (dist.logits for dist in self.dist)
+        return (dist.logits for dist in self.dist) # type: ignore
 
     def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
@@ -74,9 +75,9 @@ class MultiCategorical(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return th.stack([dist.log_prob(action) for dist, action in zip(self.dist, th.unbind(actions, dim=1))],
-                        dim=1
-                        ).sum(dim=1)
+        return th.stack([dist.log_prob(action) for dist, action in zip(self.dist, th.unbind(actions, dim=1))], dim=1).sum(
+            dim=1
+        )
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""

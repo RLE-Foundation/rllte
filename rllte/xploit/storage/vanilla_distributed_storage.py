@@ -23,11 +23,11 @@
 # =============================================================================
 
 import threading
-from typing import Any, Dict, Generator, List, Tuple
-from torch import multiprocessing as mp
+from typing import Any, Dict
 
 import gymnasium as gym
 import torch as th
+from torch import multiprocessing as mp
 
 from rllte.common.base_storage import BaseStorage
 
@@ -100,12 +100,13 @@ class VanillaDistributedStorage(BaseStorage):
             for key in self.storages:
                 self.storages[key].append(th.empty(**specs[key]).share_memory_())
 
-    def add(self, 
-            idx: int,
-            timestep: int,
-            actor_output: Dict[str, Any],
-            env_output: Dict[str, Any],
-            ) -> None:
+    def add(
+        self,
+        idx: int,
+        timestep: int,
+        actor_output: Dict[str, Any],
+        env_output: Dict[str, Any],
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -113,7 +114,7 @@ class VanillaDistributedStorage(BaseStorage):
             timestep (int): The timestep of rollout.
             actor_output (Dict): Actor output.
             env_output (Dict): Environment output.
-        
+
         Returns:
             None
         """
@@ -122,11 +123,9 @@ class VanillaDistributedStorage(BaseStorage):
         for key in actor_output:
             self.storages[key][idx][timestep, ...] = actor_output[key]
 
-    def sample(self, # noqa B008
-               free_queue: mp.SimpleQueue, 
-               full_queue: mp.SimpleQueue, 
-               lock=threading.Lock()
-               ) -> Tuple[Dict, Generator[Any, Any, None]]:
+    def sample(
+        self, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock=threading.Lock()  # noqa B008
+    ) -> Dict[str, th.Tensor]:
         """Sample transitions from the storage.
 
         Args:

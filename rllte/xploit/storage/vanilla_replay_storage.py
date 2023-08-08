@@ -23,13 +23,14 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 
 from rllte.common.base_storage import BaseStorage, VanillaReplayBatch
+
 
 class VanillaReplayStorage(BaseStorage):
     """Vanilla replay storage for off-policy algorithms.
@@ -60,7 +61,7 @@ class VanillaReplayStorage(BaseStorage):
         self.storage_size = max(storage_size // num_envs, 1)
         self.num_envs = num_envs
         self.batch_size = batch_size
-        
+
         # data containers
         ###########################################################################################################
         # initialize this container later, for `DictReplayStorage`
@@ -131,7 +132,7 @@ class VanillaReplayStorage(BaseStorage):
             batch_indices = (np.random.randint(1, self.storage_size, size=self.batch_size) + self.step) % self.storage_size
         else:
             batch_indices = np.random.randint(0, self.step, size=self.batch_size)
-        env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size, ))
+        env_indices = np.random.randint(0, self.num_envs, size=(self.batch_size,))
 
         # get batch data
         obs = self.observations[batch_indices, env_indices, :]
@@ -147,7 +148,7 @@ class VanillaReplayStorage(BaseStorage):
             rewards=self.to_torch(rewards),
             terminateds=self.to_torch(terminateds),
             truncateds=self.to_torch(truncateds),
-            next_observations=self.to_torch(next_obs)
+            next_observations=self.to_torch(next_obs),
         )
 
     def update(self, *args) -> None:

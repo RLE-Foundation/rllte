@@ -39,7 +39,7 @@ from rllte.xplore.distribution import TruncatedNormalNoise
 
 class DDPG(OffPolicyAgent):
     """Deep Deterministic Policy Gradient (DDPG) agent.
-        
+
     Args:
         env (gym.Env): A Gym-like environment for training.
         eval_env (gym.Env): A Gym-like environment for evaluation.
@@ -49,7 +49,6 @@ class DDPG(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
-        eval_every_steps (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -73,7 +72,6 @@ class DDPG(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 5000,
         feature_dim: int = 50,
         batch_size: int = 256,
         lr: float = 1e-4,
@@ -92,7 +90,6 @@ class DDPG(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -120,7 +117,7 @@ class DDPG(OffPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn
+            init_fn=init_fn,
         )
 
         # default storage
@@ -165,7 +162,8 @@ class DDPG(OffPolicyAgent):
         metrics.update(self.update_critic(encoded_obs, 
                                           batch.actions, 
                                           batch.rewards, 
-                                          batch.discount, 
+                                          batch.terminateds, 
+                                          batch.truncateds, 
                                           encoded_next_obs))
 
         # update actor (do not udpate encoder)
@@ -183,7 +181,7 @@ class DDPG(OffPolicyAgent):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
-        next_obs: th.Tensor
+        next_obs: th.Tensor,
     ) -> Dict[str, float]:
         """Update the critic network.
 
@@ -220,7 +218,7 @@ class DDPG(OffPolicyAgent):
             "Critic Loss": critic_loss.item(),
             "Q1": Q1.mean().item(),
             "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item()
+            "Target Q": target_Q.mean().item(),
         }
 
     def update_actor(self, obs: th.Tensor) -> Dict[str, float]:
@@ -239,7 +237,7 @@ class DDPG(OffPolicyAgent):
         Q1, Q2 = self.policy.critic(obs, action)
         Q = th.min(Q1, Q2)
 
-        actor_loss = - Q.mean()
+        actor_loss = -Q.mean()
 
         # optimize actor
         self.policy.actor_opt.zero_grad(set_to_none=True)

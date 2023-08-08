@@ -27,9 +27,11 @@ from typing import Callable
 
 from torch import nn
 
+
 def _identity(m):
     """Identity initialization."""
     pass
+
 
 def _orthogonal(m):
     """Orthogonal initialization."""
@@ -43,6 +45,7 @@ def _orthogonal(m):
         if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
 
+
 def _xavier_uniform(m):
     """Xavier uniform initialization."""
     if isinstance(m, nn.Linear):
@@ -53,6 +56,7 @@ def _xavier_uniform(m):
         nn.init.xavier_uniform_(m.weight.data)
         if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
+
 
 def _xavier_normal(m):
     """Xavier normal initialization."""
@@ -65,7 +69,8 @@ def _xavier_normal(m):
         if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
 
-def get_init_fn(method: str = "orthogonal") -> Callable:  # noqa: c901
+
+def get_init_fn(method: str = "orthogonal") -> Callable:  # : c901
     """Returns a network initialization function.
 
     Args:

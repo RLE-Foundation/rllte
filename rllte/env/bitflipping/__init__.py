@@ -23,8 +23,10 @@
 # =============================================================================
 
 from collections import OrderedDict
-from typing import Any, Dict, Optional, Tuple, Union, Callable
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
+import gymnasium as gym
+import numpy as np
 from gymnasium import Env, spaces
 from gymnasium.envs.registration import EnvSpec
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
@@ -32,23 +34,21 @@ from gymnasium.wrappers import RecordEpisodeStatistics
 
 from rllte.env.utils import Gymnasium2Torch
 
-import numpy as np
-import gymnasium as gym
 
 class BitFlippingEnv(Env):
-    """Simple bit flipping env, useful to test HER. 
-        The goal is to flip all the bits to get a vector of ones. 
-        In the continuous variant, if the ith action component has a value > 0, 
+    """Simple bit flipping env, useful to test HER.
+        The goal is to flip all the bits to get a vector of ones.
+        In the continuous variant, if the ith action component has a value > 0,
         then the ith bit will be flipped.
 
         Borrowed from: https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/envs/bit_flipping_env.py
-    
+
     Args:
         n_bits (int): Number of bits to flip
-        continuous (bool): Whether to use the continuous actions version or not, 
+        continuous (bool): Whether to use the continuous actions version or not,
             by default, it uses the discrete one.
         max_steps (int):  Max number of steps, by default, equal to n_bits.
-        discrete_obs_space (bool): Whether to use the discrete observation 
+        discrete_obs_space (bool): Whether to use the discrete observation
             version or not, by default, it uses the ``MultiBinary`` one.
         image_obs_space (bool): Use image as input instead of the ``MultiBinary`` one.
         channel_first (bool): Whether to use channel-first or last image.
@@ -181,8 +181,7 @@ class BitFlippingEnv(Env):
         return bit_vector
 
     def _get_obs(self) -> Dict[str, Union[int, np.ndarray]]:
-        """Helper to create the observation.
-        """
+        """Helper to create the observation."""
         return OrderedDict(
             [
                 ("observation", self.convert_if_needed(self.state.copy())),
@@ -200,12 +199,12 @@ class BitFlippingEnv(Env):
         self.state = self.obs_space.sample()
         return self._get_obs(), {}
 
-    def step(self, action: Union[np.ndarray, int]) -> Tuple[Dict[str, Union[int, np.ndarray]], float, bool, Dict]:
+    def step(self, action: Union[np.ndarray, int]) -> Tuple[Dict[str, Union[int, np.ndarray]], float, bool, bool, Dict]:
         """Step into the env.
 
         Args:
             action (Union[np.ndarray, int]): Action to take.
-        
+
         Returns:
             Time step data.
         """
@@ -240,12 +239,12 @@ class BitFlippingEnv(Env):
         # Here we are using a vectorized version
         distance = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
         return -(distance > 0).astype(np.float32)
-    
+
 
 def make_bitflipping_env(
-    env_id: str = "BitFlippingEnv-v0", 
-    num_envs: int = 1, 
-    device: str = "cpu", 
+    env_id: str = "BitFlippingEnv-v0",
+    num_envs: int = 1,
+    device: str = "cpu",
     seed: int = 0,
     parallel: bool = True,
     n_bits: int = 15,
@@ -262,14 +261,14 @@ def make_bitflipping_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
+        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
             For `Distributed` algorithms, in which `SyncVectorEnv` is required
             and reward clip will be used before environment vectorization.
         n_bits (int): Number of bits to flip
-        continuous (bool): Whether to use the continuous actions version or not, 
+        continuous (bool): Whether to use the continuous actions version or not,
             by default, it uses the discrete one.
         max_steps (int):  Max number of steps, by default, equal to n_bits.
-        discrete_obs_space (bool): Whether to use the discrete observation 
+        discrete_obs_space (bool): Whether to use the discrete observation
             version or not, by default, it uses the ``MultiBinary`` one.
         image_obs_space (bool): Use image as input instead of the ``MultiBinary`` one.
         channel_first (bool): Whether to use channel-first or last image.
@@ -280,12 +279,14 @@ def make_bitflipping_env(
 
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            env = BitFlippingEnv(n_bits=n_bits, 
-                                 continuous=continuous, 
-                                 max_steps=max_steps, 
-                                 discrete_obs_space=discrete_obs_space, 
-                                 image_obs_space=image_obs_space, 
-                                 channel_first=channel_first)
+            env = BitFlippingEnv(
+                n_bits=n_bits,
+                continuous=continuous,
+                max_steps=max_steps,
+                discrete_obs_space=discrete_obs_space,
+                image_obs_space=image_obs_space,
+                channel_first=channel_first,
+            )
             env.observation_space.seed(seed)
             env.action_space.seed(seed)
             return env

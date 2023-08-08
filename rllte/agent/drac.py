@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional, Generator
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -34,8 +34,9 @@ from rllte.common.on_policy_agent import OnPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
 from rllte.xplore.augmentation import RandomCrop
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+
 
 class DrAC(OnPolicyAgent):
     """Data Regularized Actor-Critic (DrAC) agent.
@@ -157,8 +158,7 @@ class DrAC(OnPolicyAgent):
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
     def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
         total_entropy_loss = [0.0]
@@ -167,7 +167,9 @@ class DrAC(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -190,7 +192,7 @@ class DrAC(OnPolicyAgent):
                 batch_obs_aug = self.aug(batch.observations)
                 new_batch_actions, _ = self.policy(obs=batch.observations)
                 values_aug, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
-                policy_loss_aug = - log_probs_aug.mean()
+                policy_loss_aug = -log_probs_aug.mean()
                 value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                 aug_loss = policy_loss_aug + value_loss_aug
 
@@ -200,7 +202,7 @@ class DrAC(OnPolicyAgent):
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.opt.step()
-                
+
                 total_policy_loss.append(policy_loss.item())
                 total_value_loss.append(value_loss.item())
                 total_entropy_loss.append(entropy.item())

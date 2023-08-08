@@ -23,9 +23,9 @@
 # =============================================================================
 
 
+from collections import deque
 from pathlib import Path
 from typing import Dict, Optional
-from collections import deque
 
 import gymnasium as gym
 import numpy as np
@@ -61,7 +61,7 @@ class OffPolicyAgent(BaseAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
 
@@ -71,21 +71,23 @@ class OffPolicyAgent(BaseAgent):
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self, 
-              num_train_steps: int, 
-              init_model_path: Optional[str] = None, 
-              log_interval: int = 1, 
-              eval_interval: int = 5000,
-              num_eval_episodes: int = 10) -> None:
+    def train(
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str] = None,
+        log_interval: int = 1,
+        eval_interval: int = 5000,
+        num_eval_episodes: int = 10,
+    ) -> None:
         """Training function.
-        
+
         Args:
             num_train_steps (int): The number of training steps.
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             None.
         """
@@ -179,10 +181,10 @@ class OffPolicyAgent(BaseAgent):
 
     def eval(self, num_eval_episodes: int) -> Dict[str, float]:
         """Evaluation function.
-        
+
         Args:
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             The evaluation results.
         """
@@ -214,5 +216,5 @@ class OffPolicyAgent(BaseAgent):
             "episode": self.global_episode,
             "episode_length": np.mean(episode_steps),
             "episode_reward": np.mean(episode_rewards),
-            "total_time": self.timer.total_time()
+            "total_time": self.timer.total_time(),
         }

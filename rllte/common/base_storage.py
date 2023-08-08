@@ -24,54 +24,43 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Any
 from collections import namedtuple
+from typing import Any
 
 import gymnasium as gym
-import torch as th
 import numpy as np
+import torch as th
 
 from rllte.common.preprocessing import process_env_info
 
+VanillaReplayBatch = namedtuple(
+    typename="VanillaReplayBatch",
+    field_names=["observations", "actions", "rewards", "terminateds", "truncateds", "next_observations"],
+)
 
-VanillaReplayBatch = namedtuple(typename="VanillaReplayBatch", field_names=[
-    "observations", 
-    "actions",
-    "rewards",
-    "terminateds",
-    "truncateds",
-    "next_observations"
-])
+PrioritizedReplayBatch = namedtuple(
+    typename="PrioritizedReplayBatch",
+    field_names=["observations", "actions", "rewards", "terminateds", "truncateds", "next_observations", "indices", "weights"],
+)
 
-PrioritizedReplayBatch = namedtuple(typename="PrioritizedReplayBatch", field_names=[
-    "observations",
-    "actions",
-    "rewards",
-    "terminateds",
-    "truncateds",
-    "next_observations",
-    "indices",
-    "weights"
-])
+NStepReplayBatch = namedtuple(
+    typename="NStepReplayBatch", field_names=["observations", "actions", "rewards", "discounts", "next_observations"]
+)
 
-NStepReplayBatch = namedtuple(typename="NStepReplayBatch", field_names=[
-    "observations", 
-    "actions",
-    "rewards",
-    "discounts",
-    "next_observations"
-])
+VanillaRolloutBatch = namedtuple(
+    typename="VanillaRolloutBatch",
+    field_names=[
+        "observations",
+        "actions",
+        "values",
+        "returns",
+        "terminateds",
+        "truncateds",
+        "old_log_probs",
+        "adv_targ",
+    ],
+)
 
-VanillaRolloutBatch = namedtuple(typename="VanillaRolloutBatch", field_names=[
-    "observations",
-    "actions",
-    "values",
-    "returns",
-    "terminateds",
-    "truncateds",
-    "old_log_probs",
-    "adv_targ",
-])
 
 class BaseStorage(ABC):
     """Base class of storage module.
@@ -94,11 +83,12 @@ class BaseStorage(ABC):
         self.observation_space = observation_space
         self.action_space = action_space
         # get environment information
-        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
-            process_env_info(observation_space, action_space)
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = process_env_info(
+            observation_space, action_space
+        )
         # set device
         self.device = th.device(device)
-    
+
     def to_torch(self, x: np.ndarray) -> th.Tensor:
         """Convert numpy array to torch tensor.
 

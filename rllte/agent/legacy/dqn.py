@@ -38,7 +38,7 @@ from rllte.xploit.storage import VanillaReplayStorage
 
 class DQN(OffPolicyAgent):
     """Deep Q-Network (DQN) agent.
-        
+
     Args:
         env (gym.Env): A Gym-like environment for training.
         eval_env (gym.Env): A Gym-like environment for evaluation.
@@ -48,7 +48,6 @@ class DQN(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
-        eval_every_steps (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -73,7 +72,6 @@ class DQN(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 5000,
         feature_dim: int = 50,
         batch_size: int = 32,
         lr: float = 1e-3,
@@ -93,7 +91,6 @@ class DQN(OffPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_init_steps=num_init_steps,
-            eval_every_steps=eval_every_steps,
         )
 
         # hyper parameters
@@ -119,7 +116,7 @@ class DQN(OffPolicyAgent):
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
-            init_fn=init_fn
+            init_fn=init_fn,
         )
 
         # default storage
@@ -129,7 +126,7 @@ class DQN(OffPolicyAgent):
             device=device,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            storage_size=10000
+            storage_size=10000,
         )
 
         # set all the modules [essential operation!!!]
@@ -155,7 +152,7 @@ class DQN(OffPolicyAgent):
                 step=self.global_step,
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
-        
+
         # encode
         encoded_obs = self.policy.encoder(batch.observations)
         with th.no_grad():
@@ -167,7 +164,9 @@ class DQN(OffPolicyAgent):
             next_q_values, _ = next_q_values.max(dim=1)
             next_q_values = next_q_values.reshape(-1, 1)
             # time limit mask
-            target_q_values = batch.rewards + (1.0 - batch.terminateds) * (1.0 - batch.truncateds) * self.discount * next_q_values
+            target_q_values = (
+                batch.rewards + (1.0 - batch.terminateds) * (1.0 - batch.truncateds) * self.discount * next_q_values
+            )
 
         # compute current Q values
         q_values = self.policy.qnet(encoded_obs)
@@ -185,8 +184,4 @@ class DQN(OffPolicyAgent):
         if self.global_step % self.target_update_freq:
             utils.soft_update_params(self.policy.qnet, self.policy.qnet_target, self.tau)
 
-        return {
-            "Huber Loss": huber_loss.item(),
-            "Q": q_values.mean().item(),
-            "Target Q": target_q_values.mean().item()
-        }
+        return {"Huber Loss": huber_loss.item(), "Q": q_values.mean().item(), "Target Q": target_q_values.mean().item()}

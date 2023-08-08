@@ -24,13 +24,14 @@
 
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
-from rllte.common.preprocessing import process_env_info
-from rllte.common.initialization import get_init_fn
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import gymnasium as gym
 import torch as th
 from torch import nn
+
+from rllte.common.initialization import get_init_fn
+from rllte.common.preprocessing import process_env_info
 
 
 class BasePolicy(nn.Module):
@@ -71,9 +72,10 @@ class BasePolicy(nn.Module):
         self.init_fn = get_init_fn(init_fn)
 
         # get environment information
-        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = \
-            process_env_info(observation_space, action_space)
-    
+        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = process_env_info(
+            observation_space, action_space
+        )
+
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
 

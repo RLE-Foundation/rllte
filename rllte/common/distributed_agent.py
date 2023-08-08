@@ -27,9 +27,9 @@ import os
 import threading
 import time
 import traceback
-from collections import deque, namedtuple
+from collections import deque
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -38,6 +38,7 @@ from torch import multiprocessing as mp
 
 from rllte.common.base_agent import BaseAgent
 from rllte.env.utils import DistributedWrapper
+
 
 class DistributedAgent(BaseAgent):  # type: ignore
     """Trainer for distributed algorithms.
@@ -139,21 +140,23 @@ class DistributedAgent(BaseAgent):  # type: ignore
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self, 
-              num_train_steps: int, 
-              init_model_path: Optional[str] = None, 
-              log_interval: int = 1, 
-              eval_interval: int = 5000,
-              num_eval_episodes: int = 10) -> None:
+    def train( # noqa: C901
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str] = None,
+        log_interval: int = 1,
+        eval_interval: int = 5000,
+        num_eval_episodes: int = 10,
+    ) -> None:
         """Training function.
-        
+
         Args:
             num_train_steps (int): The number of training steps.
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             None.
         """
@@ -170,6 +173,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 Learning rate.
             """
             return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
+
         # set learning rate scheduler
         self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.opt, lr_lambda)
 
@@ -187,7 +191,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 # sample batch
                 batch = self.storage.sample(free_queue=free_queue, full_queue=full_queue)
                 # update agent
-                metrics = self.update(batch=batch)
+                metrics = self.update(batch=batch) # type: ignore
                 with lock:
                     global_step += self.num_steps * self.batch_size
                     global_episode += self.batch_size
@@ -278,10 +282,10 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
     def eval(self, num_eval_episodes: int) -> Dict[str, float]:
         """Evaluation function.
-        
+
         Args:
             num_eval_episodes (int): The number of evaluation episodes.
-        
+
         Returns:
             The evaluation results.
         """
