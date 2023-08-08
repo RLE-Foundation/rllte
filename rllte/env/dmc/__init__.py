@@ -33,7 +33,7 @@ from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 from rllte.env.dmc.wrappers import ActionDTypeWrapper, ActionRepeatWrapper, DMC2Gymnasium, FlatObsWrapper, FrameStackWrapper
-from rllte.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import Gymnasium2Torch
 
 
 def make_dmc_env(
@@ -108,4 +108,4 @@ def make_dmc_env(
     envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device)
+    return Gymnasium2Torch(envs, device)

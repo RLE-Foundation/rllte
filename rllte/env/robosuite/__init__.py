@@ -32,7 +32,7 @@ from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from robosuite.wrappers import GymWrapper
 
-from rllte.env.utils import TorchVecEnvWrapper
+from rllte.env.utils import Gymnasium2Torch
 
 
 class AdapterEnv(gym.Wrapper):
@@ -134,4 +134,4 @@ def make_robosuite_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device=device)
+    return Gymnasium2Torch(envs, device=device)

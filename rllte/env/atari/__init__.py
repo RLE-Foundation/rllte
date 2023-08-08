@@ -40,7 +40,7 @@ from rllte.env.atari.wrappers import (EpisodicLifeEnv,
                                       NoopResetEnv, 
                                       EnvPoolAsynchronous, 
                                       EnvPoolSynchronous)
-from rllte.env.utils import TorchVecEnvWrapper, EnvPool2Torch
+from rllte.env.utils import Gymnasium2Torch
 
 def make_envpool_atari_env(
     env_id: str = "Alien-v5",
@@ -68,7 +68,7 @@ def make_envpool_atari_env(
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return EnvPool2Torch(envs, device)
+    return Gymnasium2Torch(envs, device)
 
 
 def make_atari_env(
@@ -129,4 +129,4 @@ def make_atari_env(
         envs = SyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
 
-    return TorchVecEnvWrapper(envs, device)
+    return Gymnasium2Torch(envs, device)

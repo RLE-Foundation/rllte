@@ -46,7 +46,6 @@ class OffPolicyAgent(BaseAgent):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on pre-training model or not.
         num_init_steps (int): Number of initial exploration steps.
-        eval_every_steps (int): Evaluation interval.
         **kwargs: Arbitrary arguments such as `batch_size` and `hidden_dim`.
 
     Returns:
@@ -62,26 +61,31 @@ class OffPolicyAgent(BaseAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
-        eval_every_steps: int = 5000,
         **kwargs
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
 
-        self.log_interval = kwargs.get("log_interval", 1000)
-        self.eval_every_steps = eval_every_steps
         self.num_init_steps = num_init_steps
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
+    def train(self, 
+              num_train_steps: int, 
+              init_model_path: Optional[str] = None, 
+              log_interval: int = 1, 
+              eval_interval: int = 5000,
+              num_eval_episodes: int = 10) -> None:
         """Training function.
-
+        
         Args:
-            num_train_steps (int): Number of training steps.
-            init_model_path (Optional[str]): Path of Iinitial model parameters.
-
+            num_train_steps (int): The number of training steps.
+            init_model_path (Optional[str]): The path of the initial model.
+            log_interval (int): The interval of logging.
+            eval_interval (int): The interval of evaluation.
+            num_eval_episodes (int): The number of evaluation episodes.
+        
         Returns:
             None.
         """
@@ -108,8 +112,8 @@ class OffPolicyAgent(BaseAgent):
         # training loop
         while self.global_step <= num_train_steps:
             # try to eval
-            if (self.global_step % self.eval_every_steps) == 0 and (self.eval_env is not None):
-                eval_metrics = self.eval()
+            if (self.global_step % eval_interval) == 0 and (self.eval_env is not None):
+                eval_metrics = self.eval(num_eval_episodes)
 
                 # log to console
                 self.logger.eval(msg=eval_metrics)
@@ -151,7 +155,7 @@ class OffPolicyAgent(BaseAgent):
                 self.global_episode += len(eps_r)
 
             # log training information
-            if len(episode_rewards) > 1 and (self.global_step % self.log_interval) == 0:
+            if len(episode_rewards) > 1 and (self.global_step % log_interval) == 0:
                 total_time = self.timer.total_time()
 
                 # log to console

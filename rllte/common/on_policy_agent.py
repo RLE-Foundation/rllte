@@ -45,7 +45,6 @@ class OnPolicyAgent(BaseAgent):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on pre-training model or not.
         num_steps (int): The sample length of per rollout.
-        eval_every_episodes (int): Evaluation interval.
 
     Returns:
         On-policy agent instance.
@@ -60,24 +59,30 @@ class OnPolicyAgent(BaseAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_steps: int = 128,
-        eval_every_episodes: int = 10,
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
-        self.eval_every_episodes = eval_every_episodes
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms.
         """
         raise NotImplementedError
 
-    def train(self, num_train_steps: int = 100000, init_model_path: Optional[str] = None) -> None:
+    def train(self, 
+              num_train_steps: int, 
+              init_model_path: Optional[str] = None, 
+              log_interval: int = 1, 
+              eval_interval: int = 100,
+              num_eval_episodes: int = 10) -> None:
         """Training function.
-
+        
         Args:
-            num_train_steps (int): Number of training steps.
-            init_model_path (Optional[str]): Path of Iinitial model parameters.
-
+            num_train_steps (int): The number of training steps.
+            init_model_path (Optional[str]): The path of the initial model.
+            log_interval (int): The interval of logging.
+            eval_interval (int): The interval of evaluation.
+            num_eval_episodes (int): The number of evaluation episodes.
+        
         Returns:
             None.
         """
@@ -105,8 +110,8 @@ class OnPolicyAgent(BaseAgent):
 
         for update in range(num_updates):
             # try to eval
-            if (update % self.eval_every_episodes) == 0 and (self.eval_env is not None):
-                eval_metrics = self.eval()
+            if (update % eval_interval) == 0 and (self.eval_env is not None):
+                eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
                 
@@ -168,7 +173,7 @@ class OnPolicyAgent(BaseAgent):
             self.global_episode += self.num_envs
             self.global_step += self.num_envs * self.num_steps
 
-            if len(episode_rewards) > 0:
+            if len(episode_rewards) > 0 and update % log_interval == 0:
                 total_time = self.timer.total_time()
 
                 # log to console
@@ -207,15 +212,22 @@ class OnPolicyAgent(BaseAgent):
         if self.eval_env is not None:
             self.eval_env.close()
 
-    def eval(self) -> Dict[str, float]:
-        """Evaluation function."""
+    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+        """Evaluation function.
+        
+        Args:
+            num_eval_episodes (int): The number of evaluation episodes.
+        
+        Returns:
+            The evaluation results.
+        """
         # reset the env
         time_step = self.eval_env.reset(seed=self.seed)
         episode_rewards = list()
         episode_steps = list()
 
         # evaluation loop
-        while len(episode_rewards) < self.num_eval_episodes:
+        while len(episode_rewards) < num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
                 actions, _ = self.policy(time_step.observations, training=False)
                 time_step = self.eval_env.step(actions)

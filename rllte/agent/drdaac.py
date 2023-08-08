@@ -50,7 +50,6 @@ class DrDAAC(OnPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_steps (int): The sample length of per rollout.
-        eval_every_episodes (int): Evaluation interval.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -81,7 +80,6 @@ class DrDAAC(OnPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_steps: int = 128,
-        eval_every_episodes: int = 10,
         feature_dim: int = 512,
         batch_size: int = 256,
         lr: float = 2.5e-4,
@@ -107,7 +105,6 @@ class DrDAAC(OnPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_steps=num_steps,
-            eval_every_episodes=eval_every_episodes,
         )
 
         # hyper parameters
