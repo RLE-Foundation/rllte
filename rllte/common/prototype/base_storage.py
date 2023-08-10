@@ -24,7 +24,6 @@
 
 
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from typing import Any
 
 import gymnasium as gym
@@ -32,35 +31,6 @@ import numpy as np
 import torch as th
 
 from rllte.common.preprocessing import process_env_info
-
-VanillaReplayBatch = namedtuple(
-    typename="VanillaReplayBatch",
-    field_names=["observations", "actions", "rewards", "terminateds", "truncateds", "next_observations"],
-)
-
-PrioritizedReplayBatch = namedtuple(
-    typename="PrioritizedReplayBatch",
-    field_names=["observations", "actions", "rewards", "terminateds", "truncateds", "next_observations", "indices", "weights"],
-)
-
-NStepReplayBatch = namedtuple(
-    typename="NStepReplayBatch", field_names=["observations", "actions", "rewards", "discounts", "next_observations"]
-)
-
-VanillaRolloutBatch = namedtuple(
-    typename="VanillaRolloutBatch",
-    field_names=[
-        "observations",
-        "actions",
-        "values",
-        "returns",
-        "terminateds",
-        "truncateds",
-        "old_log_probs",
-        "adv_targ",
-    ],
-)
-
 
 class BaseStorage(ABC):
     """Base class of storage module.

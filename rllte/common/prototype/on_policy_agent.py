@@ -31,7 +31,7 @@ import numpy as np
 import torch as th
 
 from rllte.common import utils
-from rllte.common.base_agent import BaseAgent
+from rllte.common.prototype.base_agent import BaseAgent
 
 
 class OnPolicyAgent(BaseAgent):

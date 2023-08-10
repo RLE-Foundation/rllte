@@ -29,7 +29,8 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.prototype import BaseStorage, VanillaReplayBatch
+from rllte.common.prototype import BaseStorage
+from rllte.common.type_alias import VanillaReplayBatch
 
 
 class VanillaReplayStorage(BaseStorage):

@@ -234,7 +234,7 @@ class OnPolicySharedActorCritic(BasePolicy):
         observation_space: gym.Space,
         action_space: gym.Space,
         feature_dim: int,
-        hidden_dim: int,
+        hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         aux_critic: bool = False,

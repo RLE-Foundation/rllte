@@ -35,7 +35,8 @@ import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
-from rllte.common.prototype import BaseStorage, NStepReplayBatch
+from rllte.common.prototype import BaseStorage
+from rllte.common.type_alias import NStepReplayBatch
 from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
 
 

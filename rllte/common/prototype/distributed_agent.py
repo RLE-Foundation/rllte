@@ -36,7 +36,7 @@ import numpy as np
 import torch as th
 from torch import multiprocessing as mp
 
-from rllte.common.base_agent import BaseAgent
+from rllte.common.prototype.base_agent import BaseAgent
 from rllte.env.utils import DistributedWrapper
 
 

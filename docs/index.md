@@ -9,7 +9,7 @@ hide:
 
 ---
 
-Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. **RLLTE** is **not** designed to provide specific RL algorithms but a toolkit for producing algorithms.
+Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. **RLLTE** is **not** designed to provide specific RL algorithms but a framework for producing algorithms.
 
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/ShVdiHHyXFM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -37,7 +37,12 @@ See [Fast Algorithm Development]() for detailed examples.
 
 
 ## **Project Evolution**
-The evolution of RLLTE comprises two aspects: modules and algorithms.
+**RLLTE** selects RL algorithms based on the following tenet:
+
+- Excellent performance on recognized benchmarks;
+- Improvements in generalization ability;
+- Improvements in sample efficiency;
+- Great compatibility for redevelopment.
 
 ## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:

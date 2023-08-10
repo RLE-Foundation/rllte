@@ -79,7 +79,7 @@ extra:
 nav:
   - Overview: 
     - Overview: index.md
-    - Tenet: assets/pdf/tenet.pdf
+    - White Paper: assets/pdf/White Paper.pdf
     - Changelog: changelog.md
     - Contribution: contributing.md
     - License: license.md

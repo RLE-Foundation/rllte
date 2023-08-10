@@ -6,7 +6,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
 <h3> <a href=""> Paper </a> |
 <a href="https://docs.rllte.dev/api/"> Documentation </a> |
-<a href="https://github.com/hpcaitech/ColossalAI/tree/main/examples"> Tutorials </a> |
+<a href="https://docs.rllte.dev/tutorials/"> Tutorials </a> |
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
 <a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
 
@@ -19,15 +19,23 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 # Contents
 - [Overview](#overview)
 - [Quick Start](#quick-start)
-- [Implemented Modules (Part)](#implemented-modules-part)
-- [Benchmarks](#benchmarks)
+  + [Installation](#installation)
+  + [Fast Training with Built-in Algorithms](#fast-training-with-built-in-algorithms)
+    - [On NVIDIA GPU](#on-nvidia-gpu)
+    - [On HUAWEI NPU](#on-huawei-npu)
+  + [Three Steps to Create Your RL Agent](#three-steps-to-create-your-rl-agent)
+  + [Algorithm Decoupling and Module Replacement](#)
+- [Function List (Part)](#implemented-modules-part)
+  + [RL Agents](#rl-agents)
+  + [Intrinsic Reward Modules](#intrinsic-reward-modules)
+- [RLLTE Ecosystem](#benchmarks)
 - [API Documentation](#api-documentation)
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
 
 # Overview
-Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. **RLLTE** is **not** designed to provide specific RL algorithms but a toolkit for producing algorithms.
+Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. **RLLTE** is **not** designed to provide specific RL algorithms but a framework for producing algorithms.
 
 <div align="center">
 <a href="https://youtu.be/ShVdiHHyXFM" rel="nofollow">
@@ -44,7 +52,7 @@ Why **RLLTE**?
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
-- 💾 Large number of reusable benchmarks (See [rllte-hub](https://hub.rllte.dev));
+- 💾 Large number of reusable benchmarks ([rllte-hub](https://hub.rllte.dev));
 - 👨‍✈️ Large language model-empowered copilot.
 
 See the project structure below:
@@ -52,7 +60,7 @@ See the project structure below:
 <img src='./docs/assets/images/structure.svg' style="width: 100%">
 </div>
 
-For more detiled descriptions of these modules, see [API Documentation](https://docs.rllte.dev/api).
+For more detailed descriptions of these modules, see [API Documentation](https://docs.rllte.dev/api).
 
 # Quick Start
 ## Installation
@@ -85,9 +93,10 @@ pip install -e .[envs] # for pre-defined environments
 
 For more detailed installation instruction, see [Getting Started](https://docs.rllte.dev/getting_started).
 
-## Start Training
+## Fast Training with Built-in Algorithms
+**RLLTE** provides implementations for well-recognized RL algorithms and simple interface for building applications.
 ### On NVIDIA GPU
-For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
+Suppose we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
 
 ``` python
 # import `env` and `agent` api
@@ -115,7 +124,81 @@ Similarly, if we want to train an agent on HUAWEI NPU, it suffices to replace `c
 device = "cuda:0" -> device = "npu:0"
 ```
 
-Please refer to [Implemented Modules](#implemented-modules-part) for the compatibility of NPU. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
+## Three Steps to Create Your RL Agent
+Developers only need three steps to implement an RL algorithm with **RLLTE**. The following example illustrates how to write an Advantage Actor-Critic (A2C) agent to solve Atari games. 
+- Firstly, select a prototype:
+``` py
+from rllte.common.prototype import OnPolicyAgent
+```
+- Secondly, select necessary modules to build the agent:
+``` py
+from rllte.xploit.encoder import MnihCnnEncoder
+from rllte.xploit.policy import OnPolicySharedActorCritic
+from rllte.xploit.storage import VanillaRolloutStorage
+from rllte.xplore.distribution import Categorical
+```
+- Finally, merge these modules and write a `.update` function:
+``` py
+from torch import nn
+import torch as th
+
+class A2C(OnPolicyAgent):
+    def __init__(self, env, tag, seed, device, num_steps) -> None:
+        super().__init__(env=env, tag=tag, seed=seed, device=device, num_steps=num_steps)
+        # create modules
+        encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=512)
+        policy = OnPolicySharedActorCritic(observation_space=env.observation_space,
+                                           action_space=env.action_space,
+                                           feature_dim=512,
+                                           opt_class=th.optim.Adam,
+                                           opt_kwargs=dict(lr=2.5e-4, eps=1e-5),
+                                           init_fn="xavier_uniform"
+                                           )
+        storage = VanillaRolloutStorage(observation_space=env.observation_space,
+                                        action_space=env.action_space,
+                                        device=device,
+                                        num_steps=self.num_steps,
+                                        num_envs=self.num_envs,
+                                        batch_size=256
+                                        )
+        # set all the modules
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
+    
+    def update(self):
+        for _ in range(4):
+            for batch in self.storage.sample():
+                # evaluate the sampled actions
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                # policy loss part
+                policy_loss = - (batch.adv_targ * new_log_probs).mean()
+                # value loss part
+                value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
+                # update
+                self.policy.opt.zero_grad(set_to_none=True)
+                (value_loss * 0.5 + policy_loss - entropy * 0.01).backward()
+                nn.utils.clip_grad_norm_(self.policy.parameters(), 0.5)
+                self.policy.opt.step()
+```
+Then train the agent by
+``` py
+from rllte.env import make_atari_env
+if __name__ == "__main__":
+    device = "cuda"
+    env = make_atari_env("PongNoFrameskip-v4", num_envs=8, seed=0, device=device)
+    agent = A2C(env=env, tag="a2c_atari", seed=0, device=device, num_steps=128)
+    agent.train(num_train_steps=10000000)
+```
+As shown in this example, only a few dozen lines of code are needed to create RL agents with **RLLTE**. 
+
+## Algorithm Decoupling and Module Replacement
+**RLLTE** allows developers to replace settled modules of implemented algorithms to make performance comparison and algorithm improvement, and both 
+built-in and custom modules are supported. Suppose we want to compare the effect of different encoders, it suffices to invoke the `.set` function
+``` py
+from rllte.xploit.encoder import EspeholtResidualEncoder
+encoder = EspeholtResidualEncoder(...)
+agent.set(encoder=encoder)
+```
+RLLTE is an extremely open framework that allows developers to try anything. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
 
 # Implemented Modules (Part)
 ## RL Agents

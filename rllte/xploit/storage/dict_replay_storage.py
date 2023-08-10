@@ -29,7 +29,7 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.prototype import VanillaReplayBatch
+from rllte.common.type_alias import VanillaReplayBatch
 from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
 
 
