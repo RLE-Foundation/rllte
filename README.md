@@ -227,7 +227,7 @@ See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.
 # RLLTE Ecosystem
 Explore the ecosystem of RLLTE to facilitate your project:
 
-- [Hub](https://docs.rllte.dev/benchmarks/): Fast training API and reusable benchmarks.
+- [Hub](https://docs.rllte.dev/benchmarks/): Fast training APIs and reusable benchmarks.
 - [Evaluation](https://docs.rllte.dev/api/tutorials/): Reasonable and reliable metrics for algorithm evaluation.
 - [Env](https://docs.rllte.dev/api/tutorials/): Packaged environments for fast invocation.
 - [Deployment](https://docs.rllte.dev/api/tutorials/): Convenient APIs for model deployment.

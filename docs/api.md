@@ -7,11 +7,11 @@ hide:
 
 #### <font color="#B80000"><b>Agent</b></font>: Implemented RL algorithms using **RLLTE** modules.
 
-| Type 	| Legacy 	| Current 	|
-|---	|---	|---	|
-| On-Policy 	| [A2C](https://arxiv.org/abs/1602.01783)<sup>🖥️⛓️💰</sup>,[PPO](https://arxiv.org/pdf/1707.06347)<sup>🖥️⛓️💰</sup> 	| [DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>🖥️⛓️💰</sup>,[DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup>,[DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup> 	|
-| Off-Policy 	| [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>🖥️⛓️💰</sup>,[DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>🖥️⛓️💰</sup>,[SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>🖥️⛓️💰</sup> 	| [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>🖥️⛓️💰🔭</sup> 	|
-| Distributed 	|  	| [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)<sup>⛓️</sup> 	|
+| Type 	| Algorithm 	|
+|---	|---	|
+| On-Policy 	| [A2C](https://arxiv.org/abs/1602.01783)<sup>🖥️⛓️💰</sup>,[PPO](https://arxiv.org/pdf/1707.06347)<sup>🖥️⛓️💰</sup> 	[DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>🖥️⛓️💰</sup>,[DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup>,[DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup> 	|
+| Off-Policy 	| [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>🖥️⛓️💰</sup>,[DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>🖥️⛓️💰</sup>,[SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>🖥️⛓️💰</sup> 	[DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>🖥️⛓️💰🔭</sup> 	|
+| Distributed 	|   [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)<sup>⛓️</sup> 	|
 
 > - 🖥️: Support Neural-network processing unit.
 > - ⛓️: Multi Processing.
@@ -121,24 +121,24 @@ hide:
 ---
 
 #### <font color="#B80000"><b>Copilot</b></font>: Large language model-empowered copilot.
-See [Copilot](./copilot.md).
+See [Copilot](../copilot/).
 
 ---
 
-#### <font color="#B80000"><b>Hub</b></font>: Fast training API and reusable benchmarks.
-See [Benchmarks](./benchmarks.md).
+#### <font color="#B80000"><b>Hub</b></font>: Fast training APIs and reusable benchmarks.
+See [Benchmarks](../benchmarks/).
 
 ---
 
 #### <font color="#B80000"><b>Evaluation</b></font>: Reasonable and reliable metrics for algorithm evaluation.
-See [Tutorials: Evaluate Your Model](./tutorials/evaluation.md).
+See [Tutorials: Model Evaluation](../tutorials/).
 
 ---
 
 #### <font color="#B80000"><b>Pre-training</b></font>: Methods of pre-training in RL.
-See [Tutorials: Pre-training](./tutorials/pre-training.md).
+See [Tutorials: Pre-training](../tutorials/).
 
 ---
 
-#### <font color="#B80000"><b>Deployment</b></font>: Methods of model deployment in RL.
-See [Tutorials: Deploy Your Model in Inference Devices](./tutorials/deployment.md).
+#### <font color="#B80000"><b>Deployment</b></font>: Convenient APIs for model deployment.
+See [Tutorials: Model Deployment](../tutorials/).

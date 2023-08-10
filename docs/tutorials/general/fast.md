@@ -24,76 +24,67 @@ from rllte.xploit.encoder import MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Categorical
-
-import torch as th
-
-class A2C(OnPolicyAgent):
-    def __init__(self, env, tag, device, num_steps):
-        super().__init__(env=env, tag=tag, device=device, num_steps=num_steps)
-        # add some hyper parameters
-        lr = 2.5e-4
-        batch_size = 256
-        num_envs = 8
-        # add encoder
-        encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=512)
-        # add policy
-        policy = OnPolicySharedActorCritic(observation_space=env.observation_space,
-                                           action_space=env.action_space,
-                                           feature_dim=512,
-                                           hidden_dim=512,
-                                           opt_class=th.optim.Adam,
-                                           opt_kwargs=dict(lr=lr),
-                                           init_fn="orthogonal")
-        # add storage
-        storage = VanillaRolloutStorage(observation_space=env.observation_space,
-                                        action_space=env.action_space,
-                                        device=device,
-                                        num_steps=num_steps,
-                                        num_envs=num_envs,
-                                        batch_size=batch_size)
-        # set all the modules [essential operation!!!]
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
 ```
 
 ## Set update function
-Finally, we need to fill in the `.update` function:
+Finally, merge these modules and write a `.update` function:
 ``` py
-def update(self):
-    n_epochs = 4
-    vf_coef = 0.5
-    ent_coef = 0.01
-    max_grad_norm = 0.5
+from torch import nn
+import torch as th
 
-    for _ in range(n_epochs):
-        for batch in self.storage.sample():
-            # evaluate sampled actions
-            new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
-            # policy loss part
-            policy_loss = -(batch.adv_targ * new_log_probs).mean()
-            # value loss part
-            value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
-            # update
-            self.policy.opt.zero_grad(set_to_none=True)
-            loss = value_loss * vf_coef + policy_loss - entropy * ent_coef
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.policy.parameters(), max_grad_norm)
-            self.policy.opt.step()
+class A2C(OnPolicyAgent):
+    def __init__(self, env, tag, seed, device, num_steps) -> None:
+        super().__init__(env=env, tag=tag, seed=seed, device=device, num_steps=num_steps)
+        # create modules
+        encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=512)
+        policy = OnPolicySharedActorCritic(observation_space=env.observation_space,
+                                           action_space=env.action_space,
+                                           feature_dim=512,
+                                           opt_class=th.optim.Adam,
+                                           opt_kwargs=dict(lr=2.5e-4, eps=1e-5),
+                                           init_fn="xavier_uniform"
+                                           )
+        storage = VanillaRolloutStorage(observation_space=env.observation_space,
+                                        action_space=env.action_space,
+                                        device=device,
+                                        num_steps=self.num_steps,
+                                        num_envs=self.num_envs,
+                                        batch_size=256
+                                        )
+        # set all the modules
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
+    
+    def update(self):
+        for _ in range(4):
+            for batch in self.storage.sample():
+                # evaluate the sampled actions
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                # policy loss part
+                policy_loss = - (batch.adv_targ * new_log_probs).mean()
+                # value loss part
+                value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
+                # update
+                self.policy.opt.zero_grad(set_to_none=True)
+                (value_loss * 0.5 + policy_loss - entropy * 0.01).backward()
+                nn.utils.clip_grad_norm_(self.policy.parameters(), 0.5)
+                self.policy.opt.step()
 ```
 
 ## Start training
 Now we can start training by
 ``` py title="train.py"
+from rllte.env import make_atari_env
 if __name__ == "__main__":
     device = "cuda"
-    env = make_atari_env(device=device, num_envs=8)
-    agent = A2C(env=env, tag="a2c", device=device, num_steps=128)
-    agent.train(num_train_steps=10000)
+    env = make_atari_env("AlienNoFrameskip-v4", num_envs=8, seed=0, device=device)
+    agent = A2C(env=env, tag="a2c_atari", seed=0, device=device, num_steps=128)
+    agent.train(num_train_steps=10000000)
 ```
 Run `train.py` and you will see the following output:
 ``` sh
 [08/04/2023 02:19:06 PM] - [INFO.] - Invoking RLLTE Engine...
 [08/04/2023 02:19:06 PM] - [INFO.] - ================================================================================
-[08/04/2023 02:19:06 PM] - [INFO.] - Tag               : a2c
+[08/04/2023 02:19:06 PM] - [INFO.] - Tag               : a2c_atari
 [08/04/2023 02:19:06 PM] - [INFO.] - Device            : NVIDIA GeForce RTX 3090
 [08/04/2023 02:19:07 PM] - [DEBUG] - Agent             : A2C
 [08/04/2023 02:19:07 PM] - [DEBUG] - Encoder           : MnihCnnEncoder
@@ -115,67 +106,57 @@ Run `train.py` and you will see the following output:
 
 The complete code is as follows
 ``` py
-from rllte.common import OnPolicyAgent
+from rllte.common.prototype import OnPolicyAgent
 from rllte.xploit.encoder import MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Categorical
-from rllte.env import make_atari_env
-
 from torch import nn
 import torch as th
 
 class A2C(OnPolicyAgent):
-    def __init__(self, env, tag, device, num_steps):
-        super().__init__(env=env, tag=tag, device=device, num_steps=num_steps)
-        # add some hyper parameters
-        lr = 2.5e-4
-        batch_size = 256
-        num_envs = 8
-        # add encoder
+    def __init__(self, env, tag, seed, device, num_steps) -> None:
+        super().__init__(env=env, tag=tag, seed=seed, device=device, num_steps=num_steps)
+        # create modules
         encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=512)
-        # add policy
         policy = OnPolicySharedActorCritic(observation_space=env.observation_space,
                                            action_space=env.action_space,
                                            feature_dim=512,
-                                           hidden_dim=512,
                                            opt_class=th.optim.Adam,
-                                           opt_kwargs=dict(lr=lr),
-                                           init_fn="orthogonal")
-        # add storage
+                                           opt_kwargs=dict(lr=2.5e-4, eps=1e-5),
+                                           init_fn="xavier_uniform"
+                                           )
         storage = VanillaRolloutStorage(observation_space=env.observation_space,
                                         action_space=env.action_space,
                                         device=device,
-                                        num_steps=num_steps,
-                                        num_envs=num_envs,
-                                        batch_size=batch_size)
-        # set all the modules [essential operation!!!]
+                                        num_steps=self.num_steps,
+                                        num_envs=self.num_envs,
+                                        batch_size=256
+                                        )
+        # set all the modules
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
     
     def update(self):
-        n_epochs = 4
-        vf_coef = 0.5
-        ent_coef = 0.01
-        max_grad_norm = 0.5
-
-        for _ in range(n_epochs):
+        for _ in range(4):
             for batch in self.storage.sample():
-                # evaluate sampled actions
+                # evaluate the sampled actions
                 new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
                 # policy loss part
-                policy_loss = -(batch.adv_targ * new_log_probs).mean()
+                policy_loss = - (batch.adv_targ * new_log_probs).mean()
                 # value loss part
                 value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
                 # update
                 self.policy.opt.zero_grad(set_to_none=True)
-                loss = value_loss * vf_coef + policy_loss - entropy * ent_coef
-                loss.backward()
-                nn.utils.clip_grad_norm_(self.policy.parameters(), max_grad_norm)
+                (value_loss * 0.5 + policy_loss - entropy * 0.01).backward()
+                nn.utils.clip_grad_norm_(self.policy.parameters(), 0.5)
                 self.policy.opt.step()
 
+from rllte.env import make_atari_env
 if __name__ == "__main__":
     device = "cuda"
-    env = make_atari_env(device=device, num_envs=8)
-    agent = A2C(env=env, tag="a2c", device=device, num_steps=128)
-    agent.train(num_train_steps=10000)
+    env = make_atari_env("AlienNoFrameskip-v4", num_envs=8, seed=0, device=device)
+    agent = A2C(env=env, tag="a2c_atari", seed=0, device=device, num_steps=128)
+    agent.train(num_train_steps=10000000)
 ```
+
+As shown in this example, only a few dozen lines of code are needed to create RL agents with **RLLTE**. 
