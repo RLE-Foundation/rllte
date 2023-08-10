@@ -25,7 +25,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
     - [On HUAWEI NPU](#on-huawei-npu)
   + [Three Steps to Create Your RL Agent](#three-steps-to-create-your-rl-agent)
   + [Algorithm Decoupling and Module Replacement](#algorithm-decoupling-and-module-replacement)
-- [Function List (Part)](#implemented-modules-part)
+- [Function List (Part)](#function-list-part)
   + [RL Agents](#rl-agents)
   + [Intrinsic Reward Modules](#intrinsic-reward-modules)
 - [RLLTE Ecosystem](#rllte-ecosystem)
@@ -192,7 +192,7 @@ As shown in this example, only a few dozen lines of code are needed to create RL
 
 ## Algorithm Decoupling and Module Replacement
 **RLLTE** allows developers to replace settled modules of implemented algorithms to make performance comparison and algorithm improvement, and both 
-built-in and custom modules are supported. Suppose we want to compare the effect of different encoders, it suffices to invoke the `.set` function
+built-in and custom modules are supported. Suppose we want to compare the effect of different encoders, it suffices to invoke the `.set` function:
 ``` py
 from rllte.xploit.encoder import EspeholtResidualEncoder
 encoder = EspeholtResidualEncoder(...)
@@ -200,7 +200,7 @@ agent.set(encoder=encoder)
 ```
 **RLLTE** is an extremely open framework that allows developers to try anything. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
 
-# Implemented Modules (Part)
+# Function List (Part)
 ## RL Agents
 | Type 	| Algorithm 	|
 |---	|---	|
