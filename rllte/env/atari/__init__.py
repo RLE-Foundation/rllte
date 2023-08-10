@@ -51,9 +51,7 @@ def make_envpool_atari_env(
         num_envs (int): Number of environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        parallel (bool): `True` for `Async` execution and `False` for `Sync` execution.
     """
     if parallel:
         envs = EnvPoolAsynchronous(env_id, num_envs, seed)
