@@ -24,11 +24,11 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
     - [On NVIDIA GPU](#on-nvidia-gpu)
     - [On HUAWEI NPU](#on-huawei-npu)
   + [Three Steps to Create Your RL Agent](#three-steps-to-create-your-rl-agent)
-  + [Algorithm Decoupling and Module Replacement](#)
+  + [Algorithm Decoupling and Module Replacement](#algorithm-decoupling-and-module-replacement)
 - [Function List (Part)](#implemented-modules-part)
   + [RL Agents](#rl-agents)
   + [Intrinsic Reward Modules](#intrinsic-reward-modules)
-- [RLLTE Ecosystem](#benchmarks)
+- [RLLTE Ecosystem](#rllte-ecosystem)
 - [API Documentation](#api-documentation)
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
@@ -198,15 +198,15 @@ from rllte.xploit.encoder import EspeholtResidualEncoder
 encoder = EspeholtResidualEncoder(...)
 agent.set(encoder=encoder)
 ```
-RLLTE is an extremely open framework that allows developers to try anything. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
+**RLLTE** is an extremely open framework that allows developers to try anything. For more detailed tutorials, see [Tutorials](https://docs.rllte.dev/tutorials).
 
 # Implemented Modules (Part)
 ## RL Agents
-| Type 	| Legacy 	| Current 	|
-|---	|---	|---	|
-| On-Policy 	| [A2C](https://arxiv.org/abs/1602.01783)<sup>🖥️⛓️💰</sup>,[PPO](https://arxiv.org/pdf/1707.06347)<sup>🖥️⛓️💰</sup> 	| [DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>🖥️⛓️💰</sup>,[DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup>,[DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup> 	|
-| Off-Policy 	| [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>🖥️⛓️💰</sup>,[DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>🖥️⛓️💰</sup>,[SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>🖥️⛓️💰</sup> 	| [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>🖥️⛓️💰🔭</sup> 	|
-| Distributed 	|  	| [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)<sup>⛓️</sup> 	|
+| Type 	| Algorithm 	|
+|---	|---	|
+| On-Policy 	| [A2C](https://arxiv.org/abs/1602.01783)<sup>🖥️⛓️💰</sup>,[PPO](https://arxiv.org/pdf/1707.06347)<sup>🖥️⛓️💰</sup> 	[DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>🖥️⛓️💰</sup>,[DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup>,[DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup> 	|
+| Off-Policy 	| [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>🖥️⛓️💰</sup>,[DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>🖥️⛓️💰</sup>,[SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>🖥️⛓️💰</sup> 	[DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>🖥️⛓️💰🔭</sup> 	|
+| Distributed 	|  	[IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)<sup>⛓️</sup> 	|
 
 > - 🖥️: Support Neural-network processing unit.
 > - ⛓️: Multi Processing.
@@ -224,8 +224,15 @@ RLLTE is an extremely open framework that allows developers to try anything. For
 
 See [Tutorials: Use Intrinsic Reward and Observation Augmentation](https://docs.rllte.dev/tutorials/data_augmentation) for usage examples.
 
-# Benchmarks
-**RLLTE** provides a large number of reusable bechmarks, see [https://hub.rllte.dev/](https://hub.rllte.dev/) and [https://docs.rllte.dev/benchmarks/](https://docs.rllte.dev/benchmarks/)
+# RLLTE Ecosystem
+Explore the ecosystem of RLLTE to facilitate your project:
+
+- [Hub](https://docs.rllte.dev/benchmarks/): Fast training API and reusable benchmarks.
+- [Evaluation](https://docs.rllte.dev/api/tutorials/): Reasonable and reliable metrics for algorithm evaluation.
+- [Env](https://docs.rllte.dev/api/tutorials/): Packaged environments for fast invocation.
+- [Deployment](https://docs.rllte.dev/api/tutorials/): Convenient APIs for model deployment.
+- [Pre-training](https://docs.rllte.dev/api/tutorials/): Methods of pre-training in RL.
+- [Copilot](https://docs.rllte.dev/copilot): Large language model-empowered copilot.
 
 # API Documentation
 View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
