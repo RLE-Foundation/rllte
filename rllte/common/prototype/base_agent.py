@@ -148,6 +148,8 @@ class BaseAgent(ABC):
         """Freeze the agent and get ready for training."""
         # freeze the structure of the agent
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
+        # torch compilation
+        self.policy = th.compile(self.policy)
         # to device
         self.policy.to(self.device)
         # set the training mode
