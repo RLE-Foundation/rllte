@@ -56,6 +56,7 @@ if __name__ == "__main__":
         num_levels=0,
         start_level=0,
         distribution_mode="easy",
+        parallel=False
     )
     # create agent
     feature_dim = 256

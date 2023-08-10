@@ -7,16 +7,24 @@ hide:
 
 #### <font color="#B80000"><b>Agent</b></font>: Implemented RL algorithms using **RLLTE** modules.
 
-| Type 	| Algorithm 	|
-|---	|---	|
-| On-Policy 	| [A2C](https://arxiv.org/abs/1602.01783)<sup>🖥️⛓️💰</sup>,[PPO](https://arxiv.org/pdf/1707.06347)<sup>🖥️⛓️💰</sup> 	[DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>🖥️⛓️💰</sup>,[DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup>,[DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>🖥️⛓️💰🔭</sup> 	|
-| Off-Policy 	| [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>🖥️⛓️💰</sup>,[DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>🖥️⛓️💰</sup>,[SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>🖥️⛓️💰</sup> 	[DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>🖥️⛓️💰🔭</sup> 	|
-| Distributed 	|   [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)<sup>⛓️</sup> 	|
+|     Type    |  Algo. | Box | `Dis.` | `M.B.` | `M.D.` | `M.P.` | NPU |
+|:-----------:|:------:|:---:|:----:|:----:|:----:|------|:---:|
+| On-Policy   | [A2C](https://arxiv.org/abs/1602.01783)<sup>💰</sup>    | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |
+| On-Policy   | [PPO](https://arxiv.org/pdf/1707.06347)<sup>💰</sup>    | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |
+| On-Policy   | [DrAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>💰🔭</sup>   | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |
+| On-Policy   | [DAAC](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf)<sup>💰</sup>   | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |
+| On-Policy   | [DrDAAC](https://proceedings.neurips.cc/paper/2021/file/2b38c2df6a49b97f706ec9148ce48d86-Paper.pdf)<sup>💰🔭</sup> | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |
+| Off-Policy  | [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf)<sup>💰</sup>    | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |
+| Off-Policy  | [DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)<sup>💰</sup>   | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |
+| Off-Policy  | [SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)<sup>💰</sup>    | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |
+| Off-Policy  | [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)<sup>💰🔭</sup> | ✔️   | ❌    | ❌    | ❌    | ❌    | ✔️   |
+| Distributed | [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | ✔️   | ✔️    | ❌    | ❌    | ✔️    | ❌   |
 
-> - 🖥️: Support Neural-network processing unit.
-> - ⛓️: Multi Processing.
-> - 💰: Support intrinsic reward shaping.
-> - 🔭: Support observation augmentation.
+> - `Dis., M.B., M.D.`: `Discrete`, `MultiBinary`, and `MultiDiscrete` action space;
+> - `M.P.`: Multi processing;
+> - 🐌: Developing;
+> - 💰: Support intrinsic reward shaping;
+> - 🔭: Support observation augmentation. 
 
 ---
 
