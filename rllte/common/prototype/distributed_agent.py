@@ -147,6 +147,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         log_interval: int = 1,
         eval_interval: int = 5000,
         num_eval_episodes: int = 10,
+        th_compile: bool = True,
     ) -> None:
         """Training function.
 
@@ -156,12 +157,13 @@ class DistributedAgent(BaseAgent):  # type: ignore
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
+            th_compile (bool): Whether to use `th.compile` or not.
 
         Returns:
             None.
         """
         # freeze the agent and get ready for training
-        self.freeze(init_model_path=init_model_path)
+        self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
         def lr_lambda(epoch: int = 0) -> float:
             """Function for learning rate scheduler.

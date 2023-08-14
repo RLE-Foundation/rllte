@@ -149,7 +149,8 @@ class BaseAgent(ABC):
         # freeze the structure of the agent
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
         # torch compilation
-        self.policy = th.compile(self.policy)
+        if kwargs.get("th_compile", False):
+            self.policy = th.compile(self.policy)
         # to device
         self.policy.to(self.device)
         # set the training mode
@@ -275,6 +276,7 @@ class BaseAgent(ABC):
         log_interval: int,
         eval_interval: int,
         num_eval_episodes: int,
+        th_compile: bool,
     ) -> None:
         """Training function.
 
@@ -284,6 +286,7 @@ class BaseAgent(ABC):
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
             num_eval_episodes (int): The number of evaluation episodes.
+            th_compile (bool): Whether to use `th.compile` or not.
 
         Returns:
             None.

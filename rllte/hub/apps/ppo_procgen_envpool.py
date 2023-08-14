@@ -24,13 +24,12 @@
 
 
 import argparse
+import torch as th
+th.set_float32_matmul_precision('high')
 
 from rllte.agent import PPO
 from rllte.env import make_envpool_procgen_env
 from rllte.xploit.encoder import EspeholtResidualEncoder
-
-import torch as th
-th.set_float32_matmul_precision('high')
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="bigfish")

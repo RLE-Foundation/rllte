@@ -24,6 +24,8 @@
 
 
 import argparse
+import torch as th
+th.set_float32_matmul_precision('high')
 
 from rllte.agent import PPO
 from rllte.env import make_bullet_env
@@ -70,4 +72,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=1000000)
+    agent.train(num_train_steps=2000000)
