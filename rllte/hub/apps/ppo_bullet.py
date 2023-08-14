@@ -52,10 +52,11 @@ if __name__ == "__main__":
     )
     # create agent
     feature_dim = 64
+    env_name = args.env_id.split("BulletEnv-v0")[0].lower()
     agent = PPO(
         env=env,
         eval_env=eval_env,
-        tag=f"ppo_bullet_{args.env_id}_seed_{args.seed}",
+        tag=f"ppo_bullet_{env_name}_seed_{args.seed}",
         seed=args.seed,
         device=args.device,
         num_steps=2048,

@@ -38,8 +38,8 @@ import torch as th
 # try to load torch_npu
 try:
     import torch_npu as torch_npu  # type: ignore
-
-    NPU_AVAILABLE = True
+    if th.npu.is_available():
+        NPU_AVAILABLE = True
 except Exception:
     NPU_AVAILABLE = False
 
@@ -149,6 +149,8 @@ class BaseAgent(ABC):
         # freeze the structure of the agent
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
         # torch compilation
+        ## compliation will change the name of the policy into `OptimizedModule`
+        self.policy_name = self.policy.__class__.__name__
         if kwargs.get("th_compile", False):
             self.policy = th.compile(self.policy)
         # to device
@@ -173,7 +175,7 @@ class BaseAgent(ABC):
         self.logger.info(f"{'Device'.ljust(NUMBER_OF_SPACES)} : {self.device_name}")
         self.logger.debug(f"{'Agent'.ljust(NUMBER_OF_SPACES)} : {self.__class__.__name__}")
         self.logger.debug(f"{'Encoder'.ljust(NUMBER_OF_SPACES)} : {self.encoder.__class__.__name__}")
-        self.logger.debug(f"{'Policy'.ljust(NUMBER_OF_SPACES)} : {self.policy.__class__.__name__}")
+        self.logger.debug(f"{'Policy'.ljust(NUMBER_OF_SPACES)} : {self.policy_name}")
         self.logger.debug(f"{'Storage'.ljust(NUMBER_OF_SPACES)} : {self.storage.__class__.__name__}")
         # class for `Distribution` and instance for `Noise`
         dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
