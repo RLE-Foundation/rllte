@@ -81,4 +81,4 @@ if __name__ == "__main__":
     encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
     agent.set(encoder=encoder)
     # training
-    agent.train(num_train_steps=25000000)
+    agent.train(num_train_steps=25000000, eval_interval=10)

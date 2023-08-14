@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # Benchmarks
 
 **rllte-hub** provides a large number of reusable datasets and models of representative RL benchmarks. All the files 
@@ -6,9 +11,36 @@ are deposited on the [Hugging Face](https://huggingface.co) platform, view them 
 - [https://hub.rllte.dev/](https://hub.rllte.dev/) or
 - [https://huggingface.co/RLE-Foundation](https://huggingface.co/RLE-Foundation).
 
-## Datasets
+| Module | Remark |
+|:-|:-|
+|`rllte.hub.datasets`|Provide **test scores** and **learning cures** of various RL algorithms on different benchmarks. |
+|`rllte.hub.models`|Provide **trained models** of various RL algorithms on different benchmarks.|
+|`rllte.hub.apps`|Provide **fast-APIs** for training RL agents with one-line command.|
 
-`rllte.hub.datasets` provide test scores and learning cures of various RL algorithms on different benchmarks. 
+## Support list
+
+
+
+| Benchmark | Algorithm | Remark | Reproduction | Reference |
+|:-|:-|:-|:-|:-|
+|[Atari Games](https://www.jair.org/index.php/jair/article/download/10819/25823)|PPO|**50M**, 💯📊🤖| `.ppo_atari` | [Paper]() |
+|[PyBullet](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA)|PPO|**2M**, 💯📊🤖| `.ppo_bullet` | [Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
+||SAC|**1M**, 💯📊🤖| `.sac_bullet` | [Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
+|[DeepMind Control (Pixel)](https://arxiv.org/pdf/1801.00690)|DrQ-v2|**1M**, 💯📊🤖| `.drqv2_dmc_pixel` | [Paper](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |
+|[DeepMind Control (State)](https://arxiv.org/pdf/1801.00690)|SAC|**10M**, 💯📊🤖| `.sac_dmc_state` | |
+||DDPG|**10M**, 💯📊🤖| `.sac_dmc_state` | |
+|[Procgen Games](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|PPO|**25M**, 💯📊🤖| `ppo_procgen`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+||PPO|**25M**, 💯📊🤖| `ppo_procgen_envpool`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+|[MiniGrid Games](https://github.com/Farama-Foundation/Minigrid)||
+
+!!! tip
+    - **🐌**: Incoming.
+    - **(25M)**: 25 million training steps.
+    - **💯Scores**: Available final scores.
+    - **📊Curves**: Available training curves.
+    - **🤖Models**: Available trained models.
+
+## Datasets
 
 ### `.load_scores`
 Suppose we want to evaluate algorithm performance on the [Procgen](https://github.com/openai/procgen) benchmark. Here is an example:
@@ -18,7 +50,7 @@ from rllte.hub.datasets import Procgen
 
 procgen = Procgen()
 procgen_scores = procgen.load_scores()
-print(procgen_scores['PPO'].shape)
+print(procgen_scores['ppo'].shape)
 
 # Output:
 # (10, 16)
@@ -61,8 +93,7 @@ if __name__ == "__main__":
 
 ## Models
 
-`rllte.hub.models` provide trained models of various RL algorithms on different benchmarks. Suppose we want to load an `PPO` agent trained on 
-[Procgen](https://github.com/openai/procgen) benchmark, here is an example:
+Suppose we want to load an `PPO` agent trained on [Procgen](https://github.com/openai/procgen) benchmark, here is an example:
 
 ``` py title="example.py"
 from rllte.hub.models import Procgen
@@ -106,22 +137,11 @@ mean episode length: 296.1
 ```
 
 ## Applications
-
-`rllte.hub.apps` provide fast-api for training RL agents with one-line command. Suppose we want to train an `PPO` agent on 
-[Procgen](https://github.com/openai/procgen) benchmark, it suffices to run the following command:
+Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to run the following command:
 ``` sh
 python -m rllte.hub.apps.ppo_procgen \
     --env_id bigfish \
     --seed 1 \
     --device "cuda"
 ```
-
-## Support List
-<table><thead><tr><th></th><th>PPO</th><th>DAAC</th><th>SAC</th><th>DDPG</th><th>IMPALA</th><th>DrAC</th><th>DrQ-v2</th><th>DrQ</th></tr></thead><tbody><tr><td><a href="https://www.jair.org/index.php/jair/article/download/10819/25823" target="_blank" rel="noopener noreferrer">Atari Games</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td><a href="https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA" target="_blank" rel="noopener noreferrer">PyBullet</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td><a href="https://arxiv.org/pdf/1801.00690" target="_blank" rel="noopener noreferrer">DeepMind Control Suite</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td><a href="http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf" target="_blank" rel="noopener noreferrer">Procgen Games</a></td><td>💯 (25M)<br>📊 (25M)<br>🤖 (25M)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td><a href="https://github.com/Farama-Foundation/Minigrid" target="_blank" rel="noopener noreferrer">MiniGrid Games</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td><a href="https://robosuite.ai/" target="_blank" rel="noopener noreferrer">Robosuite</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
-
-!!! tip
-    - **🐌**: Incoming.
-    - **(25M)**: 2.5e+6 training steps.
-    - **💯Scores**: Available final scores.
-    - **📊Curves**: Available training curves.
-    - **🤖Models**: Available trained models.
+All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.apps`, and all the hyper-parameters can be found in the reference.

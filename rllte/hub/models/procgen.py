@@ -30,11 +30,11 @@ from torch import nn
 
 class Procgen:
     """Trained models various RL algorithms on the full Procgen benchmark.
-    Environment link: https://github.com/openai/procgen
-    Number of environments: 16
-    Number of training steps: 25,000,000
-    Number of seeds: 10
-    Added algorithms: [PPO]
+        Environment link: https://github.com/openai/procgen
+        Number of environments: 16
+        Number of training steps: 25,000,000
+        Number of seeds: 10
+        Added algorithms: [PPO]
     """
 
     def __init__(self) -> None:
