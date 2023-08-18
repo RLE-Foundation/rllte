@@ -26,6 +26,7 @@
 from typing import Dict, Generator
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
@@ -40,10 +41,10 @@ class VanillaRolloutStorage(BaseStorage):
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
-        num_steps (int): The sample length of per rollout.
-        num_envs (int): The number of parallel environments.
+        storage_size (int): The size of the storage.
         batch_size (int): Batch size of samples.
-        discount (float): discount factor.
+        num_envs (int): The number of parallel environments.
+        discount (float): The discount factor.
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
@@ -55,116 +56,86 @@ class VanillaRolloutStorage(BaseStorage):
         observation_space: gym.Space,
         action_space: gym.Space,
         device: str = "cpu",
-        num_steps: int = 256,
-        num_envs: int = 8,
+        storage_size: int = 256,
         batch_size: int = 64,
+        num_envs: int = 8,
         discount: float = 0.999,
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device)
-        self.num_steps = num_steps
+        self.storage_size = storage_size
         self.num_envs = num_envs
         self.batch_size = batch_size
         self.discount = discount
         self.gae_lambda = gae_lambda
-
+        self.reset()
+    
+    def reset(self) -> None:
+        """Reset the storage."""
         # data containers
-        ###########################################################################################################
-        # initialize this container later, for `DictRolloutStorage`
-        if not isinstance(self.observation_space, gym.spaces.Dict):
-            self.observations = th.empty(
-                size=(num_steps + 1, num_envs, *self.obs_shape),
-                dtype=th.float32,
-                device=self.device,
-            )
-        if self.action_type == "Discrete":
-            self.actions = th.empty(
-                size=(num_steps, num_envs),
-                dtype=th.float32,
-                device=self.device,
-            )
-        elif self.action_type == "Box":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        elif self.action_type == "MultiBinary":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        else:
-            raise NotImplementedError
-
-        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
-        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
+        self.observations = np.empty(shape=(self.storage_size, self.num_envs, *self.obs_shape), dtype=np.float32)
+        self.actions = np.empty(shape=(self.storage_size, self.num_envs, self.action_dim), dtype=np.float32)
+        self.rewards = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        self.terminateds = np.empty(shape=(self.storage_size + 1, self.num_envs), dtype=np.float32)
+        self.truncateds = np.empty(shape=(self.storage_size + 1, self.num_envs), dtype=np.float32)
         # first next_terminated
-        self.terminateds[0].copy_(th.zeros(num_envs).to(self.device))
-        self.truncateds[0].copy_(th.zeros(num_envs).to(self.device))
+        self.terminateds[0].fill(0.0)
+        self.truncateds[0].fill(0.0)
         # extra part
-        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        ###########################################################################################################
+        self.log_probs = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        self.values = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        self.returns = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        self.advantages = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        super().reset()
 
-        # counter
-        self.step = 0
-
-    def add(
-        self,
-        observations: th.Tensor,
-        actions: th.Tensor,
-        rewards: th.Tensor,
-        terminateds: th.Tensor,
-        truncateds: th.Tensor,
-        infos: Dict,
-        next_observations: th.Tensor,
-        log_probs: th.Tensor,
-        values: th.Tensor,
-    ) -> None:
+    def add(self,
+            observations: np.ndarray,
+            actions: np.ndarray,
+            rewards: np.ndarray,
+            terminateds: np.ndarray,
+            truncateds: np.ndarray,
+            infos: Dict,
+            next_observations: np.ndarray,
+            log_probs: th.Tensor,
+            values: th.Tensor
+            ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (th.Tensor): Observations.
-            actions (th.Tensor): Actions.
-            rewards (th.Tensor): Rewards.
-            terminateds (th.Tensor): Termination signals.
-            truncateds (th.Tensor): Truncation signals.
+            observations (np.ndarray): Observations.
+            actions (np.ndarray): Actions.
+            rewards (np.ndarray): Rewards.
+            terminateds (np.ndarray): Termination signals.
+            truncateds (np.ndarray): Truncation signals.
             infos (Dict): Extra information.
-            next_observations (th.Tensor): Next observations.
+            next_observations (np.ndarray): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.
 
         Returns:
             None.
         """
-        self.observations[self.step].copy_(observations)
-        self.actions[self.step].copy_(actions)
-        self.rewards[self.step].copy_(rewards)
-        self.terminateds[self.step + 1].copy_(terminateds)
-        self.truncateds[self.step + 1].copy_(truncateds)
-        self.observations[self.step + 1].copy_(next_observations)
-        self.log_probs[self.step].copy_(log_probs)
-        self.values[self.step].copy_(values.flatten())
+        np.copyto(self.observations[self.step], observations)
+        np.copyto(self.actions[self.step], actions)
+        np.copyto(self.rewards[self.step], rewards)
+        np.copyto(self.terminateds[self.step + 1], terminateds)
+        np.copyto(self.truncateds[self.step + 1], truncateds)
+        np.copyto(self.observations[self.step + 1], next_observations)
+        np.copyto(self.log_probs[self.step], log_probs.cpu().numpy())
+        np.copyto(self.values[self.step], values.cpu().numpy().flatten())
 
-        self.step = (self.step + 1) % self.num_steps
+        self.step = (self.step + 1) % self.storage_size
 
     def update(self) -> None:
         """Reset the terminal state of each env."""
-        self.terminateds[0].copy_(self.terminateds[-1])
-        self.truncateds[0].copy_(self.truncateds[-1])
+        np.copyto(self.terminateds[0], self.terminateds[-1])
+        np.copyto(self.truncateds[0], self.truncateds[-1])
 
     def compute_returns_and_advantages(self, last_values: th.Tensor) -> None:
         """Perform generalized advantage estimation (GAE).
 
         Args:
             last_values (th.Tensor): Estimated values of the last step.
-            gamma (float): Discount factor.
-            gae_lamdba (float): Coefficient of GAE.
 
         Returns:
             None.
@@ -172,7 +143,7 @@ class VanillaRolloutStorage(BaseStorage):
         gae = 0
         for step in reversed(range(self.num_steps)):
             if step == self.num_steps - 1:
-                next_values = last_values[:, 0]
+                next_values = last_values.cpu().flatten()[:, 0]
             else:
                 next_values = self.values[step + 1]
             next_non_terminal = 1.0 - self.terminateds[step + 1]
@@ -200,12 +171,12 @@ class VanillaRolloutStorage(BaseStorage):
             adv_targ = self.advantages.view(-1)[indices]
 
             yield VanillaRolloutBatch(
-                observations=batch_obs,
-                actions=batch_actions,
-                values=batch_values,
-                returns=batch_returns,
-                terminateds=batch_terminateds,
-                truncateds=batch_truncateds,
-                old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ,
+                observations=self.to_torch(batch_obs),
+                actions=self.to_torch(batch_actions),
+                values=self.to_torch(batch_values),
+                returns=self.to_torch(batch_returns),
+                terminateds=self.to_torch(batch_terminateds),
+                truncateds=self.to_torch(batch_truncateds),
+                old_log_probs=self.to_torch(batch_old_log_probs),
+                adv_targ=self.to_torch(adv_targ)
             )

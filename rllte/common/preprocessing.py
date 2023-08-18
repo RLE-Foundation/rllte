@@ -31,26 +31,6 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-
-def process_env_info(observation_space: gym.Space, 
-                     action_space: gym.Space) -> Tuple[Union[Dict[str, Tuple], Tuple], Tuple, int, str, Tuple]:
-    """Process the environment information.
-
-    Args:
-        observation_space (gym.Space): Observation space.
-        action_space (gym.Space): Action space.
-
-    Returns:
-        Information of the observation and action space.
-    """
-    # observation part
-    obs_shape = process_observation_space(observation_space)
-    # action part
-    action_shape, action_dim, action_type, action_range = process_action_space(action_space) # type: ignore
-
-    return obs_shape, action_shape, action_dim, action_type, action_range # type: ignore
-
-
 def process_observation_space(observation_space: gym.Space) -> Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]:
     """Process the observation space.
 
@@ -90,30 +70,27 @@ def process_action_space(action_space: gym.Space) -> Tuple[Tuple, int, str, Tupl
         Information of the action space.
     """
     # TODO: revise the action_range
-    action_shape = action_space.shape
     if action_space.__class__.__name__ == "Discrete":
-        action_dim = int(action_space.n)
+        action_shape = int(action_space.n)
+        action_dim = 1
         action_type = "Discrete"
-        action_range = (0, int(action_space.n) - 1)
     elif action_space.__class__.__name__ == "Box":
-        action_dim = int(np.prod(action_space.shape))
+        action_shape = int(np.prod(action_space.shape))
+        action_dim = action_shape
         action_type = "Box"
-        action_range = (
-            float(action_space.low[0]),
-            float(action_space.high[0]),
-        )
     elif action_space.__class__.__name__ == "MultiDiscrete":
+        action_shape = sum(list(action_space.nvec))
         action_dim = int(len(action_space.nvec))
         action_type = "MultiDiscrete"
-        action_range = [0, int(action_space.nvec[0]) - 1]
     elif action_space.__class__.__name__ == "MultiBinary":
-        action_dim = int(action_space.shape[0])
+        assert isinstance(action_space.n, int), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
+        action_shape = int(action_space.shape[0])
+        action_dim = int(action_space.n)
         action_type = "MultiBinary"
-        action_range = (0, 1)
     else:
         raise NotImplementedError(f"{action_space} action space is not supported")
 
-    return action_shape, action_dim, action_type, action_range
+    return action_shape, action_dim, action_type
 
 
 def get_flattened_obs_dim(observation_space: spaces.Space) -> int:
