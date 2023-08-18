@@ -62,7 +62,7 @@ class VanillaRolloutStorage(BaseStorage):
         discount: float = 0.999,
         gae_lambda: float = 0.95,
     ) -> None:
-        super().__init__(observation_space, action_space, device)
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.storage_size = storage_size
         self.num_envs = num_envs
         self.batch_size = batch_size
@@ -73,7 +73,7 @@ class VanillaRolloutStorage(BaseStorage):
     def reset(self) -> None:
         """Reset the storage."""
         # data containers
-        self.observations = np.empty(shape=(self.storage_size, self.num_envs, *self.obs_shape), dtype=np.float32)
+        self.observations = np.empty(shape=(self.storage_size + 1, self.num_envs, *self.obs_shape), dtype=np.float32)
         self.actions = np.empty(shape=(self.storage_size, self.num_envs, self.action_dim), dtype=np.float32)
         self.rewards = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
         self.terminateds = np.empty(shape=(self.storage_size + 1, self.num_envs), dtype=np.float32)
@@ -116,7 +116,7 @@ class VanillaRolloutStorage(BaseStorage):
             None.
         """
         np.copyto(self.observations[self.step], observations)
-        np.copyto(self.actions[self.step], actions)
+        np.copyto(self.actions[self.step], actions.reshape((self.num_envs, self.action_dim)))
         np.copyto(self.rewards[self.step], rewards)
         np.copyto(self.terminateds[self.step + 1], terminateds)
         np.copyto(self.truncateds[self.step + 1], truncateds)
@@ -141,9 +141,9 @@ class VanillaRolloutStorage(BaseStorage):
             None.
         """
         gae = 0
-        for step in reversed(range(self.num_steps)):
-            if step == self.num_steps - 1:
-                next_values = last_values.cpu().flatten()[:, 0]
+        for step in reversed(range(self.storage_size)):
+            if step == self.storage_size - 1:
+                next_values = last_values.cpu().numpy()[:, 0]
             else:
                 next_values = self.values[step + 1]
             next_non_terminal = 1.0 - self.terminateds[step + 1]
@@ -158,17 +158,17 @@ class VanillaRolloutStorage(BaseStorage):
 
     def sample(self) -> Generator:
         """Sample data from storage."""
-        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.storage_size)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = self.observations[:-1].view(-1, *self.obs_shape)[indices]
-            batch_actions = self.actions.view(-1, *self.action_shape)[indices]
-            batch_values = self.values.view(-1)[indices]
-            batch_returns = self.returns.view(-1)[indices]
-            batch_terminateds = self.terminateds[:-1].view(-1)[indices]
-            batch_truncateds = self.truncateds[:-1].view(-1)[indices]
-            batch_old_log_probs = self.log_probs.view(-1)[indices]
-            adv_targ = self.advantages.view(-1)[indices]
+            batch_obs = self.observations[:-1].reshape((-1, *self.obs_shape))[indices]
+            batch_actions = self.actions.reshape((-1, *self.action_shape))[indices]
+            batch_values = self.values.flatten()[indices]
+            batch_returns = self.returns.flatten()[indices]
+            batch_terminateds = self.terminateds[:-1].flatten()[indices]
+            batch_truncateds = self.truncateds[:-1].flatten()[indices]
+            batch_old_log_probs = self.log_probs.flatten()[indices]
+            adv_targ = self.advantages.flatten()[indices]
 
             yield VanillaRolloutBatch(
                 observations=self.to_torch(batch_obs),

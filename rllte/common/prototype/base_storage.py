@@ -63,7 +63,7 @@ class BaseStorage(ABC):
         self.num_envs = num_envs
         # get environment information
         self.obs_shape = process_observation_space(observation_space)
-        self.action_shape, self.action_dim, self.action_type = process_action_space(action_space)
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(action_space)
         # set device
         self.device = th.device(device)
         # counter

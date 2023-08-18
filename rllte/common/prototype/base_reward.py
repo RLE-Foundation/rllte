@@ -29,7 +29,7 @@ from typing import Dict
 import gymnasium as gym
 import torch as th
 
-from rllte.common.preprocessing import process_env_info
+from rllte.common.preprocessing import process_observation_space, process_action_space
 
 
 class BaseIntrinsicRewardModule(ABC):
@@ -55,9 +55,8 @@ class BaseIntrinsicRewardModule(ABC):
         kappa: float = 0.000025,
     ) -> None:
         # get environment information
-        self._obs_shape, self._action_shape, self._action_dim, self._action_type, self._action_range = process_env_info(
-            observation_space, action_space
-        )
+        self.obs_shape = process_observation_space(observation_space)
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(action_space)
 
         self._device = th.device(device)
         self._beta = beta

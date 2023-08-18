@@ -70,27 +70,28 @@ def process_action_space(action_space: gym.Space) -> Tuple[Tuple, int, str, Tupl
         Information of the action space.
     """
     # TODO: revise the action_range
+    action_shape = action_space.shape
     if action_space.__class__.__name__ == "Discrete":
-        action_shape = int(action_space.n)
+        policy_action_dim = int(action_space.n)
         action_dim = 1
         action_type = "Discrete"
     elif action_space.__class__.__name__ == "Box":
-        action_shape = int(np.prod(action_space.shape))
-        action_dim = action_shape
+        policy_action_dim = int(np.prod(action_space.shape))
+        action_dim = policy_action_dim
         action_type = "Box"
     elif action_space.__class__.__name__ == "MultiDiscrete":
-        action_shape = sum(list(action_space.nvec))
+        policy_action_dim = sum(list(action_space.nvec))
         action_dim = int(len(action_space.nvec))
         action_type = "MultiDiscrete"
     elif action_space.__class__.__name__ == "MultiBinary":
         assert isinstance(action_space.n, int), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
-        action_shape = int(action_space.shape[0])
-        action_dim = int(action_space.n)
+        policy_action_dim = int(action_space.n)
+        action_dim = policy_action_dim
         action_type = "MultiBinary"
     else:
         raise NotImplementedError(f"{action_space} action space is not supported")
 
-    return action_shape, action_dim, action_type
+    return action_shape, action_dim, policy_action_dim, action_type
 
 
 def get_flattened_obs_dim(observation_space: spaces.Space) -> int:

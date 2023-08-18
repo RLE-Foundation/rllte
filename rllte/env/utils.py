@@ -108,10 +108,11 @@ class Gymnasium2Torch(gym.Wrapper):
             self.observation_space = env.single_observation_space
             self.action_space = env.single_action_space
 
-        if isinstance(self.observation_space, gym.spaces.Dict):
-            self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
-        else:
-            self._format_obs = lambda x: th.as_tensor(x, device=self.device)
+        self._format_obs = lambda x: x
+        # if isinstance(self.observation_space, gym.spaces.Dict):
+        #     self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
+        # else:
+        #     self._format_obs = lambda x: th.as_tensor(x, device=self.device)
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[th.Tensor, Dict]:
         """Reset all environments and return a batch of initial observations and info.
@@ -145,16 +146,19 @@ class Gymnasium2Torch(gym.Wrapper):
         # convert to tensor
         rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
 
-        terminateds = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in terminateds],
-            dtype=th.float32,
-            device=self.device,
-        )
-        truncateds = th.as_tensor(
-            [1.0 if _ else 0.0 for _ in truncateds],
-            dtype=th.float32,
-            device=self.device,
-        )
+        # terminateds = th.as_tensor(
+        #     [1.0 if _ else 0.0 for _ in terminateds],
+        #     dtype=th.float32,
+        #     device=self.device,
+        # )
+        # truncateds = th.as_tensor(
+        #     [1.0 if _ else 0.0 for _ in truncateds],
+        #     dtype=th.float32,
+        #     device=self.device,
+        # )
+
+        terminateds = np.asarray([1.0 if _ else 0.0 for _ in terminateds], dtype=np.float32)
+        truncateds = np.asarray([1.0 if _ else 0.0 for _ in truncateds], dtype=np.float32)
 
         return self._format_obs(new_observations), rewards, terminateds, truncateds, infos
 

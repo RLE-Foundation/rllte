@@ -50,7 +50,7 @@ from rllte.common.prototype.base_policy import BasePolicy as Policy
 from rllte.common.prototype.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.prototype.base_storage import BaseStorage as Storage
 from rllte.common.logger import Logger
-from rllte.common.preprocessing import process_env_info
+from rllte.common.preprocessing import process_observation_space, process_action_space
 from rllte.common.timer import Timer
 from rllte.common.utils import get_npu_name
 
@@ -119,9 +119,8 @@ class BaseAgent(ABC):
         self.observation_space = env.observation_space
         self.action_space = env.action_space
         self.num_envs = env.num_envs
-        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = process_env_info(
-            self.observation_space, self.action_space
-        )
+        self.obs_shape = process_observation_space(env.observation_space)
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(env.action_space)
 
         # set seed
         self.seed = seed
