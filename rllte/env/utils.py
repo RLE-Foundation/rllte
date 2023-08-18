@@ -107,7 +107,7 @@ class Gymnasium2Torch(gym.Wrapper):
             self.observation_space = env.single_observation_space
             self.action_space = env.single_action_space
 
-        if isinstance(env.single_observation_space, gym.spaces.Dict):
+        if isinstance(self.observation_space, gym.spaces.Dict):
             self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
         else:
             self._format_obs = lambda x: th.as_tensor(x, device=self.device)

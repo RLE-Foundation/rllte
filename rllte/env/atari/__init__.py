@@ -68,7 +68,7 @@ def make_envpool_atari_env(
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return Gymnasium2Torch(envs, device)
+    return Gymnasium2Torch(envs, device, envpool=True)
 
 
 def make_atari_env(
