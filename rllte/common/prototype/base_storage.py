@@ -30,15 +30,18 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.preprocessing import process_env_info
+from rllte.common.preprocessing import process_observation_space, process_action_space
 
 class BaseStorage(ABC):
-    """Base class of storage module.
+    """Base class of the storage module.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
+        storage_size (int): The size of the storage.
+        batch_size (int): Batch size of samples.
+        num_envs (int): The number of parallel environments.
 
     Returns:
         Instance of the base storage.
@@ -48,16 +51,24 @@ class BaseStorage(ABC):
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
-        device: str = "cpu",
+        device: str,
+        storage_size: int,
+        batch_size: int,
+        num_envs: int
     ) -> None:
         self.observation_space = observation_space
         self.action_space = action_space
+        self.storage_size = storage_size
+        self.batch_size = batch_size
+        self.num_envs = num_envs
         # get environment information
-        self.obs_shape, self.action_shape, self.action_dim, self.action_type, self.action_range = process_env_info(
-            observation_space, action_space
-        )
+        self.obs_shape = process_observation_space(observation_space)
+        self.action_shape, self.action_dim, self.action_type = process_action_space(action_space)
         # set device
         self.device = th.device(device)
+        # counter
+        self.step = 0
+        self.full = False
 
     def to_torch(self, x: np.ndarray) -> th.Tensor:
         """Convert numpy array to torch tensor.
@@ -70,18 +81,19 @@ class BaseStorage(ABC):
         """
         return th.as_tensor(x, device=self.device).float()
     
+    def reset(self) -> None:
+        """Reset the storage."""
+        self.step = 0
+        self.full = False
+
     @abstractmethod
-    def add(self, *args) -> None:
+    def add(self, *args, **kwargs) -> None:
         """Add samples to the storage."""
 
     @abstractmethod
-    def reset(self) -> None:
-        """Reset the storage."""
-
-    @abstractmethod
-    def sample(self, *args) -> Any:
+    def sample(self, *args, **kwargs) -> Any:
         """Sample from the storage."""
 
     @abstractmethod
-    def update(self, *args) -> None:
+    def update(self, *args, **kwargs) -> None:
         """Update the storage if necessary."""
