@@ -167,7 +167,7 @@ class SAC(OffPolicyAgent):
             return metrics
 
         # sample a batch
-        batch = self.storage.sample(self.global_step)
+        batch = self.storage.sample()
 
         # compute intrinsic rewards
         if self.irs is not None:

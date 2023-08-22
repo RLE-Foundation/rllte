@@ -67,15 +67,14 @@ class OnPolicyAgent(BaseAgent):
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(
-        self,
-        num_train_steps: int,
-        init_model_path: Optional[str] = None,
-        log_interval: int = 1,
-        eval_interval: int = 100,
-        num_eval_episodes: int = 10,
-        th_compile: bool = True,
-    ) -> None:
+    def train(self,
+              num_train_steps: int,
+              init_model_path: Optional[str] = None,
+              log_interval: int = 1,
+              eval_interval: int = 100,
+              num_eval_episodes: int = 10,
+              th_compile: bool = True
+              ) -> None:
         """Training function.
 
         Args:
@@ -115,7 +114,7 @@ class OnPolicyAgent(BaseAgent):
 
                 # pre-training mode
                 if self.pretraining:
-                    rews = th.zeros_like(rews, device=self.device)
+                    rews = np.zeros_like(rews)
 
                 # add transitions
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
