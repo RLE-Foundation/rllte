@@ -45,7 +45,7 @@ class ActorCritic(nn.Module):
         super().__init__()
 
         self.action_shape = action_shape
-        self.action_dim = action_dim
+        self.policy_action_dim = action_dim
         self.action_range = action_range
         self.action_type = action_type
 
@@ -88,9 +88,9 @@ class ActorCritic(nn.Module):
         features = self.encoder(x)
         # get one-hot last actions
         if self.action_type == "Discrete":
-            encoded_actions = F.one_hot(inputs["last_action"].view(T * B), self.action_dim).float()
+            encoded_actions = F.one_hot(inputs["last_action"].view(T * B), self.policy_action_dim).float()
         else:
-            encoded_actions = inputs["last_action"].view(T * B, self.action_dim)
+            encoded_actions = inputs["last_action"].view(T * B, self.policy_action_dim)
         # merge features and one-hot last actions
         mixed_features = th.cat([features, inputs["reward"].view(T * B, 1), encoded_actions], dim=-1)
         # get policy outputs and baseline
@@ -175,7 +175,7 @@ class DistributedActorLearner(BasePolicy):
         self.actor = ActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
-            action_dim=self.action_dim,
+            action_dim=self.policy_action_dim,
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=self.feature_dim,
@@ -183,7 +183,7 @@ class DistributedActorLearner(BasePolicy):
         self.learner = ActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
-            action_dim=self.action_dim,
+            action_dim=self.policy_action_dim,
             action_type=self.action_type,
             action_range=self.action_range,
             feature_dim=self.feature_dim,

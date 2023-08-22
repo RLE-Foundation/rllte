@@ -90,16 +90,16 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
 
         # build actor and critic
         self.actor = actor_class(
-            obs_shape=self.obs_shape, action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+            obs_shape=self.obs_shape, action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
         )
 
         if len(self.obs_shape) > 1:
-            self.gae = nn.Linear(feature_dim + self.action_dim, 1)
+            self.gae = nn.Linear(feature_dim + self.policy_action_dim, 1)
             self.critic = nn.Linear(feature_dim, 1)
         else:
             # for state-based observations and `IdentityEncoder`
             self.gae = nn.Sequential(
-                nn.Linear(feature_dim + self.action_dim, hidden_dim),
+                nn.Linear(feature_dim + self.policy_action_dim, hidden_dim),
                 nn.Tanh(),
                 nn.Linear(hidden_dim, hidden_dim),
                 nn.Tanh(),
@@ -189,7 +189,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         dist = self.dist(*policy_outputs)
 
         if self.action_type == "Discrete":
-            encoded_actions = F.one_hot(actions.long(), self.action_dim).to(h.device)
+            encoded_actions = F.one_hot(actions.long(), self.policy_action_dim).to(h.device)
         else:
             encoded_actions = actions
 

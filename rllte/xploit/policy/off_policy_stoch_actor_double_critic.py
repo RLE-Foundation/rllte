@@ -84,11 +84,11 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
             nn.ReLU(inplace=True),
             nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, 2 * self.action_dim),
+            nn.Linear(self.hidden_dim, 2 * self.policy_action_dim),
         )
 
-        self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic_target = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
 
         self.log_std_min, self.log_std_max = log_std_range
 
@@ -126,7 +126,7 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         Returns:
             Sampled actions.
         """
-        return th.rand(size=(obs.size()[0], self.action_dim), device=obs.device).uniform_(-1.0, 1.0)
+        return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
         """Sample actions based on observations.

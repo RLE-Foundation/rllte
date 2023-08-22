@@ -41,15 +41,16 @@ from rllte.env.atari.wrappers import (
 from rllte.env.utils import Gymnasium2Rllte
 
 
-def make_envpool_atari_env(
-    env_id: str = "Alien-v5", num_envs: int = 8, device: str = "cpu", seed: int = 1, parallel: bool = True
-) -> gym.Env:
+def make_envpool_atari_env(env_id: str = "Alien-v5", 
+                           num_envs: int = 8, 
+                           seed: int = 1, 
+                           parallel: bool = True
+                           ) -> gym.Env:
     """Build Atari environments with `envpool`.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         parallel (bool): `True` for `Async` execution and `False` for `Sync` execution.
     """
@@ -61,23 +62,20 @@ def make_envpool_atari_env(
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return Gymnasium2Rllte(envs, device, envpool=True)
+    return Gymnasium2Rllte(envs, envpool=True)
 
 
-def make_atari_env(
-    env_id: str = "Alien-v5",
-    num_envs: int = 8,
-    device: str = "cpu",
-    seed: int = 1,
-    frame_stack: int = 4,
-    parallel: bool = True,
-) -> gym.Env:
+def make_atari_env(env_id: str = "Alien-v5",
+                   num_envs: int = 8,
+                   seed: int = 1,
+                   frame_stack: int = 4,
+                   parallel: bool = True
+                   ) -> gym.Env:
     """Build Atari environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
         parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
@@ -122,4 +120,4 @@ def make_atari_env(
         envs = SyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Rllte(envs, device)
+    return Gymnasium2Rllte(envs)

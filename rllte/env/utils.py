@@ -120,23 +120,22 @@ class Gymnasium2Rllte(gym.Wrapper):
 
         return obs, infos
 
-    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, List[Dict]]:
+    def step(self, actions: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict]:
         """Take an action for each environment.
 
         Args:
-            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
+            actions (np.ndarray): element of :attr:`action_space` Batch of actions.
 
         Returns:
             Next observations, rewards, terminateds, truncateds, infos.
         """
-        new_observations, rewards, terminateds, truncateds, infos = self.env.step(actions.cpu().numpy())
+        new_observations, rewards, terminateds, truncateds, infos = self.env.step(actions)
         # TODO: get real next observations
         # for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
         #     if term or trunc:
         #         new_obs[idx] = info['final_observation'][idx]
 
         # convert to tensor
-        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
         terminateds = np.asarray([1.0 if _ else 0.0 for _ in terminateds], dtype=np.float32)
         truncateds = np.asarray([1.0 if _ else 0.0 for _ in truncateds], dtype=np.float32)
 

@@ -37,7 +37,6 @@ from rllte.env.procgen.wrappers import AdapterEnv, EnvPoolAsynchronous, EnvPoolS
 def make_envpool_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
-    device: str = "cpu",
     seed: int = 1,
     gamma: float = 0.99,
     num_levels: int = 200,
@@ -50,7 +49,6 @@ def make_envpool_procgen_env(
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.
@@ -90,12 +88,11 @@ def make_envpool_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Rllte(envs, device, envpool=True)
+    return Gymnasium2Rllte(envs, envpool=True)
 
 def make_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
-    device: str = "cpu",
     seed: int = 1,
     gamma: float = 0.99,
     num_levels: int = 200,
@@ -107,7 +104,6 @@ def make_procgen_env(
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
         seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.
@@ -134,4 +130,4 @@ def make_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Rllte(envs, device)
+    return Gymnasium2Rllte(envs)

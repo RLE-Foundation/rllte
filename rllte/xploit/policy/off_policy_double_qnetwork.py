@@ -130,7 +130,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
             nn.ReLU(inplace=True),
             nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, self.action_dim),
+            nn.Linear(self.hidden_dim, self.policy_action_dim),
         )
         self.qnet_target = deepcopy(self.qnet)
 

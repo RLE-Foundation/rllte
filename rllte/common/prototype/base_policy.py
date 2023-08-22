@@ -73,7 +73,7 @@ class BasePolicy(nn.Module):
 
         # get environment information
         self.obs_shape = process_observation_space(observation_space)
-        self.action_shape, self.action_dim, self.action_type = process_action_space(action_space)
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(action_space)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.

@@ -24,6 +24,8 @@
 
 
 import argparse
+import torch as th
+th.set_float32_matmul_precision('high')
 
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
@@ -39,9 +41,8 @@ if __name__ == "__main__":
     env = make_envpool_atari_env(
         env_id=args.env_id,
         num_envs=8,
-        device=args.device,
         seed=args.seed,
-        parallel=True,
+        parallel=True
     )
     # create agent
     feature_dim = 512

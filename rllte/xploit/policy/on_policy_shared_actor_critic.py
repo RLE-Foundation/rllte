@@ -262,7 +262,7 @@ class OnPolicySharedActorCritic(BasePolicy):
 
         # build actor and critic
         self.actor = actor_class(
-            obs_shape=self.obs_shape, action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+            obs_shape=self.obs_shape, action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
         )
 
         if len(self.obs_shape) > 1:

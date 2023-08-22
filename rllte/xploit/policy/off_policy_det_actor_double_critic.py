@@ -132,12 +132,12 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
             nn.ReLU(inplace=True),
             nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, self.action_dim),
+            nn.Linear(self.hidden_dim, self.policy_action_dim),
             nn.Tanh(),
         )
 
-        self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
+        self.critic_target = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -173,7 +173,7 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         Returns:
             Sampled actions.
         """
-        return th.rand(size=(obs.size()[0], self.action_dim), device=obs.device).uniform_(-1.0, 1.0)
+        return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
