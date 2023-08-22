@@ -28,62 +28,81 @@ from typing import Callable
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
-from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
+from gymnasium.wrappers import (FrameStack, 
+                                GrayScaleObservation, 
+                                RecordEpisodeStatistics, 
+                                ResizeObservation, 
+                                TransformReward)
 
-from rllte.env.atari.wrappers import (
-    EnvPoolAsynchronous,
-    EnvPoolSynchronous,
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-from rllte.env.utils import Gymnasium2Rllte
+from rllte.env.atari.wrappers import (EpisodicLifeEnv, 
+                                      FireResetEnv, 
+                                      MaxAndSkipEnv, 
+                                      NoopResetEnv)
+from rllte.env.utils import (Gymnasium2Torch,
+                             EnvPoolAsync2Gymnasium,
+                             EnvPoolSync2Gymnasium)
 
 
-def make_envpool_atari_env(env_id: str = "Alien-v5", 
-                           num_envs: int = 8, 
-                           seed: int = 1, 
-                           parallel: bool = True
-                           ) -> gym.Env:
-    """Build Atari environments with `envpool`.
+def make_envpool_atari_env(
+        env_id: str = "Alien-v5",
+        num_envs: int = 8,
+        device: str = "cpu",
+        seed: int = 1,
+        parallel: bool = True
+) -> gym.Env:
+    """Create Atari environments with `envpool`.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
+        device (str): Device to convert the data.
         seed (int): Random seed.
-        parallel (bool): `True` for `Async` execution and `False` for `Sync` execution.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
+    
+    Returns:
+        The vectorized environments.
     """
-    if parallel:
-        envs = EnvPoolAsynchronous(env_id, num_envs, seed)
-    else:
-        envs = EnvPoolSynchronous(env_id, num_envs, seed)
+    env_kwargs = dict(env_id,
+                      env_type="gymnasium",
+                      num_envs=num_envs,
+                      batch_size=num_envs,
+                      seed=seed,
+                      episodic_life=True,
+                      reward_clip=False)
 
+    if parallel:
+        envs = EnvPoolAsync2Gymnasium(**env_kwargs)
+    else:
+        envs = EnvPoolSync2Gymnasium(**env_kwargs)
+    
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return Gymnasium2Rllte(envs, envpool=True)
+    return Gymnasium2Torch(envs, device, envpool=True)
 
 
-def make_atari_env(env_id: str = "Alien-v5",
-                   num_envs: int = 8,
-                   seed: int = 1,
-                   frame_stack: int = 4,
-                   parallel: bool = True
-                   ) -> gym.Env:
-    """Build Atari environments.
+def make_atari_env(
+        env_id: str = "Alien-v5",
+        num_envs: int = 8,
+        device: str = "cpu",
+        seed: int = 1,
+        frame_stack: int = 4,
+        parallel: bool = True
+) -> gym.Env:
+    """Create Atari environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
+        device (str): Device to convert the data.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
     def make_env(env_id: str, seed: int) -> Callable:
@@ -120,4 +139,4 @@ def make_atari_env(env_id: str = "Alien-v5",
         envs = SyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Rllte(envs)
+    return Gymnasium2Torch(envs, device)

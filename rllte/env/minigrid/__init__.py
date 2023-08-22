@@ -97,7 +97,7 @@ def make_minigrid_env(
     device: str = "cpu",
     parallel: bool = True,
 ) -> gym.Env:
-    """Build MiniGrid environments.
+    """Create MiniGrid environments.
 
     Args:
         env_id (str): Name of environment.
@@ -108,13 +108,12 @@ def make_minigrid_env(
             word in a fixed vocabulary.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        device (str): Device to convert the data.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
     def make_env(env_id: str, seed: int) -> gym.Env:

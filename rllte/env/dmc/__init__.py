@@ -33,7 +33,7 @@ from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
 from rllte.env.dmc.wrappers import ActionDTypeWrapper, ActionRepeatWrapper, DMC2Gymnasium, FlatObsWrapper, FrameStackWrapper
-from rllte.env.utils import Gymnasium2Rllte
+from rllte.env.utils import Gymnasium2Torch
 
 
 def make_dmc_env(
@@ -48,12 +48,12 @@ def make_dmc_env(
     frame_stack: int = 3,
     action_repeat: int = 2,
 ) -> gym.Env:
-    """Build DeepMind Control Suite environments.
+    """Create DeepMind Control Suite environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device to convert the data.
         seed (int): Random seed.
         visualize_reward (bool): True when 'from_pixels' is False, False when 'from_pixels' is True.
         from_pixels (bool): Provide image-based observations or not.
@@ -63,7 +63,7 @@ def make_dmc_env(
         action_repeat (int): Number of action repeats.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
     def make_env(env_id: str, seed: int) -> Callable:
@@ -108,4 +108,4 @@ def make_dmc_env(
     envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Rllte(envs, device)
+    return Gymnasium2Torch(envs, device)

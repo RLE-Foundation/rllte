@@ -32,7 +32,7 @@ from gymnasium.envs.registration import EnvSpec
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.utils import Gymnasium2Rllte
+from rllte.env.utils import Gymnasium2Torch
 
 
 class BitFlippingEnv(Env):
@@ -254,16 +254,15 @@ def make_bitflipping_env(
     image_obs_space: bool = False,
     channel_first: bool = True,
 ) -> gym.Env:
-    """Build bit flipping environment.
+    """Create bit flipping environment.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device to convert the data.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
         n_bits (int): Number of bits to flip
         continuous (bool): Whether to use the continuous actions version or not,
             by default, it uses the discrete one.
@@ -274,7 +273,7 @@ def make_bitflipping_env(
         channel_first (bool): Whether to use channel-first or last image.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
     def make_env(env_id: str, seed: int) -> Callable:
@@ -301,4 +300,4 @@ def make_bitflipping_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Rllte(envs, device=device)
+    return Gymnasium2Torch(envs, device=device)

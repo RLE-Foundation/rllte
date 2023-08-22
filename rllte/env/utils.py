@@ -25,6 +25,7 @@
 from collections import deque
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import envpool
 import gymnasium as gym
 import numpy as np
 import torch as th
@@ -83,28 +84,106 @@ def make_rllte_env(
 
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Rllte(env=envs, device=device)
+    return Gymnasium2Torch(env=envs, device=device)
+
+class EnvPoolAsync2Gymnasium(gym.Wrapper):
+    """Create an `EnvPool` environment with asynchronous mode, and wrap it 
+        to allow a modular transformation of the `step` and `reset` methods.
+    
+    Args:
+        env_kwargs (gym.Env): Environment arguments.
+    
+    Returns:
+        A `Gymnasium`-like environment.
+    """
+    def __init__(self, env_kwargs: Dict) -> None:
+        env = envpool.make(**env_kwargs)
+        super().__init__(env)
+        self.num_envs = env_kwargs.get("num_envs", 1)
+        self.is_vector_env = True
+    
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment."""
+        # send the initial reset signal to all envs
+        self.env.async_reset()
+        obs, rew, term, trunc, info = self.env.recv()
+        # run one step to get the initial observation
+        self.env.send(np.zeros(shape=(self.num_envs, *self.action_space.shape)), info["env_id"])
+        return obs, info
+
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment.
+
+        Args:
+            actions (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        obs, rew, term, trunc, info = self.env.recv()
+        self.env.send(actions, info["env_id"])
+
+        return obs, rew, term, trunc, info
 
 
-class Gymnasium2Rllte(gym.Wrapper):
-    """Env wrapper for processing gymnasium environments.
+class EnvPoolSync2Gymnasium(gym.Wrapper):
+    """Wraps an `EnvPool` environment with synchronous mode to allow 
+        a modular transformation of the `step` and `reset` methods.
+
+    Args:
+        env_kwargs (gym.Env): Environment arguments.
+
+    Returns:
+        A `Gymnasium`-like environment.
+    """
+    def __init__(self, env_kwargs: Dict) -> None:
+        env = envpool.make(**env_kwargs)
+        super().__init__(env)
+        self.num_envs = env_kwargs.get("num_envs", 1)
+        self.is_vector_env = True
+
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment with `envpool`."""
+        return self.env.reset()
+
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment with `envpool`.
+
+        Args:
+            actions (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        return self.env.step(actions)
+
+
+class Gymnasium2Torch(gym.Wrapper):
+    """Env wrapper for processing gymnasium environments and outputting torch tensors.
 
     Args:
         env (VectorEnv): The vectorized environments.
+        device (str): Device (cpu, cuda, ...) on which the code should be run.
         envpool (bool): Whether to use `EnvPool` env.
 
     Returns:
-        Gymnasium2Rllte wrapper.
+        Gymnasium2Torch wrapper.
     """
 
-    def __init__(self, env: VectorEnv, envpool: bool = False) -> None:
+    def __init__(self, env: VectorEnv, device: str, envpool: bool = False) -> None:
         super().__init__(env)
         self.num_envs = env.num_envs
+        self.device = th.device(device)
 
         # envpool's observation space and action space are the same as the single env.
         if not envpool:
             self.observation_space = env.single_observation_space
             self.action_space = env.single_action_space
+
+        if isinstance(self.observation_space, gym.spaces.Dict):
+            self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
+        else:
+            self._format_obs = lambda x: th.as_tensor(x, device=self.device)
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[th.Tensor, Dict]:
         """Reset all environments and return a batch of initial observations and info.
@@ -118,28 +197,38 @@ class Gymnasium2Rllte(gym.Wrapper):
         """
         obs, infos = self.env.reset(seed=seed, options=options)
 
-        return obs, infos
+        return self._format_obs(obs), infos
 
-    def step(self, actions: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict]:
+    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, List[Dict]]:
         """Take an action for each environment.
 
         Args:
-            actions (np.ndarray): element of :attr:`action_space` Batch of actions.
+            actions (th.Tensor): element of :attr:`action_space` Batch of actions.
 
         Returns:
             Next observations, rewards, terminateds, truncateds, infos.
         """
-        new_observations, rewards, terminateds, truncateds, infos = self.env.step(actions)
+        new_observations, rewards, terminateds, truncateds, infos = self.env.step(actions.cpu().numpy())
         # TODO: get real next observations
         # for idx, (term, trunc) in enumerate(zip(terminateds, truncateds)):
         #     if term or trunc:
         #         new_obs[idx] = info['final_observation'][idx]
 
         # convert to tensor
-        terminateds = np.asarray([1.0 if _ else 0.0 for _ in terminateds], dtype=np.float32)
-        truncateds = np.asarray([1.0 if _ else 0.0 for _ in truncateds], dtype=np.float32)
+        rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
 
-        return new_observations, rewards, terminateds, truncateds, infos
+        terminateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in terminateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+        truncateds = th.as_tensor(
+            [1.0 if _ else 0.0 for _ in truncateds],
+            dtype=th.float32,
+            device=self.device,
+        )
+
+        return self._format_obs(new_observations), rewards, terminateds, truncateds, infos
 
 
 class FrameStack(gym.Wrapper):

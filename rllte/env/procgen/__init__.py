@@ -28,15 +28,59 @@ from typing import Dict, Tuple
 import gymnasium as gym
 import numpy as np
 
+from gymnasium.spaces import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from rllte.env.utils import Gymnasium2Rllte
-from rllte.env.procgen.wrappers import AdapterEnv, EnvPoolAsynchronous, EnvPoolSynchronous
+from rllte.env.utils import (Gymnasium2Torch,
+                             EnvPoolAsync2Gymnasium,
+                             EnvPoolSync2Gymnasium)
+
+class AdapterEnv(gym.Wrapper):
+    """Procgen games currently doesn't support Gymnasium.
+
+    Args:
+        env (gym.Env): Environment to wrap.
+        num_envs (int): Number of environments.
+
+    Returns:
+        AdapterEnv instance.
+    """
+
+    def __init__(self, env: gym.Env, num_envs: int) -> None:
+        super().__init__(env)
+        self.single_observation_space = Box(
+            low=env.observation_space["rgb"].low[0, 0, 0],
+            high=env.observation_space["rgb"].high[0, 0, 0],
+            shape=[3, 64, 64],
+            dtype=env.observation_space["rgb"].dtype,
+        )
+        self.single_action_space = env.action_space
+        self.is_vector_env = True
+        self.num_envs = num_envs
+
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
+        """Step the environment.
+
+        Args:
+            action (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, and info.
+        """
+        obs, reward, done, info = self.env.step(action)
+        return obs, reward, done, done, {}
+
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment."""
+        obs = self.env.reset()
+        return obs, {}
+    
 
 def make_envpool_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
+    device: str = "cpu",
     seed: int = 1,
     gamma: float = 0.99,
     num_levels: int = 200,
@@ -44,11 +88,12 @@ def make_envpool_procgen_env(
     distribution_mode: str = "easy",
     parallel: bool = True,
 ) -> gym.Env:
-    """Build Prcogen environments.
+    """Create Procgen environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
+        device (str): Device to convert the data.
         seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.
@@ -57,10 +102,11 @@ def make_envpool_procgen_env(
             'start_level' and 'num_levels' fully specify the set of possible levels.
         distribution_mode (str): What variant of the levels to use, the options are "easy",
             "hard", "extreme", "memory", "exploration".
-        parallel (bool): `True` for `Async` execution and `False` for `Sync` execution.
-
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
+            
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
     if distribution_mode == "easy":
         task_id = env_id.capitalize() + "Easy-v0"
@@ -80,30 +126,33 @@ def make_envpool_procgen_env(
         start_level=start_level,
     )
     if parallel:
-        envs = EnvPoolAsynchronous(env_kwargs)
+        envs = EnvPoolAsync2Gymnasium(**env_kwargs)
     else:
-        envs = EnvPoolSynchronous(env_kwargs)
+        envs = EnvPoolSync2Gymnasium(**env_kwargs)
 
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Rllte(envs, envpool=True)
+    return Gymnasium2Torch(envs, device=device, envpool=True)
+
 
 def make_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
+    device: str = "cpu",
     seed: int = 1,
     gamma: float = 0.99,
     num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
 ) -> gym.Env:
-    """Build Prcogen environments.
+    """Create Procgen environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
+        device (str): Device to convert the data.
         seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.
@@ -130,4 +179,4 @@ def make_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Rllte(envs)
+    return Gymnasium2Torch(envs, device)

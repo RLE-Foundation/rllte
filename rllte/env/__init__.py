@@ -53,12 +53,6 @@ except Exception:
 
 try:
     from .procgen import make_procgen_env as make_procgen_env
-    from .procgen import make_envpool_procgen_env as make_envpool_procgen_env
-except Exception:
-    pass
-
-try:
-    from .robosuite import make_robosuite_env as make_robosuite_env
 except Exception:
     pass
 
