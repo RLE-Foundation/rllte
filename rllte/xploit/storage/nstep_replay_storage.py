@@ -249,10 +249,10 @@ class NStepReplayStorage(BaseStorage):
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
-        device (str): Device to store replay data.
+        device (str): Device to convert replay data.
         storage_size (int): Max number of element in the storage.
         num_envs (int): The number of parallel environments.
-        batch_size (int): Batch size.
+        batch_size (int): Batch size of samples.
         num_workers (int): Subprocesses to use for data loading.
         pin_memory (bool): Pin memory or not.
         nstep (int): The number of transitions to consider when computing n-step returns
@@ -264,28 +264,27 @@ class NStepReplayStorage(BaseStorage):
         N-step replay storage.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        device: str = "cpu",
-        storage_size: int = 1000000,
-        num_envs: int = 1,
-        batch_size: int = 256,
-        num_workers: int = 4,
-        pin_memory: bool = True,
-        n_step: int = 3,
-        discount: float = 0.99,
-        fetch_every: int = 1000,
-        save_snapshot: bool = False,
-    ) -> None:
-        super().__init__(observation_space=observation_space, action_space=action_space, device=device)
+    def __init__(self,
+                 observation_space: gym.Space,
+                 action_space: gym.Space,
+                 device: str = "cpu",
+                 storage_size: int = 1000000,
+                 num_envs: int = 1,
+                 batch_size: int = 256,
+                 num_workers: int = 4,
+                 pin_memory: bool = True,
+                 n_step: int = 3,
+                 discount: float = 0.99,
+                 fetch_every: int = 1000,
+                 save_snapshot: bool = False
+                 ) -> None:
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
         # build storage
         self.replay_dir = Path.cwd() / "storage"
         self.replay_storage = ReplayStorage(self.replay_dir)
         max_size_per_worker = storage_size // max(1, num_workers)
-        dataset = ReplayStorageDataset(
+        self.dataset = ReplayStorageDataset(
             replay_dir=self.replay_dir,
             max_size=max_size_per_worker,
             num_workers=num_workers,
@@ -294,45 +293,52 @@ class NStepReplayStorage(BaseStorage):
             fetch_every=fetch_every,
             save_snapshot=save_snapshot,
         )
-        # build dataloader
-        self.replay_loader = th.utils.data.DataLoader(
-            dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, worker_init_fn=worker_init_fn
-        )
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.reset()
+    
+    def reset(self) -> None:
+        """Reset the storage."""
+        self.replay_loader = th.utils.data.DataLoader(self.dataset,
+                                                      batch_size=self.batch_size,
+                                                      num_workers=self.num_workers, 
+                                                      pin_memory=self.pin_memory,
+                                                      worker_init_fn=worker_init_fn
+                                                      )
         self._replay_iter = None
 
-    def add(
-        self,
-        obs: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        terminateds: np.ndarray,
-        truncateds: np.ndarray,
-        infos: Dict[str, Any],
-        next_obs: np.ndarray,
-    ) -> None:
+    def add(self,
+            obs: np.ndarray,
+            actions: np.ndarray,
+            rewards: np.ndarray,
+            terminateds: np.ndarray,
+            truncateds: np.ndarray,
+            infos: Dict[str, Any],
+            next_obs: np.ndarray,
+            ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observation.
-            actions (np.ndarray): Action.
-            rewards (np.ndarray): Reward.
+            obs (np.ndarray): Observations.
+            actions (np.ndarray): Actions.
+            rewards (np.ndarray): Rewards.
             terminateds (np.ndarray): Termination flag.
             truncateds (np.ndarray): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observation.
+            next_obs (np.ndarray): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs[0].cpu().numpy(),
-            action=actions[0].cpu().numpy(),
-            reward=rewards[0].cpu().numpy(),
-            terminated=terminateds[0].cpu().numpy(),
-            truncated=truncateds[0].cpu().numpy(),
+            obs=obs[0],
+            action=actions[0],
+            reward=rewards[0],
+            terminated=terminateds[0],
+            truncated=truncateds[0],
             infos=infos,
-            next_obs=next_obs[0].cpu().numpy(),
+            next_obs=next_obs[0],
         )
 
     @property
@@ -342,15 +348,8 @@ class NStepReplayStorage(BaseStorage):
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
 
-    def sample(self, step: int) -> NStepReplayBatch:
-        """Sample from the storage.
-
-        Args:
-            step (int): Global training step.
-
-        Returns:
-            Sampled data.
-        """
+    def sample(self) -> NStepReplayBatch:
+        """Sample from the storage."""
         # to device
         obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
 

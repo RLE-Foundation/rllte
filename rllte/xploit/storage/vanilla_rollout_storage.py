@@ -40,8 +40,8 @@ class VanillaRolloutStorage(BaseStorage):
     Args:
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        storage_size (int): The capacity of the storage.
+        device (str): Device to convert the data.
+        storage_size (int): The capacity of the storage. Here it refers to the length of per rollout.
         batch_size (int): Batch size of samples.
         num_envs (int): The number of parallel environments.
         discount (float): The discount factor.

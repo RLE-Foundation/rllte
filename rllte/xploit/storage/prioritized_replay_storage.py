@@ -45,10 +45,10 @@ class PrioritizedReplayStorage(BaseStorage):
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
-        device (str): Device to store the data.
-        storage_size (int): Storage size.
+        device (str): Device to convert the data.
+        storage_size (int): The capacity of the storage.
         num_envs (int): The number of parallel environments.
-        batch_size (int): Batch size.
+        batch_size (int): Batch size of samples.
         alpha (float): Prioritization value.
         beta (float): Importance sampling value.
 
@@ -56,105 +56,94 @@ class PrioritizedReplayStorage(BaseStorage):
         Prioritized replay storage.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        device: str = "cpu",
-        storage_size: int = 1000000,
-        num_envs: int = 1,
-        batch_size: int = 1024,
-        alpha: float = 0.6,
-        beta: float = 0.4,
-    ) -> None:
-        super().__init__(observation_space, action_space, device)
+    def __init__(self,
+                 observation_space: gym.Space,
+                 action_space: gym.Space,
+                 device: str = "cpu",
+                 storage_size: int = 1000000,
+                 batch_size: int = 1024,
+                 num_envs: int = 1,
+                 alpha: float = 0.6,
+                 beta: float = 0.4,
+                 ) -> None:
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         # TODO: add support for parallel environments
-        warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
-        self.storage_size = storage_size
-        self.num_envs = num_envs
-        self.batch_size = batch_size
-        assert alpha > 0, "The prioritization value 'alpha' must be positive!"
+        warnings.warn("PrioritizedReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
+        assert alpha > 0, "The prioritization value `alpha` must be positive!"
         self.alpha = alpha
         self.beta = beta
-        self.storage = deque(maxlen=storage_size)
-        self.priorities = np.zeros((storage_size,), dtype=np.float32)
-        self.position = 0
+        self.reset()
+    
+    def reset(self) -> None:
+        """Reset the storage."""
+        self.transitions = deque(maxlen=self.storage_size)
+        self.priorities = np.zeros((self.storage_size,), dtype=np.float32)
+        self.global_step = 0
+        super().reset()
 
     def __len__(self) -> int:
         """Return the number of transitions in storage."""
-        return len(self.storage)
+        return len(self.transitions)
 
-    def annealing_beta(self, step: int) -> float:
-        """Linearly increases beta from the initial value to 1 over global training steps.
+    @property
+    def annealing_beta(self) -> float:
+        """Linearly increases beta from the initial value to 1 over global training steps."""
+        return min(1.0, self.beta + self.global_step * (1.0 - self.beta) / self.storage_size)
 
-        Args:
-            step (int): The global training step.
-
-        Returns:
-            Beta value.
-        """
-        return min(1.0, self.beta + step * (1.0 - self.beta) / self.storage_size)
-
-    def add(
-        self,
-        observations: th.Tensor,
-        actions: th.Tensor,
-        rewards: th.Tensor,
-        terminateds: th.Tensor,
-        truncateds: th.Tensor,
-        infos: Dict[str, Any],
-        next_observations: th.Tensor,
-    ) -> None:
+    def add(self,
+            observations: np.ndarray,
+            actions: np.ndarray,
+            rewards: np.ndarray,
+            terminateds: np.ndarray,
+            truncateds: np.ndarray,
+            infos: Dict[str, Any],
+            next_observations: np.ndarray
+            ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (th.Tensor): Observations.
-            actions (th.Tensor): Actions.
-            rewards (th.Tensor): Rewards.
-            terminateds (th.Tensor): Termination flag.
-            truncateds (th.Tensor): Truncation flag.
+            observations (np.ndarray): Observations.
+            actions (np.ndarray): Actions.
+            rewards (np.ndarray): Rewards.
+            terminateds (np.ndarray): Termination flag.
+            truncateds (np.ndarray): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (th.Tensor): Next observations.
+            next_observations (np.ndarray): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
-        transition = (
-            observations[0].cpu().numpy(),
-            actions[0].cpu().numpy(),
-            rewards[0].cpu().numpy(),
-            terminateds[0].cpu().numpy(),
-            truncateds[0].cpu().numpy(),
-            next_observations[0].cpu().numpy(),
-        )
-        max_prio = self.priorities.max() if self.storage else 1.0
-        self.priorities[self.position] = max_prio
-        self.storage.append(transition)
-        self.position = (self.position + 1) % self.storage_size
+        transition = (observations[0],
+                      actions[0],
+                      rewards[0],
+                      terminateds[0],
+                      truncateds[0],
+                      next_observations[0]
+                      )
+        max_prio = self.priorities.max() if self.transitions else 1.0
+        self.priorities[self.step] = max_prio
+        self.transitions.append(transition)
 
-    def sample(self, step: int) -> PrioritizedReplayBatch:
-        """Sample from the storage.
+        self.step = (self.step + 1) % self.storage_size
+        self.full = self.full or self.step == 0
+        self.global_step += 1
 
-        Args:
-            step (int): Global training step.
-
-        Returns:
-            Batched samples.
-        """
-        if len(self.storage) == self.storage_size:
+    def sample(self) -> PrioritizedReplayBatch:
+        """Sample from the storage."""
+        if len(self.transitions) == self.storage_size:
             priorities = self.priorities
         else:
-            priorities = self.priorities[: self.position]
+            priorities = self.priorities[: self.step]
 
         # compute probabilities and sample indices
         probs = priorities**self.alpha
         probs /= probs.sum()
-        indices = np.random.choice(len(self.storage), self.batch_size, p=probs)
+        indices = np.random.choice(len(self.transitions), self.batch_size, p=probs)
 
         # get samples
-        samples = [self.storage[i] for i in indices]
-        weights = (len(self.storage) * probs[indices]) ** (-self.annealing_beta(step))
+        samples = [self.transitions[i] for i in indices]
+        weights = (len(self.transitions) * probs[indices]) ** (-self.annealing_beta)
         weights /= weights.max()
         weights = np.array(weights, dtype=np.float32)
 
@@ -175,7 +164,7 @@ class PrioritizedReplayStorage(BaseStorage):
             truncateds=self.to_torch(truncateds),
             next_observations=self.to_torch(next_obs),
             weights=self.to_torch(weights),
-            indices=indices,
+            indices=indices
         )
 
     def update(self, metrics: Dict) -> None:

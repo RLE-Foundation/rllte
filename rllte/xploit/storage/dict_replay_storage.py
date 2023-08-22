@@ -39,7 +39,7 @@ class DictReplayStorage(VanillaReplayStorage):
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
-        device (str): Device to store the data.
+        device (str): Device to convert the data.
         storage_size (int): The capacity of the storage.
         batch_size (int): Batch size of samples.
         num_envs (int): The number of parallel environments.

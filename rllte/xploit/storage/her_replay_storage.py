@@ -41,10 +41,10 @@ class HerReplayStorage(DictReplayStorage):
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
-        device (str): Device to store the data.
-        storage_size (int): Storage size.
+        device (str): Device to convert the data.
+        storage_size (int): The capacity of the storage.
         num_envs (int): The number of parallel environments.
-        batch_size (int): Batch size.
+        batch_size (int): Batch size of samples.
         goal_selection_strategy (str): A goal selection strategy of ["future", "final", "episode"].
         num_goals (int): The number of goals to sample.
         reward_fn (Callable): Function to compute new rewards based on state and goal, whose definition is
@@ -55,35 +55,25 @@ class HerReplayStorage(DictReplayStorage):
         Dict replay storage.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        device: str = "cpu",
-        storage_size: int = 1000000,
-        num_envs: int = 1,
-        batch_size: int = 1024,
-        goal_selection_strategy: str = "future",
-        num_goals: int = 4,
-        reward_fn: Optional[Callable] = None,
-        copy_info_dict: bool = False,
-    ) -> None:
-        super().__init__(observation_space, action_space, device, storage_size, num_envs, batch_size)
+    def __init__(self,
+                 observation_space: gym.Space,
+                 action_space: gym.Space,
+                 device: str = "cpu",
+                 storage_size: int = 1000000,
+                 num_envs: int = 1,
+                 batch_size: int = 1024,
+                 goal_selection_strategy: str = "future",
+                 num_goals: int = 4,
+                 reward_fn: Optional[Callable] = None,
+                 copy_info_dict: bool = False
+                 ) -> None:
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
 
         assert goal_selection_strategy in ["future", "final", "episode", "random"]
         self.goal_selection_strategy = goal_selection_strategy
         self.num_goals = num_goals
         self.reward_fn = reward_fn
         self.copy_info_dict = copy_info_dict
-
-        # data containers
-        ###########################################################################################################
-        # don't use memory optimization
-        self.next_observations = {
-            key: np.empty((self.storage_size, num_envs, *shape), dtype=observation_space[key].dtype)
-            for key, shape in self.obs_shape.items() # type: ignore
-        }
-        ###########################################################################################################
 
         # compute ratio between HER replays and regular replays in percent
         self.her_ratio = 1 - (1.0 / (self.num_goals + 1))
@@ -94,26 +84,34 @@ class HerReplayStorage(DictReplayStorage):
         self.ep_length = np.zeros((self.storage_size, self.num_envs), dtype=np.int64)
         self._current_ep_start = np.zeros(self.num_envs, dtype=np.int64)
 
-    def add(
-        self,
-        observations: Dict[str, th.Tensor],
-        actions: th.Tensor,
-        rewards: th.Tensor,
-        terminateds: th.Tensor,
-        truncateds: th.Tensor,
-        infos: Dict[str, Any],
-        next_observations: Dict[str, th.Tensor],
-    ) -> None:
+        self.reset()
+    
+    def reset(self) -> None:
+        """Reset the storage."""
+        self.next_observations = {
+            key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
+            for key, shape in self.obs_shape.items()
+        }
+
+    def add(self,
+            observations: Dict[str, np.ndarray],
+            actions: np.ndarray,
+            rewards: np.ndarray,
+            terminateds: np.ndarray,
+            truncateds: np.ndarray,
+            infos: Dict[str, Any],
+            next_observations: np.ndarray
+            ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (Dict[str, th.Tensor]): Observations.
-            actions (th.Tensor): Actions.
-            rewards (th.Tensor): Rewards.
-            terminateds (th.Tensor): Termination flag.
-            truncateds (th.Tensor): Truncation flag.
+            observations (Dict[str, np.ndarray]): Observations.
+            actions (np.ndarray): Actions.
+            rewards (np.ndarray): Rewards.
+            terminateds (np.ndarray): Termination flag.
+            truncateds (np.ndarray): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (Dict[str, th.Tensor]): Next observations.
+            next_observations (np.ndarray): Next observations.
 
         Returns:
             None.
@@ -159,15 +157,8 @@ class HerReplayStorage(DictReplayStorage):
         # update the current episode start
         self._current_ep_start[env_idx] = self.step
 
-    def sample(self, step: int) -> VanillaReplayBatch:
-        """Sample from the storage.
-
-        Args:
-            step (int): Global training step.
-
-        Returns:
-            Batched samples.
-        """
+    def sample(self) -> VanillaReplayBatch:
+        """Sample from the storage."""
         # check if we have complete episodes
         is_valid = self.ep_length > 0
         if not np.any(is_valid):
