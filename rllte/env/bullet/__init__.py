@@ -32,7 +32,7 @@ import pybullet_envs as pybullet_envs
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.utils import Gymnasium2Rllte
 
 
 class AdapterEnv(gym.Wrapper):
@@ -114,4 +114,4 @@ def make_bullet_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Torch(envs, device=device)
+    return Gymnasium2Rllte(envs, device=device)

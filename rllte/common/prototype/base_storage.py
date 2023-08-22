@@ -81,6 +81,7 @@ class BaseStorage(ABC):
         """
         return th.as_tensor(x, device=self.device).float()
     
+    @abstractmethod
     def reset(self) -> None:
         """Reset the storage."""
         self.step = 0

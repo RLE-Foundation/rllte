@@ -32,7 +32,7 @@ from gymnasium.envs.registration import EnvSpec
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.utils import Gymnasium2Rllte
 
 
 class BitFlippingEnv(Env):
@@ -301,4 +301,4 @@ def make_bitflipping_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Torch(envs, device=device)
+    return Gymnasium2Rllte(envs, device=device)

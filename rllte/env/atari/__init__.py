@@ -38,7 +38,7 @@ from rllte.env.atari.wrappers import (
     MaxAndSkipEnv,
     NoopResetEnv,
 )
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.utils import Gymnasium2Rllte
 
 
 def make_envpool_atari_env(
@@ -61,7 +61,7 @@ def make_envpool_atari_env(
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
-    return Gymnasium2Torch(envs, device, envpool=True)
+    return Gymnasium2Rllte(envs, device, envpool=True)
 
 
 def make_atari_env(
@@ -122,4 +122,4 @@ def make_atari_env(
         envs = SyncVectorEnv(envs)
         envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Torch(envs, device)
+    return Gymnasium2Rllte(envs, device)

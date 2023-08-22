@@ -41,7 +41,7 @@ class VanillaRolloutStorage(BaseStorage):
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
-        storage_size (int): The size of the storage.
+        storage_size (int): The capacity of the storage.
         batch_size (int): Batch size of samples.
         num_envs (int): The number of parallel environments.
         discount (float): The discount factor.
@@ -51,21 +51,17 @@ class VanillaRolloutStorage(BaseStorage):
         Vanilla rollout storage.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        device: str = "cpu",
-        storage_size: int = 256,
-        batch_size: int = 64,
-        num_envs: int = 8,
-        discount: float = 0.999,
-        gae_lambda: float = 0.95,
-    ) -> None:
+    def __init__(self,
+                 observation_space: gym.Space,
+                 action_space: gym.Space,
+                 device: str = "cpu",
+                 storage_size: int = 256,
+                 batch_size: int = 64,
+                 num_envs: int = 8,
+                 discount: float = 0.999,
+                 gae_lambda: float = 0.95,
+                 ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
-        self.storage_size = storage_size
-        self.num_envs = num_envs
-        self.batch_size = batch_size
         self.discount = discount
         self.gae_lambda = gae_lambda
         self.reset()
@@ -124,10 +120,11 @@ class VanillaRolloutStorage(BaseStorage):
         np.copyto(self.log_probs[self.step], log_probs.cpu().numpy())
         np.copyto(self.values[self.step], values.cpu().numpy().flatten())
 
+        self.full = True if self.step == self.storage_size - 1 else False
         self.step = (self.step + 1) % self.storage_size
 
     def update(self) -> None:
-        """Reset the terminal state of each env."""
+        """Update the terminal state of each env."""
         np.copyto(self.terminateds[0], self.terminateds[-1])
         np.copyto(self.truncateds[0], self.truncateds[-1])
 
@@ -158,6 +155,7 @@ class VanillaRolloutStorage(BaseStorage):
 
     def sample(self) -> Generator:
         """Sample data from storage."""
+        assert self.full, "Cannot sample when the storage is not full!"
         sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.storage_size)), self.batch_size, drop_last=True)
 
         for indices in sampler:

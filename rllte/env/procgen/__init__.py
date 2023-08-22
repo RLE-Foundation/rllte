@@ -31,7 +31,7 @@ import numpy as np
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.utils import Gymnasium2Rllte
 from rllte.env.procgen.wrappers import AdapterEnv, EnvPoolAsynchronous, EnvPoolSynchronous
 
 def make_envpool_procgen_env(
@@ -90,7 +90,7 @@ def make_envpool_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Torch(envs, device, envpool=True)
+    return Gymnasium2Rllte(envs, device, envpool=True)
 
 def make_procgen_env(
     env_id: str = "bigfish",
@@ -134,4 +134,4 @@ def make_procgen_env(
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
-    return Gymnasium2Torch(envs, device)
+    return Gymnasium2Rllte(envs, device)

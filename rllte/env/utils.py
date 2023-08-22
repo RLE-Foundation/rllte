@@ -83,36 +83,28 @@ def make_rllte_env(
 
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Torch(env=envs, device=device)
+    return Gymnasium2Rllte(env=envs, device=device)
 
 
-class Gymnasium2Torch(gym.Wrapper):
-    """Env wrapper for outputting torch tensors.
+class Gymnasium2Rllte(gym.Wrapper):
+    """Env wrapper for processing gymnasium environments.
 
     Args:
         env (VectorEnv): The vectorized environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
         envpool (bool): Whether to use `EnvPool` env.
 
     Returns:
-        Gymnasium2Torch wrapper.
+        Gymnasium2Rllte wrapper.
     """
 
-    def __init__(self, env: VectorEnv, device: str, envpool: bool = False) -> None:
+    def __init__(self, env: VectorEnv, envpool: bool = False) -> None:
         super().__init__(env)
         self.num_envs = env.num_envs
-        self.device = th.device(device)
 
         # envpool's observation space and action space are the same as the single env.
         if not envpool:
             self.observation_space = env.single_observation_space
             self.action_space = env.single_action_space
-
-        self._format_obs = lambda x: x
-        # if isinstance(self.observation_space, gym.spaces.Dict):
-        #     self._format_obs = lambda x: {key: th.as_tensor(item, device=self.device) for key, item in x.items()}
-        # else:
-        #     self._format_obs = lambda x: th.as_tensor(x, device=self.device)
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[th.Tensor, Dict]:
         """Reset all environments and return a batch of initial observations and info.
@@ -126,7 +118,7 @@ class Gymnasium2Torch(gym.Wrapper):
         """
         obs, infos = self.env.reset(seed=seed, options=options)
 
-        return self._format_obs(obs), infos
+        return obs, infos
 
     def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, List[Dict]]:
         """Take an action for each environment.
@@ -145,22 +137,10 @@ class Gymnasium2Torch(gym.Wrapper):
 
         # convert to tensor
         rewards = th.as_tensor(rewards, dtype=th.float32, device=self.device)
-
-        # terminateds = th.as_tensor(
-        #     [1.0 if _ else 0.0 for _ in terminateds],
-        #     dtype=th.float32,
-        #     device=self.device,
-        # )
-        # truncateds = th.as_tensor(
-        #     [1.0 if _ else 0.0 for _ in truncateds],
-        #     dtype=th.float32,
-        #     device=self.device,
-        # )
-
         terminateds = np.asarray([1.0 if _ else 0.0 for _ in terminateds], dtype=np.float32)
         truncateds = np.asarray([1.0 if _ else 0.0 for _ in truncateds], dtype=np.float32)
 
-        return self._format_obs(new_observations), rewards, terminateds, truncateds, infos
+        return new_observations, rewards, terminateds, truncateds, infos
 
 
 class FrameStack(gym.Wrapper):

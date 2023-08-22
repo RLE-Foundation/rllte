@@ -31,7 +31,7 @@ from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import DictObservationSpaceWrapper, FlatObsWrapper, FullyObsWrapper
 
-from rllte.env.utils import FrameStack, Gymnasium2Torch
+from rllte.env.utils import FrameStack, Gymnasium2Rllte
 
 
 class Minigrid2Image(gym.ObservationWrapper):
@@ -146,4 +146,4 @@ def make_minigrid_env(
         envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
-    return Gymnasium2Torch(envs, device=device)
+    return Gymnasium2Rllte(envs, device=device)
