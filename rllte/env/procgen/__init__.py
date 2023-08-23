@@ -126,9 +126,9 @@ def make_envpool_procgen_env(
         start_level=start_level,
     )
     if parallel:
-        envs = EnvPoolAsync2Gymnasium(**env_kwargs)
+        envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
-        envs = EnvPoolSync2Gymnasium(**env_kwargs)
+        envs = EnvPoolSync2Gymnasium(env_kwargs)
 
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)

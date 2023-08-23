@@ -108,14 +108,13 @@ class OnPolicyAgent(BaseAgent):
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, extra_policy_outputs = self.policy(th.as_tensor(obs, device=self.device), training=True)
-                    actions = actions.cpu().numpy()
+                    actions, extra_policy_outputs = self.policy(obs, training=True)
                     # observe rewards and next obs
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
                 # pre-training mode
                 if self.pretraining:
-                    rews = np.zeros_like(rews)
+                    rews = th.zeros_like(rews, device=self.device)
 
                 # add transitions
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
@@ -131,7 +130,7 @@ class OnPolicyAgent(BaseAgent):
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(th.as_tensor(next_obs, device=self.device)).detach()
+                last_values = self.policy.get_value(next_obs).detach()
 
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
@@ -147,8 +146,8 @@ class OnPolicyAgent(BaseAgent):
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
                 # only add the intrinsic rewards to the advantages and returns
-                self.storage.advantages += intrinsic_rewards.cpu().numpy()
-                self.storage.returns += intrinsic_rewards.cpu().numpy()
+                self.storage.advantages += intrinsic_rewards.to(self.device)
+                self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
             self.update()
@@ -207,8 +206,8 @@ class OnPolicyAgent(BaseAgent):
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy(th.as_tensor(obs, device=self.device), training=False)
-                next_obs, rews, terms, truncs, infos = self.eval_env.step(actions.cpu().numpy())
+                actions, _ = self.policy(obs, training=False)
+                next_obs, rews, terms, truncs, infos = self.eval_env.step(actions)
 
             # get episode information
             if "episode" in infos:

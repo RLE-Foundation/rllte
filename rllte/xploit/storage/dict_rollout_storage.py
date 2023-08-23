@@ -74,43 +74,43 @@ class DictRolloutStorage(VanillaRolloutStorage):
         # data containers
         self.observations = dict()
         for key, shape in self.obs_shape.items():
-            self.observations[key] = np.empty(shape=(self.storage_size + 1, self.num_envs, *shape), dtype=th.float32)
-        self.actions = np.empty(shape=(self.storage_size, self.num_envs, self.action_dim), dtype=np.float32)
-        self.rewards = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
-        self.terminateds = np.empty(shape=(self.storage_size + 1, self.num_envs), dtype=np.float32)
-        self.truncateds = np.empty(shape=(self.storage_size + 1, self.num_envs), dtype=np.float32)
+            self.observations[key] = th.empty(size=(self.storage_size + 1, self.num_envs, *shape), dtype=th.float32, device=self.device)
+        self.actions = th.empty(size=(self.storage_size, self.num_envs, self.action_dim), dtype=th.float32, device=self.device)
+        self.rewards = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.terminateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
+        self.truncateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
         # first next_terminated
-        self.terminateds[0].fill(0.0)
-        self.truncateds[0].fill(0.0)
+        self.terminateds[0].fill_(0.0)
+        self.truncateds[0].fill_(0.0)
         # extra part
-        self.log_probs = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
-        self.values = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
-        self.returns = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
-        self.advantages = np.empty(shape=(self.storage_size, self.num_envs), dtype=np.float32)
+        self.log_probs = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.values = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.returns = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
 
         super(VanillaRolloutStorage, self).reset()
 
     def add(self,
-            observations: np.ndarray,
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: Dict[str, th.Tensor],
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict,
-            next_observations: np.ndarray,
+            next_observations: th.Tensor,
             log_probs: th.Tensor,
             values: th.Tensor
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination signals.
-            truncateds (np.ndarray): Truncation signals.
+            observations (Dict[str, th.Tensor]): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination signals.
+            truncateds (th.Tensor): Truncation signals.
             infos (Dict): Extra information.
-            next_observations (np.ndarray): Next observations.
+            next_observations (th.Tensor): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.
 
@@ -125,16 +125,15 @@ class DictRolloutStorage(VanillaRolloutStorage):
                 obs_ = observations[key]
                 next_obs_ = next_observations[key]
 
-            np.copyto(self.observations[key][self.step], obs_)
-            np.copyto(self.observations[key][self.step + 1], next_obs_)
+            self.observations[key][self.step].copy_(obs_)
+            self.observations[key][self.step + 1].copy_(next_obs_)
 
-        np.copyto(self.actions[self.step], actions.reshape((self.num_envs, self.action_dim)))
-        np.copyto(self.rewards[self.step], rewards)
-        np.copyto(self.terminateds[self.step + 1], terminateds)
-        np.copyto(self.truncateds[self.step + 1], truncateds)
-        np.copyto(self.observations[self.step + 1], next_observations)
-        np.copyto(self.log_probs[self.step], log_probs.cpu().numpy())
-        np.copyto(self.values[self.step], values.cpu().numpy().flatten())
+        self.actions[self.step].copy_(actions.view(self.num_envs, self.action_dim))
+        self.rewards[self.step].copy_(rewards)
+        self.terminateds[self.step + 1].copy_(terminateds)
+        self.truncateds[self.step + 1].copy_(truncateds)
+        self.log_probs[self.step].copy_(log_probs)
+        self.values[self.step].copy_(values.flatten())
 
         self.full = True if self.step == self.storage_size - 1 else False
         self.step = (self.step + 1) % self.storage_size
@@ -145,25 +144,22 @@ class DictRolloutStorage(VanillaRolloutStorage):
         sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
 
         for indices in sampler:
-            batch_obs = {
-                key: self.to_torch(item[:-1].reshape((-1, *self.obs_shape))[indices])
-                for (key, item) in self.observations.items()
-                }
-            batch_actions = self.actions.reshape((-1, *self.action_shape))[indices]
-            batch_values = self.values.flatten()[indices]
-            batch_returns = self.returns.flatten()[indices]
-            batch_terminateds = self.terminateds[:-1].flatten()[indices]
-            batch_truncateds = self.truncateds[:-1].flatten()[indices]
-            batch_old_log_probs = self.log_probs.flatten()[indices]
-            adv_targ = self.advantages.flatten()[indices]
+            batch_obs = {key: item[:-1].view(-1, *self.obs_shape[key])[indices] for (key, item) in self.observations.items()}
+            batch_actions = self.actions.view(-1, *self.action_shape)[indices]
+            batch_values = self.values.view(-1)[indices]
+            batch_returns = self.returns.view(-1)[indices]
+            batch_terminateds = self.terminateds[:-1].view(-1)[indices]
+            batch_truncateds = self.truncateds[:-1].view(-1)[indices]
+            batch_old_log_probs = self.log_probs.view(-1)[indices]
+            adv_targ = self.advantages.view(-1)[indices]
 
             yield VanillaRolloutBatch(
                 observations=batch_obs,
-                actions=self.to_torch(batch_actions),
-                values=self.to_torch(batch_values),
-                returns=self.to_torch(batch_returns),
-                terminateds=self.to_torch(batch_terminateds),
-                truncateds=self.to_torch(batch_truncateds),
-                old_log_probs=self.to_torch(batch_old_log_probs),
-                adv_targ=self.to_torch(adv_targ)
+                actions=batch_actions,
+                values=batch_values,
+                returns=batch_returns,
+                terminateds=batch_terminateds,
+                truncateds=batch_truncateds,
+                old_log_probs=batch_old_log_probs,
+                adv_targ=adv_targ
             )

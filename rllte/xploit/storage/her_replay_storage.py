@@ -94,24 +94,24 @@ class HerReplayStorage(DictReplayStorage):
         }
 
     def add(self,
-            observations: Dict[str, np.ndarray],
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: Dict[str, th.Tensor],
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict[str, Any],
-            next_observations: np.ndarray
+            next_observations: Dict[str, th.Tensor]
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (Dict[str, np.ndarray]): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (Dict[str, th.Tensor]): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (np.ndarray): Next observations.
+            next_observations (Dict[str, th.Tensor]): Next observations.
 
         Returns:
             None.
@@ -326,6 +326,6 @@ class HerReplayStorage(DictReplayStorage):
         transition_indices = (transition_indices_in_episode + batch_ep_start) % self.storage_size
         return self.next_observations["achieved_goal"][transition_indices, env_indices]
 
-    def update(self, *args) -> None:
+    def update(self, *args, **kwargs) -> None:
         """Update the storage if necessary."""
         return None

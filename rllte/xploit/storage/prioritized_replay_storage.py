@@ -29,6 +29,7 @@ from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
+import torch as th
 
 from rllte.common.prototype import BaseStorage
 from rllte.common.type_alias import PrioritizedReplayBatch
@@ -90,36 +91,37 @@ class PrioritizedReplayStorage(BaseStorage):
         return min(1.0, self.beta + self.global_step * (1.0 - self.beta) / self.storage_size)
 
     def add(self,
-            observations: np.ndarray,
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: th.Tensor,
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict[str, Any],
-            next_observations: np.ndarray
+            next_observations: th.Tensor
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (np.ndarray): Next observations.
+            next_observations (th.Tensor): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
-        transition = (observations[0],
-                      actions[0],
-                      rewards[0],
-                      terminateds[0],
-                      truncateds[0],
-                      next_observations[0]
-                      )
+        transition = (
+            observations[0].cpu().numpy(),
+            actions[0].cpu().numpy(),
+            rewards[0].cpu().numpy(),
+            terminateds[0].cpu().numpy(),
+            truncateds[0].cpu().numpy(),
+            next_observations[0].cpu().numpy(),
+        )
         max_prio = self.priorities.max() if self.transitions else 1.0
         self.priorities[self.step] = max_prio
         self.transitions.append(transition)

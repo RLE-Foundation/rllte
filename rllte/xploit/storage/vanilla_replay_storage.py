@@ -27,6 +27,7 @@ from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
+import torch as th
 
 from rllte.common.prototype import BaseStorage
 from rllte.common.type_alias import VanillaReplayBatch
@@ -74,34 +75,34 @@ class VanillaReplayStorage(BaseStorage):
         return self.storage_size if self.full else self.step
 
     def add(self,
-            observations: np.ndarray,
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: th.Tensor,
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict[str, Any],
-            next_observations: np.ndarray
+            next_observations: th.Tensor
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (np.ndarray): Next observations.
+            next_observations (th.Tensor): Next observations.
 
         Returns:
             None.
         """
-        np.copyto(self.observations[self.step], observations)
-        np.copyto(self.actions[self.step], actions.reshape((self.num_envs, self.action_dim)))
-        np.copyto(self.rewards[self.step], rewards)
-        np.copyto(self.observations[(self.step + 1) % self.storage_size], next_observations)
-        np.copyto(self.terminateds[self.step], terminateds)
-        np.copyto(self.truncateds[self.step], truncateds)
+        np.copyto(self.observations[self.step], observations.cpu().numpy())
+        np.copyto(self.actions[self.step], actions.cpu().numpy())
+        np.copyto(self.rewards[self.step], rewards.cpu().numpy())
+        np.copyto(self.observations[(self.step + 1) % self.storage_size], next_observations.cpu().numpy())
+        np.copyto(self.terminateds[self.step], terminateds.cpu().numpy())
+        np.copyto(self.truncateds[self.step], truncateds.cpu().numpy())
 
         self.step = (self.step + 1) % self.storage_size
         self.full = self.full or self.step == 0

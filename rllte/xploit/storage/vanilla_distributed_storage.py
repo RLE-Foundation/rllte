@@ -127,6 +127,6 @@ class VanillaDistributedStorage(BaseStorage):
         batch = {key: tensor.to(device=self.device, non_blocking=True) for key, tensor in batch.items()}
         return batch
 
-    def update(self, *args) -> None:
+    def update(self, *args, **kwargs) -> None:
         """Update the storage"""
         return None

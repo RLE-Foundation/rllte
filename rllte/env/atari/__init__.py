@@ -63,7 +63,7 @@ def make_envpool_atari_env(
     Returns:
         The vectorized environments.
     """
-    env_kwargs = dict(env_id,
+    env_kwargs = dict(task_id=env_id,
                       env_type="gymnasium",
                       num_envs=num_envs,
                       batch_size=num_envs,
@@ -72,9 +72,9 @@ def make_envpool_atari_env(
                       reward_clip=False)
 
     if parallel:
-        envs = EnvPoolAsync2Gymnasium(**env_kwargs)
+        envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
-        envs = EnvPoolSync2Gymnasium(**env_kwargs)
+        envs = EnvPoolSync2Gymnasium(env_kwargs)
     
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))

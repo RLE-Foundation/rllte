@@ -9,7 +9,6 @@ from rllte.env import (
     make_envpool_atari_env,
     make_minigrid_env,
     make_procgen_env,
-    make_robosuite_env,
 )
 
 
@@ -21,7 +20,6 @@ from rllte.env import (
         make_procgen_env,
         make_dmc_env,
         make_bullet_env,
-        make_robosuite_env,
         make_bitflipping_env,
         make_envpool_atari_env,
     ],

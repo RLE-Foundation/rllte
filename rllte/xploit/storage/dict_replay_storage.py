@@ -27,6 +27,7 @@ from typing import Any, Dict
 
 import gymnasium as gym
 import numpy as np
+import torch as th
 
 from rllte.common.type_alias import VanillaReplayBatch
 from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
@@ -76,24 +77,24 @@ class DictReplayStorage(VanillaReplayStorage):
         super(VanillaReplayStorage, self).reset()
 
     def add(self,
-            observations: Dict[str, np.ndarray],
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: Dict[str, th.Tensor],
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict[str, Any],
-            next_observations: np.ndarray
+            next_observations: Dict[str, th.Tensor],
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            observations (Dict[str, np.ndarray]): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (Dict[str, th.Tensor]): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_observations (np.ndarray): Next observations.
+            next_observations (Dict[str, th.Tensor]): Next observations.
 
         Returns:
             None.
@@ -107,13 +108,13 @@ class DictReplayStorage(VanillaReplayStorage):
                 obs_ = observations[key]
                 next_obs_ = next_observations[key]
 
-            np.copyto(self.observations[key][self.step], obs_)
-            np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_)
+            np.copyto(self.observations[key][self.step], obs_.cpu().numpy())
+            np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
 
-        np.copyto(self.actions[self.step], actions)
-        np.copyto(self.rewards[self.step], rewards)
-        np.copyto(self.terminateds[self.step], terminateds)
-        np.copyto(self.truncateds[self.step], truncateds)
+        np.copyto(self.actions[self.step], actions.cpu().numpy())
+        np.copyto(self.rewards[self.step], rewards.cpu().numpy())
+        np.copyto(self.terminateds[self.step], terminateds.cpu().numpy())
+        np.copyto(self.truncateds[self.step], truncateds.cpu().numpy())
 
         self.step = (self.step + 1) % self.storage_size
         self.full = self.full or self.step == 0
@@ -152,6 +153,6 @@ class DictReplayStorage(VanillaReplayStorage):
             next_observations=next_observations,
         )
 
-    def update(self, *args) -> None:
+    def update(self, *args, **kwargs) -> None:
         """Update the storage if necessary."""
         return None

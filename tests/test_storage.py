@@ -88,6 +88,6 @@ def test_storage(storage_cls, device):
         for batch in samples:
             print(batch)
     else:
-        storage.sample(0)
+        storage.sample()
 
     print("Storage test passed!")

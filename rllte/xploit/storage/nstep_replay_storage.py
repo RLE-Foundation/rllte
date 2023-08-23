@@ -308,37 +308,37 @@ class NStepReplayStorage(BaseStorage):
         self._replay_iter = None
 
     def add(self,
-            obs: np.ndarray,
-            actions: np.ndarray,
-            rewards: np.ndarray,
-            terminateds: np.ndarray,
-            truncateds: np.ndarray,
+            observations: th.Tensor,
+            actions: th.Tensor,
+            rewards: th.Tensor,
+            terminateds: th.Tensor,
+            truncateds: th.Tensor,
             infos: Dict[str, Any],
-            next_obs: np.ndarray,
+            next_observations: th.Tensor
             ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observations.
-            actions (np.ndarray): Actions.
-            rewards (np.ndarray): Rewards.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
+            observations (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
             infos (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observations.
+            next_observations (th.Tensor): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs[0],
-            action=actions[0],
-            reward=rewards[0],
-            terminated=terminateds[0],
-            truncated=truncateds[0],
+            obs=observations[0].cpu().numpy(),
+            action=actions[0].cpu().numpy(),
+            reward=rewards[0].cpu().numpy(),
+            terminated=terminateds[0].cpu().numpy(),
+            truncated=truncateds[0].cpu().numpy(),
             infos=infos,
-            next_obs=next_obs[0],
+            next_obs=next_observations[0].cpu().numpy(),
         )
 
     @property

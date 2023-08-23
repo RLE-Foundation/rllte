@@ -47,9 +47,9 @@ def make_rllte_env(
         env_id (Union[str, Callable[..., gym.Env]]): either the env ID, the env class or a callable returning an env
         num_envs (int): Number of environments.
         seed (int): Random seed.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device to convert data.
         parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-        env_kwargs: Optional keyword argument to pass to the env constructor
+        env_kwargs: Optional keyword argument to pass to the env constructor.
 
     Returns:
         Environment wrapped by `TorchVecEnvWrapper`.
@@ -85,6 +85,7 @@ def make_rllte_env(
     envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(env=envs, device=device)
+
 
 class EnvPoolAsync2Gymnasium(gym.Wrapper):
     """Create an `EnvPool` environment with asynchronous mode, and wrap it 
