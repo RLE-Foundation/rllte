@@ -35,185 +35,10 @@ from torch.distributions import Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
-
-class DiscreteActor(nn.Module):
-    """Actor for `Discrete` tasks.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        feature_dim: int,
-        hidden_dim: int,
-    ) -> None:
-        super().__init__()
-        if len(obs_shape) > 1:
-            self.actor = nn.Linear(feature_dim, action_dim)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.actor = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim),
-            )
-
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Unnormalized probabilities.
-        """
-        logits = self.actor(obs)
-        return (logits,)
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Only for model inference.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Unnormalized action probabilities.
-        """
-        return self.actor(obs)
-
-
-class BoxActor(nn.Module):
-    """Actor for `Box` tasks.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        feature_dim: int,
-        hidden_dim: int,
-    ) -> None:
-        super().__init__()
-        if len(obs_shape) > 1:
-            self.actor_mu = nn.Linear(feature_dim, action_dim)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.actor_mu = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim),
-            )
-        self.actor_logstd = nn.Parameter(th.ones(1, action_dim))
-
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Mean and variance of sample distributions.
-        """
-        mu = self.actor_mu(obs)
-        logstd = self.actor_logstd.expand_as(mu)
-        return (mu, logstd.exp())
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Only for model inference.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Deterministic actions.
-        """
-        return self.actor_mu(obs)
-
-
-class MultiBinaryActor(nn.Module):
-    """Actor for `MultiBinary` tasks.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_dim: int,
-        feature_dim: int,
-        hidden_dim: int,
-    ) -> None:
-        super().__init__()
-        if len(obs_shape) > 1:
-            self.actor = nn.Linear(feature_dim, action_dim)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.actor = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, action_dim),
-            )
-
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
-        """Get policy outputs for training.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Unnormalized probabilities.
-        """
-        logits = self.actor(obs)
-        return (logits,)
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Only for model inference.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Unnormalized action probabilities.
-        """
-        return self.actor(obs)
-
+from .utils import OnPolicyActor, OnPolicyCritic
 
 class OnPolicySharedActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `PPO` and `A2C`.
-
-        Structure: self.encoder (shared by actor and critic), self.actor, self.critic
-        Optimizers: self.opt -> (self.encoder, self.actor, self.critic)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -250,34 +75,34 @@ class OnPolicySharedActorCritic(BasePolicy):
             init_fn=init_fn,
         )
 
-        # choose an actor class based on action space type
-        if self.action_type == "Discrete":
-            actor_class = DiscreteActor
-        elif self.action_type == "Box":
-            actor_class = BoxActor
-        elif self.action_type == "MultiBinary":
-            actor_class = MultiBinaryActor
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
+            f"Unsupported action type {self.action_type}!"
 
         # build actor and critic
-        self.actor = actor_class(
-            obs_shape=self.obs_shape, action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
-        )
-
-        if len(self.obs_shape) > 1:
-            self.critic = nn.Linear(self.feature_dim, 1)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.critic = nn.Sequential(
-                nn.Linear(self.feature_dim, self.hidden_dim),
-                nn.Tanh(),
-                nn.Linear(self.hidden_dim, self.hidden_dim),
-                nn.Tanh(),
-                nn.Linear(self.hidden_dim, 1),
-            )
+        self.actor = OnPolicyActor(obs_shape=self.obs_shape, 
+                                   action_type=self.action_type,
+                                   action_dim=self.policy_action_dim, 
+                                   feature_dim=self.feature_dim, 
+                                   hidden_dim=self.hidden_dim
+                                   )
+        self.critic = OnPolicyCritic(obs_shape=self.obs_shape, 
+                                     action_type=self.action_type,
+                                     action_dim=self.policy_action_dim, 
+                                     feature_dim=self.feature_dim, 
+                                     hidden_dim=self.hidden_dim
+                                     )
         if aux_critic:
             self.aux_critic = deepcopy(self.critic)
+    
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OnPolicySharedActorCritic")
+        print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor, self.critic")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -298,7 +123,7 @@ class OnPolicySharedActorCritic(BasePolicy):
         # initialize parameters
         self.apply(self.init_fn)
         # build optimizers
-        self.opt = self.opt_class(self.parameters(), **self.opt_kwargs)
+        self._optimizers["opt"] = self.opt_class(self.parameters(), **self.opt_kwargs)
 
     def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.

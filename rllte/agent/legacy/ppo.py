@@ -181,11 +181,11 @@ class PPO(OnPolicyAgent):
                     value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                 # update
-                self.policy.opt.zero_grad(set_to_none=True)
+                self.policy.optimizers['opt'].zero_grad(set_to_none=True)
                 loss = value_loss * self.vf_coef + policy_loss - entropy * self.ent_coef
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-                self.policy.opt.step()
+                self.policy.optimizers['opt'].step()
 
                 total_policy_loss.append(policy_loss.item())
                 total_value_loss.append(value_loss.item())

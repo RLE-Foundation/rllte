@@ -202,7 +202,7 @@ agent.set(encoder=encoder)
 
 # Function List (Part)
 ## RL Agents
-|     Type    |  Algo. | Box | `Dis.` | `M.B.` | `M.D.` | `M.P.` | NPU |💰|🔭|
+|     Type    |  Algo. | Box | Dis. | M.B. | M.D. | M.P. | NPU |💰|🔭|
 |:-----------:|:------:|:---:|:----:|:----:|:----:|:------:|:---:|:------:|:---:|
 | On-Policy   | [A2C](https://arxiv.org/abs/1602.01783)    | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |✔️    |❌    |
 | On-Policy   | [PPO](https://arxiv.org/pdf/1707.06347)    | ✔️   | ✔️    | ✔️    | 🐌    | ✔️    | ✔️   |✔️    |❌    |

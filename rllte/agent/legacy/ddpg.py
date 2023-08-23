@@ -208,11 +208,11 @@ class DDPG(OffPolicyAgent):
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self.policy.encoder_opt.zero_grad(set_to_none=True)
-        self.policy.critic_opt.zero_grad(set_to_none=True)
+        self.policy.optimizers['encoder_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
         critic_loss.backward()
-        self.policy.critic_opt.step()
-        self.policy.encoder_opt.step()
+        self.policy.optimizers['critic_opt'].step()
+        self.policy.optimizers['encoder_opt'].step()
 
         return {
             "Critic Loss": critic_loss.item(),
@@ -240,8 +240,8 @@ class DDPG(OffPolicyAgent):
         actor_loss = -Q.mean()
 
         # optimize actor
-        self.policy.actor_opt.zero_grad(set_to_none=True)
+        self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
         actor_loss.backward()
-        self.policy.actor_opt.step()
+        self.policy.optimizers['actor_opt'].step()
 
         return {"Actor Loss": actor_loss.item()}

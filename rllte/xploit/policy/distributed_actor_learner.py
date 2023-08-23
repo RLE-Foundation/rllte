@@ -11,7 +11,7 @@ from torch.nn import functional as F
 
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor
+from .utils import OnPolicyActor
 
 PolicyOutputs = namedtuple("PolicyOutputs", ["policy_outputs", "baseline", "action"])
 
@@ -52,19 +52,20 @@ class ActorCritic(nn.Module):
         # feature_dim + one-hot of last action + last reward
         mixed_feature_dim = feature_dim + action_dim + 1
 
-        # build actor and critic
-        if self.action_type == "Discrete":
-            actor_class = DiscreteActor
-            self.policy_reshape_dim = action_dim
-        elif self.action_type == "Box":
-            actor_class = BoxActor
+        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
+            f"Unsupported action type {self.action_type}!"
+        
+        if self.action_type == "Box":
             self.policy_reshape_dim = action_dim * 2
         else:
-            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
+            self.policy_reshape_dim = action_dim
 
         # build actor and critic
-        self.actor = actor_class(
-            obs_shape=obs_shape, action_dim=action_dim, feature_dim=mixed_feature_dim, hidden_dim=hidden_dim
+        self.actor = OnPolicyActor(obs_shape=obs_shape, 
+                                   action_type=action_type,
+                                   action_dim=action_dim,
+                                   feature_dim=mixed_feature_dim, 
+                                   hidden_dim=hidden_dim
         )
         # baseline value function
         self.critic = nn.Linear(mixed_feature_dim, 1)

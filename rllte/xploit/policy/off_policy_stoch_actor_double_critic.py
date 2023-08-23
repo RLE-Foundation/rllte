@@ -33,15 +33,11 @@ from torch.distributions import Distribution
 
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.off_policy_det_actor_double_critic import DoubleCritic
-
+from .utils import OffPolicyDoubleCritic
 
 class OffPolicyStochActorDoubleCritic(BasePolicy):
     """Stochastic actor network and double critic network for off-policy algortithms like `SAC`.
         Here the 'self.dist' refers to an sampling distribution instance.
-
-        Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
-        Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -87,10 +83,23 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
             nn.Linear(self.hidden_dim, 2 * self.policy_action_dim),
         )
 
-        self.critic = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
 
         self.log_std_min, self.log_std_max = log_std_range
+
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OffPolicyStochActorDoubleCritic")
+        print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor")
+        print(f"{''.ljust(10)} : self.critic, self.critic_target")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['encoder_opt'] -> self.encoder")
+        print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.encoder, self.critic)")
+        print(f"{''.ljust(10)} : self.optimizers['actor_opt'] -> self.actor")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -113,9 +122,9 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         # synchronize the parameters of critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers['actor_opt'] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers['critic_opt'] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.

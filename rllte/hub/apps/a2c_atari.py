@@ -61,8 +61,6 @@ if __name__ == "__main__":
         batch_size=256,
         lr=2.5e-4,
         eps=1e-5,
-        clip_range=0.1,
-        clip_range_vf=0.1,
         n_epochs=4,
         vf_coef=0.5,
         ent_coef=0.01,

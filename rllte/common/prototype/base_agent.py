@@ -34,6 +34,7 @@ import gymnasium as gym
 import numpy as np
 import pynvml
 import torch as th
+th.set_float32_matmul_precision('high')
 
 # try to load torch_npu
 try:

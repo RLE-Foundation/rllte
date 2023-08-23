@@ -176,9 +176,9 @@ class DQN(OffPolicyAgent):
         huber_loss = F.mse_loss(q_values, target_q_values)
 
         # optimize the qnet
-        self.policy.opt.zero_grad(set_to_none=True)
+        self.policy.optimizers['opt'].zero_grad(set_to_none=True)
         huber_loss.backward()
-        self.policy.opt.step()
+        self.policy.optimizers['opt'].step()
 
         # udpate target qnet
         if self.global_step % self.target_update_freq:

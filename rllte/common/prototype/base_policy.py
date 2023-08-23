@@ -22,7 +22,7 @@
 # SOFTWARE.
 # =============================================================================
 
-
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
@@ -34,7 +34,7 @@ from rllte.common.initialization import get_init_fn
 from rllte.common.preprocessing import process_observation_space, process_action_space
 
 
-class BasePolicy(nn.Module):
+class BasePolicy(ABC, nn.Module):
     """Base class for all policies.
 
     Args:
@@ -75,6 +75,19 @@ class BasePolicy(nn.Module):
         self.obs_shape = process_observation_space(observation_space)
         self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(action_space)
 
+        # placeholder for optimizers
+        self._optimizers: Dict[str, th.optim.Optimizer] = {}
+        
+    @property
+    def optimizers(self) -> Dict[str, th.optim.Optimizer]:
+        """Get optimizers."""
+        return self._optimizers
+
+    @staticmethod
+    @abstractmethod
+    def describe() -> None:
+        """Describe the policy."""
+
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
 
@@ -85,6 +98,7 @@ class BasePolicy(nn.Module):
             Sampled actions.
         """
 
+    @abstractmethod
     def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
         """Forward method.
 
@@ -96,9 +110,11 @@ class BasePolicy(nn.Module):
             Sampled actions, estimated values, ..., depends on specific algorithms.
         """
 
+    @abstractmethod
     def freeze(self) -> None:
-        """Freeze the policy."""
+        """Freeze the policy and start training."""
 
+    @abstractmethod
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.
 
@@ -110,6 +126,7 @@ class BasePolicy(nn.Module):
             None.
         """
 
+    @abstractmethod
     def load(self, path: str) -> None:
         """Load initial parameters.
 

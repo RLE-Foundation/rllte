@@ -159,7 +159,7 @@ class DrDAAC(OnPolicyAgent):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            num_steps=self.num_steps,
+            storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
         )

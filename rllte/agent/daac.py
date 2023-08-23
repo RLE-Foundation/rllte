@@ -155,7 +155,7 @@ class DAAC(OnPolicyAgent):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            num_steps=self.num_steps,
+            storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
         )
@@ -185,10 +185,10 @@ class DAAC(OnPolicyAgent):
                 adv_loss = (new_adv_preds.flatten() - batch.adv_targ).pow(2).mean()
 
                 # update
-                self.policy.actor_opt.zero_grad(set_to_none=True)
+                self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
                 (adv_loss * self.adv_coef + policy_loss - entropy * self.ent_coef).backward()
                 nn.utils.clip_grad_norm_(self.policy.actor_params, self.max_grad_norm)
-                self.policy.actor_opt.step()
+                self.policy.optimizers['actor_opt'].step()
 
                 total_policy_loss.append(policy_loss.item())
                 total_adv_loss.append(adv_loss.item())
@@ -212,10 +212,10 @@ class DAAC(OnPolicyAgent):
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                     # update
-                    self.policy.critic_opt.zero_grad(set_to_none=True)
+                    self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
                     value_loss.backward()
                     nn.utils.clip_grad_norm_(self.policy.critic_params, self.max_grad_norm)
-                    self.policy.critic_opt.step()
+                    self.policy.optimizers['critic_opt'].step()
 
                     total_value_loss.append(value_loss.item())
 

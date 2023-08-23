@@ -36,14 +36,10 @@ from torch.nn import functional as F
 
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor, MultiBinaryActor
-
+from .utils import OnPolicyActor, OnPolicyCritic, OnPolicyGAE
 
 class OnPolicyDecoupledActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `DAAC`.
-
-        Structure: self.actor_encoder, self.actor, self.critic_encoder, self.critic
-        Optimizers: self.actor_opt -> (self.actor_encoder, self.actor), self.critic_opt -> (self.critic_encoder, self.critic)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -63,7 +59,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         observation_space: gym.Space,
         action_space: gym.Space,
         feature_dim: int,
-        hidden_dim: int,
+        hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         init_fn: Optional[str] = None,
@@ -78,40 +74,39 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             init_fn=init_fn,
         )
 
-        # choose an actor class based on action space type
-        if self.action_type == "Discrete":
-            actor_class = DiscreteActor
-        elif self.action_type == "Box":
-            actor_class = BoxActor
-        elif self.action_type == "MultiBinary":
-            actor_class = MultiBinaryActor
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
+            f"Unsupported action type {self.action_type}!"
 
-        # build actor and critic
-        self.actor = actor_class(
-            obs_shape=self.obs_shape, action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
-        )
-
-        if len(self.obs_shape) > 1:
-            self.gae = nn.Linear(feature_dim + self.policy_action_dim, 1)
-            self.critic = nn.Linear(feature_dim, 1)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.gae = nn.Sequential(
-                nn.Linear(feature_dim + self.policy_action_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, 1),
-            )
-            self.critic = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, 1),
-            )
+        # build actor, critic and advantage estimator
+        self.actor = OnPolicyActor(obs_shape=self.obs_shape, 
+                                   action_type=self.action_type,
+                                   action_dim=self.policy_action_dim, 
+                                   feature_dim=self.feature_dim, 
+                                   hidden_dim=self.hidden_dim
+                                   )
+        self.critic = OnPolicyCritic(obs_shape=self.obs_shape, 
+                                     action_type=self.action_type,
+                                     action_dim=self.policy_action_dim, 
+                                     feature_dim=self.feature_dim, 
+                                     hidden_dim=self.hidden_dim
+                                     )
+        self.gae = OnPolicyGAE(obs_shape=self.obs_shape, 
+                               action_type=self.action_type,
+                               action_dim=self.policy_action_dim, 
+                               feature_dim=self.feature_dim, 
+                               hidden_dim=self.hidden_dim
+                               )
+    
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OnPolicyDecoupledActorCritic")
+        print(f"{'Structure'.ljust(10)} : self.actor_encoder, self.actor, self.critic_encoder, self.critic")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['actor_opt'] -> (self.actor_encoder, self.actor)")
+        print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.critic_encoder, self.critic)")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -137,8 +132,8 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
-        self.actor_opt = th.optim.Adam(self.actor_params, **self.opt_kwargs)
-        self.critic_opt = th.optim.Adam(self.critic_params, **self.opt_kwargs)
+        self._optimizers['actor_opt'] = th.optim.Adam(self.actor_params, **self.opt_kwargs)
+        self._optimizers['critic_opt'] = th.optim.Adam(self.critic_params, **self.opt_kwargs)
 
     def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.

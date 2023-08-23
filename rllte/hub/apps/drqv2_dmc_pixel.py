@@ -77,4 +77,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=250000)
+    agent.train(num_train_steps=250000, log_interval=500, th_compile=False)

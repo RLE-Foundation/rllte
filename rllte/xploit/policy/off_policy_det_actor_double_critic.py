@@ -34,62 +34,12 @@ from torch.distributions import Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
-
-class DoubleCritic(nn.Module):
-    """Double critic network for DrQv2 and SAC.
-
-    Args:
-        action_dim (int): Number of neurons for outputting actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Critic network instance.
-    """
-
-    def __init__(self, action_dim: int, feature_dim: int = 64, hidden_dim: int = 1024) -> None:
-        super().__init__()
-
-        self.Q1 = nn.Sequential(
-            nn.Linear(feature_dim + action_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-        self.Q2 = nn.Sequential(
-            nn.Linear(feature_dim + action_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1),
-        )
-
-    def forward(self, obs: th.Tensor, action: th.Tensor) -> Tuple[th.Tensor, ...]:
-        """Value estimation.
-
-        Args:
-            obs (th.Tensor): Observations.
-            action (th.Tensor): Actions.
-
-        Returns:
-            Estimated values.
-        """
-        h_action = th.cat([obs, action], dim=-1)
-
-        q1 = self.Q1(h_action)
-        q2 = self.Q2(h_action)
-
-        return q1, q2
+from .utils import OffPolicyDoubleCritic
 
 
 class OffPolicyDetActorDoubleCritic(BasePolicy):
     """Deterministic actor network and double critic network for off-policy algortithms like `DrQv2`, `DDPG`.
         Here the 'self.dist' refers to an action noise instance.
-
-        Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
-        Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -136,8 +86,21 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
             nn.Tanh(),
         )
 
-        self.critic = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
+        self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OffPolicyDetActorDoubleCritic")
+        print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor")
+        print(f"{''.ljust(10)} : self.critic, self.critic_target")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['encoder_opt'] -> self.encoder")
+        print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.encoder, self.critic)")
+        print(f"{''.ljust(10)} : self.optimizers['actor_opt'] -> self.actor")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -160,9 +123,9 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         # synchronize the parameters of critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers['actor_opt'] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers['critic_opt'] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
