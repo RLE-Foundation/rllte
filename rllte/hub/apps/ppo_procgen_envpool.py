@@ -41,6 +41,7 @@ if __name__ == "__main__":
     # create env
     env = make_envpool_procgen_env(
         env_id=args.env_id,
+        device=args.device,
         num_envs=64,
         seed=args.seed,
         gamma=0.99,
@@ -50,6 +51,7 @@ if __name__ == "__main__":
     )
     eval_env = make_envpool_procgen_env(
         env_id=args.env_id,
+        device=args.device,
         num_envs=1,
         seed=args.seed,
         gamma=0.99,

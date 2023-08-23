@@ -41,6 +41,7 @@ if __name__ == "__main__":
     env = make_envpool_atari_env(
         env_id=args.env_id,
         num_envs=8,
+        device=args.device,
         seed=args.seed,
         parallel=True
     )

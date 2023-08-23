@@ -40,11 +40,13 @@ if __name__ == "__main__":
     # create env
     env = make_atari_env(
         env_id=args.env_id,
+        device=args.device,
         num_envs=8,
         seed=args.seed
     )
     eval_env = make_atari_env(
         env_id=args.env_id,
+        device=args.device,
         num_envs=1,
         seed=args.seed
     )
