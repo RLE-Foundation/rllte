@@ -64,15 +64,15 @@ class VTraceLoss:
     def __call__(self, batch):
         _target_dist = batch["target_dist"]
         _behavior_dist = batch["behavior_dist"]
-        _action = batch["action"]
+        _actions = th.flatten(batch["actions"], 1, -1)
         _baseline = batch["values"]
         _bootstrap_value = batch["bootstrap_value"]
         _values = batch["values"]
         _discounts = batch["discounts"]
-        _rewards = batch["reward"]
+        _rewards = batch["rewards"]
 
         with th.no_grad():
-            rhos = self.compute_ISW(target_dist=_target_dist, behavior_dist=_behavior_dist, action=_action)
+            rhos = self.compute_ISW(target_dist=_target_dist, behavior_dist=_behavior_dist, action=_actions)
             if self.clip_rho_threshold is not None:
                 clipped_rhos = th.clamp(rhos, max=self.clip_rho_threshold)
             else:
@@ -101,7 +101,7 @@ class VTraceLoss:
                 clipped_pg_rhos = rhos
             pg_advantages = clipped_pg_rhos * (_rewards + _discounts * vs_t_plus_1 - _values)
 
-        pg_loss = -(_target_dist.log_prob(_action) * pg_advantages).sum()
+        pg_loss = -(_target_dist.log_prob(_actions) * pg_advantages).sum()
         baseline_loss = F.mse_loss(vs, _baseline, reduction="sum") * 0.5
         entropy_loss = (_target_dist.entropy()).sum()
 
@@ -174,7 +174,7 @@ class IMPALA(DistributedAgent):
             num_storages=num_storages,
             batch_size=batch_size,
             feature_dim=feature_dim,
-            use_lstm=use_lstm,
+            use_lstm=use_lstm
         )
         # hyper parameters
         self.feature_dim = feature_dim
@@ -198,7 +198,7 @@ class IMPALA(DistributedAgent):
         elif self.action_type == "Box":
             dist = DiagonalGaussian
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
         policy = DistributedActorLearner(
@@ -217,7 +217,7 @@ class IMPALA(DistributedAgent):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            num_steps=self.num_steps,
+            storage_size=self.num_steps,
             num_storages=num_storages,
             batch_size=batch_size,
         )
@@ -226,8 +226,7 @@ class IMPALA(DistributedAgent):
         self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
     def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]:  # noqa B008
-        """
-        Update the learner model.
+        """Update the learner model.
 
         Args:
             batch (Batch): Batch samples.
@@ -236,17 +235,18 @@ class IMPALA(DistributedAgent):
         Returns:
             Training metrics.
         """
+
         with lock:
             learner_outputs = self.policy.learner(batch)
 
             # Take final value function slice for bootstrapping.
-            bootstrap_value = learner_outputs["baseline"][-1]
+            bootstrap_value = learner_outputs["baselines"][-1]
 
             # Move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
             learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
-            discounts = (~batch["terminated"]).float() * self.discount
+            discounts = (~batch["terminateds"]).float() * self.discount
 
             batch.update(
                 {
@@ -254,20 +254,20 @@ class IMPALA(DistributedAgent):
                     "bootstrap_value": bootstrap_value,
                     "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),
                     "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),
-                    "values": learner_outputs["baseline"],
+                    "values": learner_outputs["baselines"],
                 }
             )
 
             pg_loss, baseline_loss, entropy_loss = VTraceLoss()(batch)
             total_loss = pg_loss + self.baseline_coef * baseline_loss - self.ent_coef * entropy_loss
 
-            episode_returns = batch["episode_return"][batch["terminated"]]
-            episode_steps = batch["episode_step"][batch["terminated"]]
+            episode_returns = batch["episode_returns"][batch["terminateds"]]
+            episode_steps = batch["episode_steps"][batch["terminateds"]]
 
-            self.policy.opt.zero_grad()
+            self.policy.optimizers['opt'].zero_grad()
             total_loss.backward()
             nn.utils.clip_grad_norm_(self.policy.learner.parameters(), self.max_grad_norm)
-            self.policy.opt.step()
+            self.policy.optimizers['opt'].step()
             self.lr_scheduler.step()
 
             self.policy.actor.load_state_dict(self.policy.learner.state_dict())

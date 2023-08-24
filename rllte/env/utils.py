@@ -307,17 +307,17 @@ class DistributedWrapper:
         obs = self._format_obs(obs)
 
         return dict(
-            observation=obs,
-            reward=init_reward,
-            terminated=init_terminated,
-            truncated=init_truncated,
-            episode_return=self.episode_return,
-            episode_step=self.episode_step,
-            last_action=init_last_action,
+            observations=obs,
+            rewards=init_reward,
+            terminateds=init_terminated,
+            truncateds=init_truncated,
+            episode_returns=self.episode_return,
+            episode_steps=self.episode_step,
+            last_actions=init_last_action,
         )
 
     def step(self, action: th.Tensor) -> Dict[str, th.Tensor]:
-        """Step function that returns a dict consists of current and history observation and action.
+        """Step function that returns a dict consists of the current and history observation and action.
 
         Args:
             action (th.Tensor): Action tensor.
@@ -348,13 +348,13 @@ class DistributedWrapper:
         truncated = th.as_tensor(truncated, dtype=th.uint8).view(1, 1)
 
         return dict(
-            observation=obs,
-            reward=reward,
-            terminated=terminated,
-            truncated=truncated,
-            episode_return=episode_return,
-            episode_step=episode_step,
-            last_action=action,
+            observations=obs,
+            rewards=reward,
+            terminateds=terminated,
+            truncateds=truncated,
+            episode_returns=episode_return,
+            episode_steps=episode_step,
+            last_actions=action
         )
 
     def close(self) -> None:

@@ -71,29 +71,48 @@ class DistributedAgent(BaseAgent):  # type: ignore
         num_actors: int = 45,
         num_learners: int = 4,
         num_storages: int = 60,
-        **kwargs,
+        **kwargs
     ) -> None:
-        batch_size = kwargs.pop("batch_size", 4)
-
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
 
         self.num_actors = num_actors
         self.num_learners = num_learners
         self.num_steps = num_steps
         self.num_storages = num_storages
-        self.batch_size = batch_size
 
         # get separate environments
-        self.env = self.env.envs
+        try:
+            self.env = self.env.envs
+        except AttributeError:
+            raise AttributeError("Please set `parallel=False` in the environment setting for distributed training!")
 
-    def run(self, env: gym.Env, actor_idx: int, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue) -> None:
+        # create process and thread pool
+        self.ctx = mp.get_context("fork")
+        self.free_queue = self.ctx.SimpleQueue()
+        self.full_queue = self.ctx.SimpleQueue()
+        self.actor_pool = list()
+        self.learner_threads = list()
+
+        # linear learning rate scheduler
+        def lr_lambda(num_train_steps: int) -> float:
+            """Function for learning rate scheduler.
+
+            Args:
+                num_train_steps (int): The number of training steps.
+
+            Returns:
+                Learning rate.
+            """
+            return lambda epoch: 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
+        
+        self.lr_lambda = lr_lambda
+
+    def run(self, env: gym.Env, actor_idx: int) -> None:
         """Sample function of each actor. Implemented by individual algorithms.
 
         Args:
             env (gym.Env): A Gym-like environment wrapped by `DistributedWrapper`.
             actor_idx (int): The index of actor.
-            free_queue (Queue): Free queue for communication.
-            full_queue (Queue): Full queue for communication.
 
         Returns:
             None.
@@ -112,7 +131,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             actor_output = self.policy.actor(env_output, training=True)
 
             while True:
-                idx = free_queue.get()
+                idx = self.free_queue.get()
                 if idx is None:
                     break
 
@@ -122,11 +141,11 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 for t in range(self.num_steps):
                     with th.no_grad():
                         actor_output = self.policy.actor(env_output, training=True)
-                    env_output = env.step(actor_output["action"])
+                    env_output = env.step(actor_output["actions"])
 
                     self.storage.add(idx, t + 1, actor_output, env_output)
 
-                full_queue.put(idx)
+                self.full_queue.put(idx)
 
         # return silently.
         except KeyboardInterrupt:
@@ -147,7 +166,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         log_interval: int = 1,
         eval_interval: int = 5000,
         num_eval_episodes: int = 10,
-        th_compile: bool = True,
+        th_compile: bool = False
     ) -> None:
         """Training function.
 
@@ -165,19 +184,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
         # freeze the agent and get ready for training
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
-        def lr_lambda(epoch: int = 0) -> float:
-            """Function for learning rate scheduler.
-
-            Args:
-                epoch (int): Number of training epochs.
-
-            Returns:
-                Learning rate.
-            """
-            return 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
-
         # set learning rate scheduler
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.opt, lr_lambda)
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.optimizers['opt'], self.lr_lambda(num_train_steps))
 
         # training tracker
         global_step = 0
@@ -191,47 +199,38 @@ class DistributedAgent(BaseAgent):  # type: ignore
             nonlocal global_step, global_episode, metrics
             while global_step < num_train_steps:
                 # sample batch
-                batch = self.storage.sample(free_queue=free_queue, full_queue=full_queue)
+                batch = self.storage.sample(free_queue=self.free_queue, full_queue=self.full_queue)
                 # update agent
-                metrics = self.update(batch=batch) # type: ignore
+                metrics = self.update(batch) # type: ignore
                 with lock:
-                    global_step += self.num_steps * self.batch_size
-                    global_episode += self.batch_size
+                    global_step += self.num_steps * self.storage.batch_size
+                    global_episode += self.storage.batch_size
 
-        # create process pool
-        actor_pool = []
-        ctx = mp.get_context("fork")
-        free_queue = ctx.SimpleQueue()
-        full_queue = ctx.SimpleQueue()
         # start actor processes
         for actor_idx in range(self.num_actors):
-            actor = ctx.Process(
-                target=self.run,
-                kwargs={
-                    "env": DistributedWrapper(self.env[actor_idx]),
-                    "actor_idx": actor_idx,
-                    "free_queue": free_queue,
-                    "full_queue": full_queue,
-                },
-            )
+            actor = self.ctx.Process(target=self.run,
+                                     kwargs={
+                                         "env": DistributedWrapper(self.env[actor_idx]),
+                                         "actor_idx": actor_idx
+                                         })
             actor.start()
-            actor_pool.append(actor)
+            self.actor_pool.append(actor)
         self.logger.info(f"{self.num_actors} actors started!")
 
         # serialize the data
         for _ in range(self.num_storages):
-            free_queue.put(_)
+            self.free_queue.put(_)
 
         # start learner threads
-        threads = []
         for i in range(self.num_learners):
             thread = threading.Thread(target=sample_and_update, name=f"sample-and-update-{i}")
             thread.start()
-            threads.append(thread)
+            self.learner_threads.append(thread)
         self.logger.info(f"{self.num_learners} learners started!")
 
         try:
             log_times = 0
+            log_available = False
             while global_step < num_train_steps:
                 start_step = global_step
                 time.sleep(5)
@@ -251,8 +250,11 @@ class DistributedAgent(BaseAgent):  # type: ignore
                         "fps": (global_step - start_step) / episode_time,
                         "total_time": total_time,
                     }
-                    self.logger.train(msg=train_metrics)
+                    log_available = True
                     log_times += 1
+                
+                if (log_times % log_interval == 0) and log_available:
+                    self.logger.train(msg=train_metrics)
 
                 # if log_times % eval_interval == 0:
                 #     episode_time, total_time = self.timer.reset()
@@ -268,7 +270,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             # TODO: join actors then quit.
             return
         else:
-            for thread in threads:
+            for thread in self.learner_threads:
                 thread.join()
             self.logger.info("Training Accomplished!")
             # save model
@@ -278,8 +280,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
             self.logger.info(f"Model saved at: {save_dir}")
         finally:
             for _ in range(self.num_actors):
-                free_queue.put(None)
-            for actor in actor_pool:
+                self.free_queue.put(None)
+            for actor in self.actor_pool:
                 actor.join(timeout=1)
 
     def eval(self, num_eval_episodes: int) -> Dict[str, float]:
@@ -300,12 +302,12 @@ class DistributedAgent(BaseAgent):  # type: ignore
         while len(episode_rewards) < num_eval_episodes:
             with th.no_grad():
                 actor_output = self.policy.actor(env_output, training=False)
-            env_output = env.step(actor_output["action"])
-            if env_output["terminated"].item() or env_output["truncated"].item():
-                episode_rewards.append(env_output["episode_return"].item())
-                episode_steps.append(env_output["episode_step"].item())
+            env_output = env.step(actor_output["actions"])
+            if env_output["terminateds"].item() or env_output["truncateds"].item():
+                episode_rewards.append(env_output["episode_returns"].item())
+                episode_steps.append(env_output["episode_steps"].item())
 
         return {
-            "episode_length": np.mean(episode_steps),
-            "episode_reward": np.mean(episode_rewards),
+            "episode_lengths": np.mean(episode_steps),
+            "episode_rewards": np.mean(episode_rewards)
         }

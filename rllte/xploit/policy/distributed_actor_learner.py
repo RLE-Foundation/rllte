@@ -1,7 +1,31 @@
-from collections import namedtuple
+# =============================================================================
+# MIT License
+
+# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
+
+
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import gymnasium as gym
 import torch as th
@@ -11,127 +35,7 @@ from torch.nn import functional as F
 
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from .utils import OnPolicyActor
-
-PolicyOutputs = namedtuple("PolicyOutputs", ["policy_outputs", "baseline", "action"])
-
-
-class ActorCritic(nn.Module):
-    """Actor-Critic network for IMPALA.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_shape (Tuple): The data shape of actions.
-        action_dim (int): Number of neurons for outputting actions.
-        action_type (str): Type of actions.
-        action_range (Tuple): Range of actions.
-        feature_dim (int): Number of features accepted.
-        hidden_dim (int): Number of units per hidden layer.
-
-    Returns:
-        Actor-Critic network.
-    """
-
-    def __init__(
-        self,
-        obs_shape: Tuple,
-        action_shape: Tuple,
-        action_dim: int,
-        action_type: str,
-        action_range: Tuple,
-        feature_dim: int,
-        hidden_dim: int = 512,
-    ) -> None:
-        super().__init__()
-
-        self.action_shape = action_shape
-        self.policy_action_dim = action_dim
-        self.action_range = action_range
-        self.action_type = action_type
-
-        # feature_dim + one-hot of last action + last reward
-        mixed_feature_dim = feature_dim + action_dim + 1
-
-        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
-            f"Unsupported action type {self.action_type}!"
-        
-        if self.action_type == "Box":
-            self.policy_reshape_dim = action_dim * 2
-        else:
-            self.policy_reshape_dim = action_dim
-
-        # build actor and critic
-        self.actor = OnPolicyActor(obs_shape=obs_shape, 
-                                   action_type=action_type,
-                                   action_dim=action_dim,
-                                   feature_dim=mixed_feature_dim, 
-                                   hidden_dim=hidden_dim
-        )
-        # baseline value function
-        self.critic = nn.Linear(mixed_feature_dim, 1)
-
-    def forward(self, inputs: Dict[str, th.Tensor], training: bool = True) -> Dict[str, th.Tensor]:
-        """Get actions in training.
-
-        Args:
-            inputs (Dict[str, th.Tensor]): Inputs data that contains observations, last actions, ...
-            training (bool): Whether in training mode.
-
-        Returns:
-            Actions.
-        """
-        # [T, B, *obs_shape], T: rollout length, B: batch size
-        x = inputs["observation"]
-        T, B, *_ = x.shape
-        # merge time and batch
-        x = th.flatten(x, 0, 1)
-        # extract features from observations
-        features = self.encoder(x)
-        # get one-hot last actions
-        if self.action_type == "Discrete":
-            encoded_actions = F.one_hot(inputs["last_action"].view(T * B), self.policy_action_dim).float()
-        else:
-            encoded_actions = inputs["last_action"].view(T * B, self.policy_action_dim)
-        # merge features and one-hot last actions
-        mixed_features = th.cat([features, inputs["reward"].view(T * B, 1), encoded_actions], dim=-1)
-        # get policy outputs and baseline
-        policy_outputs = self.actor.get_policy_outputs(mixed_features)
-        baseline = self.critic(mixed_features)
-        dist = self.dist(*policy_outputs)
-
-        if training:
-            action = dist.sample()
-        else:
-            action = dist.mean
-
-        # reshape for policy outputs
-        policy_outputs = th.cat(policy_outputs, dim=1).view(T, B, self.policy_reshape_dim)
-        baseline = baseline.view(T, B)
-        if self.action_type == "Discrete":
-            action = action.view(T, B, *self.action_shape)
-        elif self.action_type == "Box":
-            action = action.view(T, B, *self.action_shape).squeeze(0).clamp(*self.action_range)
-        else:
-            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
-
-        return dict(policy_outputs=policy_outputs, baseline=baseline, action=action)
-
-    def get_dist(self, outputs: th.Tensor) -> Distribution:
-        """Get action distribution.
-
-        Args:
-            outputs (th.Tensor): Policy outputs.
-
-        Returns:
-            Action distribution.
-        """
-        if self.action_type == "Discrete":
-            return self.dist(outputs)
-        elif self.action_type == "Box":
-            mu, logstd = outputs.chunk(2, dim=-1)
-            return self.dist(mu, logstd.exp())
-        else:
-            raise NotImplementedError(f"Unsupported action type {self.action_type}.")
+from .utils import DisctributedActorCritic
 
 
 class DistributedActorLearner(BasePolicy):
@@ -173,22 +77,30 @@ class DistributedActorLearner(BasePolicy):
         )
 
         # TODO: add support for LSTM
-        self.actor = ActorCritic(
+        self.actor = DisctributedActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
             action_dim=self.policy_action_dim,
             action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=self.feature_dim,
+            feature_dim=self.feature_dim
         )
-        self.learner = ActorCritic(
+        self.learner = DisctributedActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
             action_dim=self.policy_action_dim,
             action_type=self.action_type,
-            action_range=self.action_range,
-            feature_dim=self.feature_dim,
+            feature_dim=self.feature_dim
         )
+    
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : DistributedActorLearner")
+        print(f"{'Structure'.ljust(10)} : self.actor, self.learner")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['opt'] -> self.learner")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -216,7 +128,10 @@ class DistributedActorLearner(BasePolicy):
         # share memory
         self.actor.share_memory()
         # build optimizers
-        self.opt = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
+        self._optimizers['opt'] = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
+    
+    def forward(self, *args) -> th.Tensor:
+        """Only for inference."""
 
     def to(self, device: th.device) -> None:
         """Only move the learner to device, and keep actor in CPU.

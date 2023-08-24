@@ -30,7 +30,7 @@ import torch as th
 from torch import multiprocessing as mp
 
 from rllte.common.prototype import BaseStorage
-
+from rllte.common.preprocessing import is_image_space
 
 class VanillaDistributedStorage(BaseStorage):
     """Vanilla distributed storage for distributed algorithms like IMPALA.
@@ -63,19 +63,21 @@ class VanillaDistributedStorage(BaseStorage):
 
     def reset(self) -> None:
         """Reset the storage."""
+        obs_dtype = th.int8 if is_image_space(self.observation_space) else th.float32
         specs = dict(
-            observation=dict(size=(self.storage_size + 1, *self.obs_shape), dtype=th.uint8),
-            reward=dict(size=(self.storage_size + 1,), dtype=th.float32),
-            terminated=dict(size=(self.storage_size + 1,), dtype=th.bool),
-            truncated=dict(size=(self.storage_size + 1,), dtype=th.bool),
-            episode_return=dict(size=(self.storage_size + 1,), dtype=th.float32),
-            episode_step=dict(size=(self.storage_size + 1,), dtype=th.int32),
-            last_action=dict(size=(self.storage_size + 1,), dtype=th.int64),
-            policy_outputs=dict(size=(self.storage_size + 1, self.action_dim), dtype=th.float32),
-            baseline=dict(size=(self.storage_size + 1,), dtype=th.float32),
-            action=dict(size=(self.storage_size + 1,), dtype=th.int64),
+            observations=dict(size=(self.storage_size + 1, *self.obs_shape), dtype=obs_dtype),
+            actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=th.float32),
+            rewards=dict(size=(self.storage_size + 1, ), dtype=th.float32),
+            terminateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
+            truncateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
+            episode_returns=dict(size=(self.storage_size + 1, ), dtype=th.float32),
+            episode_steps=dict(size=(self.storage_size + 1, ), dtype=th.int32),
+            last_actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=th.float32),
+            policy_outputs=dict(size=(self.storage_size + 1, self.policy_action_dim), dtype=th.float32),
+            baselines=dict(size=(self.storage_size + 1, ), dtype=th.float32)
         )
-        # Create memory-shared storages.
+
+        # create memory-shared storages
         self.storages = {key: [] for key in specs}
         for _ in range(self.num_storages):
             for key in self.storages:
@@ -103,9 +105,11 @@ class VanillaDistributedStorage(BaseStorage):
         for key in actor_output:
             self.storages[key][idx][timestep, ...] = actor_output[key]
 
-    def sample(
-        self, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock=threading.Lock()  # noqa B008
-    ) -> Dict[str, th.Tensor]:
+    def sample(self, 
+               free_queue: mp.SimpleQueue, 
+               full_queue: mp.SimpleQueue, 
+               lock=threading.Lock()  # noqa B008
+               ) -> Dict[str, th.Tensor]:
         """Sample transitions from the storage.
 
         Args:
