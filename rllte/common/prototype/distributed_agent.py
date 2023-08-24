@@ -245,8 +245,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
                     train_metrics = {
                         "step": global_step,
                         "episode": global_episode,
-                        "episode_length": np.mean(episode_steps),
-                        "episode_reward": np.mean(episode_rewards),
+                        "episode_length": np.max(episode_steps),
+                        "episode_reward": np.max(episode_rewards),
                         "fps": (global_step - start_step) / episode_time,
                         "total_time": total_time,
                     }
