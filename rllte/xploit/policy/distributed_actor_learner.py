@@ -64,7 +64,7 @@ class DistributedActorLearner(BasePolicy):
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         init_fn: Optional[str] = None,
-        use_lstm: bool = False,
+        use_lstm: bool = False
     ) -> None:
         super().__init__(
             observation_space=observation_space,

@@ -64,7 +64,10 @@ class VTraceLoss:
     def __call__(self, batch):
         _target_dist = batch["target_dist"]
         _behavior_dist = batch["behavior_dist"]
-        _actions = th.flatten(batch["actions"], 1, -1)
+        if batch["actions"].dtype is th.int64:
+            _actions = th.flatten(batch["actions"], 1, -1)
+        else:
+            _actions = batch["actions"]
         _baseline = batch["values"]
         _bootstrap_value = batch["bootstrap_value"]
         _values = batch["values"]
@@ -78,7 +81,7 @@ class VTraceLoss:
             else:
                 clipped_rhos = rhos
             cs = th.clamp(rhos, max=1.0)
-            # Append bootstrapped value to get [v1, ..., v_t+1]
+            # append bootstrapped value to get [v1, ..., v_t+1]
             values_t_plus_1 = th.cat([_values[1:], th.unsqueeze(_bootstrap_value, 0)], dim=0)
             deltas = clipped_rhos * (_rewards + _discounts * values_t_plus_1 - _values)
 
@@ -90,9 +93,9 @@ class VTraceLoss:
             result.reverse()
             vs_minus_v_xs = th.stack(result)
 
-            # Add V(x_s) to get v_s.
+            # add V(x_s) to get v_s
             vs = th.add(vs_minus_v_xs, _values)
-            # Advantage for policy gradient.
+            # advantage for policy gradient
             broadcasted_bootstrap_values = th.ones_like(vs[0]) * _bootstrap_value
             vs_t_plus_1 = th.cat([vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0)
             if self.clip_pg_rho_threshold is not None:
@@ -239,10 +242,10 @@ class IMPALA(DistributedAgent):
         with lock:
             learner_outputs = self.policy.learner(batch)
 
-            # Take final value function slice for bootstrapping.
+            # take final value function slice for bootstrapping.
             bootstrap_value = learner_outputs["baselines"][-1]
 
-            # Move from obs[t] -> action[t] to action[t] -> obs[t].
+            # move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
             learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 

@@ -302,7 +302,7 @@ class DisctributedActorCritic(nn.Module):
         features = self.encoder(x)
         # get one-hot last actions
         if self.action_type == "Discrete":
-            encoded_actions = F.one_hot(inputs["last_actions"].view(T * B).long(), self.policy_action_dim).float()
+            encoded_actions = F.one_hot(inputs["last_actions"].view(T * B), self.policy_action_dim).float()
         else:
             encoded_actions = inputs["last_actions"].view(T * B, self.policy_action_dim)
         # merge features and one-hot last actions

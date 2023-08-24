@@ -64,16 +64,18 @@ class VanillaDistributedStorage(BaseStorage):
     def reset(self) -> None:
         """Reset the storage."""
         obs_dtype = th.int8 if is_image_space(self.observation_space) else th.float32
+        action_dtype = th.float32 if self.action_type is "Box" else th.int64
+        policy_outputs_dim = self.policy_action_dim * 2 if self.action_type is "Box" else self.policy_action_dim
         specs = dict(
             observations=dict(size=(self.storage_size + 1, *self.obs_shape), dtype=obs_dtype),
-            actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=th.float32),
+            actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
             rewards=dict(size=(self.storage_size + 1, ), dtype=th.float32),
             terminateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
             truncateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
             episode_returns=dict(size=(self.storage_size + 1, ), dtype=th.float32),
             episode_steps=dict(size=(self.storage_size + 1, ), dtype=th.int32),
-            last_actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=th.float32),
-            policy_outputs=dict(size=(self.storage_size + 1, self.policy_action_dim), dtype=th.float32),
+            last_actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
+            policy_outputs=dict(size=(self.storage_size + 1, policy_outputs_dim), dtype=th.float32),
             baselines=dict(size=(self.storage_size + 1, ), dtype=th.float32)
         )
 
