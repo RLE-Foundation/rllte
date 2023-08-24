@@ -63,7 +63,7 @@ class VanillaDistributedStorage(BaseStorage):
 
     def reset(self) -> None:
         """Reset the storage."""
-        obs_dtype = th.int8 if is_image_space(self.observation_space) else th.float32
+        obs_dtype = th.uint8 if is_image_space(self.observation_space) else th.float32
         action_dtype = th.float32 if self.action_type is "Box" else th.int64
         policy_outputs_dim = self.policy_action_dim * 2 if self.action_type is "Box" else self.policy_action_dim
         specs = dict(
