@@ -129,7 +129,7 @@ class A2C(OnPolicyAgent):
         storage = VanillaRolloutStorage(observation_space=env.observation_space,
                                         action_space=env.action_space,
                                         device=device,
-                                        num_steps=self.num_steps,
+                                        storage_size=self.num_steps,
                                         num_envs=self.num_envs,
                                         batch_size=256
                                         )
@@ -146,10 +146,10 @@ class A2C(OnPolicyAgent):
                 # value loss part
                 value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
                 # update
-                self.policy.opt.zero_grad(set_to_none=True)
+                self.policy.optimizers['opt'].zero_grad(set_to_none=True)
                 (value_loss * 0.5 + policy_loss - entropy * 0.01).backward()
                 nn.utils.clip_grad_norm_(self.policy.parameters(), 0.5)
-                self.policy.opt.step()
+                self.policy.optimizers['opt'].step()
 
 from rllte.env import make_atari_env
 if __name__ == "__main__":
