@@ -34,12 +34,12 @@ from rllte.env.utils import Gymnasium2Torch
 
 
 class StateEnv(gym.Env):
-    """Environment with state-based observation space and `MultiBinary` action space for testing."""
+    """Environment with state-based observation space and `MultiDiscrete` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
         self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
-        self.action_space = gym.spaces.MultiBinary(n=3)
+        self.action_space = gym.spaces.MultiDiscrete(nvec=(2, 3, 4))
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
@@ -75,12 +75,12 @@ class StateEnv(gym.Env):
 
 
 class PixelEnv(gym.Env):
-    """Environment with image-based observation space and `MultiBinary` action space for testing."""
+    """Environment with image-based observation space and `MultiDiscrete` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
         self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(4, 84, 84), dtype=np.float32)
-        self.action_space = gym.spaces.MultiBinary(n=3)
+        self.action_space = gym.spaces.MultiDiscrete(nvec=(2, 3, 4))
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
@@ -115,10 +115,10 @@ class PixelEnv(gym.Env):
         return obs, reward, terminated, truncated, info
 
 
-def make_multibinary_env(
-    env_id: str = "MultiBinary-State", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
+def make_multidiscrete_env(
+    env_id: str = "MultiDiscrete-State", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
 ) -> gym.Env:
-    """Build environments with `MultiBinary` action space for testing.
+    """Build environments with `MultiDiscrete` action space for testing.
 
     Args:
         env_id (str): Name of environment.
@@ -134,7 +134,7 @@ def make_multibinary_env(
 
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            if env_id == "MultiBinary-State":
+            if env_id == "MultiDiscrete-State":
                 env = StateEnv()
             else:
                 env = PixelEnv()

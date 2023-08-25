@@ -74,6 +74,7 @@ class BasePolicy(ABC, nn.Module):
         # get environment information
         self.obs_shape = process_observation_space(observation_space)
         self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(action_space)
+        self.nvec = tuple(int(_) for _ in action_space.nvec.reshape(-1)) if hasattr(action_space, "nvec") else None
 
         # placeholder for optimizers
         self._optimizers: Dict[str, th.optim.Optimizer] = {}

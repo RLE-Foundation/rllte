@@ -35,7 +35,7 @@ from torch.distributions import Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
-from .utils import OnPolicyActor, OnPolicyCritic
+from .utils import get_actor, OnPolicyCritic
 
 class OnPolicySharedActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `PPO` and `A2C`.
@@ -79,14 +79,15 @@ class OnPolicySharedActorCritic(BasePolicy):
             f"Unsupported action type {self.action_type}!"
 
         # build actor and critic
-        self.actor = OnPolicyActor(obs_shape=self.obs_shape, 
-                                   action_type=self.action_type,
-                                   action_dim=self.policy_action_dim, 
-                                   feature_dim=self.feature_dim, 
-                                   hidden_dim=self.hidden_dim
-                                   )
+        actor_kwargs = dict(obs_shape=self.obs_shape,
+                            action_dim=self.policy_action_dim, 
+                            feature_dim=self.feature_dim, 
+                            hidden_dim=self.hidden_dim)
+        if self.action_type == "MultiDiscrete":
+            actor_kwargs['nvec'] = self.nvec
+        self.actor = get_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
+
         self.critic = OnPolicyCritic(obs_shape=self.obs_shape, 
-                                     action_type=self.action_type,
                                      action_dim=self.policy_action_dim, 
                                      feature_dim=self.feature_dim, 
                                      hidden_dim=self.hidden_dim

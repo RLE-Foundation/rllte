@@ -52,6 +52,11 @@ except Exception:
     pass
 
 try:
+    from .multidiscrete import make_multidiscrete_env as make_multidiscrete_env
+except Exception:
+    pass
+
+try:
     from .procgen import make_procgen_env as make_procgen_env
     from .procgen import make_envpool_procgen_env as make_envpool_procgen_env
 except Exception:

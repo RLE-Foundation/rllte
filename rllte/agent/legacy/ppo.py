@@ -34,7 +34,10 @@ from rllte.common.prototype import OnPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+from rllte.xplore.distribution import (Bernoulli, 
+                                       Categorical, 
+                                       DiagonalGaussian,
+                                       MultiCategorical)
 
 
 class PPO(OnPolicyAgent):
@@ -123,8 +126,10 @@ class PPO(OnPolicyAgent):
             dist = DiagonalGaussian
         elif self.action_type == "MultiBinary":
             dist = Bernoulli
+        elif self.action_type == "MultiDiscrete":
+            dist = MultiCategorical
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
         policy = OnPolicySharedActorCritic(

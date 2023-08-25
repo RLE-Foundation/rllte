@@ -117,12 +117,6 @@ class DistributedAgent(BaseAgent):  # type: ignore
         Returns:
             None.
         """
-        # test code
-        # seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")
-        # env_output = env.reset(seed)
-        # actor_output = self.policy.actor(env_output, training=True)
-        # print("runned")
-
         try:
             # reset environment
             seed = actor_idx * int.from_bytes(os.urandom(4), byteorder="little")

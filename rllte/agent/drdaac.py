@@ -35,7 +35,10 @@ from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.augmentation import RandomCrop
-from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
+from rllte.xplore.distribution import (Bernoulli, 
+                                       Categorical, 
+                                       DiagonalGaussian,
+                                       MultiCategorical)
 
 
 class DrDAAC(OnPolicyAgent):
@@ -140,8 +143,10 @@ class DrDAAC(OnPolicyAgent):
             dist = DiagonalGaussian
         elif self.action_type == "MultiBinary":
             dist = Bernoulli
+        elif self.action_type == "MultiDiscrete":
+            dist = MultiCategorical
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
         policy = OnPolicyDecoupledActorCritic(
