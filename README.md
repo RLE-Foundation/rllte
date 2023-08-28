@@ -137,7 +137,20 @@ from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Categorical
 ```
-- Finally, merge these modules and write a `.update` function:
+- Run the `.describe` function of the selected policy and you will see the following output:
+``` py
+OnPolicySharedActorCritic.describe()
+# Output:
+# ================================================================================
+# Name       : OnPolicySharedActorCritic
+# Structure  : self.encoder (shared by actor and critic), self.actor, self.critic
+# Forward    : obs -> self.encoder -> self.actor -> actions
+#            : obs -> self.encoder -> self.critic -> values
+#            : actions -> log_probs
+# Optimizers : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)
+# ================================================================================
+```
+This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write a `.update` function:
 ``` py
 from torch import nn
 import torch as th

@@ -1,14 +1,14 @@
 # Performance Evaluation of Single Algorithm
 
 <div class="badge">
-<a href="">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/model_evaluation.ipynb">
 <img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
 Open in Colab
 </a>
 </div>
 
 <div class="badge">
-<a href="">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/model_evaluation.ipynb">
 <img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
 View on GitHub
 </a>
