@@ -22,8 +22,8 @@
 
 __pycache__/
 _build/
+/legacy
 /cfgs
-/examples
 /logs
 /dist
 /experimental
