@@ -36,10 +36,10 @@ hide:
     |:-|:-|:-|
     | OnPolicySharedActorCritic |On-policy| Actor-Critic networks with a shared encoder.|
     | OnPolicyDecoupledActorCritic |On-policy|Actor-Critic networks with two separate encoders.|
-    | OffPolicyDoubleQNetwork |On-policy| Double Q-network. |
-    | OffPolicyDetActorDoubleCritic |On-policy| Deterministic actor network and double-critic network.|
-    | OffPolicyStochActorDoubleCritic |On-policy|Stochastic actor network and double-critic network.|
-    | DistributedActorLearner |On-policy|Actor-Learner networks.|
+    | OffPolicyDoubleQNetwork |Off-policy| Double Q-network. |
+    | OffPolicyDetActorDoubleCritic |Off-policy| Deterministic actor network and double-critic network.|
+    | OffPolicyStochActorDoubleCritic |Off-policy|Stochastic actor network and double-critic network.|
+    | DistributedActorLearner |Distributed|Actor-Learner networks.|
 
 !!! abstract "Encoder: *Neural nework-based encoders for processing observations.*"
     |Module|Input|Reference|Target Task|
