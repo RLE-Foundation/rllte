@@ -2,7 +2,7 @@
 
 
 ## BaseIntrinsicRewardModule
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L35)
 ```python 
 BaseIntrinsicRewardModule(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -33,7 +33,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L65)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L68)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -59,7 +59,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_reward.py/#L81)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L84)
 ```python
 .update(
    samples: Dict

@@ -2,11 +2,11 @@
 
 
 ## OnPolicyDecoupledActorCritic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L43)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L41)
 ```python 
 OnPolicyDecoupledActorCritic(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int,
-   hidden_dim: int, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
+   hidden_dim: int = 512, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
    opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: Optional[str] = None
 )
 ```
@@ -14,9 +14,6 @@ OnPolicyDecoupledActorCritic(
 
 ---
 Actor-Critic network for on-policy algorithms like `DAAC`.
-
-Structure: self.actor_encoder, self.actor, self.critic_encoder, self.critic
-Optimizers: self.actor_opt -> (self.actor_encoder, self.actor), self.critic_opt -> (self.critic_encoder, self.critic)
 
 
 **Args**
@@ -38,8 +35,17 @@ Actor-Critic network instance.
 **Methods:**
 
 
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L100)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L117)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L114)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -61,7 +67,7 @@ Freeze all the elements like `encoder` and `dist`.
 None.
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L144)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L141)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True
@@ -84,7 +90,7 @@ Sampled actions, estimated values, and log of probabilities for observations whe
 else only deterministic actions.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L167)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L164)
 ```python
 .get_value(
    obs: th.Tensor
@@ -105,7 +111,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .evaluate_actions
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L178)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L175)
 ```python
 .evaluate_actions(
    obs: th.Tensor, actions: th.Tensor = None
@@ -127,7 +133,7 @@ Evaluate actions according to the current policy given the observations.
 Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L203)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L200)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -149,7 +155,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L219)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_decoupled_actor_critic.py/#L216)
 ```python
 .load(
    path: str, device: th.device

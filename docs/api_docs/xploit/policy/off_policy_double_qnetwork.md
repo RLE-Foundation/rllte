@@ -2,7 +2,7 @@
 
 
 ## OffPolicyDoubleQNetwork
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L89)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L39)
 ```python 
 OffPolicyDoubleQNetwork(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int = 64,
@@ -38,8 +38,17 @@ Actor network instance.
 **Methods:**
 
 
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L88)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L138)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L99)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -61,7 +70,7 @@ Freeze all the elements like `encoder` and `dist`.
 None.
 
 ### .explore
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L158)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L119)
 ```python
 .explore(
    obs: th.Tensor
@@ -82,7 +91,7 @@ Explore the environment and randomly generate actions.
 Sampled actions.
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L170)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L130)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -105,7 +114,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L186)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L146)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -127,7 +136,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L202)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L162)
 ```python
 .load(
    path: str, device: th.device

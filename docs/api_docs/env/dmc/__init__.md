@@ -12,14 +12,14 @@
 ```
 
 ---
-Build DeepMind Control Suite environments.
+Create DeepMind Control Suite environments.
 
 
 **Args**
 
 * **env_id** (str) : Name of environment.
 * **num_envs** (int) : Number of environments.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **device** (str) : Device to convert the data.
 * **seed** (int) : Random seed.
 * **visualize_reward** (bool) : True when 'from_pixels' is False, False when 'from_pixels' is True.
 * **from_pixels** (bool) : Provide image-based observations or not.
@@ -31,4 +31,4 @@ Build DeepMind Control Suite environments.
 
 **Returns**
 
-The vectorized environment.
+The vectorized environments.

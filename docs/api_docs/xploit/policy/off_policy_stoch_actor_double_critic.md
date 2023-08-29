@@ -2,7 +2,7 @@
 
 
 ## OffPolicyStochActorDoubleCritic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L40)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L38)
 ```python 
 OffPolicyStochActorDoubleCritic(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int = 64,
@@ -16,9 +16,6 @@ OffPolicyStochActorDoubleCritic(
 ---
 Stochastic actor network and double critic network for off-policy algortithms like `SAC`.
 Here the 'self.dist' refers to an sampling distribution instance.
-
-Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
-Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
 
 
 **Args**
@@ -41,8 +38,17 @@ Actor-Critic network.
 **Methods:**
 
 
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L91)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L96)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L106)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -64,7 +70,7 @@ Freeze all the elements like `encoder` and `dist`.
 None.
 
 ### .explore
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L121)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L131)
 ```python
 .explore(
    obs: th.Tensor
@@ -85,7 +91,7 @@ Explore the environment and randomly generate actions.
 Sampled actions.
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L132)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L142)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -108,7 +114,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .get_dist
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L153)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L163)
 ```python
 .get_dist(
    obs: th.Tensor, step: int
@@ -130,7 +136,7 @@ Get sample distribution.
 Action distribution.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L172)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L182)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -152,7 +158,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L188)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_stoch_actor_double_critic.py/#L198)
 ```python
 .load(
    path: str, device: th.device

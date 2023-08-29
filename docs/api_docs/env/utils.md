@@ -2,7 +2,7 @@
 
 
 ### make_rllte_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/utils.py/#L36)
 ```python
 .make_rllte_env(
    env_id: Union[str, Callable[..., gym.Env]], num_envs: int = 1, seed: int = 1,
@@ -20,9 +20,9 @@ Create environments that adapt to rllte engine.
 * **env_id** (Union[str, Callable[..., gym.Env]]) : either the env ID, the env class or a callable returning an env
 * **num_envs** (int) : Number of environments.
 * **seed** (int) : Random seed.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **device** (str) : Device to convert data.
 * **parallel** (bool) : `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-* **env_kwargs**  : Optional keyword argument to pass to the env constructor
+* **env_kwargs**  : Optional keyword argument to pass to the env constructor.
 
 
 **Returns**

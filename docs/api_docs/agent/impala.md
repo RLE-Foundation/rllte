@@ -2,7 +2,7 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L114)
 ```python 
 IMPALA(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
@@ -54,7 +54,7 @@ IMPALA agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L228)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L231)
 ```python
 .update(
    batch: Dict, lock = threading.Lock()

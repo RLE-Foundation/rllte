@@ -2,7 +2,7 @@
 
 
 ## DistributedActorLearner
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L140)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L41)
 ```python 
 DistributedActorLearner(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int,
@@ -37,8 +37,17 @@ Actor-Critic network.
 **Methods:**
 
 
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L95)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L196)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L107)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -59,8 +68,19 @@ Freeze all the elements like `encoder` and `dist`.
 
 None.
 
+### .forward
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L135)
+```python
+.forward(
+   *args
+)
+```
+
+---
+Only for inference.
+
 ### .to
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L224)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L138)
 ```python
 .to(
    device: th.device
@@ -81,7 +101,7 @@ Only move the learner to device, and keep actor in CPU.
 None.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L235)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L149)
 ```python
 .save(
    path: Path
@@ -102,7 +122,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L247)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/distributed_actor_learner.py/#L161)
 ```python
 .load(
    path: str, device: th.device

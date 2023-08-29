@@ -2,7 +2,7 @@
 
 
 ### make_procgen_env
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/procgen/__init__.py/#L78)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/env/procgen/__init__.py/#L140)
 ```python
 .make_procgen_env(
    env_id: str = 'bigfish', num_envs: int = 64, device: str = 'cpu', seed: int = 1,
@@ -12,14 +12,14 @@
 ```
 
 ---
-Build Prcogen environments.
+Create Procgen environments.
 
 
 **Args**
 
 * **env_id** (str) : Name of environment.
 * **num_envs** (int) : Number of environments.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
+* **device** (str) : Device to convert the data.
 * **seed** (int) : Random seed.
 * **gamma** (float) : A discount factor.
 * **num_levels** (int) : The number of unique levels that can be generated.

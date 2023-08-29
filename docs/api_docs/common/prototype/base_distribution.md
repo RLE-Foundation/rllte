@@ -2,7 +2,7 @@
 
 
 ## BaseDistribution
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L28)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L29)
 ```python 
 
 ```
@@ -17,7 +17,7 @@ In rllte, action noise is implemented as a distribution.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_distribution.py/#L35)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L37)
 ```python
 .reset()
 ```

@@ -2,15 +2,15 @@
 
 
 ## PPO
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ppo.py/#L40)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ppo.py/#L43)
 ```python 
 PPO(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
-   eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
-   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 512, clip_range: float = 0.1,
-   clip_range_vf: float = 0.1, n_epochs: int = 4, vf_coef: float = 0.5,
-   ent_coef: float = 0.01, max_grad_norm: float = 0.5, init_fn: str = 'orthogonal'
+   feature_dim: int = 512, batch_size: int = 256, lr: float = 0.00025, eps: float = 1e-05,
+   hidden_dim: int = 512, clip_range: float = 0.1, clip_range_vf: float = 0.1,
+   n_epochs: int = 4, vf_coef: float = 0.5, ent_coef: float = 0.01,
+   max_grad_norm: float = 0.5, init_fn: str = 'orthogonal'
 )
 ```
 
@@ -29,7 +29,6 @@ Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **pretraining** (bool) : Turn on the pre-training mode.
 * **num_steps** (int) : The sample length of per rollout.
-* **eval_every_episodes** (int) : Evaluation interval.
 * **feature_dim** (int) : Number of features extracted by the encoder.
 * **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
@@ -54,11 +53,10 @@ PPO agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ppo.py/#L156)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ppo.py/#L158)
 ```python
 .update()
 ```
 
 ---
 Update function that returns training metrics such as policy loss, value loss, etc..
-

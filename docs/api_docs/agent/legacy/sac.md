@@ -7,9 +7,8 @@
 SAC(
    env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 2000,
-   eval_every_steps: int = 10000, feature_dim: int = 50, batch_size: int = 1024,
-   lr: float = 0.0001, eps: float = 1e-08, hidden_dim: int = 1024,
-   critic_target_tau: float = 0.005, update_every_steps: int = 2,
+   feature_dim: int = 50, batch_size: int = 1024, lr: float = 0.0001, eps: float = 1e-08,
+   hidden_dim: int = 1024, critic_target_tau: float = 0.005, update_every_steps: int = 2,
    log_std_range: Tuple[float, ...] = (-5.0, 2), betas: Tuple[float, ...] = (0.9,
    0.999), temperature: float = 0.1, fixed_temperature: bool = False,
    discount: float = 0.99, init_fn: str = 'orthogonal'
@@ -31,7 +30,6 @@ Based on: https://github.com/denisyarats/pytorch_sac
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **pretraining** (bool) : Turn on the pre-training mode.
 * **num_init_steps** (int) : Number of initial exploration steps.
-* **eval_every_steps** (int) : Evaluation interval.
 * **feature_dim** (int) : Number of features extracted by the encoder.
 * **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
@@ -57,7 +55,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L162)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L159)
 ```python
 .alpha()
 ```
@@ -66,7 +64,7 @@ PPO agent instance.
 Get the temperature coefficient.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L166)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L163)
 ```python
 .update()
 ```
@@ -75,7 +73,7 @@ Get the temperature coefficient.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L212)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L209)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -102,7 +100,7 @@ Update the critic network.
 Critic loss.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L261)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L257)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor

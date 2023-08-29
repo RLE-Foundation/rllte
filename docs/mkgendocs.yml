@@ -6,7 +6,6 @@ pages:
   - page: common/preprocessing.md
     source: rllte/common/preprocessing.py
     functions:
-      - process_env_info
       - process_observation_space
       - process_action_space
       - get_flattened_obs_dim
@@ -21,48 +20,48 @@ pages:
       - _xavier_uniform
       - _orthogonal
       - _identity
-  - page: common/base_agent.md
-    source: rllte/common/base_agent.py
+  - page: common/prototype/base_agent.md
+    source: rllte/common/prototype/base_agent.py
     classes:
       - BaseAgent
-  - page: common/base_augmentation.md
-    source: rllte/common/base_augmentation.py
+  - page: common/prototype/base_augmentation.md
+    source: rllte/common/prototype/base_augmentation.py
     classes:
       - BaseAugmentation
-  - page: common/base_distribution.md
-    source: rllte/common/base_distribution.py
+  - page: common/prototype/base_distribution.md
+    source: rllte/common/prototype/base_distribution.py
     classes:
       - BaseDistribution
-  - page: common/base_encoder.md
-    source: rllte/common/base_encoder.py
+  - page: common/prototype/base_encoder.md
+    source: rllte/common/prototype/base_encoder.py
     classes:
       - BaseEncoder
-  - page: common/base_reward.md
-    source: rllte/common/base_reward.py
+  - page: common/prototype/base_reward.md
+    source: rllte/common/prototype/base_reward.py
     classes:
       - BaseIntrinsicRewardModule
-  - page: common/base_policy.md
-    source: rllte/common/base_policy.py
+  - page: common/prototype/base_policy.md
+    source: rllte/common/prototype/base_policy.py
     classes:
       - BasePolicy
-  - page: common/base_storage.md
-    source: rllte/common/base_storage.py
+  - page: common/prototype/base_storage.md
+    source: rllte/common/prototype/base_storage.py
     classes:
       - BaseStorage
-  - page: common/distributed_agent.md
-    source: rllte/common/distributed_agent.py
+  - page: common/prototype/distributed_agent.md
+    source: rllte/common/prototype/distributed_agent.py
     classes:
       - DistributedAgent
   - page: common/logger.md
     source: rllte/common/logger.py
     classes:
       - Logger
-  - page: common/off_policy_agent.md
-    source: rllte/common/off_policy_agent.py
+  - page: common/prototype/off_policy_agent.md
+    source: rllte/common/prototype/off_policy_agent.py
     classes:
       - OffPolicyAgent
-  - page: common/on_policy_agent.md
-    source: rllte/common/on_policy_agent.py
+  - page: common/prototype/on_policy_agent.md
+    source: rllte/common/prototype/on_policy_agent.py
     classes:
       - OnPolicyAgent
   - page: common/timer.md

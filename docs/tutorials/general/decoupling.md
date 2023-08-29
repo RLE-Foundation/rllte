@@ -18,10 +18,10 @@ strategies), which are difficult to quantify.
 
 Therefore, the core of **RLLTE** is not designed to provide specific RL algorithms but a toolkit for producing algorithms. Developers are free to use various built-in or customized modules to build RL algorithms.
 
-- > See [Fast Algorithm Development](../development.md)
+- > See [Fast Algorithm Development](./fast.md)
 
 In particular, developers are allowed to replace modules of an implemented algorithm.
 
-- > See [Module Replacement for An Implemented Algorithm](../../mt/replacement.md)
+- > See [Module Replacement for An Implemented Algorithm](../mt/replacement.md)
 
 **RLLTE** is an extremely open framework that allows developers to try anything.

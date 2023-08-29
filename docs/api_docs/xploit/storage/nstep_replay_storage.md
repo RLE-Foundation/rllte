@@ -2,7 +2,7 @@
 
 
 ## NStepReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L243)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L245)
 ```python 
 NStepReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -22,10 +22,10 @@ Implemented based on: https://github.com/facebookresearch/drqv2/blob/main/replay
 
 * **observation_space** (gym.Space) : Observation space.
 * **action_space** (gym.Space) : Action space.
-* **device** (str) : Device to store replay data.
+* **device** (str) : Device to convert replay data.
 * **storage_size** (int) : Max number of element in the storage.
 * **num_envs** (int) : The number of parallel environments.
-* **batch_size** (int) : Batch size.
+* **batch_size** (int) : Batch size of samples.
 * **num_workers** (int) : Subprocesses to use for data loading.
 * **pin_memory** (bool) : Pin memory or not.
 * **nstep** (int) : The number of transitions to consider when computing n-step returns
@@ -42,13 +42,22 @@ N-step replay storage.
 **Methods:**
 
 
+### .reset
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L300)
+```python
+.reset()
+```
+
+---
+Reset the storage.
+
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L301)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L310)
 ```python
 .add(
-   obs: np.ndarray, actions: np.ndarray, rewards: np.ndarray,
-   terminateds: np.ndarray, truncateds: np.ndarray, info: Dict[str, Any],
-   next_obs: np.ndarray
+   observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
+   terminateds: th.Tensor, truncateds: th.Tensor, infos: Dict[str, Any],
+   next_observations: th.Tensor
 )
 ```
 
@@ -58,13 +67,13 @@ Add sampled transitions into storage.
 
 **Args**
 
-* **obs** (np.ndarray) : Observation.
-* **actions** (np.ndarray) : Action.
-* **rewards** (np.ndarray) : Reward.
-* **terminateds** (np.ndarray) : Termination flag.
-* **truncateds** (np.ndarray) : Truncation flag.
-* **info** (Dict[str, Any]) : Additional information.
-* **next_obs** (np.ndarray) : Next observation.
+* **observations** (th.Tensor) : Observations.
+* **actions** (th.Tensor) : Actions.
+* **rewards** (th.Tensor) : Rewards.
+* **terminateds** (th.Tensor) : Termination flag.
+* **truncateds** (th.Tensor) : Truncation flag.
+* **infos** (Dict[str, Any]) : Additional information.
+* **next_observations** (th.Tensor) : Next observations.
 
 
 **Returns**
@@ -72,7 +81,7 @@ Add sampled transitions into storage.
 None.
 
 ### .replay_iter
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L337)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L345)
 ```python
 .replay_iter()
 ```
@@ -81,28 +90,16 @@ None.
 Create iterable dataloader.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L343)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L351)
 ```python
-.sample(
-   step: int
-)
+.sample()
 ```
 
 ---
 Sample from the storage.
 
-
-**Args**
-
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Sampled data.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L362)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/nstep_replay_storage.py/#L364)
 ```python
 .update(
    *args

@@ -2,14 +2,14 @@
 
 
 ## Procgen
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L33)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L32)
 ```python 
 
 ```
 
 
 ---
-Scores and learning cures of various RL algorithms on the full Procgen benchmark.
+Scores and learning cures of various RL algorithms on the full Procgen benchmark. 
 Environment link: https://github.com/openai/procgen
 Number of environments: 16
 Number of training steps: 25,000,000
@@ -21,7 +21,7 @@ Added algorithms: [PPO]
 
 
 ### .load_scores
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L45)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L44)
 ```python
 .load_scores()
 ```
@@ -30,13 +30,13 @@ Added algorithms: [PPO]
 Returns final performance.
 
 ### .load_curves
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L59)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L55)
 ```python
 .load_curves()
 ```
 
 ---
-Returns learning curves using a Dict of arrays:
+Returns learning curves using a `Dict` of arrays:
 curves = {
     "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
 },

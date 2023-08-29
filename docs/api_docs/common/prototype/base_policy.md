@@ -2,7 +2,7 @@
 
 
 ## BasePolicy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L36)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L37)
 ```python 
 BasePolicy(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int,
@@ -35,8 +35,35 @@ Base policy instance.
 **Methods:**
 
 
+### .optimizers
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L83)
+```python
+.optimizers()
+```
+
+---
+Get optimizers.
+
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L89)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
+### .describe
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L89)
+```python
+.describe()
+```
+
+---
+Describe the policy.
+
 ### .explore
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L77)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L92)
 ```python
 .explore(
    obs: th.Tensor
@@ -57,7 +84,7 @@ Explore the environment and randomly generate actions.
 Sampled actions.
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L103)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True
@@ -79,16 +106,16 @@ Forward method.
 Sampled actions, estimated values, ..., depends on specific algorithms.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L98)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L115)
 ```python
 .freeze()
 ```
 
 ---
-Freeze the policy.
+Freeze the policy and start training.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L101)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L119)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -110,7 +137,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_policy.py/#L112)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_policy.py/#L131)
 ```python
 .load(
    path: str

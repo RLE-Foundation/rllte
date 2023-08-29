@@ -2,7 +2,7 @@
 
 
 ## RaffinCombinedEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/raffin_combined_encoder.py/#L36)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/raffin_combined_encoder.py/#L35)
 ```python 
 RaffinCombinedEncoder(
    observation_space: gym.Space, feature_dim: int = 256, cnn_output_dim: int = 256
@@ -31,7 +31,7 @@ Identity encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/raffin_combined_encoder.py/#L66)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/raffin_combined_encoder.py/#L65)
 ```python
 .forward(
    obs: th.Tensor

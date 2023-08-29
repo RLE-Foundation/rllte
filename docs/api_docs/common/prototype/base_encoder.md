@@ -2,7 +2,7 @@
 
 
 ## BaseEncoder
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/base_encoder.py/#L30)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_encoder.py/#L30)
 ```python 
 BaseEncoder(
    observation_space: gym.Space, feature_dim: int = 0
