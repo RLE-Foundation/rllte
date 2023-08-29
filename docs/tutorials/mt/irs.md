@@ -1,13 +1,27 @@
 # Intrinsic Reward Shaping for Enhancing Exploration
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/intrinsic_reward_shaping.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/intrinsic_reward_shaping.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 Since **RLLTE** decouples RL algorithms into minimum primitives from the perspective of exploitation and exploration, intrinsic reward shaping is supported by default. Due to the large differences in the calculation of different intrinsic reward methods, **RLLTE** has the following rules:
 
 1. The environments are assumed to be ***vectorized***;
 2. The ***compute_irs*** function of each intrinsic reward module has a mandatory argument ***samples***, which is a dict like:
-     - obs (n_steps, n_envs, *obs_shape) <class 'torch.Tensor'>
-     - actions (n_steps, n_envs, *action_shape) <class 'torch.Tensor'>
-     - rewards (n_steps, n_envs) <class 'torch.Tensor'>
-     - next_obs (n_steps, n_envs, *obs_shape) <class 'torch.Tensor'>
+     - obs (n_steps, n_envs, *obs_shape), `torch.Tensor`
+     - actions (n_steps, n_envs, *action_shape) `torch.Tensor`
+     - rewards (n_steps, n_envs) `torch.Tensor`
+     - next_obs (n_steps, n_envs, *obs_shape) `torch.Tensor`
 
 Take RE3 for instance, it computes the intrinsic reward for each state based on the Euclidean distance between the state and 
 its $k$-nearest neighbor within a mini-batch. Thus it suffices to provide ***obs*** data to compute the reward. The following code provides a usage example of RE3:

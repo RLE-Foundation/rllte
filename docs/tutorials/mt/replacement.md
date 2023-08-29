@@ -1,5 +1,19 @@
 # Module Replacement for An Implemented Algorithm
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/module_replacement.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/module_replacement.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 **RLLTE** allows developers to replace settled modules of implemented algorithms to make performance comparison and algorithm improvement.
 
 ## Use built-in modules

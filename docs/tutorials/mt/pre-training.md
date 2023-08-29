@@ -1,5 +1,19 @@
 # Pre-training with Intrinsic Rewards
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/pretraining.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/pretraining.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 ## Pre-training
 Currently, **RLLTE** only supports online pre-training via intrinsic reward. To turn on the pre-training mode, 
 it suffices to write a `train.py` like:
@@ -53,7 +67,7 @@ For all supported reward modules, see [API Documentation](https://docs.rllte.dev
 
 ## Fine-tuning
 Once the pre-training is finished, you can find the model parameters in the `pretrained` subfolder of the working directory. To 
-load the parameters, just turn off the pre-training mode and write the `train.py` like
+load the parameters, just turn off the pre-training mode and load the parameters with `.load()` function:
 
 ```py title="train.py"
 from rllte.agent import PPO

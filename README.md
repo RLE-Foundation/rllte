@@ -110,7 +110,7 @@ if __name__ == "__main__":
     # create agent
     agent = DrQv2(env=env, device=device, tag="drqv2_dmc_pixel")
     # start training
-    agent.train(num_train_steps=500000)
+    agent.train(num_train_steps=500000, log_interval=1000)
 ```
 Run `train.py` and you will see the following output:
 
