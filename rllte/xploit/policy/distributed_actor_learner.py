@@ -98,6 +98,8 @@ class DistributedActorLearner(BasePolicy):
         print("=" * 80)
         print(f"{'Name'.ljust(10)} : DistributedActorLearner")
         print(f"{'Structure'.ljust(10)} : self.actor, self.learner")
+        print(f"{'Forward'.ljust(10)} : obs, last actions, rewards -> self.actor -> actions, values, policy outputs")
+        print(f"{''.ljust(10)} : obs, last actions, rewards -> self.learner -> actions, values, policy outputs")
         print(f"{'Optimizers'.ljust(10)} : self.optimizers['opt'] -> self.learner")
         print("=" * 80)
         print("\n")

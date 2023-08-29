@@ -91,6 +91,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         print("=" * 80)
         print(f"{'Name'.ljust(10)} : OffPolicyDoubleQNetwork")
         print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.qnet, self.qnet_target")
+        print(f"{'Forward'.ljust(10)} : obs -> self.encoder -> self.qnet -> action values")
         print(f"{'Optimizers'.ljust(10)} : self.optimizers['opt'] -> self.qnet")
         print("=" * 80)
         print("\n")

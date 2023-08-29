@@ -95,6 +95,8 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         print(f"{'Name'.ljust(10)} : OffPolicyStochActorDoubleCritic")
         print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor")
         print(f"{''.ljust(10)} : self.critic, self.critic_target")
+        print(f"{'Forward'.ljust(10)} : obs -> self.encoder -> self.actor -> actions")
+        print(f"{''.ljust(10)} : obs -> self.encoder -> self.critic -> double values")
         print(f"{'Optimizers'.ljust(10)} : self.optimizers['encoder_opt'] -> self.encoder")
         print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.encoder, self.critic)")
         print(f"{''.ljust(10)} : self.optimizers['actor_opt'] -> self.actor")
