@@ -17,7 +17,7 @@ View on GitHub
 Developers only need three steps to implement an RL algorithm with **RLLTE**:
 
 !!! abstract "Workflow"
-    1. Selection an algorithm prototype;
+    1. Select an algorithm prototype;
     2. Select desired modules;
     3. Write a update function.
 
