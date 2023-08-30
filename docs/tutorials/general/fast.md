@@ -26,6 +26,8 @@ The following example illustrates how to write an Advantage Actor-Critic (A2C) a
 ## Set prototype
 Firstly, we select `OnPolicyAgent` as the prototype
 ``` py
+from rllte.common.prototype import OnPolicyAgent
+
 class A2C(OnPolicyAgent):
     def __init__(self, env, tag, device, num_steps):
         # here we only use four arguments
