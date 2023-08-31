@@ -99,7 +99,7 @@ For more detailed installation instruction, see [Getting Started](https://docs.r
 Suppose we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of [DeepMind Control Suite](https://github.com/deepmind/dm_control), and it suffices to write a `train.py` like:
 
 ``` python
-# import `env` and `agent` api
+# import `env` and `agent` module
 from rllte.env import make_dmc_env 
 from rllte.agent import DrQv2
 
@@ -107,8 +107,9 @@ if __name__ == "__main__":
     device = "cuda:0"
     # create env, `eval_env` is optional
     env = make_dmc_env(env_id="cartpole_balance", device=device)
+    eval_env = make_dmc_env(env_id="cartpole_balance", device=device)
     # create agent
-    agent = DrQv2(env=env, device=device, tag="drqv2_dmc_pixel")
+    agent = DrQv2(env=env, eval_env=eval_env, device=device, tag="drqv2_dmc_pixel")
     # start training
     agent.train(num_train_steps=500000, log_interval=1000)
 ```

@@ -21,7 +21,7 @@ Suppose we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to s
 it suffices to write a `train.py` like:
 
 ``` py title="train.py"
-# import `env` and `agent` api
+# import `env` and `agent` module
 from rllte.env import make_dmc_env 
 from rllte.agent import DrQv2
 
