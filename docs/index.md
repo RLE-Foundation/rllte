@@ -39,10 +39,10 @@ See [Fast Algorithm Development]() for detailed examples.
 ## **Project Evolution**
 **RLLTE** selects RL algorithms based on the following tenet:
 
+- Generality takes all;
+- Improvements in sample efficiency or generalization ability;
 - Excellent performance on recognized benchmarks;
-- Improvements in generalization ability;
-- Improvements in sample efficiency;
-- Great compatibility for redevelopment.
+- Promising tools for RL.
 
 ## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:

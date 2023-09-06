@@ -39,13 +39,13 @@ hide:
     | OffPolicyDoubleQNetwork |Off-policy| Double Q-network. |
     | OffPolicyDetActorDoubleCritic |Off-policy| Deterministic actor network and double-critic network.|
     | OffPolicyStochActorDoubleCritic |Off-policy|Stochastic actor network and double-critic network.|
-    | DistributedActorLearner |Distributed|Actor-Learner networks.|
+    | DistributedActorLearner |Distributed|Memory-shared actor and learner networks|
 
 !!! abstract "Encoder: *Neural nework-based encoders for processing observations.*"
     |Module|Input|Reference|Target Task|
     |:-|:-|:-|:-|
-    |EspeholtResidualEncoder|Images|[Paper](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)|Atari or Procgen games.|
-    |MnihCnnEncoder|Images|[Paper](https://arxiv.org/pdf/1312.5602.pdf?source=post_page---------------------------)|Atari games.|
+    |EspeholtResidualEncoder|Images|[Paper](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf)|Atari or Procgen games|
+    |MnihCnnEncoder|Images|[Paper](https://arxiv.org/pdf/1312.5602.pdf?source=post_page---------------------------)|Atari games
     |TassaCnnEncoder|Images|[Paper](https://arxiv.org/pdf/1801.00690)|DeepMind Control Suite: pixel|
     |PathakCnnEncoder|Images|[Paper](http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf)|Atari or MiniGrid games|
     |IdentityEncoder|States|N/A|DeepMind Control Suite: state|
@@ -55,7 +55,7 @@ hide:
     > - **Naming Rule**: `Surname of the first author` + `Backbone` + `Encoder`
     > - **Target Task**: The testing tasks in their paper or potential tasks.
 
-!!! abstract "Storage: *Storges for storing collected experiences.*"
+!!! abstract "Storage: *Experience storage and sampling.*"
 
     |Module|Type|Remark|
     |:-|:-|:-|
