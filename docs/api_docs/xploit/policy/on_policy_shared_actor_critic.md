@@ -47,7 +47,7 @@ Actor-Critic network instance.
 Describe the policy.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L113)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -69,7 +69,7 @@ Freeze all the elements like `encoder` and `dist`.
 None.
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L132)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L134)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True
@@ -92,7 +92,7 @@ Sampled actions, estimated values, and log of probabilities for observations whe
 else only deterministic actions.
 
 ### .get_value
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L155)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L157)
 ```python
 .get_value(
    obs: th.Tensor
@@ -113,7 +113,7 @@ Get estimated values for observations.
 Estimated values.
 
 ### .evaluate_actions
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L166)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L168)
 ```python
 .evaluate_actions(
    obs: th.Tensor, actions: th.Tensor = None
@@ -134,8 +134,50 @@ Evaluate actions according to the current policy given the observations.
 
 Estimated values, log of the probability evaluated at `actions`, entropy of distribution.
 
+### .get_policy_outputs
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L187)
+```python
+.get_policy_outputs(
+   obs: th.Tensor
+)
+```
+
+---
+Get policy outputs for training.
+
+
+**Args**
+
+* **obs** (Tensor) : Observations.
+
+
+**Returns**
+
+Policy outputs like unnormalized probabilities for `Discrete` tasks.
+
+### .get_dist_and_aux_value
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L200)
+```python
+.get_dist_and_aux_value(
+   obs: th.Tensor
+)
+```
+
+---
+Get probs and auxiliary estimated values for auxiliary phase update.
+
+
+**Args**
+
+* **obs**  : Sampled observations.
+
+
+**Returns**
+
+Sample distribution, estimated values, auxiliary estimated values.
+
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L185)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L215)
 ```python
 .save(
    path: Path, pretraining: bool = False
@@ -157,7 +199,7 @@ Save models.
 None.
 
 ### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L201)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/on_policy_shared_actor_critic.py/#L231)
 ```python
 .load(
    path: str, device: th.device
