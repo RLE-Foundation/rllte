@@ -18,6 +18,7 @@ hide:
 | Off-Policy  | [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf) | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    | ❌   |
 | Off-Policy  | [DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
+| Off-Policy  | [TD3](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)| ✔️   | ❌    | ❌    | ❌    | ❌    | ✔️   |✔️    |✔️    |
 | Distributed | [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | ✔️   | ✔️    | ❌    | ❌    | ✔️    | ❌   |❌    |❌    |
 
@@ -38,6 +39,7 @@ hide:
     | OnPolicySharedActorCritic |On-policy| Actor-Critic networks with a shared encoder.|
     | OnPolicyDecoupledActorCritic |On-policy|Actor-Critic networks with two separate encoders.|
     | OffPolicyDoubleQNetwork |Off-policy| Double Q-network. |
+    | OffPolicyDoubleActorDoubleCritic | Off-policy | Double deterministic actor network and double-critic network.|
     | OffPolicyDetActorDoubleCritic |Off-policy| Deterministic actor network and double-critic network.|
     | OffPolicyStochActorDoubleCritic |Off-policy|Stochastic actor network and double-critic network.|
     | DistributedActorLearner |Distributed|Memory-shared actor and learner networks|

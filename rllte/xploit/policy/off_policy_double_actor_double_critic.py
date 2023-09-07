@@ -25,6 +25,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Type
+from copy import deepcopy
 
 import gymnasium as gym
 import torch as th
@@ -37,8 +38,8 @@ from rllte.common.utils import ExportModel
 from .utils import OffPolicyDoubleCritic
 
 
-class OffPolicyDetActorDoubleCritic(BasePolicy):
-    """Deterministic actor network and double critic network for off-policy algortithms like `DrQv2`, `DDPG`.
+class OffPolicyDoubleActorDoubleCritic(BasePolicy):
+    """Double deterministic actor network and double critic network for off-policy algortithms like `DDPG`, `TD3`.
         Here the 'self.dist' refers to an action noise instance.
 
     Args:
@@ -85,6 +86,7 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
             nn.Linear(self.hidden_dim, self.policy_action_dim),
             nn.Tanh(),
         )
+        self.actor_target = deepcopy(self.actor)
 
         self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
         self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
@@ -93,9 +95,9 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         """Describe the policy."""
         print("\n")
         print("=" * 80)
-        print(f"{'Name'.ljust(10)} : OffPolicyDetActorDoubleCritic")
+        print(f"{'Name'.ljust(10)} : OffPolicyDoubleActorDoubleCritic")
         print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor")
-        print(f"{''.ljust(10)} : self.critic, self.critic_target")
+        print(f"{''.ljust(10)} : self.actor_target, self.critic, self.critic_target")
         print(f"{'Forward'.ljust(10)} : obs -> self.encoder -> self.actor -> actions")
         print(f"{''.ljust(10)} : obs -> self.encoder -> self.critic -> double values")
         print(f"{'Optimizers'.ljust(10)} : self.optimizers['encoder_opt'] -> self.encoder")
@@ -123,6 +125,7 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         # initialize parameters
         self.apply(self.init_fn)
         # synchronize the parameters of critic and target critic
+        self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
         self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
@@ -171,7 +174,7 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         Returns:
             RLLTE distribution.
         """
-        mu = self.actor(obs)
+        mu = self.actor_target(obs)
 
         # for Scheduled Exploration Noise
         self.dist.reset(mu, step)

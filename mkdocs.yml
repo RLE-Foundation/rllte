@@ -130,8 +130,9 @@ nav:
         - OnPolicySharedActorCritic: api_docs/xploit/policy/on_policy_shared_actor_critic.md
         - OnPolicyDecoupledActorCritic: api_docs/xploit/policy/on_policy_decoupled_actor_critic.md
         - OffPolicyDoubleQNetwork: api_docs/xploit/policy/off_policy_double_qnetwork.md
-        - OffPolicyDeterministicActorDoubleCritic: api_docs/xploit/policy/off_policy_det_actor_double_critic.md
-        - OffPolicyStochasticActorDoubleCritic: api_docs/xploit/policy/off_policy_stoch_actor_double_critic.md
+        - OffPolicyDoubleActorDoubleCritic: api_docs/xploit/policy/off_policy_double_actor_double_critic.md
+        - OffPolicyDetActorDoubleCritic: api_docs/xploit/policy/off_policy_det_actor_double_critic.md
+        - OffPolicyStochActorDoubleCritic: api_docs/xploit/policy/off_policy_stoch_actor_double_critic.md
         - DistributedActorLearner: api_docs/xploit/policy/distributed_actor_learner.md
 
       - encoder:

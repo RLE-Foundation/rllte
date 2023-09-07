@@ -29,6 +29,7 @@ from .drdaac import DrDAAC as DrDAAC
 from .drqv2 import DrQv2 as DrQv2
 from .impala import IMPALA as IMPALA
 from .ppg import PPG as PPG
+from .legacy.td3 import TD3 as TD3
 from .legacy.a2c import A2C as A2C
 from .legacy.ddpg import DDPG as DDPG
 from .legacy.dqn import DQN as DQN

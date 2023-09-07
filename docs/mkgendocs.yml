@@ -180,6 +180,10 @@ pages:
     source: rllte/xploit/policy/off_policy_det_actor_double_critic.py
     classes:
       - OffPolicyDetActorDoubleCritic
+  - page: xploit/policy/off_policy_double_actor_double_critic.md
+    source: rllte/xploit/policy/off_policy_double_actor_double_critic.py
+    classes:
+      - OffPolicyDoubleActorDoubleCritic
   - page: xploit/policy/off_policy_double_qnetwork.md
     source: rllte/xploit/policy/off_policy_double_qnetwork.py
     classes:

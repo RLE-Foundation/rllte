@@ -32,13 +32,13 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.policy import OffPolicyDetActorDoubleCritic
+from rllte.xploit.policy import OffPolicyDoubleActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
 from rllte.xplore.distribution import TruncatedNormalNoise
 
 
-class DDPG(OffPolicyAgent):
-    """Deep Deterministic Policy Gradient (DDPG) agent.
+class TD3(OffPolicyAgent):
+    """Twin Delayed Deep Deterministic Policy Gradient (TD3) agent.
 
     Args:
         env (gym.Env): A Gym-like environment for training.
@@ -54,7 +54,7 @@ class DDPG(OffPolicyAgent):
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
         hidden_dim (int): The size of the hidden layers.
-        critic_target_tau: The critic Q-function soft-update rate.
+        tau: The soft-update rate.
         update_every_steps (int): The agent update frequency.
         discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
@@ -77,7 +77,7 @@ class DDPG(OffPolicyAgent):
         lr: float = 1e-4,
         eps: float = 1e-8,
         hidden_dim: int = 1024,
-        critic_target_tau: float = 0.01,
+        tau: float = 0.01,
         update_every_steps: int = 2,
         discount: float = 0.99,
         init_fn: str = "orthogonal",
@@ -95,7 +95,7 @@ class DDPG(OffPolicyAgent):
         # hyper parameters
         self.lr = lr
         self.eps = eps
-        self.critic_target_tau = critic_target_tau
+        self.tau = tau
         self.discount = discount
         self.update_every_steps = update_every_steps
 
@@ -110,7 +110,7 @@ class DDPG(OffPolicyAgent):
         dist = TruncatedNormalNoise(low=self.action_space.low[0], high=self.action_space.high[0])
 
         # create policy
-        policy = OffPolicyDetActorDoubleCritic(
+        policy = OffPolicyDoubleActorDoubleCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -169,8 +169,9 @@ class DDPG(OffPolicyAgent):
         # update actor (do not udpate encoder)
         metrics.update(self.update_actor(encoded_obs.detach()))
 
-        # udpate critic target
-        utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
+        # udpate actor and critic target
+        utils.soft_update_params(self.policy.actor, self.policy.actor_target, self.tau)
+        utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.tau)
 
         return metrics
 
@@ -197,10 +198,11 @@ class DDPG(OffPolicyAgent):
             Critic loss.
         """
         with th.no_grad():
-            # sample actions
+            # sample actions with actor_target
             dist = self.policy.get_dist(next_obs, step=self.global_step)
-            next_action = dist.sample(clip=True)
-            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
+            next_actions = dist.sample(clip=True)
+
+            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_actions)
             target_V = th.min(target_Q1, target_Q2)
             target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
 
