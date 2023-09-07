@@ -120,6 +120,10 @@ pages:
     source: rllte/agent/drdaac.py
     classes:
       - DrDAAC
+  - page: agent/ppg.md
+    source: rllte/agent/ppg.py
+    classes:
+      - PPG
   - page: agent/drqv2.md
     source: rllte/agent/drqv2.py
     classes:

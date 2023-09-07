@@ -101,10 +101,12 @@ class OnPolicySharedActorCritic(BasePolicy):
         print("=" * 80)
         print(f"{'Name'.ljust(10)} : OnPolicySharedActorCritic")
         print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor, self.critic")
+        print(f"{''.ljust(10)} : self.aux_critic (optional, for PPG)")
         print(f"{'Forward'.ljust(10)} : obs -> self.encoder -> self.actor -> actions")
         print(f"{''.ljust(10)} : obs -> self.encoder -> self.critic -> values")
         print(f"{''.ljust(10)} : actions -> log_probs")
         print(f"{'Optimizers'.ljust(10)} : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)")
+        print(f"{''.ljust(10)} : self.optimizers['opt'] -> self.aux_critic  (optional, for PPG)")
         print("=" * 80)
         print("\n")
 
@@ -181,6 +183,34 @@ class OnPolicySharedActorCritic(BasePolicy):
         entropy = dist.entropy().mean()
 
         return self.critic(h), log_probs, entropy
+
+    def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
+        """Get policy outputs for training.
+
+        Args:
+            obs (Tensor): Observations.
+
+        Returns:
+            Policy outputs like unnormalized probabilities for `Discrete` tasks.
+        """
+        h = self.encoder(obs)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        return th.cat(policy_outputs, dim=1)
+
+    def get_dist_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
+        """Get probs and auxiliary estimated values for auxiliary phase update.
+
+        Args:
+            obs: Sampled observations.
+
+        Returns:
+            Sample distribution, estimated values, auxiliary estimated values.
+        """
+        h = self.encoder(obs)
+        policy_outputs = self.actor.get_policy_outputs(h)
+        dist = self.dist(*policy_outputs)
+
+        return dist, self.critic(h.detach()), self.aux_critic(h)
 
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.

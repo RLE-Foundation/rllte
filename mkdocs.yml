@@ -122,6 +122,7 @@ nav:
         - DAAC: api_docs/agent/daac.md
         - DrAC: api_docs/agent/drac.md
         - DrDAAC: api_docs/agent/drdaac.md
+        - PPG: api_docs/agent/ppg.md
         - IMPALA: api_docs/agent/impala.md
 
     - Xploit:

@@ -96,7 +96,7 @@ class OnPolicyAgent(BaseAgent):
         episode_steps = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
-        num_updates = num_train_steps // self.num_envs // self.num_steps
+        num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
         for update in range(num_updates):
             # try to eval

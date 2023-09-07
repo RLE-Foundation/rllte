@@ -26,8 +26,19 @@
 import torch as th
 from torch.distributions import register_kl
 
-from rllte.xplore.distribution.categorical import Categorical
-from rllte.xplore.distribution.diagonal_gaussian import DiagonalGaussian
+from .bernoulli import Bernoulli
+from .categorical import Categorical
+from .diagonal_gaussian import DiagonalGaussian
+
+@register_kl(Bernoulli, Bernoulli)
+def kl_bernoulli_bernoulli(p, q):
+    t1 = p.probs * (th.nn.functional.softplus(-q.logits) - th.nn.functional.softplus(-p.logits))
+    t1[q.probs == 0] = th.inf
+    t1[p.probs == 0] = 0
+    t2 = (1 - p.probs) * (th.nn.functional.softplus(q.logits) - th.nn.functional.softplus(p.logits))
+    t2[q.probs == 1] = th.inf
+    t2[p.probs == 1] = 0
+    return t1 + t2
 
 
 @register_kl(Categorical, Categorical)
