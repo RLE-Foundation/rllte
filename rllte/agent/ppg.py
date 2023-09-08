@@ -191,7 +191,7 @@ class PPG(OnPolicyAgent):
     def update(self) -> Dict[str, float]:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         # save the observations and returns for auxiliary phase
-        idx = int(self.global_episode % self.policy_epochs)
+        idx = int((self.global_episode // self.num_envs) % self.policy_epochs)
         self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
             self.storage.observations[:-1].clone())
         self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
@@ -250,9 +250,8 @@ class PPG(OnPolicyAgent):
             with th.no_grad():
                 # get policy outputs
                 policy_outputs_ = self.policy.get_policy_outputs(
-                    self.aux_obs[:, i * self.num_envs : (i + 1) * self.num_envs
-                                 ].to(self.device).view((-1, *self.obs_shape))
-                    )
+                    self.aux_obs[:, i * self.num_envs : (i + 1) * self.num_envs].to(self.device).view(
+                    (-1, *self.obs_shape)))
                 self.aux_policy_outputs[:, i * self.num_envs : (i + 1) * self.num_envs] = policy_outputs_.view(
                     (self.num_steps, self.num_envs, self.policy_outputs_dim))
         
@@ -265,7 +264,7 @@ class PPG(OnPolicyAgent):
             for j in range(0, self.num_aux_rollouts, self.num_aux_mini_batch):
                 batch_inds = aux_inds[j : j + self.num_aux_mini_batch]
                 batch_aux_obs = self.aux_obs[:, batch_inds].view((-1, *self.obs_shape)).to(self.device)
-                batch_aux_returns = self.aux_returns[:, batch_inds].reshape((-1, )).to(self.device)
+                batch_aux_returns = self.aux_returns[:, batch_inds].flatten().to(self.device)
                 batch_aux_policy_outputs = self.aux_policy_outputs[:, batch_inds].view(
                     (-1, self.policy_outputs_dim)).to(self.device)
                                 
