@@ -19,18 +19,28 @@
 >+ `cd path_to_rllte/deloyment/c++`  
 >+ `mkdir build && cd build`
 >+ `cmake .. && make`
->+ `./DeployerTest ../../model/test_model.onnx`  
+>+ `./DeployerTest ../../model/test_model.onnx`    
+This demo will deploy the testing onnx model into tensorRT and output the performed result w.r.t the input [1\*9\*84\*84] float16 data.  
+![Alt text](docs/c++_quick_start_run.png)
 
 ### python
->+ `git clone https://github.com/RLE-Foundation/rllte`  
->+ `cd path_to_rllte/deloyment/python`
->+ `python3 pth2onnx.py ../model/test_model.pth`
->+ `./trtexec --onnx=test_model.onnx --saveEngine=test_model.trt --skipInference`
->+ `python3 infer.py test_model.plan`
+>+ `git clone https://github.com/RLE-Foundation/rllte`    
+>+ `cd path_to_rllte/deloyment/python`  
+>+ `python3 pth2onnx.py ../model/test_model.pth`    
+This python script will transform pth model to onnx model, which is saved in the current path.     
+![Alt text](docs/python_pth_2_onnx.png)    
+>+ `./trtexec --onnx=test_model.onnx --saveEngine=test_model.trt --skipInference`  
+Using the trtexec tool to transfom the onnx model into trt model.   
+![Alt text](docs/onnx_2_trt_py.png)    
+>+ `python3 infer.py test_model.trt`  
+It will infer the trt model and output the performed result w.r.t the input [1\*9\*84\*84] float16 data.  
+![Alt text](docs/py_infer.png) 
+
 
 ## use in your c++ project
+### basic API instruction
 >+ `#inlude "RLLTEDeployer.h"`  
-    Including the header file in your cpp file.
+    Including the header file in your cpp file.  
 >+ `Options options;`  
     `options.deviceIndex = 0;`  
     `options.doesSupportDynamicBatchSize = false;`  
@@ -50,13 +60,23 @@
    Use infer member funtion to execute the infer process. The input is the tensor with relevant data type, and the output is a pointer with relevant data size and data type. The infer result will be moved to the output.
 >+ The complete code please refer to the DeployerTest.cpp;
 
-## c++ project with cmake
+### build your c++ project with cmake
 >+ `find_package(CUDA REQUIRED)`  
+Find the header and dynamic libraries of CUDA.  
 >+ `include_directories(${CUDA_INCLUDE_DIRS} ${Path_of_RLLTEDeployer_h}})`   
->+ `target_link_libraries(YOUREXECUTEFILE ${PATH_OF_libRLLTEDeployer_so)`  
+Set the path of include files required.
+>+ `add_library(RLLTEDeployer SHARED ${Path_of_RLLTEDeployer.cpp} ${Path_of_common/logger.cpp})`
+Build the RLLTEDployer as a dynamic library.  
+>+ `target_link_libraries(RLLTEDeployer nvinfer nvonnxparser ${CUDA_LIBRARIES})`   
+Link the dependecies od RLLTEDployer.so.  
+>+ `add_executable(YourProjectExecutable ${Path_of_YourProjectExecutable.cpp})`  
+Build the executable file of your project.  
+>+ `target_link_libraries(YourProjectExecutable RLLTEDeployer)`  
+Link the RLLTEDeployer to your project.  
+
 
 ## c++ deployment with Docker
-
+Using docker to deploy model is easier than using host PC, the nvidia driver is the only dependency to install, everything else is prepared in the image.  
 ### install Nvidia_Docker
 >+ Make sure to install Nvidia Driver.
 >+ `sudo apt-get install ca-certificates gnupg lsb-release`
@@ -73,15 +93,21 @@
 >+ `sudo groupadd docker`  
 >+ `sudo gpasswd -a $USER docker`  
 >+ Logout and Login to make the user group activated.
->+ `sudo service docker restart`
+>+ `sudo service docker restart`  
+>+ `docker run --gpus all nvidia/cuda:12.0.0-cudnn8-devel-ubuntu20.04  nvidia-smi`  
+If the gpu message is showed, then everything is okay.  
+![Alt text](docs/gpus_docker.png) 
 
 ### usage
->+ `docker pull jakeshihaoluo/rllte_deployment_env:0.0.1`
+>+ `docker pull jakeshihaoluo/rllte_deployment_env:0.0.1`  
+![Alt text](docs/pull.png) 
 >+ `docker run -it -v ${path_to_the_repo}:/rllte --gpus all jakeshihaoluo/rllte_deployment_env:0.0.1`  
+![Alt text](docs/docker_container.png) 
 >+ `cd /rllte/deloyment/c++`  
 >+ `mkdir build && cd build`
 >+ `cmake .. && make`
 >+ `./DeployerTest ../../model/test_model.onnx`  
+![Alt text](docs/run_docker.png) 
 
 ##  deployment with Ascend
 
@@ -98,7 +124,7 @@
 
 ### c++ development 
 >+ include header file `#include "acl/acl.h"`  
->+ The main workflow is showned as below. The main functions are implemented in the *ascend/src/main.cpp* .
+>+ The main workflow is showned as below. The main functions are implemented in the *ascend/src/main.cpp* .  
 ![Alt text](docs/ascendmain.png)
 
 ### build and run
