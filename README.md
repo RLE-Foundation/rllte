@@ -53,7 +53,7 @@ Why **RLLTE**?
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
 - 💾 Large number of reusable benchmarks ([rllte-hub](https://hub.rllte.dev));
-- 👨‍✈️ Large language model-empowered copilot.
+- 👨‍✈️ Large language model-empowered copilot ([Copilot](https://huggingface.co/spaces/RLE-Foundation/Copilot)).
 
 See the project structure below:
 <div align=center>

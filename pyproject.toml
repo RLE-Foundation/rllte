@@ -34,7 +34,7 @@ classifiers = [
 
 dependencies = [
   "gymnasium[accept-rom-license]==0.28.1",
-  "torch==2.0.0",
+  "torch",
   "torchvision==0.15.1",
   "opencv-python",
   "termcolor",
