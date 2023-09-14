@@ -12,4 +12,4 @@ built based on [LocalGPT](https://github.com/PromtEngineer/localGPT) and [Vicuna
 	src="https://gradio.s3-us-west-2.amazonaws.com/3.44.1/gradio.js"
 ></script>
 
-<gradio-app src="https://yuanmingqi-copilot.hf.space"></gradio-app>
+<gradio-app src="https://rle-foundation-copilot.hf.space"></gradio-app>
