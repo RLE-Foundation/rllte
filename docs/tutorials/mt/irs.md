@@ -10,7 +10,7 @@ Open in Colab
 <div class="badge">
 <a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/intrinsic_reward_shaping.ipynb">
 <img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
-View on GitHub
+&nbsp;&nbsp;View on GitHub
 </a>
 </div>
 
