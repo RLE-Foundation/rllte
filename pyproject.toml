@@ -35,7 +35,7 @@ classifiers = [
 dependencies = [
   "gymnasium[accept-rom-license]==0.28.1",
   "torch",
-  "torchvision==0.15.1",
+  "torchvision",
   "opencv-python",
   "termcolor",
   "scipy>= 1.7.0",
@@ -59,6 +59,7 @@ tests = [
   "black"
 ]
 envs = [
+  "envpool",
   "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
   "ale-py==0.8.1",
   "robosuite==1.4.0",
