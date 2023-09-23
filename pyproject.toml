@@ -33,7 +33,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "gymnasium[accept-rom-license]==0.28.1",
+  "gymnasium[accept-rom-license]",
   "torch",
   "torchvision",
   "opencv-python",
@@ -48,7 +48,7 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-  "build-0.10.0",
+  "build",
   "pytest",
   "pytest-cov",
   "pytest-env",
@@ -60,9 +60,8 @@ tests = [
 ]
 envs = [
   "envpool",
-  "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
+  "gym==0.21.0", # for Procgen games, PyBullet envs.
   "ale-py==0.8.1",
-  "robosuite==1.4.0",
   "gymnasium[accept-rom-license]",
   "dm-control==1.0.11",
   "procgen==0.10.7",
