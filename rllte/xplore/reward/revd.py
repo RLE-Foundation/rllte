@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -129,7 +129,7 @@ class REVD(BaseIntrinsicRewardModule):
         self.average_divergence = average_divergence
 
         self.first_update = True
-        self.last_encoded_obs = list()
+        self.last_encoded_obs: List = list()
 
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
         """Compute the intrinsic rewards for current samples.

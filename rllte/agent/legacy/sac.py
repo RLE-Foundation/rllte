@@ -25,13 +25,13 @@
 
 from typing import Dict, Optional, Tuple
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyStochActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
@@ -43,8 +43,8 @@ class SAC(OffPolicyAgent):
         Based on: https://github.com/denisyarats/pytorch_sac
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (Optional[gym.Env]): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -71,8 +71,8 @@ class SAC(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -86,7 +86,7 @@ class SAC(OffPolicyAgent):
         critic_target_tau: float = 0.005,
         update_every_steps: int = 2,
         log_std_range: Tuple[float, ...] = (-5.0, 2),
-        betas: Tuple[float, ...] = (0.9, 0.999),
+        betas: Tuple[float, float] = (0.9, 0.999),
         temperature: float = 0.1,
         fixed_temperature: bool = False,
         discount: float = 0.99,
@@ -120,11 +120,13 @@ class SAC(OffPolicyAgent):
         if len(self.obs_shape) == 3:
             encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
-        dist = SquashedNormal
+        dist = SquashedNormal()
 
         # create policy
         policy = OffPolicyStochActorDoubleCritic(
@@ -148,12 +150,7 @@ class SAC(OffPolicyAgent):
         )
 
         # set all the modules [essential operation!!!]
-        self.set(
-            encoder=encoder,
-            policy=policy,
-            storage=storage,
-            distribution=dist,
-        )
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
     @property
     def alpha(self) -> th.Tensor:
@@ -162,7 +159,7 @@ class SAC(OffPolicyAgent):
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics = {}
+        metrics: Dict[str, float] = {}
         if self.global_step % self.update_every_steps != 0:
             return metrics
 
@@ -241,11 +238,11 @@ class SAC(OffPolicyAgent):
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self.policy.optimizers['encoder_opt'].zero_grad(set_to_none=True)
-        self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["encoder_opt"].zero_grad(set_to_none=True)
+        self.policy.optimizers["critic_opt"].zero_grad(set_to_none=True)
         critic_loss.backward()
-        self.policy.optimizers['critic_opt'].step()
-        self.policy.optimizers['encoder_opt'].step()
+        self.policy.optimizers["critic_opt"].step()
+        self.policy.optimizers["encoder_opt"].step()
 
         return {
             "Critic Loss": critic_loss.item(),
@@ -273,9 +270,9 @@ class SAC(OffPolicyAgent):
         actor_loss = (self.alpha.detach() * log_prob - Q).mean()
 
         # optimize actor
-        self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["actor_opt"].zero_grad(set_to_none=True)
         actor_loss.backward()
-        self.policy.optimizers['actor_opt'].step()
+        self.policy.optimizers["actor_opt"].step()
 
         if not self.fixed_temperature:
             # update temperature

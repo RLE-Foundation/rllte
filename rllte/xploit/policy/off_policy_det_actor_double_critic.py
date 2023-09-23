@@ -24,13 +24,13 @@
 
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
@@ -39,7 +39,7 @@ from .utils import OffPolicyDoubleCritic
 
 class OffPolicyDetActorDoubleCritic(BasePolicy):
     """Deterministic actor network and double critic network for off-policy algortithms like `DrQv2`, `DDPG`.
-        Here the 'self.dist' refers to an action noise instance.
+        Here the 'self.dist' refers to an action noise.
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -47,8 +47,8 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network.
@@ -62,8 +62,10 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -86,9 +88,17 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
             nn.Tanh(),
         )
 
-        self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
-        self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
+        )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
 
+        # attr annotations
+        self.action_space: gym.spaces.Box
+
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -104,30 +114,30 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
+    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Distribution): Distribution class.
+            dist (Type[Distribution]): Distribution class.
 
         Returns:
             None.
         """
         # set encoder
-        assert encoder is not None, "Encoder should not be None!"
+        assert encoder is not None, "The encoder should not be None!"
         self.encoder = encoder
         # set distribution
-        assert dist is not None, "Distribution should not be None!"
+        assert dist is not None, "The action noise should not be None!"
         self.dist = dist
         # initialize parameters
         self.apply(self.init_fn)
         # synchronize the parameters of critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self._optimizers['actor_opt'] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self._optimizers['critic_opt'] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self._optimizers["encoder_opt"] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers["actor_opt"] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers["critic_opt"] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
@@ -139,6 +149,12 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
             Sampled actions.
         """
         return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
+
+    def _clamp(self, x: th.Tensor, eps: float = 1e-6) -> th.Tensor:
+        """Clamps the input to the range [low, high]."""
+        clamped_x = th.clamp(x, self.action_space.low[0] + eps, self.action_space.high[0] - eps)
+        x = x - x.detach() + clamped_x.detach()
+        return x
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
@@ -173,10 +189,7 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         """
         mu = self.actor(obs)
 
-        # for Scheduled Exploration Noise
-        self.dist.reset(mu, step)
-
-        return self.dist
+        return self.dist(mu)
 
     def save(self, path: Path, pretraining: bool = False) -> None:
         """Save models.

@@ -24,13 +24,13 @@
 
 
 from copy import deepcopy
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.type_alias import VanillaReplayBatch
+from rllte.common.type_alias import DictReplayBatch
 from rllte.xploit.storage.dict_replay_storage import DictReplayStorage
 
 
@@ -55,18 +55,19 @@ class HerReplayStorage(DictReplayStorage):
         Dict replay storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 1000000,
-                 num_envs: int = 1,
-                 batch_size: int = 1024,
-                 goal_selection_strategy: str = "future",
-                 num_goals: int = 4,
-                 reward_fn: Optional[Callable] = None,
-                 copy_info_dict: bool = False
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 1000000,
+        num_envs: int = 1,
+        batch_size: int = 1024,
+        goal_selection_strategy: str = "future",
+        num_goals: int = 4,
+        reward_fn: Callable = lambda x: x,
+        copy_info_dict: bool = False,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
 
         assert goal_selection_strategy in ["future", "final", "episode", "random"]
@@ -83,9 +84,13 @@ class HerReplayStorage(DictReplayStorage):
         self.ep_start = np.zeros((self.storage_size, self.num_envs), dtype=np.int64)
         self.ep_length = np.zeros((self.storage_size, self.num_envs), dtype=np.int64)
         self._current_ep_start = np.zeros(self.num_envs, dtype=np.int64)
-
         self.reset()
-    
+
+        # attr annotations
+        self.observation_space: gym.spaces.Dict
+        self.obs_shape: Dict[str, Any]
+        self.observations: Dict[str, np.ndarray]  # type: ignore[assignment]
+
     def reset(self) -> None:
         """Reset the storage."""
         self.next_observations = {
@@ -93,15 +98,16 @@ class HerReplayStorage(DictReplayStorage):
             for key, shape in self.obs_shape.items()
         }
 
-    def add(self,
-            observations: Dict[str, th.Tensor],
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict[str, Any],
-            next_observations: Dict[str, th.Tensor]
-            ) -> None:
+    def add(
+        self,
+        observations: Dict[str, th.Tensor],  # type: ignore[override]
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: Dict[str, th.Tensor],  # type: ignore[override]
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -122,7 +128,7 @@ class HerReplayStorage(DictReplayStorage):
             episode_length = self.ep_length[self.step, env_idx]
             if episode_length > 0:
                 episode_end = episode_start + episode_length
-                episode_indices = np.arange(self.step, episode_end) % self.buffer_size
+                episode_indices = np.arange(self.step, episode_end) % self.storage_size
                 self.ep_length[episode_indices, env_idx] = 0
 
         # update episode start
@@ -157,7 +163,7 @@ class HerReplayStorage(DictReplayStorage):
         # update the current episode start
         self._current_ep_start[env_idx] = self.step
 
-    def sample(self) -> VanillaReplayBatch:
+    def sample(self) -> DictReplayBatch:  # type: ignore[override]
         """Sample from the storage."""
         # check if we have complete episodes
         is_valid = self.ep_length > 0
@@ -196,7 +202,7 @@ class HerReplayStorage(DictReplayStorage):
         truncateds = th.cat((real_data.truncateds, virtual_data.truncateds))
         rewards = th.cat((real_data.rewards, virtual_data.rewards))
 
-        return VanillaReplayBatch(
+        return DictReplayBatch(
             observations=observations,
             actions=actions,
             rewards=rewards,
@@ -205,7 +211,7 @@ class HerReplayStorage(DictReplayStorage):
             next_observations=next_observations,
         )
 
-    def _sample_real(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> VanillaReplayBatch:
+    def _sample_real(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> DictReplayBatch:
         """Get real samples from the storage.
 
         Args:
@@ -228,7 +234,7 @@ class HerReplayStorage(DictReplayStorage):
         observations = {key: self.to_torch(item) for key, item in obs.items()}
         next_observations = {key: self.to_torch(item) for key, item in next_obs.items()}
 
-        return VanillaReplayBatch(
+        return DictReplayBatch(
             observations=observations,
             actions=self.to_torch(actions),
             rewards=self.to_torch(rewards),
@@ -237,7 +243,7 @@ class HerReplayStorage(DictReplayStorage):
             next_observations=next_observations,
         )
 
-    def _sample_virtual(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> VanillaReplayBatch:
+    def _sample_virtual(self, batch_indices: np.ndarray, env_indices: np.ndarray) -> DictReplayBatch:
         """Get the samples with new goals and rewards.
 
         Args:
@@ -285,7 +291,7 @@ class HerReplayStorage(DictReplayStorage):
         observations = {key: self.to_torch(item) for key, item in obs.items()}
         next_observations = {key: self.to_torch(item) for key, item in next_obs.items()}
 
-        return VanillaReplayBatch(
+        return DictReplayBatch(
             observations=observations,
             actions=self.to_torch(actions),
             rewards=self.to_torch(rewards),

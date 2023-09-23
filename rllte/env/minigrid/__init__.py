@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict
+from typing import Callable, Dict
 
 import gymnasium as gym
 import numpy as np
@@ -96,7 +96,7 @@ def make_minigrid_env(
     frame_stack: int = 1,
     device: str = "cpu",
     parallel: bool = True,
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Create MiniGrid environments.
 
     Args:
@@ -116,7 +116,7 @@ def make_minigrid_env(
         The vectorized environments.
     """
 
-    def make_env(env_id: str, seed: int) -> gym.Env:
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
 

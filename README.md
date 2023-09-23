@@ -151,7 +151,7 @@ OnPolicySharedActorCritic.describe()
 # Optimizers : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)
 # ================================================================================
 ```
-This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write a `.update` function:
+This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write an `.update` function:
 ``` py
 from torch import nn
 import torch as th
@@ -175,8 +175,9 @@ class A2C(OnPolicyAgent):
                                         num_envs=self.num_envs,
                                         batch_size=256
                                         )
+        dist = Categorical()
         # set all the modules
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
     
     def update(self):
         for _ in range(4):

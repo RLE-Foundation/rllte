@@ -30,6 +30,7 @@ from .base_encoder import BaseEncoder as BaseEncoder
 from .base_policy import BasePolicy as BasePolicy
 from .base_reward import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
 from .base_storage import BaseStorage as BaseStorage
+
 # agent prototypes
 from .distributed_agent import DistributedAgent as DistributedAgent
 from .off_policy_agent import OffPolicyAgent as OffPolicyAgent

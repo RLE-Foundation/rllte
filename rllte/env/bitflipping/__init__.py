@@ -25,7 +25,6 @@
 from collections import OrderedDict
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-import gymnasium as gym
 import numpy as np
 from gymnasium import Env, spaces
 from gymnasium.envs.registration import EnvSpec
@@ -253,7 +252,7 @@ def make_bitflipping_env(
     discrete_obs_space: bool = False,
     image_obs_space: bool = False,
     channel_first: bool = True,
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Create bit flipping environment.
 
     Args:

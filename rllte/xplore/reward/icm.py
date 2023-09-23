@@ -186,7 +186,7 @@ class ICM(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss()  # type: ignore[assignment]
 
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_dim).to(self._device)
 

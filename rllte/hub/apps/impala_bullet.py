@@ -28,13 +28,14 @@ import os
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-from rllte.agent import IMPALA
-from rllte.env import make_bullet_env
+from rllte.agent import IMPALA  # noqa: E402
+from rllte.env import make_bullet_env  # noqa: E402
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="AntBulletEnv-v0")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=30000000)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -57,4 +58,4 @@ if __name__ == "__main__":
         feature_dim=512,
     )
     # training
-    agent.train(num_train_steps=30000000)
+    agent.train(num_train_steps=args.num_train_steps)

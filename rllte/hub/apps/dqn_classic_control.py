@@ -23,6 +23,20 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@article{raffin2021stable,
+  title={Stable-baselines3: Reliable reinforcement learning implementations},
+  author={Raffin, Antonin and Hill, Ashley and Gleave, Adam and Kanervisto, Anssi and Ernestus, Maximilian and Dormann, Noah},
+  journal={The Journal of Machine Learning Research},
+  volume={22},
+  number={1},
+  pages={12348--12355},
+  year={2021},
+  publisher={JMLRORG}
+}
+"""
+
 import argparse
 
 from rllte.agent import DQN
@@ -32,6 +46,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="CartPole-v1")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=100000)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -69,4 +84,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=100000)
+    agent.train(num_train_steps=args.num_train_steps)

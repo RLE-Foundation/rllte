@@ -25,17 +25,19 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
-from torch.nn import functional as F
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
+
 from .utils import DisctributedActorCritic
+
+# from torch.distributions import Distribution
 
 
 class DistributedActorLearner(BasePolicy):
@@ -47,8 +49,8 @@ class DistributedActorLearner(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
         use_lstm (bool): Whether to use LSTM module.
 
     Returns:
@@ -63,9 +65,11 @@ class DistributedActorLearner(BasePolicy):
         hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
-        use_lstm: bool = False
+        init_fn: str = "orthogonal",
+        use_lstm: bool = False,
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -82,16 +86,17 @@ class DistributedActorLearner(BasePolicy):
             action_shape=self.action_shape,
             action_dim=self.policy_action_dim,
             action_type=self.action_type,
-            feature_dim=self.feature_dim
+            feature_dim=self.feature_dim,
         )
         self.learner = DisctributedActorCritic(
             obs_shape=self.obs_shape,
             action_shape=self.action_shape,
             action_dim=self.policy_action_dim,
             action_type=self.action_type,
-            feature_dim=self.feature_dim
+            feature_dim=self.feature_dim,
         )
-    
+
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -104,7 +109,18 @@ class DistributedActorLearner(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
+    def explore(self, obs: th.Tensor) -> th.Tensor:
+        """Explore the environment and randomly generate actions.
+
+        Args:
+            obs (th.Tensor): Observation from the environment.
+
+        Returns:
+            Sampled actions.
+        """
+        raise NotImplementedError
+
+    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
@@ -130,12 +146,12 @@ class DistributedActorLearner(BasePolicy):
         # share memory
         self.actor.share_memory()
         # build optimizers
-        self._optimizers['opt'] = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
-    
-    def forward(self, *args) -> th.Tensor:
+        self._optimizers["opt"] = self.opt_class(self.learner.parameters(), **self.opt_kwargs)
+
+    def forward(self, *args) -> th.Tensor:  # type: ignore
         """Only for inference."""
 
-    def to(self, device: th.device) -> None:
+    def to(self, device: th.device) -> None:  # type: ignore
         """Only move the learner to device, and keep actor in CPU.
 
         Args:

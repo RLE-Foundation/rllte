@@ -31,6 +31,7 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyDetActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
@@ -41,8 +42,8 @@ class DDPG(OffPolicyAgent):
     """Deep Deterministic Policy Gradient (DDPG) agent.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -57,6 +58,7 @@ class DDPG(OffPolicyAgent):
         critic_target_tau: The critic Q-function soft-update rate.
         update_every_steps (int): The agent update frequency.
         discount (float): Discount factor.
+        stddev_clip (float): The exploration std clip range.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -65,8 +67,8 @@ class DDPG(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -80,6 +82,7 @@ class DDPG(OffPolicyAgent):
         critic_target_tau: float = 0.01,
         update_every_steps: int = 2,
         discount: float = 0.99,
+        stddev_clip: float = 0.3,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -98,16 +101,20 @@ class DDPG(OffPolicyAgent):
         self.critic_target_tau = critic_target_tau
         self.discount = discount
         self.update_every_steps = update_every_steps
+        self.stddev_clip = stddev_clip
 
         # default encoder
         if len(self.obs_shape) == 3:
             encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
-        dist = TruncatedNormalNoise(low=self.action_space.low[0], high=self.action_space.high[0])
+        self.action_space: gym.spaces.Box
+        dist = TruncatedNormalNoise()
 
         # create policy
         policy = OffPolicyDetActorDoubleCritic(
@@ -134,7 +141,7 @@ class DDPG(OffPolicyAgent):
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics = {}
+        metrics: Dict = {}
         if self.global_step % self.update_every_steps != 0:
             return metrics
 
@@ -159,12 +166,11 @@ class DDPG(OffPolicyAgent):
             encoded_next_obs = self.policy.encoder(batch.next_observations)
 
         # update criitc
-        metrics.update(self.update_critic(encoded_obs, 
-                                          batch.actions, 
-                                          batch.rewards, 
-                                          batch.terminateds, 
-                                          batch.truncateds, 
-                                          encoded_next_obs))
+        metrics.update(
+            self.update_critic(
+                encoded_obs, batch.actions, batch.rewards, batch.terminateds, batch.truncateds, encoded_next_obs
+            )
+        )
 
         # update actor (do not udpate encoder)
         metrics.update(self.update_actor(encoded_obs.detach()))
@@ -199,7 +205,7 @@ class DDPG(OffPolicyAgent):
         with th.no_grad():
             # sample actions
             dist = self.policy.get_dist(next_obs, step=self.global_step)
-            next_action = dist.sample(clip=True)
+            next_action = dist.sample(clip=self.stddev_clip)
             target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
             target_V = th.min(target_Q1, target_Q2)
             target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
@@ -208,11 +214,11 @@ class DDPG(OffPolicyAgent):
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self.policy.optimizers['encoder_opt'].zero_grad(set_to_none=True)
-        self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["encoder_opt"].zero_grad(set_to_none=True)
+        self.policy.optimizers["critic_opt"].zero_grad(set_to_none=True)
         critic_loss.backward()
-        self.policy.optimizers['critic_opt'].step()
-        self.policy.optimizers['encoder_opt'].step()
+        self.policy.optimizers["critic_opt"].step()
+        self.policy.optimizers["encoder_opt"].step()
 
         return {
             "Critic Loss": critic_loss.item(),
@@ -232,7 +238,7 @@ class DDPG(OffPolicyAgent):
         """
         # sample actions
         dist = self.policy.get_dist(obs, step=self.global_step)
-        action = dist.sample(clip=True)
+        action = dist.sample(clip=self.stddev_clip)
 
         Q1, Q2 = self.policy.critic(obs, action)
         Q = th.min(Q1, Q2)
@@ -240,8 +246,8 @@ class DDPG(OffPolicyAgent):
         actor_loss = -Q.mean()
 
         # optimize actor
-        self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["actor_opt"].zero_grad(set_to_none=True)
         actor_loss.backward()
-        self.policy.optimizers['actor_opt'].step()
+        self.policy.optimizers["actor_opt"].step()
 
         return {"Actor Loss": actor_loss.item()}

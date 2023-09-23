@@ -24,11 +24,13 @@
 
 # distributed
 from .distributed_actor_learner import DistributedActorLearner as DistributedActorLearner
+from .off_policy_det_actor_double_critic import OffPolicyDetActorDoubleCritic as OffPolicyDetActorDoubleCritic
+
 # off-policy
 from .off_policy_double_actor_double_critic import OffPolicyDoubleActorDoubleCritic as OffPolicyDoubleActorDoubleCritic
 from .off_policy_double_qnetwork import OffPolicyDoubleQNetwork as OffPolicyDoubleQNetwork
 from .off_policy_stoch_actor_double_critic import OffPolicyStochActorDoubleCritic as OffPolicyStochActorDoubleCritic
-from .off_policy_det_actor_double_critic import OffPolicyDetActorDoubleCritic as OffPolicyDetActorDoubleCritic
+from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic
+
 # on-policy
 from .on_policy_shared_actor_critic import OnPolicySharedActorCritic as OnPolicySharedActorCritic
-from .on_policy_decoupled_actor_critic import OnPolicyDecoupledActorCritic as OnPolicyDecoupledActorCritic

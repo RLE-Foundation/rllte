@@ -29,11 +29,15 @@ from typing import Any, Dict, Optional, Tuple, Type
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
+
 from .utils import OffPolicyDoubleCritic
+
+# from torch.distributions import Distribution
+
 
 class OffPolicyStochActorDoubleCritic(BasePolicy):
     """Stochastic actor network and double critic network for off-policy algortithms like `SAC`.
@@ -45,9 +49,9 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
         log_std_range (Tuple): Range of log standard deviation.
-        init_fn (Optional[str]): Parameters initialization method.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network.
@@ -62,8 +66,10 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         log_std_range: Tuple = (-10, 2),
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -83,11 +89,16 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
             nn.Linear(self.hidden_dim, 2 * self.policy_action_dim),
         )
 
-        self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
 
         self.log_std_min, self.log_std_max = log_std_range
 
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -103,12 +114,12 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
+    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Distribution): Distribution class.
+            dist (Type[Distribution]): Distribution class.
 
         Returns:
             None.
@@ -124,9 +135,9 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         # synchronize the parameters of critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self._optimizers['actor_opt'] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self._optimizers['critic_opt'] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self._optimizers["encoder_opt"] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers["actor_opt"] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers["critic_opt"] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
@@ -139,7 +150,7 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         """
         return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
 
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:

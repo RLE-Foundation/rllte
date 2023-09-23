@@ -23,6 +23,18 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@article{raileanu2021automatic,
+  title={Automatic data augmentation for generalization in reinforcement learning},
+  author={Raileanu, Roberta and Goldstein, Maxwell and Yarats, Denis and Kostrikov, Ilya and Fergus, Rob},
+  journal={Advances in Neural Information Processing Systems},
+  volume={34},
+  pages={5402--5415},
+  year={2021}
+}
+"""
+
 import argparse
 
 from rllte.agent import PPO

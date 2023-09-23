@@ -23,38 +23,21 @@
 # =============================================================================
 
 
-from typing import Tuple, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import torch as th
 from torch import nn
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
-def get_actor(action_type: str, actor_kwargs: Dict) -> nn.Module:
-    """Get actor network based on action type.
+from rllte.common.type_alias import ObsShape
 
-    Args:
-        action_type (str): Type of actions.
-        actor_kwargs (Dict): Keyword arguments for actor network.
-
-    Returns:
-        Actor class.
-    """
-    if action_type in ["Discrete", "MultiBinary"]:
-        actor_class = OnPolicyDiscreteActor
-    elif action_type == "Box":
-        actor_class = OnPolicyBoxActor
-    elif action_type == "MultiDiscrete":
-        actor_class = OnPolicyMultiDiscreteActor
-    else:
-        raise NotImplementedError(f"Unsupported action type {action_type}!")
-    return actor_class(**actor_kwargs)
 
 class OnPolicyDiscreteActor(nn.Module):
     """Actor for `Discrete` and `MultiBinary` tasks.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
@@ -62,13 +45,17 @@ class OnPolicyDiscreteActor(nn.Module):
     Returns:
         Actor network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple,
-                 action_dim: int,
-                 feature_dim: int, 
-                 hidden_dim: int,
-                 ) -> None:
+
+    def __init__(
+        self,
+        obs_shape: ObsShape,
+        action_dim: int,
+        feature_dim: int,
+        hidden_dim: int,
+    ) -> None:
         super().__init__()
+        # attr annotations
+        self.actor: th.nn.Module
         if len(obs_shape) > 1:
             self.actor = nn.Linear(feature_dim, action_dim)
         else:
@@ -81,7 +68,7 @@ class OnPolicyDiscreteActor(nn.Module):
                 nn.Linear(hidden_dim, action_dim),
             )
 
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+    def get_policy_outputs(self, obs: th.Tensor) -> Union[Tuple[th.Tensor], Tuple[th.Tensor, th.Tensor]]:
         """Get policy outputs for training.
 
         Args:
@@ -90,8 +77,8 @@ class OnPolicyDiscreteActor(nn.Module):
         Returns:
             Mean and variance of sample distributions.
         """
-        return (self.actor(obs), )
-    
+        return (self.actor(obs),)
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Only for model inference.
 
@@ -103,11 +90,12 @@ class OnPolicyDiscreteActor(nn.Module):
         """
         return self.actor(obs)
 
+
 class OnPolicyBoxActor(OnPolicyDiscreteActor):
     """Actor for `Box` tasks.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
@@ -115,7 +103,8 @@ class OnPolicyBoxActor(OnPolicyDiscreteActor):
     Returns:
         Actor network.
     """
-    def __init__(self, obs_shape: Tuple, action_dim: int, feature_dim: int, hidden_dim: int) -> None:
+
+    def __init__(self, obs_shape: ObsShape, action_dim: int, feature_dim: int, hidden_dim: int) -> None:
         super().__init__(obs_shape, action_dim, feature_dim, hidden_dim)
         self.actor_logstd = nn.Parameter(th.ones(1, action_dim))
 
@@ -132,31 +121,29 @@ class OnPolicyBoxActor(OnPolicyDiscreteActor):
         logstd = self.actor_logstd.expand_as(mu)
         return (mu, logstd.exp())
 
+
 class OnPolicyMultiDiscreteActor(OnPolicyDiscreteActor):
     """Actor for `MultiDiscrete` tasks.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
-        nvec (Optional[Tuple[int, ...]]): Number of discrete actions. 
+        nvec (Optional[Tuple[int, ...]]): Number of discrete actions.
             For `MultiDiscrete` action space only.
 
     Returns:
         Actor network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple, 
-                 action_dim: int, 
-                 feature_dim: int, 
-                 hidden_dim: int,
-                 nvec: Optional[Tuple[int, ...]] = None
-                 ) -> None:
+
+    def __init__(
+        self, obs_shape: ObsShape, action_dim: int, feature_dim: int, hidden_dim: int, nvec: Optional[Tuple[int, ...]] = None
+    ) -> None:
         super().__init__(obs_shape, action_dim, feature_dim, hidden_dim)
         self.nvec = nvec
-    
-    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+
+    def get_policy_outputs(self, obs: th.Tensor) -> Tuple[th.Tensor]:
         """Get policy outputs for training.
 
         Args:
@@ -165,13 +152,14 @@ class OnPolicyMultiDiscreteActor(OnPolicyDiscreteActor):
         Returns:
             Mean and variance of sample distributions.
         """
-        return (th.split(self.actor(obs), self.nvec, dim=1), )
+        return (th.split(self.actor(obs), self.nvec, dim=1),)  # type: ignore
+
 
 class OnPolicyCritic(nn.Module):
     """Critic for on-policy modules.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
@@ -179,13 +167,11 @@ class OnPolicyCritic(nn.Module):
     Returns:
         Critic network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple,
-                 action_dim: int,
-                 feature_dim: int, 
-                 hidden_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: ObsShape, action_dim: int, feature_dim: int, hidden_dim: int) -> None:
         super().__init__()
+        # attr annotations
+        self.critic: th.nn.Module
         if len(obs_shape) > 1:
             self.critic = nn.Linear(feature_dim, 1)
         else:
@@ -197,7 +183,7 @@ class OnPolicyCritic(nn.Module):
                 nn.Tanh(),
                 nn.Linear(hidden_dim, 1),
             )
-    
+
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Get estimated values.
 
@@ -209,11 +195,12 @@ class OnPolicyCritic(nn.Module):
         """
         return self.critic(obs)
 
+
 class OnPolicyGAE(nn.Module):
     """Advantage estimator for on-policy modules.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_dim (int): Number of neurons for outputting actions.
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
@@ -221,13 +208,12 @@ class OnPolicyGAE(nn.Module):
     Returns:
         Advantage network.
     """
-    def __init__(self, 
-                 obs_shape: Tuple,
-                 action_dim: int,
-                 feature_dim: int, 
-                 hidden_dim: int
-                 ) -> None:
+
+    def __init__(self, obs_shape: ObsShape, action_dim: int, feature_dim: int, hidden_dim: int) -> None:
         super().__init__()
+        # attr annotations
+        self.gae: th.nn.Module
+
         if len(obs_shape) > 1:
             self.gae = nn.Linear(feature_dim + action_dim, 1)
         else:
@@ -239,7 +225,7 @@ class OnPolicyGAE(nn.Module):
                 nn.Tanh(),
                 nn.Linear(hidden_dim, 1),
             )
-    
+
     def forward(self, obs_actions: th.Tensor) -> th.Tensor:
         """Get estimated values.
 
@@ -250,7 +236,8 @@ class OnPolicyGAE(nn.Module):
             Estimated values.
         """
         return self.gae(obs_actions)
-    
+
+
 class OffPolicyDoubleCritic(nn.Module):
     """Double critic network for off-policy modules.
 
@@ -298,12 +285,13 @@ class OffPolicyDoubleCritic(nn.Module):
         q2 = self.Q2(h_action)
 
         return q1, q2
-    
+
+
 class DisctributedActorCritic(nn.Module):
     """Actor-Critic network for distributed modules.
 
     Args:
-        obs_shape (Tuple): The data shape of observations.
+        obs_shape (ObsShape): The data shape of observations.
         action_shape (Tuple): The data shape of actions.
         action_dim (int): Number of neurons for outputting actions.
         action_type (str): Type of actions.
@@ -314,14 +302,15 @@ class DisctributedActorCritic(nn.Module):
         Actor-Critic network.
     """
 
-    def __init__(self,
-                 obs_shape: Tuple,
-                 action_shape: Tuple,
-                 action_dim: int,
-                 action_type: str,
-                 feature_dim: int,
-                 hidden_dim: int = 512
-                 ) -> None:
+    def __init__(
+        self,
+        obs_shape: ObsShape,
+        action_shape: Tuple,
+        action_dim: int,
+        action_type: str,
+        feature_dim: int,
+        hidden_dim: int = 512,
+    ) -> None:
         super().__init__()
 
         self.action_shape = action_shape
@@ -332,24 +321,24 @@ class DisctributedActorCritic(nn.Module):
         # for discrete action space, action_dim is the number of actions
         mixed_feature_dim = feature_dim + action_dim + 1
 
-        assert self.action_type in ["Discrete", "Box"], \
-            f"Unsupported action type {self.action_type}!"
-        
+        assert self.action_type in ["Discrete", "Box"], f"Unsupported action type {self.action_type}!"
+
         if self.action_type == "Box":
             self.policy_reshape_dim = action_dim * 2
         else:
             self.policy_reshape_dim = action_dim
 
         # build actor and critic
-        actor_kwargs = dict(obs_shape=obs_shape,
-                            action_dim=action_dim, 
-                            feature_dim=mixed_feature_dim, 
-                            hidden_dim=hidden_dim)
+        actor_kwargs = dict(obs_shape=obs_shape, action_dim=action_dim, feature_dim=mixed_feature_dim, hidden_dim=hidden_dim)
         # if self.action_type == "MultiDiscrete":
         #     actor_kwargs['nvec'] = self.nvec
         self.actor = get_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
         # baseline value function
         self.critic = nn.Linear(mixed_feature_dim, 1)
+
+        # attr annotations
+        self.encoder: nn.Module
+        self.dist: Callable
 
     def forward(self, inputs: Dict[str, th.Tensor], training: bool = True) -> Dict[str, th.Tensor]:
         """Get actions in training.
@@ -386,16 +375,16 @@ class DisctributedActorCritic(nn.Module):
             actions = dist.mean
 
         # reshape for policy outputs
-        policy_outputs = th.cat(policy_outputs, dim=1).view(T, B, self.policy_reshape_dim)
+        policy_outputs = th.cat(policy_outputs, dim=1).view(T, B, self.policy_reshape_dim)  # type: ignore
         baselines = baselines.view(T, B)
         if self.action_type == "Discrete":
             actions = actions.view(T, B, *self.action_shape)
         elif self.action_type == "Box":
-            actions = actions.view(T, B, *self.action_shape).squeeze(0)#.clamp(*self.action_range)
+            actions = actions.view(T, B, *self.action_shape).squeeze(0)  # .clamp(*self.action_range)
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
-        return dict(policy_outputs=policy_outputs, baselines=baselines, actions=actions)
+        return dict(policy_outputs=policy_outputs, baselines=baselines, actions=actions)  # type: ignore
 
     def get_dist(self, outputs: th.Tensor) -> Distribution:
         """Get action distribution.
@@ -413,3 +402,26 @@ class DisctributedActorCritic(nn.Module):
             return self.dist(mu, logstd.exp())
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}.")
+
+
+def get_actor(
+    action_type: str, actor_kwargs: Dict
+) -> Union[OnPolicyDiscreteActor, OnPolicyBoxActor, OnPolicyMultiDiscreteActor]:
+    """Get actor network based on action type.
+
+    Args:
+        action_type (str): Type of actions.
+        actor_kwargs (Dict): Keyword arguments for actor network.
+
+    Returns:
+        Actor class.
+    """
+    if action_type in ["Discrete", "MultiBinary"]:
+        actor_class = OnPolicyDiscreteActor
+    elif action_type == "Box":
+        actor_class = OnPolicyBoxActor
+    elif action_type == "MultiDiscrete":
+        actor_class = OnPolicyMultiDiscreteActor
+    else:
+        raise NotImplementedError(f"Unsupported action type {action_type}!")
+    return actor_class(**actor_kwargs)

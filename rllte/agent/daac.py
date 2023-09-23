@@ -23,21 +23,18 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicyDecoupledActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import (Bernoulli, 
-                                       Categorical, 
-                                       DiagonalGaussian,
-                                       MultiCategorical)
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
 
 
 class DAAC(OnPolicyAgent):
@@ -45,8 +42,8 @@ class DAAC(OnPolicyAgent):
         Based on: https://github.com/rraileanu/idaac
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -75,8 +72,8 @@ class DAAC(OnPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -122,25 +119,27 @@ class DAAC(OnPolicyAgent):
         self.max_grad_norm = max_grad_norm
 
         # training track
-        self.num_policy_updates = 0
-        self.prev_total_critic_loss = 0
+        self.num_policy_updates = 0.0
+        self.prev_total_critic_loss = 0.0
 
         # default encoder
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
         if self.action_type == "Discrete":
-            dist = Categorical
+            dist = Categorical()
         elif self.action_type == "Box":
-            dist = DiagonalGaussian
+            dist = DiagonalGaussian()  # type: ignore[assignment]
         elif self.action_type == "MultiBinary":
-            dist = Bernoulli
+            dist = Bernoulli()  # type: ignore[assignment]
         elif self.action_type == "MultiDiscrete":
-            dist = MultiCategorical
+            dist = MultiCategorical()  # type: ignore[assignment]
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
@@ -168,7 +167,7 @@ class DAAC(OnPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> Dict[str, Any]:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_adv_loss = [0.0]
@@ -190,10 +189,10 @@ class DAAC(OnPolicyAgent):
                 adv_loss = (new_adv_preds.flatten() - batch.adv_targ).pow(2).mean()
 
                 # update
-                self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
+                self.policy.optimizers["actor_opt"].zero_grad(set_to_none=True)
                 (adv_loss * self.adv_coef + policy_loss - entropy * self.ent_coef).backward()
                 nn.utils.clip_grad_norm_(self.policy.actor_params, self.max_grad_norm)
-                self.policy.optimizers['actor_opt'].step()
+                self.policy.optimizers["actor_opt"].step()
 
                 total_policy_loss.append(policy_loss.item())
                 total_adv_loss.append(adv_loss.item())
@@ -217,16 +216,16 @@ class DAAC(OnPolicyAgent):
                         value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
                     # update
-                    self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
+                    self.policy.optimizers["critic_opt"].zero_grad(set_to_none=True)
                     value_loss.backward()
                     nn.utils.clip_grad_norm_(self.policy.critic_params, self.max_grad_norm)
-                    self.policy.optimizers['critic_opt'].step()
+                    self.policy.optimizers["critic_opt"].step()
 
                     total_value_loss.append(value_loss.item())
 
-            self.prev_total_critic_loss = total_value_loss
+            self.prev_total_critic_loss = total_value_loss  # type: ignore[assignment]
         else:
-            total_value_loss = self.prev_total_critic_loss
+            total_value_loss = self.prev_total_critic_loss  # type: ignore[assignment]
 
         self.num_policy_updates += 1
 

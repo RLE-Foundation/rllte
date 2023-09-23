@@ -25,76 +25,52 @@
 
 """
 The following hyperparameters are from the paper:
-@inproceedings{raileanu2021decoupling,
-  title={Decoupling value and policy for generalization in reinforcement learning},
-  author={Raileanu, Roberta and Fergus, Rob},
-  booktitle={International Conference on Machine Learning},
-  pages={8787--8798},
-  year={2021},
+@inproceedings{raffin2022smooth,
+  title={Smooth exploration for robotic reinforcement learning},
+  author={Raffin, Antonin and Kober, Jens and Stulp, Freek},
+  booktitle={Conference on Robot Learning},
+  pages={1634--1644},
+  year={2022},
   organization={PMLR}
 }
 """
 
 import argparse
+import os
 
-from rllte.agent import DAAC
-from rllte.env import make_procgen_env
-from rllte.xploit.encoder import EspeholtResidualEncoder
+from rllte.agent import SAC
+from rllte.env import make_envpool_dmc_env
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="miner")
+parser.add_argument("--env-id", type=str, default="AcrobotSwingup-v1")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
-parser.add_argument("--num-train-steps", type=int, default=2.5e7)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     # create env
-    env = make_procgen_env(
-        env_id=args.env_id,
-        num_envs=64,
-        device=args.device,
-        seed=args.seed,
-        gamma=0.99,
-        num_levels=200,
-        start_level=0,
-        distribution_mode="easy",
-    )
-    eval_env = make_procgen_env(
-        env_id=args.env_id,
-        num_envs=1,
-        device=args.device,
-        seed=args.seed,
-        gamma=0.99,
-        num_levels=0,
-        start_level=0,
-        distribution_mode="easy",
+    env = make_envpool_dmc_env(
+        env_id=args.env_id, 
+        num_envs=3, 
+        device=args.device, 
+        seed=args.seed
     )
     # create agent
-    feature_dim = 256
-    agent = DAAC(
+    agent = SAC(
         env=env,
-        eval_env=eval_env,
-        tag=f"daac_procgen_{args.env_id}_seed_{args.seed}",
+        # eval_env=eval_env,
+        tag=f"sac_dmc_state_{args.env_id}_seed_{args.seed}",
         seed=args.seed,
         device=args.device,
-        num_steps=256,
-        feature_dim=feature_dim,
-        batch_size=2048,
-        lr=5e-4,
-        eps=1e-5,
-        clip_range=0.2,
-        clip_range_vf=0.2,
-        policy_epochs=1,
-        value_epochs=9,
-        value_freq=3,
-        vf_coef=0.5,
-        ent_coef=0.01,
-        adv_coef=0.05,
-        max_grad_norm=0.5,
-        init_fn="xavier_uniform",
+        feature_dim=50,
+        batch_size=1024,
+        lr=0.0001,
+        eps=1e-8,
+        hidden_dim=1024,
+        critic_target_tau=0.005,
+        update_every_steps=2,
+        init_fn="orthogonal",
     )
-    encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-    agent.set(encoder=encoder)
     # training
-    agent.train(num_train_steps=args.num_train_steps)
+    agent.train(num_train_steps=250000)

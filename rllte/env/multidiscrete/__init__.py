@@ -117,7 +117,7 @@ class PixelEnv(gym.Env):
 
 def make_multidiscrete_env(
     env_id: str = "MultiDiscrete-State", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Build environments with `MultiDiscrete` action space for testing.
 
     Args:

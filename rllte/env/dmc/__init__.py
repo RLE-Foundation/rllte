@@ -25,15 +25,61 @@
 
 from typing import Callable
 
-import gymnasium as gym
 import numpy as np
 from dm_control import manipulation, suite
 from dm_control.suite.wrappers import action_scale, pixels
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.dmc.wrappers import ActionDTypeWrapper, ActionRepeatWrapper, DMC2Gymnasium, FlatObsWrapper, FrameStackWrapper
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.dmc.wrappers import (ActionDTypeWrapper, 
+                                    ActionRepeatWrapper, 
+                                    DMC2Gymnasium, 
+                                    FlatObsWrapper, 
+                                    FrameStackWrapper)
+from rllte.env.utils import (EnvPoolAsync2Gymnasium, 
+                             EnvPoolSync2Gymnasium, 
+                             Gymnasium2Torch)
+
+
+def make_envpool_dmc_env(
+    env_id: str = "cartpole_balance",
+    num_envs: int = 1,
+    device: str = "cpu",
+    seed: int = 1,
+    parallel: bool = True,
+) -> Gymnasium2Torch:
+    """Create DeepMind Control Suite environments with `envpool`.
+    
+    Args:
+        env_id (str): Name of environment.
+        num_envs (int): Number of environments.
+        device (str): Device to convert the data.
+        seed (int): Random seed.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
+    
+    Returns:
+        The vectorized environments.
+    """
+    domain, task = env_id.split("_", 1)
+    env_kwargs = dict(
+        task_id=env_id,
+        env_type="gymnasium",
+        num_envs=num_envs,
+        batch_size=num_envs,
+        seed=seed,
+        frame_skip=1,
+        max_episode_steps=1000
+    )
+
+    if parallel:
+        envs = EnvPoolAsync2Gymnasium(env_kwargs)
+    else:
+        envs = EnvPoolSync2Gymnasium(env_kwargs)
+
+    envs = RecordEpisodeStatistics(envs)
+
+    return Gymnasium2Torch(envs, device, envpool=True)
 
 
 def make_dmc_env(
@@ -47,7 +93,7 @@ def make_dmc_env(
     width: int = 84,
     frame_stack: int = 3,
     action_repeat: int = 2,
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Create DeepMind Control Suite environments.
 
     Args:

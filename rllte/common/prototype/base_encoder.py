@@ -40,6 +40,6 @@ class BaseEncoder(nn.Module):
 
     def __init__(self, observation_space: gym.Space, feature_dim: int = 0) -> None:
         super().__init__()
-        assert feature_dim > 0
+        assert feature_dim > 0, "The feature dimension must be greater than 0!"
         self.observation_space = observation_space
         self.feature_dim = feature_dim

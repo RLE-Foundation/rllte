@@ -22,24 +22,26 @@
 # SOFTWARE.
 # =============================================================================
 
+
 from collections import deque
 from pathlib import Path
-from typing import Dict, Optional
+from turtle import up
+from typing import Any, Deque, Dict, List, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 
 from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
+from rllte.common.type_alias import OnPolicyType, RolloutStorageType, VecEnv
 
 
 class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -52,8 +54,8 @@ class OnPolicyAgent(BaseAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -62,19 +64,24 @@ class OnPolicyAgent(BaseAgent):
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
+        # attr annotations
+        self.policy: OnPolicyType
+        self.storage: RolloutStorageType
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self,
-              num_train_steps: int,
-              init_model_path: Optional[str] = None,
-              log_interval: int = 1,
-              eval_interval: int = 100,
-              num_eval_episodes: int = 10,
-              th_compile: bool = True
-              ) -> None:
+    def train(
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str] = None,
+        log_interval: int = 1,
+        eval_interval: int = 100,
+        save_interval: int = 100,
+        num_eval_episodes: int = 10,
+        th_compile: bool = True,
+    ) -> None:
         """Training function.
 
         Args:
@@ -82,6 +89,7 @@ class OnPolicyAgent(BaseAgent):
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
+            save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
 
@@ -92,8 +100,8 @@ class OnPolicyAgent(BaseAgent):
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
         # reset the env
-        episode_rewards = deque(maxlen=10)
-        episode_steps = deque(maxlen=10)
+        episode_rewards: Deque = deque(maxlen=10)
+        episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
@@ -139,9 +147,9 @@ class OnPolicyAgent(BaseAgent):
             if self.irs is not None:
                 intrinsic_rewards = self.irs.compute_irs(
                     samples={
-                        "obs": self.storage.observations[:-1],
+                        "obs": self.storage.observations[:-1],  # type: ignore
                         "actions": self.storage.actions,
-                        "next_obs": self.storage.observations[1:],
+                        "next_obs": self.storage.observations[1:],  # type: ignore
                     },
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
@@ -166,30 +174,33 @@ class OnPolicyAgent(BaseAgent):
                 train_metrics = {
                     "step": self.global_step,
                     "episode": self.global_episode,
-                    "episode_length": np.mean(episode_steps),
-                    "episode_reward": np.mean(episode_rewards),
+                    "episode_length": np.mean(list(episode_steps)),
+                    "episode_reward": np.mean(list(episode_rewards)),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
                 }
                 self.logger.train(msg=train_metrics)
 
+            # save model
+            if update % save_interval == 0:
+                if self.pretraining:
+                    save_dir = Path.cwd() / "pretrained_{}".format(update)
+                    save_dir.mkdir(exist_ok=True)
+                else:
+                    save_dir = Path.cwd() / "model_{}".format(update)
+                    save_dir.mkdir(exist_ok=True)
+                self.policy.save(path=save_dir, pretraining=self.pretraining)
+
         # save model
         self.logger.info("Training Accomplished!")
-        if self.pretraining:  # pretraining
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-        self.policy.save(path=save_dir, pretraining=self.pretraining)
-        self.logger.info(f"Model saved at: {save_dir}")
+        self.logger.info(f"Model saved at: {self.work_dir / 'model'}")
 
         # close env
         self.env.close()
         if self.eval_env is not None:
             self.eval_env.close()
 
-    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+    def eval(self, num_eval_episodes: int) -> Dict[str, Any]:
         """Evaluation function.
 
         Args:
@@ -198,10 +209,11 @@ class OnPolicyAgent(BaseAgent):
         Returns:
             The evaluation results.
         """
+        assert self.eval_env is not None, "No evaluation environment is provided!"
         # reset the env
         obs, infos = self.eval_env.reset(seed=self.seed)
-        episode_rewards = list()
-        episode_steps = list()
+        episode_rewards: List[float] = []
+        episode_steps: List[int] = []
 
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:

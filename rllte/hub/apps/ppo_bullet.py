@@ -23,17 +23,32 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@inproceedings{raffin2022smooth,
+  title={Smooth exploration for robotic reinforcement learning},
+  author={Raffin, Antonin and Kober, Jens and Stulp, Freek},
+  booktitle={Conference on Robot Learning},
+  pages={1634--1644},
+  year={2022},
+  organization={PMLR}
+}
+"""
+
 import argparse
+
 import torch as th
-th.set_float32_matmul_precision('high')
 
 from rllte.agent import PPO
 from rllte.env import make_bullet_env
+
+th.set_float32_matmul_precision("high")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="AntBulletEnv-v0")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=2e6)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -59,11 +74,13 @@ if __name__ == "__main__":
         tag=f"ppo_bullet_{env_name}_seed_{args.seed}",
         seed=args.seed,
         device=args.device,
+        pretraining=False,
         num_steps=2048,
         feature_dim=feature_dim,
         batch_size=64,
         lr=2e-4,
         eps=1e-5,
+        hidden_dim=512,
         clip_range=0.2,
         clip_range_vf=None,
         n_epochs=10,
@@ -73,4 +90,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=2000000, eval_interval=10)
+    agent.train(num_train_steps=args.num_train_steps, eval_interval=10)

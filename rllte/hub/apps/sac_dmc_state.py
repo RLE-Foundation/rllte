@@ -23,6 +23,18 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@inproceedings{raffin2022smooth,
+  title={Smooth exploration for robotic reinforcement learning},
+  author={Raffin, Antonin and Kober, Jens and Stulp, Freek},
+  booktitle={Conference on Robot Learning},
+  pages={1634--1644},
+  year={2022},
+  organization={PMLR}
+}
+"""
+
 import argparse
 import os
 

@@ -38,6 +38,7 @@ except Exception:
 
 try:
     from .dmc import make_dmc_env as make_dmc_env
+    from .dmc import make_envpool_dmc_env as make_envpool_dmc_env
 except Exception:
     pass
 
@@ -57,8 +58,8 @@ except Exception:
     pass
 
 try:
-    from .procgen import make_procgen_env as make_procgen_env
     from .procgen import make_envpool_procgen_env as make_envpool_procgen_env
+    from .procgen import make_procgen_env as make_procgen_env
 except Exception:
     pass
 

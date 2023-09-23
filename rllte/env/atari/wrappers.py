@@ -28,7 +28,6 @@ from typing import Any, Dict, Tuple
 import gymnasium as gym
 import numpy as np
 
-
 # The following wrappers are re-implemented based on
 # https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
 

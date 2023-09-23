@@ -25,7 +25,7 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Type
 
 import gymnasium as gym
 import torch as th
@@ -48,8 +48,8 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor network instance.
@@ -63,8 +63,11 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
+        assert isinstance(action_space, gym.spaces.Discrete), "Only discrete action space is supported!"
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -85,6 +88,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         )
         self.qnet_target = deepcopy(self.qnet)
 
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -114,7 +118,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         # synchronize the parameters of Q-network and target Q-network
         self.qnet_target.load_state_dict(self.qnet.state_dict())
         # build optimizers
-        self._optimizers['opt'] = self.opt_class(self.parameters(), **self.opt_kwargs)
+        self._optimizers["opt"] = self.opt_class(self.parameters(), **self.opt_kwargs)
 
     def explore(self, obs: th.Tensor) -> th.Tensor:
         """Explore the environment and randomly generate actions.
@@ -125,7 +129,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         Returns:
             Sampled actions.
         """
-        return th.randint(low=self.action_range[0], high=self.action_range[1], size=(obs.size()[0],), device=obs.device)
+        return th.randint(low=0, high=self.policy_action_dim, size=(obs.size()[0],), device=obs.device)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.

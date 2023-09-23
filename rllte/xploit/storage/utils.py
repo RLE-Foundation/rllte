@@ -89,7 +89,7 @@ def worker_init_fn(worker_id: int) -> None:
     Returns:
         None.
     """
-    seed = np.random.get_state()[1][0] + worker_id
+    seed = np.random.get_state()[1][0] + worker_id  # type: ignore
     np.random.seed(seed)
     random.seed(seed)
 

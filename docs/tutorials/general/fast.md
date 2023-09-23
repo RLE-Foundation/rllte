@@ -19,7 +19,7 @@ Developers only need three steps to implement an RL algorithm with **RLLTE**:
 !!! abstract "Workflow"
     1. Select an algorithm prototype;
     2. Select desired modules;
-    3. Write a update function.
+    3. Write an update function.
 
 The following example illustrates how to write an Advantage Actor-Critic (A2C) agent to solve Atari games.
 
@@ -57,7 +57,7 @@ OnPolicySharedActorCritic.describe()
 # Optimizers : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)
 # ================================================================================
 ```
-This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write a `.update` function:
+This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write an `.update` function:
 ``` py
 from torch import nn
 import torch as th
@@ -81,8 +81,9 @@ class A2C(OnPolicyAgent):
                                         num_envs=self.num_envs,
                                         batch_size=256
                                         )
+        dist = Categorical()
         # set all the modules
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
     
     def update(self):
         for _ in range(4):

@@ -23,6 +23,16 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@inproceedings{yarats2021mastering,
+  title={Mastering Visual Continuous Control: Improved Data-Augmented Reinforcement Learning},
+  author={Yarats, Denis and Fergus, Rob and Lazaric, Alessandro and Pinto, Lerrel},
+  booktitle={International Conference on Learning Representations},
+  year={2021}
+}
+"""
+
 import argparse
 import os
 
@@ -36,6 +46,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="finger_spin")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=250000)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -77,4 +88,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=250000, log_interval=500, th_compile=False)
+    agent.train(num_train_steps=args.num_train_steps, log_interval=500, th_compile=False)

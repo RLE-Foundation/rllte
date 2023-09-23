@@ -31,12 +31,16 @@ from typing import Any, Dict, Optional, Tuple, Type
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
+
+# from torch.distributions import Distribution
 from torch.nn import functional as F
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from .utils import get_actor, OnPolicyCritic, OnPolicyGAE
+
+from .utils import OnPolicyCritic, OnPolicyGAE, get_actor
+
 
 class OnPolicyDecoupledActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `DAAC`.
@@ -47,8 +51,8 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -62,8 +66,10 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -74,29 +80,39 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             init_fn=init_fn,
         )
 
-        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
-            f"Unsupported action type {self.action_type}!"
+        assert self.action_type in [
+            "Discrete",
+            "Box",
+            "MultiBinary",
+            "MultiDiscrete",
+        ], f"Unsupported action type {self.action_type}!"
 
         # build actor, critic and advantage estimator
-        actor_kwargs = dict(obs_shape=self.obs_shape,
-                            action_dim=self.policy_action_dim, 
-                            feature_dim=self.feature_dim, 
-                            hidden_dim=self.hidden_dim)
-        if self.action_type == "MultiDiscrete":
-            actor_kwargs['nvec'] = self.nvec
+        actor_kwargs = dict(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+        if self.nvec is not None:
+            actor_kwargs["nvec"] = self.nvec
         self.actor = get_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
 
-        self.critic = OnPolicyCritic(obs_shape=self.obs_shape, 
-                                     action_dim=self.policy_action_dim, 
-                                     feature_dim=self.feature_dim, 
-                                     hidden_dim=self.hidden_dim
-                                     )
-        self.gae = OnPolicyGAE(obs_shape=self.obs_shape, 
-                               action_dim=self.policy_action_dim, 
-                               feature_dim=self.feature_dim, 
-                               hidden_dim=self.hidden_dim
-                               )
-    
+        self.critic = OnPolicyCritic(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+        # TODO: revise the action_dim for `MultiDiscrete`
+        self.gae = OnPolicyGAE(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim if self.action_type != "MultiDiscrete" else self.action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -111,12 +127,23 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
+    def explore(self, obs: th.Tensor) -> th.Tensor:
+        """Explore the environment and randomly generate actions.
+
+        Args:
+            obs (th.Tensor): Observation from the environment.
+
+        Returns:
+            Sampled actions.
+        """
+        raise NotImplementedError
+
+    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Distribution): Distribution class.
+            dist (Type[Distribution]): Distribution class.
 
         Returns:
             None.
@@ -135,8 +162,8 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
-        self._optimizers['actor_opt'] = th.optim.Adam(self.actor_params, **self.opt_kwargs)
-        self._optimizers['critic_opt'] = th.optim.Adam(self.critic_params, **self.opt_kwargs)
+        self._optimizers["actor_opt"] = th.optim.Adam(self.actor_params, **self.opt_kwargs)
+        self._optimizers["critic_opt"] = th.optim.Adam(self.critic_params, **self.opt_kwargs)
 
     def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
@@ -172,7 +199,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         """
         return self.critic(self.critic_encoder(obs))
 
-    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
+    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Evaluate actions according to the current policy given the observations.
 
         Args:

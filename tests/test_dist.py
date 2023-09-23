@@ -34,14 +34,14 @@ def test_aug(dist_cls, device):
 
     if dist_cls in [Categorical, Bernoulli]:
         logits = th.rand(size=(batch_size, action_dim), device=device)
-        dist = dist_cls(logits=logits)
+        dist = dist_cls()(logits=logits)
         dist.log_prob(dist.sample())
         dist.log_prob(dist.mean)
         dist.entropy()
 
     if dist_cls in [MultiCategorical]:
         logits = [th.rand(size=(batch_size, action_dim), device=device) for _ in range(4)]
-        dist = dist_cls(logits=logits)
+        dist = dist_cls()(logits=logits)
         dist.log_prob(dist.sample())
         dist.log_prob(dist.mean)
         dist.entropy()
@@ -49,14 +49,13 @@ def test_aug(dist_cls, device):
     if dist_cls in [DiagonalGaussian, SquashedNormal]:
         mu = th.randn(size=(batch_size, action_dim), device=device)
         sigma = th.rand_like(mu)
-        dist = dist_cls(loc=mu, scale=sigma)
+        dist = dist_cls()(mu, sigma)
         dist.log_prob(dist.sample())
         dist.log_prob(dist.mean)
 
     if dist_cls in [NormalNoise, OrnsteinUhlenbeckNoise, TruncatedNormalNoise]:
         noiseless_action = th.rand(size=(batch_size, action_dim), device=device)
-        dist = dist_cls()
-        dist.reset(noiseless_action, step=0)
+        dist = dist_cls()(noiseless_action)
         dist.sample()
         dist.mean
 

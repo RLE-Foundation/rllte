@@ -30,7 +30,8 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.preprocessing import process_observation_space, process_action_space
+from rllte.common.preprocessing import process_action_space, process_observation_space
+
 
 class BaseStorage(ABC):
     """Base class of the storage module.
@@ -54,7 +55,7 @@ class BaseStorage(ABC):
         device: str,
         storage_size: int,
         batch_size: int,
-        num_envs: int
+        num_envs: int,
     ) -> None:
         self.observation_space = observation_space
         self.action_space = action_space
@@ -80,7 +81,7 @@ class BaseStorage(ABC):
             Torch tensor.
         """
         return th.as_tensor(x, device=self.device).float()
-    
+
     @abstractmethod
     def reset(self) -> None:
         """Reset the storage."""

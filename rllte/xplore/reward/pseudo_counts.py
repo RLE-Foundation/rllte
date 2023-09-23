@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple
+from typing import Deque, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -152,7 +152,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
             action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
-        self.episodic_memory = deque(maxlen=capacity)
+        self.episodic_memory: Deque = deque(maxlen=capacity)
         self.k = k
         self.kernel_cluster_distance = kernel_cluster_distance
         self.kernel_epsilon = kernel_epsilon
@@ -163,7 +163,7 @@ class PseudoCounts(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.loss = nn.CrossEntropyLoss()
         else:
-            self.loss = nn.MSELoss()
+            self.loss = nn.MSELoss()  # type: ignore[assignment]
         self.batch_size = batch_size
 
     def pseudo_counts(self, e: th.Tensor) -> th.Tensor:

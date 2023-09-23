@@ -248,11 +248,13 @@ class GIRM(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.action_loss = nn.CrossEntropyLoss()
         else:
-            self.action_loss = nn.MSELoss()
+            self.action_loss = nn.MSELoss()  # type: ignore[assignment]
 
         self.opt = optim.Adam(lr=lr, params=self.vae.parameters())
 
-    def get_vae_loss(self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor) -> th.Tensor:
+    def get_vae_loss(
+        self, recon_x: th.Tensor, x: th.Tensor, mean: th.Tensor, logvar: th.Tensor
+    ) -> Tuple[th.Tensor, th.Tensor]:
         """Compute the vae loss.
 
         Args:

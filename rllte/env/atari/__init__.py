@@ -38,18 +38,14 @@ from rllte.env.atari.wrappers import (EpisodicLifeEnv,
                                       FireResetEnv, 
                                       MaxAndSkipEnv, 
                                       NoopResetEnv)
-from rllte.env.utils import (Gymnasium2Torch,
-                             EnvPoolAsync2Gymnasium,
-                             EnvPoolSync2Gymnasium)
+from rllte.env.utils import (EnvPoolAsync2Gymnasium, 
+                             EnvPoolSync2Gymnasium, 
+                             Gymnasium2Torch)
 
 
 def make_envpool_atari_env(
-        env_id: str = "Alien-v5",
-        num_envs: int = 8,
-        device: str = "cpu",
-        seed: int = 1,
-        parallel: bool = True
-) -> gym.Env:
+    env_id: str = "Alien-v5", num_envs: int = 8, device: str = "cpu", seed: int = 1, parallel: bool = True
+) -> Gymnasium2Torch:
     """Create Atari environments with `envpool`.
 
     Args:
@@ -59,23 +55,25 @@ def make_envpool_atari_env(
         seed (int): Random seed.
         parallel (bool): `True` for creating asynchronous environments, and `False`
             for creating synchronous environments.
-    
+
     Returns:
         The vectorized environments.
     """
-    env_kwargs = dict(task_id=env_id,
-                      env_type="gymnasium",
-                      num_envs=num_envs,
-                      batch_size=num_envs,
-                      seed=seed,
-                      episodic_life=True,
-                      reward_clip=False)
+    env_kwargs = dict(
+        task_id=env_id,
+        env_type="gymnasium",
+        num_envs=num_envs,
+        batch_size=num_envs,
+        seed=seed,
+        episodic_life=True,
+        reward_clip=False,
+    )
 
     if parallel:
         envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
-    
+
     envs = RecordEpisodeStatistics(envs)
     envs = TransformReward(envs, lambda reward: np.sign(reward))
 
@@ -83,13 +81,13 @@ def make_envpool_atari_env(
 
 
 def make_atari_env(
-        env_id: str = "Alien-v5",
-        num_envs: int = 8,
-        device: str = "cpu",
-        seed: int = 1,
-        frame_stack: int = 4,
-        parallel: bool = True
-) -> gym.Env:
+    env_id: str = "Alien-v5",
+    num_envs: int = 8,
+    device: str = "cpu",
+    seed: int = 1,
+    frame_stack: int = 4,
+    parallel: bool = True,
+) -> Gymnasium2Torch:
     """Create Atari environments.
 
     Args:

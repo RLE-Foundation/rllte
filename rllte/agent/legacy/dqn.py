@@ -25,12 +25,12 @@
 
 from typing import Dict, Optional
 
-import gymnasium as gym
 import torch as th
 from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OffPolicyDoubleQNetwork
 from rllte.xploit.storage import VanillaReplayStorage
@@ -40,8 +40,8 @@ class DQN(OffPolicyAgent):
     """Deep Q-Network (DQN) agent.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -65,8 +65,8 @@ class DQN(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -105,8 +105,10 @@ class DQN(OffPolicyAgent):
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # create policy
         policy = OffPolicyDoubleQNetwork(
@@ -134,7 +136,7 @@ class DQN(OffPolicyAgent):
 
     def update(self) -> Dict[str, float]:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics = {}
+        metrics: Dict[str, float] = {}
         if self.global_step % self.update_every_steps != 0:
             return metrics
 
@@ -176,9 +178,9 @@ class DQN(OffPolicyAgent):
         huber_loss = F.mse_loss(q_values, target_q_values)
 
         # optimize the qnet
-        self.policy.optimizers['opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["opt"].zero_grad(set_to_none=True)
         huber_loss.backward()
-        self.policy.optimizers['opt'].step()
+        self.policy.optimizers["opt"].step()
 
         # udpate target qnet
         if self.global_step % self.target_update_freq:

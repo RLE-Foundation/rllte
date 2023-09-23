@@ -86,11 +86,11 @@ docs = [
 # Same as Black.
 line-length = 127
 # Assume Python 3.7
-target-version = "py37"
+target-version = "py38"
 # See https://beta.ruff.rs/docs/rules/
 select = ["E", "F", "B", "UP", "C90", "RUF"]
 # Ignore explicit stacklevel`
-ignore = ["B028"]
+ignore = ["B028", "B008"]
 
 [tool.black]
 line-length = 127
@@ -103,3 +103,13 @@ src_paths = ["rllte"]
 [tool.pytype]
 inputs = ["rllte"]
 disable = ["pyi-error"]
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
+exclude = ["rllte/env", 
+"rllte/hub/apps",
+"rllte/evaluation/visualization.py"
+]
+# disable_error_code = ["union-attr", "operator", "arg-type", "assignment"]

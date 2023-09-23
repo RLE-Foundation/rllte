@@ -23,21 +23,18 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import (Bernoulli, 
-                                       Categorical, 
-                                       DiagonalGaussian,
-                                       MultiCategorical)
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
 
 
 class PPG(OnPolicyAgent):
@@ -45,8 +42,8 @@ class PPG(OnPolicyAgent):
         Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (Optional[gym.Env]): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -76,8 +73,8 @@ class PPG(OnPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -128,16 +125,18 @@ class PPG(OnPolicyAgent):
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
         if self.action_type == "Discrete":
-            dist = Categorical
+            dist = Categorical()
         elif self.action_type == "Box":
-            dist = DiagonalGaussian
+            dist = DiagonalGaussian()  # type: ignore[assignment]
         elif self.action_type == "MultiBinary":
-            dist = Bernoulli
+            dist = Bernoulli()  # type: ignore[assignment]
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
@@ -150,7 +149,7 @@ class PPG(OnPolicyAgent):
             opt_class=th.optim.Adam,
             opt_kwargs=dict(lr=lr, eps=eps),
             init_fn=init_fn,
-            aux_critic=True
+            aux_critic=True,
         )
 
         # default storage
@@ -168,34 +167,27 @@ class PPG(OnPolicyAgent):
 
         # auxiliary storages
         if self.action_type == "Box":
-            self.get_dist_fn = lambda x: self.dist(*x.chunk(2, dim=1))
+            self.get_dist_fn = lambda x: self.dist(*x.chunk(2, dim=1))  # type: ignore
             self.policy_outputs_dim = self.policy_action_dim * 2
         else:
-            self.get_dist_fn = lambda x: self.dist(x)
+            self.get_dist_fn = lambda x: self.dist(x)  # type: ignore
             self.policy_outputs_dim = self.policy_action_dim
 
         self.num_aux_rollouts = self.num_envs * self.policy_epochs
-        self.aux_obs = th.empty(
-            size=(num_steps, self.num_aux_rollouts, *self.obs_shape),
-            device="cpu",
-            dtype=th.float32)
-        self.aux_returns = th.empty(
-            size=(num_steps, self.num_aux_rollouts),
-            device="cpu",
-            dtype=th.float32)
+        self.aux_obs = th.empty(size=(num_steps, self.num_aux_rollouts, *self.obs_shape), device="cpu", dtype=th.float32)
+        self.aux_returns = th.empty(size=(num_steps, self.num_aux_rollouts), device="cpu", dtype=th.float32)
         self.aux_policy_outputs = th.empty(
-            size=(num_steps, self.num_aux_rollouts, self.policy_outputs_dim),
-            device="cpu",
-            dtype=th.float32)
+            size=(num_steps, self.num_aux_rollouts, self.policy_outputs_dim), device="cpu", dtype=th.float32
+        )
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> Dict[str, Any]:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         # save the observations and returns for auxiliary phase
         idx = int((self.global_episode // self.num_envs) % self.policy_epochs)
         self.aux_obs[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
-            self.storage.observations[:-1].clone())
-        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(
-            self.storage.returns.clone())
+            self.storage.observations[:-1].clone()  # type: ignore
+        )
+        self.aux_returns[:, idx * self.num_envs : (idx + 1) * self.num_envs].copy_(self.storage.returns.clone())
 
         # policy phase
         total_policy_loss = [0.0]
@@ -204,9 +196,7 @@ class PPG(OnPolicyAgent):
 
         for batch in self.storage.sample():
             # evaluate sampled actions
-            new_values, new_log_probs, entropy = self.policy.evaluate_actions(
-                obs=batch.observations, actions=batch.actions
-            )
+            new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
 
             # policy loss part
             ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -226,11 +216,11 @@ class PPG(OnPolicyAgent):
                 value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
 
             # update
-            self.policy.optimizers['opt'].zero_grad(set_to_none=True)
+            self.policy.optimizers["opt"].zero_grad(set_to_none=True)
             loss = value_loss * self.vf_coef + policy_loss - entropy * self.ent_coef
             loss.backward()
             nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.policy.optimizers['opt'].step()
+            self.policy.optimizers["opt"].step()
 
             total_policy_loss.append(policy_loss.item())
             total_value_loss.append(value_loss.item())
@@ -250,13 +240,14 @@ class PPG(OnPolicyAgent):
             with th.no_grad():
                 # get policy outputs
                 policy_outputs_ = self.policy.get_policy_outputs(
-                    self.aux_obs[:, i * self.num_envs : (i + 1) * self.num_envs].to(self.device).view(
-                    (-1, *self.obs_shape)))
+                    self.aux_obs[:, i * self.num_envs : (i + 1) * self.num_envs].to(self.device).view((-1, *self.obs_shape))
+                )
                 self.aux_policy_outputs[:, i * self.num_envs : (i + 1) * self.num_envs] = policy_outputs_.view(
-                    (self.num_steps, self.num_envs, self.policy_outputs_dim))
-        
-        total_aux_value_loss = [0.]
-        total_kl_loss = [0.]
+                    (self.num_steps, self.num_envs, self.policy_outputs_dim)
+                )
+
+        total_aux_value_loss = [0.0]
+        total_kl_loss = [0.0]
 
         for _ in range(self.aux_epochs):
             aux_inds = np.arange(self.num_aux_rollouts)
@@ -265,9 +256,10 @@ class PPG(OnPolicyAgent):
                 batch_inds = aux_inds[j : j + self.num_aux_mini_batch]
                 batch_aux_obs = self.aux_obs[:, batch_inds].view((-1, *self.obs_shape)).to(self.device)
                 batch_aux_returns = self.aux_returns[:, batch_inds].flatten().to(self.device)
-                batch_aux_policy_outputs = self.aux_policy_outputs[:, batch_inds].view(
-                    (-1, self.policy_outputs_dim)).to(self.device)
-                                
+                batch_aux_policy_outputs = (
+                    self.aux_policy_outputs[:, batch_inds].view((-1, self.policy_outputs_dim)).to(self.device)
+                )
+
                 # evaluate the old policy
                 new_dist, new_values, new_aux_values = self.policy.get_dist_and_aux_value(batch_aux_obs)
                 # get old distributions
@@ -282,15 +274,12 @@ class PPG(OnPolicyAgent):
                 (value_loss + aux_value_loss + self.kl_coef * kl_loss).backward()
 
                 if (j + 1) % self.num_aux_grad_accum == 0:
-                    self.policy.optimizers['opt'].zero_grad(set_to_none=True)
+                    self.policy.optimizers["opt"].zero_grad(set_to_none=True)
                     nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-                    self.policy.optimizers['opt'].step()
+                    self.policy.optimizers["opt"].step()
 
                 total_aux_value_loss.append(value_loss.item())
                 total_aux_value_loss.append(aux_value_loss.item())
                 total_kl_loss.append(kl_loss.item())
-        
-        return {
-            "Auxiliary Value Loss": np.mean(total_aux_value_loss),
-            "KL Loss": np.mean(total_kl_loss)
-        }
+
+        return {"Auxiliary Value Loss": np.mean(total_aux_value_loss), "KL Loss": np.mean(total_kl_loss)}

@@ -23,33 +23,40 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@article{raffin2021stable,
+  title={Stable-baselines3: Reliable reinforcement learning implementations},
+  author={Raffin, Antonin and Hill, Ashley and Gleave, Adam and Kanervisto, Anssi and Ernestus, Maximilian and Dormann, Noah},
+  journal={The Journal of Machine Learning Research},
+  volume={22},
+  number={1},
+  pages={12348--12355},
+  year={2021},
+  publisher={JMLRORG}
+}
+"""
+
 import argparse
+
 import torch as th
-th.set_float32_matmul_precision('high')
 
 from rllte.agent import PPO
 from rllte.env import make_atari_env
+
+th.set_float32_matmul_precision("high")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="SpaceInvadersNoFrameskip-v4")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=5e7)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     # create env
-    env = make_atari_env(
-        env_id=args.env_id,
-        device=args.device,
-        num_envs=8,
-        seed=args.seed
-    )
-    eval_env = make_atari_env(
-        env_id=args.env_id,
-        device=args.device,
-        num_envs=1,
-        seed=args.seed
-    )
+    env = make_atari_env(env_id=args.env_id, device=args.device, num_envs=8, seed=args.seed)
+    eval_env = make_atari_env(env_id=args.env_id, device=args.device, num_envs=1, seed=args.seed)
     # create agent
     feature_dim = 512
     agent = PPO(
@@ -72,4 +79,4 @@ if __name__ == "__main__":
         init_fn="orthogonal",
     )
     # training
-    agent.train(num_train_steps=50000000)
+    agent.train(num_train_steps=args.num_train_steps)

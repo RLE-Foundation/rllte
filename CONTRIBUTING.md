@@ -64,7 +64,7 @@ To run tests with `pytest`:
 make pytest
 ```
 
-Type checking with `pytype`:
+Type checking with `pytype` and `mypy`:
 
 ```
 make type

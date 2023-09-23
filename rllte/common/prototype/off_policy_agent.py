@@ -25,22 +25,22 @@
 
 from collections import deque
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Deque, Dict, List, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 
 from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
+from rllte.common.type_alias import OffPolicyType, ReplayStorageType, VecEnv
 
 
 class OffPolicyAgent(BaseAgent):
     """Trainer for off-policy algorithms.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (Optional[VecEnv]): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -54,8 +54,8 @@ class OffPolicyAgent(BaseAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -64,8 +64,10 @@ class OffPolicyAgent(BaseAgent):
         **kwargs,
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
-
         self.num_init_steps = num_init_steps
+        # attr annotations
+        self.policy: OffPolicyType
+        self.storage: ReplayStorageType
 
     def update(self) -> Dict[str, float]:
         """Update the agent. Implemented by individual algorithms."""
@@ -77,8 +79,9 @@ class OffPolicyAgent(BaseAgent):
         init_model_path: Optional[str] = None,
         log_interval: int = 1,
         eval_interval: int = 5000,
+        save_interval: int = 5000,
         num_eval_episodes: int = 10,
-        th_compile: bool = True,
+        th_compile: bool = True
     ) -> None:
         """Training function.
 
@@ -87,6 +90,7 @@ class OffPolicyAgent(BaseAgent):
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
+            save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
 
@@ -97,8 +101,8 @@ class OffPolicyAgent(BaseAgent):
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
         # reset the env
-        episode_rewards = deque(maxlen=10)
-        episode_steps = deque(maxlen=10)
+        episode_rewards: Deque = deque(maxlen=10)
+        episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
 
         # training loop
@@ -150,8 +154,8 @@ class OffPolicyAgent(BaseAgent):
                 train_metrics = {
                     "step": self.global_step,
                     "episode": self.global_episode,
-                    "episode_length": np.mean(episode_steps),
-                    "episode_reward": np.mean(episode_rewards),
+                    "episode_length": np.mean(list(episode_steps)),
+                    "episode_reward": np.mean(list(episode_rewards)),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
                 }
@@ -165,23 +169,26 @@ class OffPolicyAgent(BaseAgent):
             # set the current observation
             obs = next_obs
 
+            # save model
+            if self.global_step % save_interval == 0:
+                if self.pretraining:
+                    save_dir = Path.cwd() / "pretrained_{}".format(self.global_step)
+                    save_dir.mkdir(exist_ok=True)
+                else:
+                    save_dir = Path.cwd() / "model_{}".format(self.global_step)
+                    save_dir.mkdir(exist_ok=True)
+                self.policy.save(path=save_dir, pretraining=self.pretraining)
+
         # save model
         self.logger.info("Training Accomplished!")
-        if self.pretraining:  # pretraining
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-        self.policy.save(path=save_dir, pretraining=self.pretraining)
-        self.logger.info(f"Model saved at: {save_dir}")
+        self.logger.info(f"Model saved at: {self.work_dir / 'model'}")
 
         # close env
         self.env.close()
         if self.eval_env is not None:
             self.eval_env.close()
 
-    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+    def eval(self, num_eval_episodes: int) -> Dict[str, Any]:
         """Evaluation function.
 
         Args:
@@ -190,10 +197,11 @@ class OffPolicyAgent(BaseAgent):
         Returns:
             The evaluation results.
         """
+        assert self.eval_env is not None, "No evaluation environment is provided!"
         # reset the env
         obs, infos = self.eval_env.reset(seed=self.seed)
-        episode_rewards = list()
-        episode_steps = list()
+        episode_rewards: List[float] = []
+        episode_steps: List[int] = []
 
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:

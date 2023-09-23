@@ -117,7 +117,7 @@ class PixelEnv(gym.Env):
 
 def make_multibinary_env(
     env_id: str = "MultiBinary-State", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Build environments with `MultiBinary` action space for testing.
 
     Args:

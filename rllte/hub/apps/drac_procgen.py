@@ -23,6 +23,18 @@
 # =============================================================================
 
 
+"""
+The following hyperparameters are from the paper:
+@article{raileanu2021automatic,
+  title={Automatic data augmentation for generalization in reinforcement learning},
+  author={Raileanu, Roberta and Goldstein, Maxwell and Yarats, Denis and Kostrikov, Ilya and Fergus, Rob},
+  journal={Advances in Neural Information Processing Systems},
+  volume={34},
+  pages={5402--5415},
+  year={2021}
+}
+"""
+
 import argparse
 
 from rllte.agent import DrAC
@@ -33,6 +45,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--env-id", type=str, default="bigfish")
 parser.add_argument("--device", type=str, default="cuda")
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--num-train-steps", type=int, default=2.5e7)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -81,4 +94,4 @@ if __name__ == "__main__":
     encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
     agent.set(encoder=encoder)
     # training
-    agent.train(num_train_steps=25000000)
+    agent.train(num_train_steps=args.num_train_steps)

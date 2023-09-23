@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple
+from typing import Deque, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -199,7 +199,7 @@ class RIDE(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss()  # type: ignore[assignment]
 
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_dim).to(self._device)
 
@@ -209,7 +209,7 @@ class RIDE(BaseIntrinsicRewardModule):
         self.batch_size = batch_size
 
         # episodic memory
-        self.episodic_memory = deque(maxlen=capacity)
+        self.episodic_memory: Deque = deque(maxlen=capacity)
         self.k = k
         self.kernel_cluster_distance = kernel_cluster_distance
         self.kernel_epsilon = kernel_epsilon
