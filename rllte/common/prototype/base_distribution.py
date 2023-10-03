@@ -23,6 +23,7 @@
 # =============================================================================
 
 
+from typing import Any
 import torch as th
 from torch.distributions import Distribution
 
@@ -35,5 +36,8 @@ class BaseDistribution(Distribution):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(validate_args=False)
 
+    def __call__(self, *args, **kwargs) -> Any:
+        """Call the distribution."""
+
     def sample(self, *args, **kwargs) -> th.Tensor:  # type: ignore
-        """Generate samples"""
+        """Generate samples."""

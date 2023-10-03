@@ -33,5 +33,6 @@ from .legacy.ddpg import DDPG as DDPG
 from .legacy.dqn import DQN as DQN
 from .legacy.ppo import PPO as PPO
 from .legacy.sac import SAC as SAC
+from .legacy.sacd import SACDiscrete as SACDiscrete
 from .legacy.td3 import TD3 as TD3
 from .ppg import PPG as PPG

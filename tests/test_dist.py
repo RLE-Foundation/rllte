@@ -57,6 +57,6 @@ def test_aug(dist_cls, device):
         noiseless_action = th.rand(size=(batch_size, action_dim), device=device)
         dist = dist_cls()(noiseless_action)
         dist.sample()
-        dist.mean
+        print(dist.mean)
 
     print("Distribution test passed!")

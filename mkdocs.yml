@@ -116,7 +116,9 @@ nav:
         - A2C: api_docs/agent/legacy/a2c.md
         - DQN: api_docs/agent/legacy/dqn.md
         - SAC: api_docs/agent/legacy/sac.md
+        - SACDiscrete: api_docs/agent/legacy/sacd.md
         - DDPG: api_docs/agent/legacy/ddpg.md
+        - TD3: api_docs/agent/legacy/td3.md
       - Current:
         - DrQv2: api_docs/agent/drqv2.md
         - DAAC: api_docs/agent/daac.md
@@ -192,26 +194,30 @@ nav:
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
     
     - Hub: 
-      - apps: 
-        - ppo_procgen: ...
+      - applications: 
+        - Atari: api_docs/hub/applications/atari.md
+        - DMControl: api_docs/hub/applications/dmc.md
+        - Procgen: api_docs/hub/applications/procgen.md
+        - MiniGrid: api_docs/hub/applications/minigrid.md
       - datasets:
         - Atari: api_docs/hub/datasets/atari.md
-        - PyBullet: api_docs/hub/datasets/pybullet.md
+        - DMControl: api_docs/hub/datasets/dmc.md
         - Procgen: api_docs/hub/datasets/procgen.md
+        - MiniGrid: api_docs/hub/datasets/minigrid.md
       - models:
+        - Atari: api_docs/hub/models/atari.md
+        - DMControl: api_docs/hub/models/dmc.md
         - Procgen: api_docs/hub/models/procgen.md
+        - MiniGrid: api_docs/hub/models/minigrid.md
     
     - Env:
       - Packaged Environments:
         - make_atari_env: api_docs/env/atari/__init__.md
         - make_bullet_env: api_docs/env/bullet/__init__.md
-        - make_bitflipping_env: api_docs/env/bitflipping/__init__.md
         - make_dmc_env: api_docs/env/dmc/__init__.md
-        - make_minigrid_env: api_docs/env/minigrid/__init__.md
-        - make_multibinary_env: api_docs/env/multibinary/__init__.md
         - make_procgen_env: api_docs/env/procgen/__init__.md
-        # - make_robosuite_env: api_docs/env/robosuite/__init__.md
         - make_envpool_atari_env: api_docs/env/atari/__init__.md
+        - make_envpool_procgen_env: api_docs/env/procgen/__init__.md
       - make_rllte_env: api_docs/env/utils.md
     
     - Evaluation:

@@ -233,6 +233,9 @@ class ICM(BaseIntrinsicRewardModule):
 
         return intrinsic_rewards * beta_t
 
+    def add(self, samples: Dict) -> None:
+        """Add new samples to the intrinsic reward module."""
+
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 

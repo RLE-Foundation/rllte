@@ -12,7 +12,7 @@ hide:
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <div align="center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ShVdiHHyXFM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://youtu.be/PMF6fa72bmE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <br>
 An introduction to RLLTE.
 </div>
@@ -39,7 +39,7 @@ See [Fast Algorithm Development]() for detailed examples.
 ## **Project Evolution**
 **RLLTE** selects RL algorithms based on the following tenet:
 
-- Generality takes all;
+- Generality is the most important;
 - Improvements in sample efficiency or generalization ability;
 - Excellent performance on recognized benchmarks;
 - Promising tools for RL.
@@ -47,11 +47,11 @@ See [Fast Algorithm Development]() for detailed examples.
 ## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:
 ``` tex
-@software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
-  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
-  url = {https://github.com/RLE-Foundation/rllte},
-  year = {2023},
+@article{yuan2022intrinsically,
+  title={Intrinsically-motivated reinforcement learning: A brief introduction},
+  author={Yuan, Mingqi},
+  journal={arXiv preprint arXiv:2309.16382},
+  year={2022}
 }
 ```
 

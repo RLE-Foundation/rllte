@@ -120,17 +120,6 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         # build optimizers
         self._optimizers["opt"] = self.opt_class(self.parameters(), **self.opt_kwargs)
 
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
-
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-        return th.randint(low=0, high=self.policy_action_dim, size=(obs.size()[0],), device=obs.device)
-
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
 
@@ -147,31 +136,19 @@ class OffPolicyDoubleQNetwork(BasePolicy):
 
         return actions
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.qnet)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

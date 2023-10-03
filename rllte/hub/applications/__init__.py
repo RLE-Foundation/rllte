@@ -23,39 +23,7 @@
 # =============================================================================
 
 
-import argparse
-import os
-
-os.environ["OMP_NUM_THREADS"] = "1"
-
-from rllte.agent import IMPALA  # noqa: E402
-from rllte.env import make_bullet_env  # noqa: E402
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="AntBulletEnv-v0")
-parser.add_argument("--device", type=str, default="cuda")
-parser.add_argument("--seed", type=int, default=1)
-parser.add_argument("--num-train-steps", type=int, default=30000000)
-
-if __name__ == "__main__":
-    args = parser.parse_args()
-    # create env
-    env = make_bullet_env(env_id=args.env_id, device=args.device, seed=args.seed, num_envs=45, parallel=False)
-
-    eval_env = make_bullet_env(env_id=args.env_id, device=args.device, seed=args.seed, num_envs=1, parallel=False)
-
-    # create agent
-    agent = IMPALA(
-        env=env,
-        eval_env=eval_env,
-        tag=f"impala_bullet_{args.env_id}_seed_{args.seed}",
-        seed=args.seed,
-        device=args.device,
-        num_steps=80,
-        num_actors=45,
-        num_learners=4,
-        num_storages=60,
-        feature_dim=512,
-    )
-    # training
-    agent.train(num_train_steps=args.num_train_steps)
+from .atari import Atari as Atari
+from .dmc import DMControl as DMControl
+from .minigrid import MiniGrid as MiniGrid
+from .procgen import Procgen as Procgen

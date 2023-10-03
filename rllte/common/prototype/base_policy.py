@@ -83,7 +83,7 @@ class BasePolicy(ABC, nn.Module):
 
         # attr annotations
         self.encoder: nn.Module
-        self.dist: Type[BaseDistribution]
+        self.dist: BaseDistribution
 
     @property
     def optimizers(self) -> Dict[str, th.optim.Optimizer]:
@@ -94,10 +94,6 @@ class BasePolicy(ABC, nn.Module):
     @abstractmethod
     def describe() -> None:
         """Describe the policy."""
-
-    @abstractmethod
-    def explore(self, *args, **kwargs) -> th.Tensor:
-        """Explore the environment and randomly generate actions."""
 
     @abstractmethod
     def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor, Dict[str, th.Tensor]]]:
@@ -119,7 +115,6 @@ class BasePolicy(ABC, nn.Module):
     def save(self, *args, **kwargs) -> None:
         """Save models."""
 
-    @abstractmethod
     def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.
 
@@ -130,3 +125,5 @@ class BasePolicy(ABC, nn.Module):
         Returns:
             None.
         """
+        params = th.load(path, map_location=device)
+        self.load_state_dict(params)

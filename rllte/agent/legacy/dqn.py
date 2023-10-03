@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Optional
 
 import torch as th
 from torch.nn import functional as F
@@ -48,6 +48,7 @@ class DQN(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
+        storage_size (int): The capacity of the storage.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -72,6 +73,7 @@ class DQN(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
+        storage_size: int = 10000,
         feature_dim: int = 50,
         batch_size: int = 32,
         lr: float = 1e-3,
@@ -125,20 +127,19 @@ class DQN(OffPolicyAgent):
         storage = VanillaReplayStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
+            storage_size=storage_size,
             device=device,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            storage_size=10000,
         )
 
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage)
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> None:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics: Dict[str, float] = {}
         if self.global_step % self.update_every_steps != 0:
-            return metrics
+            return None
 
         # sample a batch
         batch = self.storage.sample()
@@ -183,7 +184,10 @@ class DQN(OffPolicyAgent):
         self.policy.optimizers["opt"].step()
 
         # udpate target qnet
-        if self.global_step % self.target_update_freq:
+        if self.global_step % self.target_update_freq == 0:
             utils.soft_update_params(self.policy.qnet, self.policy.qnet_target, self.tau)
 
-        return {"Huber Loss": huber_loss.item(), "Q": q_values.mean().item(), "Target Q": target_q_values.mean().item()}
+        # record metrics
+        self.logger.record("train/q_loss", huber_loss.item())
+        self.logger.record("train/q", q_values.mean().item())
+        self.logger.record("train/target_q", target_q_values.mean().item())

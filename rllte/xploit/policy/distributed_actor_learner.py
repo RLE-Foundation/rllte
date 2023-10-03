@@ -120,12 +120,12 @@ class DistributedActorLearner(BasePolicy):
         """
         raise NotImplementedError
 
-    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
+    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Distribution): Distribution class.
+            dist (Distribution): Distribution.
 
         Returns:
             None.
@@ -162,17 +162,19 @@ class DistributedActorLearner(BasePolicy):
         """
         self.learner.to(device)
 
-    def save(self, path: Path) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
+            pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         export_model = ExportModel(encoder=self.learner.encoder, actor=self.learner.actor)
-        th.save(export_model, path / "agent.pth")
+        th.save(export_model, path / f"agent_{global_step}.pth")
 
     def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.

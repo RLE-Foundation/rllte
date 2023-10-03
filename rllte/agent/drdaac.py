@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import numpy as np
 import torch as th
@@ -173,7 +173,7 @@ class DrDAAC(OnPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
-    def update(self) -> Dict[str, Any]:
+    def update(self) -> None:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_adv_loss = [0.0]
@@ -249,9 +249,8 @@ class DrDAAC(OnPolicyAgent):
 
         self.num_policy_updates += 1
 
-        return {
-            "Policy Loss": np.mean(total_policy_loss),
-            "Value Loss": np.mean(total_value_loss),
-            "Entropy": np.mean(total_entropy_loss),
-            "Advantage Loss": np.mean(total_adv_loss),
-        }
+        # record metrics
+        self.logger.record("train/policy_loss", np.mean(total_policy_loss))
+        self.logger.record("train/adv_loss", np.mean(total_adv_loss))
+        self.logger.record("train/value_loss", np.mean(total_value_loss))
+        self.logger.record("train/entropy", np.mean(total_entropy_loss))

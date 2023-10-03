@@ -23,7 +23,44 @@
 # =============================================================================
 
 
-from .atari import Atari as Atari
-from .dmc import DMControl as DMControl
-from .minigrid import MiniGrid as MiniGrid
-from .procgen import Procgen as Procgen
+import torch as th
+from huggingface_hub import hf_hub_download
+from torch import nn
+
+
+class DMControl:
+    """Trained models of various RL algorithms on the full dmc benchmark.
+    Environment link: https://github.com/google-deepmind/dm_control
+    Number of environments: 24
+    Number of training steps: 1,000,000
+    Number of seeds: 10
+    Added algorithms: [SAC, DrQ-v2]
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    def load_models(
+        self,
+        agent: str,
+        env_id: str,
+        seed: int,
+        device: str = "cpu",
+    ) -> nn.Module:
+        """Load the model from the hub.
+
+        Args:
+            agent (str): The agent to load.
+            env_id (str): The environment id to load.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
+        Returns:
+            The loaded model.
+        """
+        model_file = f"{agent.lower()}_dmc_{env_id.lower()}_seed_{seed}.pth"
+        subfolder = f"dmc/{agent}"
+        file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
+        model = th.load(file, map_location=device)
+
+        return model.eval()

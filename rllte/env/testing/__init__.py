@@ -22,8 +22,6 @@
 # SOFTWARE.
 # =============================================================================
 
-
-from .atari import Atari as Atari
-from .dmc import DMControl as DMControl
-from .minigrid import MiniGrid as MiniGrid
-from .procgen import Procgen as Procgen
+from .bitflipping import make_bitflipping_env as make_bitflipping_env
+from .multibinary import make_multibinary_env as make_multibinary_env
+from .multidiscrete import make_multidiscrete_env as make_multidiscrete_env

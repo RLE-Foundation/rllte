@@ -28,7 +28,6 @@ import threading
 import time
 import traceback
 from collections import deque
-from pathlib import Path
 from typing import Any, Callable, Deque, Dict, List, Optional
 
 import numpy as np
@@ -84,7 +83,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         try:
             self.env = self.env.envs  # type: ignore
         except AttributeError:
-            raise AttributeError("Asyc execution is unavailable for distributed training!")  # noqa: B904
+            raise AttributeError("Asynchronous execution is unavailable for distributed training!")  # noqa: B904
 
         # create process and thread pool
         self.ctx = mp.get_context("fork")
@@ -153,7 +152,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             traceback.print_exc()
             raise e
 
-    def update(self, *args, **kwargs) -> Dict[str, Any]:
+    def update(self, *args, **kwargs) -> None:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
@@ -266,10 +265,10 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 #     self.logger.eval(msg=eval_metrics)
 
                 # save model
-                if global_step % save_interval == 0:
-                    save_dir = Path.cwd() / "model_{}".format(global_step)
-                    save_dir.mkdir(exist_ok=True)
-                    self.policy.save(path=save_dir)
+                if global_episode % save_interval == 0:
+                    self.save()
+            # final save
+            self.save()
 
         except KeyboardInterrupt:
             # TODO: join actors then quit.

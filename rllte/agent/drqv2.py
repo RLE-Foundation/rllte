@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Optional
 
 import gymnasium as gym
 import torch as th
@@ -52,6 +52,7 @@ class DrQv2(OffPolicyAgent):
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
+        storage_size (int): The capacity of the storage.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -75,6 +76,7 @@ class DrQv2(OffPolicyAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
+        storage_size: int = 1000000,
         feature_dim: int = 50,
         batch_size: int = 256,
         lr: float = 1e-4,
@@ -130,6 +132,7 @@ class DrQv2(OffPolicyAgent):
         storage = NStepReplayStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
+            storage_size=storage_size,
             device=device,
             batch_size=batch_size,
             num_envs=self.num_envs,
@@ -141,11 +144,10 @@ class DrQv2(OffPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> None:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics: Dict[str, float] = {}
         if self.global_step % self.update_every_steps != 0:
-            return metrics
+            return None
 
         # sample a batch
         batch = self.storage.sample()
@@ -154,9 +156,9 @@ class DrQv2(OffPolicyAgent):
         if self.irs is not None:
             intrinsic_rewards = self.irs.compute_irs(
                 samples={
-                    "obs": batch.observations,
-                    "actions": batch.actions,
-                    "next_obs": batch.next_observations,
+                    "obs": batch.observations.unsqueeze(1),
+                    "actions": batch.actions.unsqueeze(1),
+                    "next_obs": batch.next_observations.unsqueeze(1),
                 },
                 step=self.global_step,
             )
@@ -176,15 +178,13 @@ class DrQv2(OffPolicyAgent):
             encoded_next_obs = self.policy.encoder(next_obs)
 
         # update criitc
-        metrics.update(self.update_critic(encoded_obs, batch.actions, batch.rewards, batch.discounts, encoded_next_obs))
+        self.update_critic(encoded_obs, batch.actions, batch.rewards, batch.discounts, encoded_next_obs)
 
         # update actor (do not udpate encoder)
-        metrics.update(self.update_actor(encoded_obs.detach()))
+        self.update_actor(encoded_obs.detach())
 
         # udpate critic target
         utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
-
-        return metrics
 
     def update_critic(
         self,
@@ -193,7 +193,7 @@ class DrQv2(OffPolicyAgent):
         rewards: th.Tensor,
         discount: th.Tensor,
         next_obs: th.Tensor,
-    ) -> Dict[str, float]:
+    ) -> None:
         """Update the critic network.
 
         Args:
@@ -204,15 +204,15 @@ class DrQv2(OffPolicyAgent):
             next_obs (th.Tensor): Next observations.
 
         Returns:
-            Critic loss.
+            None.
         """
 
         with th.no_grad():
             # sample actions
-            dist = self.policy.get_dist(next_obs, step=self.global_step)
-
-            next_action = dist.sample(clip=self.stddev_clip)
-            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_action)
+            dist = self.policy.get_dist(next_obs)
+            next_actions = dist.sample(clip=self.stddev_clip)
+            next_obs_actions = th.concat([next_obs, next_actions], dim=-1)
+            target_Q1, target_Q2 = self.policy.critic_target(next_obs_actions)
             target_V = th.min(target_Q1, target_Q2)
             target_Q = rewards + (discount * target_V)
 
@@ -226,27 +226,26 @@ class DrQv2(OffPolicyAgent):
         self.policy.optimizers["critic_opt"].step()
         self.policy.optimizers["encoder_opt"].step()
 
-        return {
-            "Critic Loss": critic_loss.item(),
-            "Q1": Q1.mean().item(),
-            "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item(),
-        }
+        # record metrics
+        self.logger.record("train/critic_loss", critic_loss.item())
+        self.logger.record("train/critic_q1", Q1.mean().item())
+        self.logger.record("train/critic_q2", Q2.mean().item())
+        self.logger.record("train/critic_target_q", target_Q.mean().item())
 
-    def update_actor(self, obs: th.Tensor) -> Dict[str, float]:
+    def update_actor(self, obs: th.Tensor) -> None:
         """Update the actor network.
 
         Args:
             obs (th.Tensor): Observations.
 
         Returns:
-            Actor loss metrics.
+            None.
         """
         # sample actions
-        dist = self.policy.get_dist(obs, step=self.global_step)
-        action = dist.sample(clip=self.stddev_clip)
-
-        Q1, Q2 = self.policy.critic(obs, action)
+        dist = self.policy.get_dist(obs)
+        actions = dist.sample(clip=self.stddev_clip)
+        obs_actions = th.concat([obs, actions], dim=-1)
+        Q1, Q2 = self.policy.critic(obs_actions)
         Q = th.min(Q1, Q2)
 
         actor_loss = -Q.mean()
@@ -256,4 +255,5 @@ class DrQv2(OffPolicyAgent):
         actor_loss.backward()
         self.policy.optimizers["actor_opt"].step()
 
-        return {"Actor Loss": actor_loss.item()}
+        # record metrics
+        self.logger.record("train/actor_loss", actor_loss.item())

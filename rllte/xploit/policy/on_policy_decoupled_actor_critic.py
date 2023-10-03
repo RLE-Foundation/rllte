@@ -39,7 +39,7 @@ from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
-from .utils import OnPolicyCritic, OnPolicyGAE, get_actor
+from .utils import OnPolicyCritic, OnPolicyGAE, get_on_policy_actor
 
 
 class OnPolicyDecoupledActorCritic(BasePolicy):
@@ -96,7 +96,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         )
         if self.nvec is not None:
             actor_kwargs["nvec"] = self.nvec
-        self.actor = get_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
+        self.actor = get_on_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
 
         self.critic = OnPolicyCritic(
             obs_shape=self.obs_shape,
@@ -127,23 +127,12 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
-
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-        raise NotImplementedError
-
-    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
+    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Type[Distribution]): Distribution class.
+            dist (Distribution): Distribution class.
 
         Returns:
             None.
@@ -224,31 +213,19 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
 
         return gae, self.critic(self.critic_encoder(obs)), log_probs, entropy
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.actor_encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

@@ -99,3 +99,22 @@ class BaseIntrinsicRewardModule(ABC):
         Returns:
             None
         """
+
+    @abstractmethod
+    def add(
+        self,
+        samples: Dict,
+    ) -> None:
+        """Add the samples to the intrinsic reward module if necessary.
+            User for modules like `RE3` that have a storage component.
+
+        Args:
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
+        Returns:
+            None
+        """

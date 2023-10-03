@@ -230,9 +230,7 @@ class IMPALA(DistributedAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
-    def update(
-        self, batch: Dict, lock=threading.Lock()
-    ) -> Dict[str, Any]:  # type: ignore[override]
+    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Any]:  # type: ignore[override]
         """Update the learner model.
 
         Args:
@@ -279,11 +277,13 @@ class IMPALA(DistributedAgent):
 
             self.policy.actor.load_state_dict(self.policy.learner.state_dict())
 
+            # record metrics
+            self.logger.record("train/policy_loss", pg_loss.item())
+            self.logger.record("train/value_loss", baseline_loss.item())
+            self.logger.record("train/entropy_loss", entropy_loss.item())
+            self.logger.record("train/total_loss", total_loss.item())
+
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
-                "Total Loss": total_loss.item(),
-                "Policy Loss": pg_loss.item(),
-                "Value Loss": baseline_loss.item(),
-                "Entropy Loss": entropy_loss.item(),
             }

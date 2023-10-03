@@ -23,23 +23,24 @@
 # =============================================================================
 
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
-from rllte.xploit.policy import OffPolicyDetActorDoubleCritic
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.policy import OffPolicyStochActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
-from rllte.xplore.distribution import TruncatedNormalNoise
+from rllte.xplore.distribution import Categorical
 
 
-class DDPG(OffPolicyAgent):
-    """Deep Deterministic Policy Gradient (DDPG) agent.
+class SACDiscrete(OffPolicyAgent):
+    """Soft Actor-Critic Discrete (SAC-Discrete) agent.
 
     Args:
         env (VecEnv): Vectorized environments for training.
@@ -56,14 +57,18 @@ class DDPG(OffPolicyAgent):
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
         hidden_dim (int): The size of the hidden layers.
-        critic_target_tau: The critic Q-function soft-update rate.
-        update_every_steps (int): The agent update frequency.
+        actor_update_freq (int): The actor update frequency (in steps).
+        critic_target_tau (float): The critic Q-function soft-update rate.
+        critic_target_update_freq (int): The critic Q-function soft-update frequency (in steps).
+        betas (Tuple[float]): Coefficients used for computing running averages of gradient and its square.
+        temperature (float): Initial temperature coefficient.
+        fixed_temperature (bool): Fixed temperature or not.
+        target_entropy_ratio (float): Target entropy ratio.
         discount (float): Discount factor.
-        stddev_clip (float): The exploration std clip range.
         init_fn (str): Parameters initialization method.
 
     Returns:
-        DDPG agent instance.
+        PPO agent instance.
     """
 
     def __init__(
@@ -74,17 +79,21 @@ class DDPG(OffPolicyAgent):
         seed: int = 1,
         device: str = "cpu",
         pretraining: bool = False,
-        num_init_steps: int = 2000,
-        storage_size: int = 1000000,
+        num_init_steps: int = 10000,
+        storage_size: int = 100000,
         feature_dim: int = 50,
         batch_size: int = 256,
-        lr: float = 1e-4,
+        lr: float = 5e-4,
         eps: float = 1e-8,
-        hidden_dim: int = 1024,
-        critic_target_tau: float = 0.01,
-        update_every_steps: int = 2,
+        hidden_dim: int = 256,
+        actor_update_freq: int = 1,
+        critic_target_tau: float = 1e-2,
+        critic_target_update_freq: int = 4,
+        betas: Tuple[float, float] = (0.9, 0.999),
+        temperature: float = 0.0,
+        fixed_temperature: bool = False,
+        target_entropy_ratio: float = 0.98,
         discount: float = 0.99,
-        stddev_clip: float = 0.3,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -100,32 +109,36 @@ class DDPG(OffPolicyAgent):
         # hyper parameters
         self.lr = lr
         self.eps = eps
+        self.actor_update_freq = actor_update_freq
         self.critic_target_tau = critic_target_tau
+        self.critic_target_update_freq = critic_target_update_freq
+        self.fixed_temperature = fixed_temperature
         self.discount = discount
-        self.update_every_steps = update_every_steps
-        self.stddev_clip = stddev_clip
+        self.betas = betas
+
+        # target entropy
+        assert isinstance(self.action_space, gym.spaces.Discrete), "SAC-Discrete only supports discrete action space!"
+        self.target_entropy = -np.log(1.0 / self.action_space.n) * target_entropy_ratio
+        self.log_alpha = th.tensor(np.log(temperature), device=self.device, requires_grad=True)
+        self.log_alpha_opt = th.optim.Adam([self.log_alpha], lr=self.lr, betas=self.betas)
 
         # default encoder
         if len(self.obs_shape) == 3:
-            encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
             )
 
-        # default distribution
-        self.action_space: gym.spaces.Box
-        dist = TruncatedNormalNoise()
-
         # create policy
-        policy = OffPolicyDetActorDoubleCritic(
+        policy = OffPolicyStochActorDoubleCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
             hidden_dim=hidden_dim,
             opt_class=th.optim.Adam,
-            opt_kwargs=dict(lr=lr, eps=eps),
+            opt_kwargs=dict(lr=lr, eps=eps, betas=betas),
             init_fn=init_fn,
         )
 
@@ -139,14 +152,19 @@ class DDPG(OffPolicyAgent):
             batch_size=batch_size,
         )
 
+        # default distribution
+        dist = Categorical()
+
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
+    @property
+    def alpha(self) -> th.Tensor:
+        """Get the temperature coefficient."""
+        return self.log_alpha.exp()
+
     def update(self) -> None:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        if self.global_step % self.update_every_steps != 0:
-            return None
-
         # sample a batch
         batch = self.storage.sample()
 
@@ -178,10 +196,26 @@ class DDPG(OffPolicyAgent):
         )
 
         # update actor (do not udpate encoder)
-        self.update_actor(encoded_obs.detach())
+        if self.global_step % self.actor_update_freq == 0:
+            self.update_actor_and_alpha(encoded_obs.detach())
 
         # udpate critic target
-        utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
+        if self.global_step % self.critic_target_update_freq == 0:
+            utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.critic_target_tau)
+
+    def deal_with_zero_probs(self, action_probs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """Deal with situation of 0.0 probabilities.
+
+        Args:
+            action_probs (th.Tensor): Action probabilities.
+
+        Returns:
+            Action probabilities and its log values.
+        """
+        z = action_probs == 0.0
+        z = z.float() * 1e-8
+        log_probs = th.log(action_probs + z)
+        return action_probs, log_probs
 
     def update_critic(
         self,
@@ -206,22 +240,23 @@ class DDPG(OffPolicyAgent):
             None.
         """
         with th.no_grad():
-            # sample actions
             dist = self.policy.get_dist(next_obs)
-            next_actions = dist.sample(clip=self.stddev_clip)
-            next_obs_actions = th.concat([next_obs, next_actions], dim=-1)
-            target_Q1, target_Q2 = self.policy.critic_target(next_obs_actions)
-            target_V = th.min(target_Q1, target_Q2)
+            # deal with situation of 0.0 probabilities
+            action_probs, log_probs = self.deal_with_zero_probs(dist.probs) # type: ignore[attr-defined]
+            target_Q1, target_Q2 = self.policy.critic_target(next_obs)
+            target_V = (th.min(target_Q1, target_Q2) - self.alpha.detach() * log_probs) * action_probs
             # TODO: add time limit mask
             # target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
-            target_Q = rewards + (1.0 - terminateds) * self.discount * target_V
+            target_Q = rewards + (1.0 - terminateds) * self.discount * target_V.sum(-1, keepdim=True)
 
-        Q1, Q2 = self.policy.critic(obs, actions)
+        Q1, Q2 = self.policy.critic(obs)
+        Q1 = Q1.gather(1, actions.long())
+        Q2 = Q2.gather(1, actions.long())
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self.policy.optimizers["encoder_opt"].zero_grad(set_to_none=True)
-        self.policy.optimizers["critic_opt"].zero_grad(set_to_none=True)
+        self.policy.optimizers["encoder_opt"].zero_grad()
+        self.policy.optimizers["critic_opt"].zero_grad()
         critic_loss.backward()
         self.policy.optimizers["critic_opt"].step()
         self.policy.optimizers["encoder_opt"].step()
@@ -232,8 +267,8 @@ class DDPG(OffPolicyAgent):
         self.logger.record("train/critic_q2", Q2.mean().item())
         self.logger.record("train/critic_target_q", target_Q.mean().item())
 
-    def update_actor(self, obs: th.Tensor) -> None:
-        """Update the actor network.
+    def update_actor_and_alpha(self, obs: th.Tensor) -> None:
+        """Update the actor network and temperature.
 
         Args:
             obs (th.Tensor): Observations.
@@ -243,17 +278,29 @@ class DDPG(OffPolicyAgent):
         """
         # sample actions
         dist = self.policy.get_dist(obs)
-        actions = dist.sample(clip=self.stddev_clip)
-        obs_actions = th.concat([obs, actions], dim=-1)
-        Q1, Q2 = self.policy.critic(obs_actions)
-        Q = th.min(Q1, Q2)
+        action_probs, log_probs = self.deal_with_zero_probs(dist.probs) # type: ignore[attr-defined]
+        actor_Q1, actor_Q2 = self.policy.critic(obs)
+        actor_Q = th.min(actor_Q1, actor_Q2)
 
-        actor_loss = -Q.mean()
+        actor_loss = ((self.alpha.detach() * log_probs - actor_Q) * action_probs).sum(1).mean()
 
         # optimize actor
-        self.policy.optimizers["actor_opt"].zero_grad(set_to_none=True)
+        self.policy.optimizers["actor_opt"].zero_grad()
         actor_loss.backward()
         self.policy.optimizers["actor_opt"].step()
 
+        if not self.fixed_temperature:
+            # update temperature
+            self.log_alpha_opt.zero_grad()
+            log_probs_pi = th.sum(log_probs * action_probs, dim=1)
+            alpha_loss = (self.alpha * (-log_probs_pi - self.target_entropy).detach()).mean()
+            alpha_loss.backward()
+            self.log_alpha_opt.step()
+            self.logger.record("train/alpha_loss", alpha_loss.item())
+
         # record metrics
         self.logger.record("train/actor_loss", actor_loss.item())
+        self.logger.record("train/actor_q", actor_Q.mean().item())
+        self.logger.record("train/alpha", self.alpha.item())
+        self.logger.record("train/target_entropy", self.target_entropy)
+        self.logger.record("train/entropy", -log_probs.mean().item())

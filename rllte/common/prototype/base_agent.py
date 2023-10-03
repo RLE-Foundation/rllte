@@ -28,7 +28,7 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 import numpy as np
 import pynvml
@@ -48,8 +48,6 @@ from rllte.common.type_alias import VecEnv
 from rllte.common.utils import get_npu_name
 
 NUMBER_OF_SPACES = 17
-
-th.set_float32_matmul_precision("high")
 
 # try to load torch_npu
 try:
@@ -124,8 +122,7 @@ class BaseAgent(ABC):
         self.action_space = env.action_space
         self.num_envs = env.num_envs
         self.obs_shape = process_observation_space(env.observation_space)
-        self.action_shape, self.action_dim, self.policy_action_dim, \
-            self.action_type = process_action_space(env.action_space)
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = process_action_space(env.action_space)
 
         # set seed
         self.seed = seed
@@ -149,6 +146,7 @@ class BaseAgent(ABC):
         self.pretraining = pretraining
         self.global_step = 0
         self.global_episode = 0
+        self.metrics: Dict[str, Any] = {}
 
     def freeze(self, **kwargs) -> None:
         """Freeze the agent and get ready for training."""
@@ -174,7 +172,7 @@ class BaseAgent(ABC):
     def check(self) -> None:
         """Check the compatibility of selected modules."""
         # check essential modules
-        for attr_name in ['encoder', 'policy', 'storage', 'dist']:
+        for attr_name in ["encoder", "policy", "storage", "dist"]:
             assert getattr(self, attr_name) is not None, f"The `{attr_name}` must be specified!"
         # print basic info
         self.logger.info("Invoking RLLTE Engine...")
@@ -188,12 +186,11 @@ class BaseAgent(ABC):
             if titles[i] == "Agent":
                 name = self.__class__.__name__
             else:
-                name = self.module_names[self.attr_names[i - 1]] # type: ignore[assignment]
+                name = self.module_names[self.attr_names[i - 1]]  # type: ignore[assignment]
             self.logger.debug(f"{titles[i].ljust(NUMBER_OF_SPACES)} : {name}")
         # check pre-training setting
         if self.pretraining:
-            assert self.irs is not None, \
-                "When the pre-training mode is turned on, an intrinsic reward must be specified!"
+            assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
             self.logger.info(f"{'Pre-training Mode'.ljust(NUMBER_OF_SPACES)} : On")
         # sep line
         self.logger.debug("=" * 80)
@@ -205,7 +202,7 @@ class BaseAgent(ABC):
         storage: Optional[Storage] = None,
         distribution: Optional[Distribution] = None,
         augmentation: Optional[Augmentation] = None,
-        reward: Optional[IntrinsicRewardModule] = None
+        reward: Optional[IntrinsicRewardModule] = None,
     ) -> None:
         """Set a module for the agent.
 
@@ -215,7 +212,7 @@ class BaseAgent(ABC):
             storage (Optional[Storage]): A storage of `rllte.xploit.storage` or a custom storage.
             distribution (Optional[Distribution]): A distribution of `rllte.xplore.distribution`
                 or a custom distribution.
-            augmentation (Optional[Augmentation]): An augmentation of `rllte.xplore.augmentation` 
+            augmentation (Optional[Augmentation]): An augmentation of `rllte.xplore.augmentation`
                 or a custom augmentation.
             reward (Optional[IntrinsicRewardModule]): A reward of `rllte.xplore.reward` or a custom reward.
 
@@ -230,12 +227,13 @@ class BaseAgent(ABC):
             if args[i] is not None:
                 assert isinstance(args[i], types[i]), f"The `{arg_names[i]}` must be a subclass of `{types[i].__name__}`!"
                 setattr(self, self.attr_names[i], args[i])
-                self.module_names[self.attr_names[i]] = args[i].__class__.__name__ # type: ignore[assignment]
-        
+                self.module_names[self.attr_names[i]] = args[i].__class__.__name__  # type: ignore[assignment]
+
         # overwrite the encoder
         if encoder is not None and self.encoder is not None:
-            assert (self.encoder.feature_dim == encoder.feature_dim), \
-                "The feature dimension of `encoder` must be equal to the previous one!"
+            assert (
+                self.encoder.feature_dim == encoder.feature_dim
+            ), "The feature dimension of `encoder` must be equal to the previous one!"
 
     def mode(self, training: bool = True) -> None:
         """Set the training mode.
@@ -249,8 +247,19 @@ class BaseAgent(ABC):
         self.training = training
         self.policy.train(training)  # type: ignore
 
+    def save(self) -> None:
+        """Save the agent."""
+        if self.pretraining:
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+        else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+
+        self.policy.save(path=save_dir, pretraining=self.pretraining, global_step=self.global_step)  # type: ignore
+
     @abstractmethod
-    def update(self, *args, **kwargs) -> Dict[str, float]:
+    def update(self, *args, **kwargs) -> None:
         """Update function of the agent."""
 
     @abstractmethod
@@ -262,7 +271,7 @@ class BaseAgent(ABC):
         eval_interval: int,
         save_interval: int,
         num_eval_episodes: int,
-        th_compile: bool
+        th_compile: bool,
     ) -> None:
         """Training function.
 

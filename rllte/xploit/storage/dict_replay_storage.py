@@ -69,12 +69,17 @@ class DictReplayStorage(VanillaReplayStorage):
         self.observation_space: gym.spaces.Dict
         self.obs_shape: Dict[str, Any]
         self.observations: Dict[str, np.ndarray]  # type: ignore[assignment]
+        self.next_observations: Dict[str, np.ndarray]  # type: ignore[assignment]
 
     def reset(self) -> None:
         """Reset the storage."""
         assert isinstance(self.obs_shape, Dict)
         # data containers
         self.observations = {
+            key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
+            for key, shape in self.obs_shape.items()
+        }
+        self.next_observations = {
             key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
             for key, shape in self.obs_shape.items()
         }
@@ -118,7 +123,8 @@ class DictReplayStorage(VanillaReplayStorage):
                 next_obs_ = next_observations[key]
 
             np.copyto(self.observations[key][self.step], obs_.cpu().numpy())
-            np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
+            np.copyto(self.next_observations[key][self.step], next_obs_.cpu().numpy())
+            # np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
 
         np.copyto(self.actions[self.step], actions.cpu().numpy())
         np.copyto(self.rewards[self.step], rewards.cpu().numpy())
@@ -139,10 +145,11 @@ class DictReplayStorage(VanillaReplayStorage):
 
         # get batch data
         obs = {key: self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
-        next_obs = {
-            key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :]
-            for key in self.observations.keys()
-        }
+        next_obs = {key: self.next_observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
+        # next_obs = {
+        #     key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :]
+        #     for key in self.observations.keys()
+        # }
 
         actions = self.actions[batch_indices, env_indices, :]
         rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)

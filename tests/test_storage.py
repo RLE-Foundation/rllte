@@ -18,11 +18,11 @@ from rllte.xploit.storage import (
     [
         NStepReplayStorage,
         PrioritizedReplayStorage,
-        # VanillaReplayStorage,
-        # VanillaRolloutStorage,
-        # DictReplayStorage,
-        # DictRolloutStorage,
-        # HerReplayStorage
+        VanillaReplayStorage,
+        VanillaRolloutStorage,
+        DictReplayStorage,
+        DictRolloutStorage,
+        HerReplayStorage
     ],
 )
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
@@ -44,7 +44,7 @@ def test_storage(storage_cls, device):
             action_space=env.action_space,
             device=device,
             num_envs=num_envs,
-            num_steps=num_steps,
+            storage_size=num_steps,
             batch_size=batch_size,
         )
     if storage_cls is HerReplayStorage:

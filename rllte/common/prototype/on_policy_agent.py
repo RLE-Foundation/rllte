@@ -24,8 +24,6 @@
 
 
 from collections import deque
-from pathlib import Path
-from turtle import up
 from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
@@ -68,7 +66,7 @@ class OnPolicyAgent(BaseAgent):
         self.policy: OnPolicyType
         self.storage: RolloutStorageType
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> None:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
@@ -143,8 +141,19 @@ class OnPolicyAgent(BaseAgent):
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
 
-            # compute intrinsic rewards
+            # deal with the intrinsic reward module
             if self.irs is not None:
+                # for modules like RE3, this will calculate the random embeddings
+                # and insert them into the storage. for modules like ICM, this
+                # will update the dynamic models.
+                self.irs.add(
+                    samples={
+                        "obs": self.storage.observations[:-1],  # type: ignore
+                        "actions": self.storage.actions,
+                        "next_obs": self.storage.observations[1:],  # type: ignore
+                    }
+                )
+                # compute intrinsic rewards
                 intrinsic_rewards = self.irs.compute_irs(
                     samples={
                         "obs": self.storage.observations[:-1],  # type: ignore
@@ -183,15 +192,10 @@ class OnPolicyAgent(BaseAgent):
 
             # save model
             if update % save_interval == 0:
-                if self.pretraining:
-                    save_dir = Path.cwd() / "pretrained_{}".format(update)
-                    save_dir.mkdir(exist_ok=True)
-                else:
-                    save_dir = Path.cwd() / "model_{}".format(update)
-                    save_dir.mkdir(exist_ok=True)
-                self.policy.save(path=save_dir, pretraining=self.pretraining)
+                self.save()
 
-        # save model
+        # final save
+        self.save()
         self.logger.info("Training Accomplished!")
         self.logger.info(f"Model saved at: {self.work_dir / 'model'}")
 

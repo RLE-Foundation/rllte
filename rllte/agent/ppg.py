@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import numpy as np
 import torch as th
@@ -180,7 +180,7 @@ class PPG(OnPolicyAgent):
             size=(num_steps, self.num_aux_rollouts, self.policy_outputs_dim), device="cpu", dtype=th.float32
         )
 
-    def update(self) -> Dict[str, Any]:
+    def update(self) -> None:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         # save the observations and returns for auxiliary phase
         idx = int((self.global_episode // self.num_envs) % self.policy_epochs)
@@ -228,11 +228,12 @@ class PPG(OnPolicyAgent):
 
         if (self.global_episode // self.num_envs + 1) % self.policy_epochs != 0:
             # if not auxiliary phase, return train loss directly.
-            return {
-                "Policy Loss": np.mean(total_policy_loss),
-                "Value Loss": np.mean(total_value_loss),
-                "Entropy Loss": np.mean(total_entropy_loss),
-            }
+            # record metrics
+            self.logger.record("train/policy_loss", np.mean(total_policy_loss))
+            self.logger.record("train/value_loss", np.mean(total_value_loss))
+            self.logger.record("train/entropy_loss", np.mean(total_entropy_loss))
+
+            return None
 
         # auxiliary phase
         # recover the old policy
@@ -282,4 +283,6 @@ class PPG(OnPolicyAgent):
                 total_aux_value_loss.append(aux_value_loss.item())
                 total_kl_loss.append(kl_loss.item())
 
-        return {"Auxiliary Value Loss": np.mean(total_aux_value_loss), "KL Loss": np.mean(total_kl_loss)}
+        # record metrics
+        self.logger.record("train/aux_value_loss", np.mean(total_aux_value_loss))
+        self.logger.record("train/kl_loss", np.mean(total_kl_loss))

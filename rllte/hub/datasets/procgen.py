@@ -53,7 +53,7 @@ class Procgen:
         return scores_dict
 
     def load_curves(self) -> Dict[str, np.ndarray]:
-        """Returns learning curves using a `Dict` of arrays:
+        """Returns learning curves using a `Dict` of NumPy arrays:
         curves = {
             "ppo": {
                 "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},

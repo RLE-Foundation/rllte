@@ -32,7 +32,7 @@ def test_discrete_env(env_cls, device, parallel):
         env = env_cls(device=device, num_envs=num_envs)
     else:
         env = env_cls(device=device, num_envs=num_envs, parallel=parallel)
-    time_step = env.reset()
+    _ = env.reset()
 
     print(env.observation_space, env.action_space)
 
@@ -44,7 +44,7 @@ def test_discrete_env(env_cls, device, parallel):
         else:
             action = th.rand(size=(num_envs, env.action_space.shape[0])).to(device)
 
-        time_step = env.step(action)
+        _ = env.step(action)
     env.close()
 
     print("Environment test passed!")

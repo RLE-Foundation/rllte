@@ -115,12 +115,12 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         print("=" * 80)
         print("\n")
 
-    def freeze(self, encoder: nn.Module, dist: Type[Distribution]) -> None:
+    def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Type[Distribution]): Distribution class.
+            dist (Distribution): Distribution.
 
         Returns:
             None.
@@ -140,17 +140,6 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         self._optimizers["encoder_opt"] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
         self._optimizers["actor_opt"] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
         self._optimizers["critic_opt"] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
-
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
-
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-        return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
 
     def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
         """Sample actions based on observations.
@@ -187,31 +176,19 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
 
         return self.dist(mu)
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

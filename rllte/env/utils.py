@@ -40,7 +40,7 @@ class EnvPoolAsync2Gymnasium(gym.Wrapper):
         to allow a modular transformation of the `step` and `reset` methods.
 
     Args:
-        env_kwargs (gym.Env): Environment arguments.
+        env_kwargs (Dict): Environment arguments.
 
     Returns:
         A `Gymnasium`-like environment.
@@ -81,7 +81,7 @@ class EnvPoolSync2Gymnasium(gym.Wrapper):
         a modular transformation of the `step` and `reset` methods.
 
     Args:
-        env_kwargs (gym.Env): Environment arguments.
+        env_kwargs (Dict): Environment arguments.
 
     Returns:
         A `Gymnasium`-like environment.
@@ -329,7 +329,7 @@ def make_rllte_env(
     num_envs: int = 1,
     seed: int = 1,
     device: str = "cpu",
-    parallel: bool = True,
+    asynchronous: bool = True,
     env_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Gymnasium2Torch:
     """Create environments that adapt to rllte engine.
@@ -339,7 +339,7 @@ def make_rllte_env(
         num_envs (int): Number of environments.
         seed (int): Random seed.
         device (str): Device to convert data.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
+        asynchronous (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
         env_kwargs: Optional keyword argument to pass to the env constructor.
 
     Returns:
@@ -368,7 +368,7 @@ def make_rllte_env(
         return _thunk
 
     env_fns = [make_env(rank=i) for i in range(num_envs)]
-    if parallel:
+    if asynchronous:
         envs = AsyncVectorEnv(env_fns)
     else:
         envs = SyncVectorEnv(env_fns)

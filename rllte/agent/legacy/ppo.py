@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import numpy as np
 import torch as th
@@ -154,7 +154,7 @@ class PPO(OnPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
-    def update(self) -> Dict[str, Any]:
+    def update(self) -> None:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
@@ -195,8 +195,7 @@ class PPO(OnPolicyAgent):
                 total_value_loss.append(value_loss.item())
                 total_entropy_loss.append(entropy.item())
 
-        return {
-            "Policy Loss": np.mean(total_policy_loss),
-            "Value Loss": np.mean(total_value_loss),
-            "Entropy Loss": np.mean(total_entropy_loss),
-        }
+        # record metrics
+        self.logger.record("train/policy_loss", np.mean(total_policy_loss))
+        self.logger.record("train/value_loss", np.mean(total_value_loss))
+        self.logger.record("train/entropy_loss", np.mean(total_entropy_loss))

@@ -4,7 +4,7 @@
 <br>
 RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
-<h3> <a href=""> Paper </a> |
+<h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> Paper </a> |
 <a href="https://docs.rllte.dev/api/"> Documentation </a> |
 <a href="https://docs.rllte.dev/tutorials/"> Tutorials </a> |
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
@@ -38,7 +38,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <div align="center">
-<a href="https://youtu.be/ShVdiHHyXFM" rel="nofollow">
+<a href="https://youtu.be/PMF6fa72bmE" rel="nofollow">
 <img src='./docs/assets/images/youtube.png' style="width: 70%">
 </a>
 <br>
@@ -228,6 +228,7 @@ agent.set(encoder=encoder)
 | Off-Policy  | [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf) | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    | ❌   |
 | Off-Policy  | [DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
+| Off-Policy  | [SAC-Discrete](https://arxiv.org/abs/1910.07207)|  ❌  | ✔️    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [TD3](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)| ✔️   | ❌    | ❌    | ❌    | ❌    | ✔️   |✔️    |✔️    |
 | Distributed | [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | ✔️   | ✔️    | ❌    | ❌    | ✔️    | ❌   |❌    |❌    |
@@ -271,11 +272,11 @@ Welcome to contribute to this project! Before you begin writing code, please rea
 # Cite the Project
 If you use **RLLTE** in your research, please cite this project like this:
 ``` tex
-@software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
-  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
-  url = {https://github.com/RLE-Foundation/rllte},
-  year = {2023},
+@article{yuan2022intrinsically,
+  title={Intrinsically-motivated reinforcement learning: A brief introduction},
+  author={Yuan, Mingqi},
+  journal={arXiv preprint arXiv:2309.16382},
+  year={2022}
 }
 ```
 
