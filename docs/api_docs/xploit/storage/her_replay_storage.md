@@ -8,7 +8,7 @@ HerReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
    storage_size: int = 1000000, num_envs: int = 1, batch_size: int = 1024,
    goal_selection_strategy: str = 'future', num_goals: int = 4,
-   reward_fn: Optional[Callable] = None, copy_info_dict: bool = False
+   reward_fn: Callable = lambdax: x, copy_info_dict: bool = False
 )
 ```
 
@@ -42,7 +42,7 @@ Dict replay storage.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L89)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L94)
 ```python
 .reset()
 ```
@@ -51,7 +51,7 @@ Dict replay storage.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L96)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L101)
 ```python
 .add(
    observations: Dict[str, th.Tensor], actions: th.Tensor, rewards: th.Tensor,
@@ -80,7 +80,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L160)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L166)
 ```python
 .sample()
 ```
@@ -89,7 +89,7 @@ None.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L329)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/her_replay_storage.py/#L335)
 ```python
 .update(
    *args, **kwargs

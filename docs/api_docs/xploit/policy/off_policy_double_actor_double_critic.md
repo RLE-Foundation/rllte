@@ -2,19 +2,19 @@
 
 
 ## OffPolicyDoubleActorDoubleCritic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L41)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L43)
 ```python 
 OffPolicyDoubleActorDoubleCritic(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int = 64,
    hidden_dim: int = 1024, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-   opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: Optional[str] = None
+   opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: str = 'orthogonal'
 )
 ```
 
 
 ---
 Double deterministic actor network and double critic network for off-policy algortithms like `DDPG`, `TD3`.
-Here the 'self.dist' refers to an action noise instance.
+Here the 'self.dist' refers to an action noise.
 
 
 **Args**
@@ -24,8 +24,8 @@ Here the 'self.dist' refers to an action noise instance.
 * **feature_dim** (int) : Number of features accepted.
 * **hidden_dim** (int) : Number of units per hidden layer.
 * **opt_class** (Type[th.optim.Optimizer]) : Optimizer class.
-* **opt_kwargs** (Optional[Dict[str, Any]]) : Optimizer keyword arguments.
-* **init_fn** (Optional[str]) : Parameters initialization method.
+* **opt_kwargs** (Dict[str, Any]) : Optimizer keyword arguments.
+* **init_fn** (str) : Parameters initialization method.
 
 
 **Returns**
@@ -37,7 +37,7 @@ Actor-Critic network.
 
 
 ### .describe
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L94)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L103)
 ```python
 .describe()
 ```
@@ -46,7 +46,7 @@ Actor-Critic network.
 Describe the policy.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L109)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L118)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -60,36 +60,15 @@ Freeze all the elements like `encoder` and `dist`.
 **Args**
 
 * **encoder** (nn.Module) : Encoder network.
-* **dist** (Distribution) : Distribution class.
+* **dist** (Distribution) : Distribution.
 
 
 **Returns**
 
 None.
 
-### .explore
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L135)
-```python
-.explore(
-   obs: th.Tensor
-)
-```
-
----
-Explore the environment and randomly generate actions.
-
-
-**Args**
-
-* **obs** (th.Tensor) : Observation from the environment.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L146)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L144)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -112,7 +91,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .get_dist
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L167)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L165)
 ```python
 .get_dist(
    obs: th.Tensor, step: int
@@ -134,10 +113,10 @@ Get sample distribution.
 RLLTE distribution.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L184)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L179)
 ```python
 .save(
-   path: Path, pretraining: bool = False
+   path: Path, pretraining: bool, global_step: int
 )
 ```
 
@@ -149,28 +128,7 @@ Save models.
 
 * **path** (Path) : Save path.
 * **pretraining** (bool) : Pre-training mode.
-
-
-**Returns**
-
-None.
-
-### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L200)
-```python
-.load(
-   path: str, device: th.device
-)
-```
-
----
-Load initial parameters.
-
-
-**Args**
-
-* **path** (str) : Import path.
-* **device** (th.device) : Device to use.
+* **global_step** (int) : Global training step.
 
 
 **Returns**

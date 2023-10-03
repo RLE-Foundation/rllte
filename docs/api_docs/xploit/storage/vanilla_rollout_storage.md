@@ -2,7 +2,7 @@
 
 
 ## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L37)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L36)
 ```python 
 VanillaRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -46,7 +46,7 @@ Vanilla rollout storage.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L89)
 ```python
 .add(
    observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
@@ -77,7 +77,7 @@ Add sampled transitions into storage.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L126)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L129)
 ```python
 .update()
 ```
@@ -86,7 +86,7 @@ None.
 Update the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L131)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L134)
 ```python
 .compute_returns_and_advantages(
    last_values: th.Tensor
@@ -107,7 +107,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L156)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L159)
 ```python
 .sample()
 ```

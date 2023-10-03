@@ -67,7 +67,7 @@ Compute the vae loss.
 Loss values.
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L272)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L274)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -92,8 +92,19 @@ Compute the intrinsic rewards for current samples.
 
 The intrinsic rewards.
 
+### .add
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L323)
+```python
+.add(
+   samples: Dict
+)
+```
+
+---
+Add new samples to the intrinsic reward module.
+
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L321)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/girm.py/#L326)
 ```python
 .update(
    samples: Dict

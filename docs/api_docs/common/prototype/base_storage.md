@@ -2,7 +2,7 @@
 
 
 ## BaseStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L35)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L36)
 ```python 
 BaseStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str,
@@ -34,7 +34,7 @@ Instance of the base storage.
 
 
 ### .to_torch
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L73)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L74)
 ```python
 .to_torch(
    x: np.ndarray
@@ -55,7 +55,7 @@ Convert numpy array to torch tensor.
 Torch tensor.
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L85)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L86)
 ```python
 .reset()
 ```
@@ -64,7 +64,7 @@ Torch tensor.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L91)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L92)
 ```python
 .add(
    *args, **kwargs
@@ -75,7 +75,7 @@ Reset the storage.
 Add samples to the storage.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L95)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L96)
 ```python
 .sample(
    *args, **kwargs
@@ -86,7 +86,7 @@ Add samples to the storage.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L99)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_storage.py/#L100)
 ```python
 .update(
    *args, **kwargs

@@ -2,25 +2,29 @@
 
 
 ## BaseDistribution
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L29)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L31)
 ```python 
-
+BaseDistribution(
+   *args, **kwargs
+)
 ```
 
 
 ---
 Abstract base class of distributions.
-In rllte, action noise is implemented as a distribution.
+In rllte, the action noise is implemented as a distribution.
 
 
 **Methods:**
 
 
-### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L37)
+### .sample
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_distribution.py/#L42)
 ```python
-.reset()
+.sample(
+   *args, **kwargs
+)
 ```
 
 ---
-Reset the distribution. This is useful for action noise.
+Generate samples.

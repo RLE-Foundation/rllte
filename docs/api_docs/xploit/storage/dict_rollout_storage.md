@@ -2,7 +2,7 @@
 
 
 ## DictRolloutStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L37)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L36)
 ```python 
 DictRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -37,7 +37,7 @@ Dict rollout storage.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L72)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L81)
 ```python
 .reset()
 ```
@@ -46,12 +46,13 @@ Dict rollout storage.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L93)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L105)
 ```python
 .add(
    observations: Dict[str, th.Tensor], actions: th.Tensor, rewards: th.Tensor,
    terminateds: th.Tensor, truncateds: th.Tensor, infos: Dict,
-   next_observations: th.Tensor, log_probs: th.Tensor, values: th.Tensor
+   next_observations: Dict[str, th.Tensor], log_probs: th.Tensor,
+   values: th.Tensor
 )
 ```
 
@@ -67,7 +68,7 @@ Add sampled transitions into storage.
 * **terminateds** (th.Tensor) : Termination signals.
 * **truncateds** (th.Tensor) : Truncation signals.
 * **infos** (Dict) : Extra information.
-* **next_observations** (th.Tensor) : Next observations.
+* **next_observations** (Dict[str, th.Tensor]) : Next observations.
 * **log_probs** (th.Tensor) : Log of the probability evaluated at `actions`.
 * **values** (th.Tensor) : Estimated values.
 
@@ -77,7 +78,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L141)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_rollout_storage.py/#L154)
 ```python
 .sample()
 ```

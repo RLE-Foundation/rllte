@@ -2,10 +2,10 @@
 
 
 ## DrDAAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L44)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L41)
 ```python 
 DrDAAC(
-   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    feature_dim: int = 512, batch_size: int = 256, lr: float = 0.00025, eps: float = 1e-05,
    hidden_dim: int = 256, clip_range: float = 0.2, clip_range_vf: float = 0.2,
@@ -23,8 +23,8 @@ Based on: https://github.com/rraileanu/idaac
 
 **Args**
 
-* **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **env** (VecEnv) : Vectorized environments for training.
+* **eval_env** (VecEnv) : Vectorized environments for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -58,7 +58,7 @@ DAAC agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L178)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L176)
 ```python
 .update()
 ```

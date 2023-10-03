@@ -93,8 +93,19 @@ Compute the intrinsic rewards for current samples.
 
 The intrinsic rewards.
 
-### .update
+### .add
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L265)
+```python
+.add(
+   samples: Dict
+)
+```
+
+---
+Add new samples to the intrinsic reward module.
+
+### .update
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L268)
 ```python
 .update(
    samples: Dict

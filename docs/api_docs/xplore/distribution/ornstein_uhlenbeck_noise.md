@@ -2,12 +2,12 @@
 
 
 ## OrnsteinUhlenbeckNoise
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L36)
 ```python 
 OrnsteinUhlenbeckNoise(
-   loc: float = 0.0, scale: float = 1.0, low: float = -1.0, high: float = 1.0,
-   eps: float = 1e-06, theta: float = 0.15, dt: float = 0.01,
-   stddev_schedule: str = 'linear(1.0, 0.1, 100000)', stddev_clip: float = 0.3
+   mu: Union[float, th.Tensor] = 0.0, sigma: Union[float, th.Tensor] = 1.0,
+   low: float = -1.0, high: float = 1.0, eps: float = 1e-06, theta: float = 0.15,
+   dt: float = 0.01
 )
 ```
 
@@ -19,8 +19,8 @@ Based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-u
 
 **Args**
 
-* **loc** (float) : mean of the noise (often referred to as mu).
-* **scale** (float) : standard deviation of the noise (often referred to as sigma).
+* **mu** (Union[float, th.Tensor]) : Mean of the noise.
+* **sigma** (Union[float, th.Tensor]) : Standard deviation of the noise.
 * **low** (float) : The lower bound of the noise.
 * **high** (float) : The upper bound of the noise.
 * **eps** (float) : A small value to avoid numerical instability.
@@ -38,43 +38,22 @@ Ornstein-Uhlenbeck noise instance.
 **Methods:**
 
 
-### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L80)
-```python
-.reset(
-   noiseless_action: th.Tensor, step: int = 0
-)
-```
-
----
-Reset the noise instance.
-
-
-**Args**
-
-* **noiseless_action** (th.Tensor) : Unprocessed actions.
-* **step** (int) : Global training step that can be None when there is no noise schedule.
-
-
-**Returns**
-
-None.
-
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L103)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L96)
 ```python
 .sample(
-   clip: bool = False, sample_shape: th.Size = th.Size()
+   clip: Optional[float] = None, sample_shape: th.Size = th.Size()
 )
 ```
 
 ---
-Generates a sample_shape shaped sample
+Generates a sample_shape shaped sample or sample_shape shaped batch of
+samples if the distribution parameters are batched.
 
 
 **Args**
 
-* **clip** (bool) : Range for noise truncation operation.
+* **clip** (Optional[float]) : The clip range of the sampled noises.
 * **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
@@ -82,8 +61,17 @@ Generates a sample_shape shaped sample
 
 A sample_shape shaped sample.
 
+### .reset
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L131)
+```python
+.reset()
+```
+
+---
+Reset the noise.
+
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L138)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L136)
 ```python
 .mean()
 ```
@@ -92,7 +80,7 @@ A sample_shape shaped sample.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L143)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/ornstein_uhlenbeck_noise.py/#L141)
 ```python
 .mode()
 ```

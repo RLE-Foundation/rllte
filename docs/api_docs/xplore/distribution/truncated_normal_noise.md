@@ -2,12 +2,12 @@
 
 
 ## TruncatedNormalNoise
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L37)
 ```python 
 TruncatedNormalNoise(
-   loc: float = 0.0, scale: float = 1.0, low: float = -1.0, high: float = 1.0,
-   eps: float = 1e-06, stddev_schedule: str = 'linear(1.0, 0.1, 100000)',
-   stddev_clip: float = 0.3
+   mu: Union[float, th.Tensor] = 0.0, sigma: Union[float, th.Tensor] = 1.0,
+   low: float = -1.0, high: float = 1.0, eps: float = 1e-06,
+   stddev_schedule: str = 'linear(1.0, 0.1, 100000)'
 )
 ```
 
@@ -19,13 +19,13 @@ Truncated normal action noise. See Section 3.1 of
 
 **Args**
 
-* **loc** (float) : mean of the noise (often referred to as mu).
-* **scale** (float) : standard deviation of the noise (often referred to as sigma).
+* **mu** (Union[float, th.Tensor]) : Mean of the noise.
+* **sigma** (Union[float, th.Tensor]) : Standard deviation of the noise.
 * **low** (float) : The lower bound of the noise.
 * **high** (float) : The upper bound of the noise.
 * **eps** (float) : A small value to avoid numerical instability.
-* **stddev_schedule** (str) : Use the exploration std schedule.
-* **stddev_clip** (float) : The exploration std clip range.
+* **stddev_schedule** (str) : Use the exploration std schedule, available options are:
+    `linear(init, final, duration)` and `step_linear(init, final1, duration1, final2, duration2)`.
 
 
 **Returns**
@@ -37,10 +37,10 @@ Truncated normal noise instance.
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L79)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L92)
 ```python
 .sample(
-   clip: bool = False, sample_shape: th.Size = th.Size()
+   clip: Optional[float] = None, sample_shape: th.Size = th.Size()
 )
 ```
 
@@ -51,7 +51,7 @@ samples if the distribution parameters are batched.
 
 **Args**
 
-* **clip** (bool) : Whether to perform noise truncation.
+* **clip** (Optional[float]) : The clip range of the sampled noises.
 * **sample_shape** (th.Size) : The size of the sample to be drawn.
 
 
@@ -59,30 +59,8 @@ samples if the distribution parameters are batched.
 
 A sample_shape shaped sample.
 
-### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L100)
-```python
-.reset(
-   noiseless_action: th.Tensor, step: int = 0
-)
-```
-
----
-Reset the noise instance.
-
-
-**Args**
-
-* **noiseless_action** (th.Tensor) : Unprocessed actions.
-* **step** (int) : Global training step that can be None when there is no noise schedule.
-
-
-**Returns**
-
-None.
-
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L116)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L117)
 ```python
 .mean()
 ```
@@ -91,7 +69,7 @@ None.
 Returns the mean of the distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L121)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/truncated_normal_noise.py/#L122)
 ```python
 .mode()
 ```

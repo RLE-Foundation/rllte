@@ -2,7 +2,7 @@
 
 
 ### process_observation_space
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L37)
 ```python
 .process_observation_space(
    observation_space: gym.Space
@@ -26,7 +26,7 @@ Information of the observation space.
 
 
 ### process_action_space
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L63)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L67)
 ```python
 .process_action_space(
    action_space: gym.Space
@@ -50,7 +50,7 @@ Information of the action space.
 
 
 ### get_flattened_obs_dim
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L97)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L104)
 ```python
 .get_flattened_obs_dim(
    observation_space: spaces.Space
@@ -75,7 +75,7 @@ The dimension of the observation space when flattened.
 
 
 ### is_image_space_channels_first
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L114)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L121)
 ```python
 .is_image_space_channels_first(
    observation_space: spaces.Box
@@ -104,7 +104,7 @@ True if observation space is channels-first image, False if channels-last.
 
 
 ### is_image_space
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L134)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L141)
 ```python
 .is_image_space(
    observation_space: gym.Space, check_channels: bool = False,
@@ -139,7 +139,7 @@ True if observation space is channels-first image, False if channels-last.
 
 
 ### preprocess_obs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L178)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/preprocessing.py/#L185)
 ```python
 .preprocess_obs(
    obs: th.Tensor, observation_space: gym.Space

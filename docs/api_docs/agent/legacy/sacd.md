@@ -1,25 +1,25 @@
 #
 
 
-## SAC
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L41)
+## SACDiscrete
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L42)
 ```python 
-SAC(
+SACDiscrete(
    env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
-   device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 5000,
-   storage_size: int = 10000000, feature_dim: int = 50, batch_size: int = 1024,
-   lr: float = 0.0001, eps: float = 1e-08, hidden_dim: int = 1024,
-   actor_update_freq: int = 1, critic_target_tau: float = 0.005,
-   critic_target_update_freq: int = 2, log_std_range: Tuple[float, ...] = (-5.0, 2),
-   betas: Tuple[float, float] = (0.9, 0.999), temperature: float = 0.1,
-   fixed_temperature: bool = False, discount: float = 0.99, init_fn: str = 'orthogonal'
+   device: str = 'cpu', pretraining: bool = False, num_init_steps: int = 10000,
+   storage_size: int = 100000, feature_dim: int = 50, batch_size: int = 256,
+   lr: float = 0.0005, eps: float = 1e-08, hidden_dim: int = 256,
+   actor_update_freq: int = 1, critic_target_tau: float = 0.01,
+   critic_target_update_freq: int = 4, betas: Tuple[float, float] = (0.9, 0.999),
+   temperature: float = 0.0, fixed_temperature: bool = False,
+   target_entropy_ratio: float = 0.98, discount: float = 0.99,
+   init_fn: str = 'orthogonal'
 )
 ```
 
 
 ---
-Soft Actor-Critic (SAC) agent.
-Based on: https://github.com/denisyarats/pytorch_sac
+Soft Actor-Critic Discrete (SAC-Discrete) agent.
 
 
 **Args**
@@ -40,10 +40,10 @@ Based on: https://github.com/denisyarats/pytorch_sac
 * **actor_update_freq** (int) : The actor update frequency (in steps).
 * **critic_target_tau** (float) : The critic Q-function soft-update rate.
 * **critic_target_update_freq** (int) : The critic Q-function soft-update frequency (in steps).
-* **log_std_range** (Tuple[float]) : Range of std for sampling actions.
 * **betas** (Tuple[float]) : Coefficients used for computing running averages of gradient and its square.
 * **temperature** (float) : Initial temperature coefficient.
 * **fixed_temperature** (bool) : Fixed temperature or not.
+* **target_entropy_ratio** (float) : Target entropy ratio.
 * **discount** (float) : Discount factor.
 * **init_fn** (str) : Parameters initialization method.
 
@@ -58,7 +58,7 @@ PPO agent instance.
 
 
 ### .alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L162)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L162)
 ```python
 .alpha()
 ```
@@ -67,7 +67,7 @@ PPO agent instance.
 Get the temperature coefficient.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L166)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L166)
 ```python
 .update()
 ```
@@ -75,8 +75,29 @@ Get the temperature coefficient.
 ---
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
+### .deal_with_zero_probs
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L206)
+```python
+.deal_with_zero_probs(
+   action_probs: th.Tensor
+)
+```
+
+---
+Deal with situation of 0.0 probabilities.
+
+
+**Args**
+
+* **action_probs** (th.Tensor) : Action probabilities.
+
+
+**Returns**
+
+Action probabilities and its log values.
+
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L206)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L220)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -103,7 +124,7 @@ Update the critic network.
 None.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L256)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L270)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor

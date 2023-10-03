@@ -2,10 +2,10 @@
 
 
 ## A2C
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L42)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L40)
 ```python 
 A2C(
-   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    feature_dim: int = 512, batch_size: int = 256, lr: float = 0.00025, eps: float = 1e-05,
    hidden_dim: int = 512, n_epochs: int = 4, vf_coef: float = 0.5, ent_coef: float = 0.01,
@@ -21,8 +21,8 @@ Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 
 **Args**
 
-* **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (Optional[gym.Env]) : A Gym-like environment for evaluation.
+* **env** (VecEnv) : Vectorized environments for training.
+* **eval_env** (VecEnv) : Vectorized environments for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
