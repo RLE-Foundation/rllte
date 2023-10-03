@@ -46,26 +46,11 @@ See [Fast Algorithm Development]() for detailed examples.
 
 ## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:
-``` tex
-@article{yuan2022intrinsically,
-  title={Intrinsically-motivated reinforcement learning: A brief introduction},
-  author={Yuan, Mingqi},
-  journal={arXiv preprint arXiv:2309.16382},
-  year={2022}
-}
-```
-
-<!-- Hsuanwu evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of Hsuanwu:
-<div align=center>
-<img src='./assets/images/roadmap.svg'>
-</div>s -->
-
-<!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023rllte,
-  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
-  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
-  journal={arXiv preprint arXiv:2311.15277},
-  year={2023}
+  title={RLLTE: Long-Term Evolution Project of Reinforcement Learning}, 
+  author={Mingqi Yuan and Zequn Zhang and Yang Xu and Shihao Luo and Bo Li and Xin Jin and Wenjun Zeng},
+  year={2023},
+  journal={arXiv preprint arXiv:2309.16382}
 }
-``` -->
+```
