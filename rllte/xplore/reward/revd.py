@@ -186,6 +186,9 @@ class REVD(BaseIntrinsicRewardModule):
 
         return beta_t * intrinsic_rewards
 
+    def add(self, samples: Dict) -> None:
+        """Add new samples to the intrinsic reward module."""
+
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
 

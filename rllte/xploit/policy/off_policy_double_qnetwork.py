@@ -120,13 +120,12 @@ class OffPolicyDoubleQNetwork(BasePolicy):
         # build optimizers
         self._optimizers["opt"] = self.opt_class(self.parameters(), **self.opt_kwargs)
 
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
+    def forward(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
             obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
-            step (int): Global training step.
 
         Returns:
             Sampled actions.

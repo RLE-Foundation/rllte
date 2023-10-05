@@ -1,7 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env import make_dmc_env, make_minigrid_env
+from rllte.env.testing import make_box_env
 from rllte.xploit.encoder import (
     EspeholtResidualEncoder,
     IdentityEncoder,
@@ -27,17 +27,13 @@ from rllte.xploit.encoder import (
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_encoder(encoder_cls, device):
-    num_envs = 3
+    num_envs = 7
     if encoder_cls in [IdentityEncoder, VanillaMlpEncoder]:
-        envs = make_dmc_env(
-            env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device, num_envs=num_envs
-        )
+        envs = make_box_env(env_id="StateObsEnv", num_envs=num_envs, device=device, seed=1, asynchronous=True)
     elif encoder_cls in [RaffinCombinedEncoder]:
-        envs = make_minigrid_env(num_envs=num_envs, device=device, fully_numerical=True, fully_observable=False)
+        envs = make_box_env(env_id="DictObsEnv", num_envs=num_envs, device=device, seed=1, asynchronous=True)
     else:
-        envs = make_dmc_env(
-            env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device, num_envs=num_envs
-        )
+        envs = make_box_env(env_id="PixelObsEnv", num_envs=num_envs, device=device, seed=1, asynchronous=True)
 
     device = th.device(device)
     encoder = encoder_cls(observation_space=envs.observation_space, feature_dim=50).to(device)

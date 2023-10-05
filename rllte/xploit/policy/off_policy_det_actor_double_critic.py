@@ -145,19 +145,18 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
         x = x - x.detach() + clamped_x.detach()
         return x
 
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
+    def forward(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
             obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
-            step (int): Global training step.
 
         Returns:
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
+        dist = self.get_dist(obs=encoded_obs)
 
         if not training:
             actions = dist.mean
@@ -166,12 +165,11 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
 
         return actions
 
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
+    def get_dist(self, obs: th.Tensor) -> Distribution:
         """Get sample distribution.
 
         Args:
             obs (th.Tensor): Observations.
-            step (int): Global training step.
 
         Returns:
             RLLTE distribution.

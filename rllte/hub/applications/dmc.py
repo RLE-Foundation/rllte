@@ -81,6 +81,7 @@ class DMControl:
                 visualize_reward=False,
                 frame_stack=3,
                 action_repeat=2,
+                asynchronous=False
             )
             eval_envs = make_dmc_env(
                 env_id=env_id,
@@ -91,6 +92,7 @@ class DMControl:
                 visualize_reward=False,
                 frame_stack=3,
                 action_repeat=2,
+                asynchronous=False
             )
             # create agent
             self.agent = DrQv2( # type: ignore[assignment]

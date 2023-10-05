@@ -35,5 +35,6 @@ if __name__ == "__main__":
     logger.error(msg="Unsupported function!")
     logger.train(msg=msg_train)
     logger.eval(msg=msg_test)
+    logger.record(key="train/loss", value=0.1)
 
     print("Logger test passed!")

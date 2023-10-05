@@ -91,13 +91,6 @@ class HerReplayStorage(DictReplayStorage):
         self.obs_shape: Dict[str, Any]
         self.observations: Dict[str, np.ndarray]  # type: ignore[assignment]
 
-    def reset(self) -> None:
-        """Reset the storage."""
-        self.next_observations = {
-            key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
-            for key, shape in self.obs_shape.items()
-        }
-
     def add(
         self,
         observations: Dict[str, th.Tensor],  # type: ignore[override]

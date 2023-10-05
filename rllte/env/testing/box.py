@@ -34,12 +34,12 @@ from rllte.env.utils import Gymnasium2Torch
 
 
 class StateEnv(gym.Env):
-    """Environment with state-based observation space and `MultiDiscrete` action space for testing."""
+    """Environment with state-based observation space and `Box` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
-        self.action_space = gym.spaces.MultiDiscrete(nvec=(2, 3, 4))
+        self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(49,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
@@ -75,12 +75,13 @@ class StateEnv(gym.Env):
 
 
 class PixelEnv(gym.Env):
-    """Environment with image-based observation space and `MultiDiscrete` action space for testing."""
+    """Environment with image-based observation space and `Box` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
         self.observation_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(3, 84, 84), dtype=np.float32)
-        self.action_space = gym.spaces.MultiDiscrete(nvec=(2, 3, 4))
+        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
+        self.count = 0
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
@@ -92,6 +93,7 @@ class PixelEnv(gym.Env):
         Returns:
             Observation and info.
         """
+        self.count = 0
         return self.observation_space.sample(), {}
 
     def step(self, action: Any) -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
@@ -105,18 +107,19 @@ class PixelEnv(gym.Env):
         """
         obs = self.observation_space.sample()
         reward = 0.5
-        if np.random.rand() > 0.5:
+
+        if self.count > 499:
             terminated = True
         else:
             terminated = False
         truncated = terminated
         info = {}
+        self.count += 1
 
         return obs, reward, terminated, truncated, info
 
-
 class DictEnv(gym.Env):
-    """Environment with dict-based observation space and `MultiDiscrete` action space for testing."""
+    """Environment with dict-based observation space and `Box` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -124,7 +127,7 @@ class DictEnv(gym.Env):
             "image": gym.spaces.Box(low=-1.0, high=1.0, shape=(3, 84, 84), dtype=np.float32),
             "state": gym.spaces.Box(low=-1.0, high=1.0, shape=(49,), dtype=np.float32),
         })
-        self.action_space = gym.spaces.MultiDiscrete(nvec=(2, 3, 4))
+        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
         """Reset the environment.
@@ -158,11 +161,10 @@ class DictEnv(gym.Env):
 
         return obs, reward, terminated, truncated, info
 
-
-def make_multidiscrete_env(
+def make_box_env(
     env_id: str = "StateObsEnv", num_envs: int = 1, device: str = "cpu", seed: int = 0, asynchronous: bool = True
 ) -> Gymnasium2Torch:
-    """Build environments with `MultiDiscrete` action space for testing.
+    """Build environments with `Box` action space for testing.
 
     Args:
         env_id (str): Name of environment.
@@ -181,7 +183,7 @@ def make_multidiscrete_env(
             if env_id == "StateObsEnv":
                 env = StateEnv()
             elif env_id == "DictObsEnv":
-                env = StateEnv()
+                env = DictEnv()
             else:
                 env = PixelEnv()
             env.observation_space.seed(seed)
