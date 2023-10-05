@@ -4,7 +4,7 @@
 <br>
 RLLTE: 强化学习长期演进计划
 
-<h3> <a href=""> 论文 </a> |
+<h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> 论文 </a> |
 <a href="https://docs.rllte.dev/api/"> 文档 </a> |
 <a href="https://github.com/hpcaitech/ColossalAI/tree/main/examples"> 示例 </a> |
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> 论坛 </a> |
