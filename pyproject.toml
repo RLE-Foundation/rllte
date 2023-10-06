@@ -13,7 +13,7 @@ packages = ["rllte"]
 
 [project]
 name = "rllte-core"
-version = "0.0.1.beta05"
+version = "0.0.1.beta06"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
@@ -36,7 +36,6 @@ dependencies = [
   "gymnasium[accept-rom-license]",
   "torch",
   "torchvision",
-  "opencv-python",
   "termcolor",
   "scipy>= 1.7.0",
   "arch==5.3.0",
@@ -108,7 +107,6 @@ ignore_missing_imports = true
 follow_imports = "silent"
 show_error_codes = true
 exclude = ["rllte/env", 
-"rllte/hub/apps",
 "rllte/evaluation/visualization.py"
 ]
 # disable_error_code = ["union-attr", "operator", "arg-type", "assignment"]

@@ -21,15 +21,15 @@ are deposited on the [Hugging Face](https://huggingface.co) platform, view them 
 
 
 
-| Benchmark | Algorithm | Remark | Reproduction | Reference |
-|:-|:-|:-|:-|:-|
-|[Atari Games](https://www.jair.org/index.php/jair/article/download/10819/25823)|PPO|**50M**, 💯📊🤖| `.ppo_atari` | [Paper]() |
-||SAC|**1M**, 💯📊🤖| `.sac_bullet` | [Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
-|[DeepMind Control (Pixel)](https://arxiv.org/pdf/1801.00690)|DrQ-v2|**1M**, 💯📊🤖| `.drqv2_dmc_pixel` | [Paper](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |
-|[DeepMind Control (State)](https://arxiv.org/pdf/1801.00690)|SAC|**10M**, 💯📊🤖| `.sac_dmc_state` | |
-||DDPG|**10M**, 💯📊🤖| `.ddpg_dmc_state` | |
-|[Procgen Games](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|PPO|**25M**, 💯📊🤖| `.ppo_procgen_envpool`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
-||DAAC|**25M**, 💯📊🤖| `.daac_procgen_envpool`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+| Benchmark | Algorithm | Remark | Reference |
+|:-|:-|:-|:-|
+|[Atari Games](https://www.jair.org/index.php/jair/article/download/10819/25823)|PPO|**50M**, 💯📊🤖|[Paper]() |
+||SAC|**1M**, 💯📊🤖|[Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
+|[DeepMind Control (Pixel)](https://arxiv.org/pdf/1801.00690)|DrQ-v2|**1M**, 💯📊🤖|[Paper](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |
+|[DeepMind Control (State)](https://arxiv.org/pdf/1801.00690)|SAC|**10M**, 💯📊🤖||
+||DDPG|**10M**, 💯📊🤖||
+|[Procgen Games](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|PPO|**25M**, 💯📊🤖| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+||DAAC|**25M**, 💯📊🤖| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
 |[MiniGrid Games](https://github.com/Farama-Foundation/Minigrid)||
 
 !!! tip
