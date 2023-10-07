@@ -33,6 +33,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
+- [Miscellaneous](#miscellaneous)
 
 # Overview
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
@@ -282,3 +283,18 @@ If you use **RLLTE** in your research, please cite this project like this:
 
 # Acknowledgment
 This project is supported by [The Hong Kong Polytechnic University](http://www.polyu.edu.hk/), [Eastern Institute for Advanced Study](http://www.eias.ac.cn/), and [FLW-Foundation](FLW-Foundation). [EIAS HPC](https://hpc.eias.ac.cn/) provides a GPU computing platform, and [HUAWEI Ascend Community](https://www.hiascend.com/) provides an NPU computing platform for our testing. Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
+
+# Miscellaneous
+
+## &#8627; Stargazers, thanks for your support!
+[![Stargazers repo roster for @RLE-Foundation/rllte](https://reporoster.com/stars/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/stargazers)
+
+## &#8627; Forkers, thank you for your support!
+[![Forkers repo roster for @RLE-Foundation/rllte](https://reporoster.com/forks/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/network/members)
+
+## &#8627; Star History
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=RLE-Foundation/rllte&type=Date)](https://star-history.com/#RLE-Foundation/rllte&Date)
+
+</div>
