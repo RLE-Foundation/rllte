@@ -289,7 +289,7 @@ This project is supported by [The Hong Kong Polytechnic University](http://www.p
 ## &#8627; Stargazers, thanks for your support!
 [![Stargazers repo roster for @RLE-Foundation/rllte](https://reporoster.com/stars/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/stargazers)
 
-## &#8627; Forkers, thank you for your support!
+## &#8627; Forkers, thanks for your support!
 [![Forkers repo roster for @RLE-Foundation/rllte](https://reporoster.com/forks/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/network/members)
 
 ## &#8627; Star History
