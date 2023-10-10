@@ -26,7 +26,7 @@
 import torch as th
 from torch.distributions import Uniform
 
-from rllte.common.base_augmentation import BaseAugmentation
+from rllte.common.prototype import BaseAugmentation
 
 
 class RandomAmplitudeScaling(BaseAugmentation):

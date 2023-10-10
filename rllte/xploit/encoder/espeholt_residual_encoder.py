@@ -30,7 +30,7 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 
 
 class Conv2d_tf(nn.Conv2d):
@@ -157,7 +157,9 @@ class EspeholtResidualEncoder(BaseEncoder):
     ) -> None:
         super().__init__(observation_space, feature_dim)
         assert len(net_arch) >= 1, "At least one Residual layer!"
-        modules = list()
+        assert observation_space.shape is not None, "The observation shape cannot be None!"
+
+        modules: List[th.nn.Module] = list()
         shape = observation_space.shape
         if len(shape) == 4:
             # vectorized envs

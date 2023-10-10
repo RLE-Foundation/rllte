@@ -23,70 +23,94 @@
 # =============================================================================
 
 from collections import deque
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, NamedTuple
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
+import envpool
 import gymnasium as gym
 import numpy as np
 import torch as th
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-def make_rllte_env(
-    env_id: Union[str, Callable[..., gym.Env]],
-    num_envs: int = 1,
-    seed: int = 1,
-    device: str = "cpu",
-    parallel: bool = True,
-    env_kwargs: Optional[Dict[str, Any]] = None,
-) -> gym.Wrapper:
-    """Create environments that adapt to rllte engine.
+GymObs = Union[th.Tensor, Dict[str, th.Tensor]]
+
+
+class EnvPoolAsync2Gymnasium(gym.Wrapper):
+    """Create an `EnvPool` environment with asynchronous mode, and wrap it
+        to allow a modular transformation of the `step` and `reset` methods.
 
     Args:
-        env_id (Union[str, Callable[..., gym.Env]]): either the env ID, the env class or a callable returning an env
-        num_envs (int): Number of environments.
-        seed (int): Random seed.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
-        env_kwargs: Optional keyword argument to pass to the env constructor
+        env_kwargs (Dict): Environment arguments.
 
     Returns:
-        Environment wrapped by `TorchVecEnvWrapper`.
+        A `Gymnasium`-like environment.
     """
-    env_kwargs = env_kwargs or {}
 
-    def make_env(rank: int) -> Callable:
-        def _thunk() -> gym.Env:
-            assert env_kwargs is not None
-            if isinstance(env_id, str):
-                # if the render mode was not specified, we set it to `rgb_array` as default.
-                kwargs = {"render_mode": "rgb_array"}
-                kwargs.update(env_kwargs)
-                try:
-                    env = gym.make(env_id, **kwargs)
-                except Exception:
-                    env = gym.make(env_id, **env_kwargs)
-            else:
-                env = env_id(**env_kwargs)
+    def __init__(self, env_kwargs: Dict) -> None:
+        env = envpool.make(**env_kwargs)
+        super().__init__(env)
+        self.num_envs = env_kwargs.get("num_envs", 1)
+        self.is_vector_env = True
 
-            env.action_space.seed(seed + rank)
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment."""
+        # send the initial reset signal to all envs
+        self.env.async_reset()
+        obs, rew, term, trunc, info = self.env.recv()
+        # run one step to get the initial observation
+        self.env.send(np.zeros(shape=(self.num_envs, *self.action_space.shape)), info["env_id"])
+        return obs, info
 
-            return env
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment.
 
-        return _thunk
+        Args:
+            actions (int): Action to take.
 
-    env_fns = [make_env(rank=i) for i in range(num_envs)]
-    if parallel:
-        envs = AsyncVectorEnv(env_fns)
-    else:
-        envs = SyncVectorEnv(env_fns)
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        obs, rew, term, trunc, info = self.env.recv()
+        self.env.send(actions, info["env_id"])
 
-    envs = RecordEpisodeStatistics(envs)
+        return obs, rew, term, trunc, info
 
-    return Gymnasium2Torch(env=envs, device=device)
+
+class EnvPoolSync2Gymnasium(gym.Wrapper):
+    """Wraps an `EnvPool` environment with synchronous mode to allow
+        a modular transformation of the `step` and `reset` methods.
+
+    Args:
+        env_kwargs (Dict): Environment arguments.
+
+    Returns:
+        A `Gymnasium`-like environment.
+    """
+
+    def __init__(self, env_kwargs: Dict) -> None:
+        env = envpool.make(**env_kwargs)
+        super().__init__(env)
+        self.num_envs = env_kwargs.get("num_envs", 1)
+        self.is_vector_env = True
+
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
+        """Reset the environment with `envpool`."""
+        return self.env.reset()
+
+    def step(self, actions: int) -> Tuple[Any, float, bool, bool, Dict]:
+        """Step the environment with `envpool`.
+
+        Args:
+            actions (int): Action to take.
+
+        Returns:
+            Observation, reward, terminated, truncated, info.
+        """
+        return self.env.step(actions)
 
 
 class Gymnasium2Torch(gym.Wrapper):
-    """Env wrapper for outputting torch tensors.
+    """Env wrapper for processing gymnasium environments and outputting torch tensors.
 
     Args:
         env (VectorEnv): The vectorized environments.
@@ -112,7 +136,7 @@ class Gymnasium2Torch(gym.Wrapper):
         else:
             self._format_obs = lambda x: th.as_tensor(x, device=self.device)
 
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[th.Tensor, Dict]:
+    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[GymObs, Dict]:
         """Reset all environments and return a batch of initial observations and info.
 
         Args:
@@ -126,7 +150,7 @@ class Gymnasium2Torch(gym.Wrapper):
 
         return self._format_obs(obs), infos
 
-    def step(self, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, List[Dict]]:
+    def step(self, actions: th.Tensor) -> Tuple[GymObs, th.Tensor, th.Tensor, th.Tensor, Dict[str, Any]]:
         """Take an action for each environment.
 
         Args:
@@ -219,7 +243,7 @@ class DistributedWrapper:
             self.action_dim = env.action_space.shape[0]
         else:
             raise NotImplementedError("Unsupported action type!")
-        
+
     def reset(self, seed) -> Dict[str, th.Tensor]:
         """Reset the environment."""
         init_reward = th.zeros(1, 1)
@@ -233,17 +257,17 @@ class DistributedWrapper:
         obs = self._format_obs(obs)
 
         return dict(
-            observation=obs,
-            reward=init_reward,
-            terminated=init_terminated,
-            truncated=init_truncated,
-            episode_return=self.episode_return,
-            episode_step=self.episode_step,
-            last_action=init_last_action,
+            observations=obs,
+            rewards=init_reward,
+            terminateds=init_terminated,
+            truncateds=init_truncated,
+            episode_returns=self.episode_return,
+            episode_steps=self.episode_step,
+            last_actions=init_last_action,
         )
 
     def step(self, action: th.Tensor) -> Dict[str, th.Tensor]:
-        """Step function that returns a dict consists of current and history observation and action.
+        """Step function that returns a dict consists of the current and history observation and action.
 
         Args:
             action (th.Tensor): Action tensor.
@@ -274,13 +298,13 @@ class DistributedWrapper:
         truncated = th.as_tensor(truncated, dtype=th.uint8).view(1, 1)
 
         return dict(
-            observation=obs,
-            reward=reward,
-            terminated=terminated,
-            truncated=truncated,
-            episode_return=episode_return,
-            episode_step=episode_step,
-            last_action=action,
+            observations=obs,
+            rewards=reward,
+            terminateds=terminated,
+            truncateds=truncated,
+            episode_returns=episode_return,
+            episode_steps=episode_step,
+            last_actions=action,
         )
 
     def close(self) -> None:
@@ -298,3 +322,57 @@ class DistributedWrapper:
         """
         obs = th.from_numpy(np.array(obs))
         return obs.view((1, 1, *obs.shape))
+
+
+def make_rllte_env(
+    env_id: Union[str, Callable[..., gym.Env]],
+    num_envs: int = 1,
+    seed: int = 1,
+    device: str = "cpu",
+    asynchronous: bool = True,
+    env_kwargs: Optional[Dict[str, Any]] = None,
+) -> Gymnasium2Torch:
+    """Create environments that adapt to rllte engine.
+
+    Args:
+        env_id (Union[str, Callable[..., gym.Env]]): either the env ID, the env class or a callable returning an env
+        num_envs (int): Number of environments.
+        seed (int): Random seed.
+        device (str): Device to convert data.
+        asynchronous (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`.
+        env_kwargs: Optional keyword argument to pass to the env constructor.
+
+    Returns:
+        Environment wrapped by `TorchVecEnvWrapper`.
+    """
+    env_kwargs = env_kwargs or {}
+
+    def make_env(rank: int) -> Callable:
+        def _thunk() -> gym.Env:
+            assert env_kwargs is not None
+            if isinstance(env_id, str):
+                # if the render mode was not specified, we set it to `rgb_array` as default.
+                kwargs = {"render_mode": "rgb_array"}
+                kwargs.update(env_kwargs)
+                try:
+                    env = gym.make(env_id, **kwargs)
+                except Exception:
+                    env = gym.make(env_id, **env_kwargs)
+            else:
+                env = env_id(**env_kwargs)
+
+            env.action_space.seed(seed + rank)
+
+            return env
+
+        return _thunk
+
+    env_fns = [make_env(rank=i) for i in range(num_envs)]
+    if asynchronous:
+        envs = AsyncVectorEnv(env_fns)
+    else:
+        envs = SyncVectorEnv(env_fns)
+
+    envs = RecordEpisodeStatistics(envs)
+
+    return Gymnasium2Torch(env=envs, device=device)

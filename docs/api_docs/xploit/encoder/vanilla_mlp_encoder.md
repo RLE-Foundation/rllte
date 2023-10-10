@@ -30,7 +30,7 @@ Mlp-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/vanilla_mlp_encoder.py/#L57)
 ```python
 .forward(
    obs: th.Tensor

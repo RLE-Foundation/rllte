@@ -30,7 +30,9 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.base_reward import BaseIntrinsicRewardModule
+from rllte.common.prototype import BaseIntrinsicRewardModule
+
+from .utils import TorchRunningMeanStd
 
 
 class Encoder(nn.Module):
@@ -93,6 +95,8 @@ class RE3(BaseIntrinsicRewardModule):
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         latent_dim (int): The dimension of encoding vectors.
+        storage_size (int): The size of the storage for random embeddings.
+        num_envs (int): The number of parallel environments.
         k (int): Use the k-th neighbors.
         average_entropy (bool): Use the average of entropy estimation.
 
@@ -108,6 +112,8 @@ class RE3(BaseIntrinsicRewardModule):
         beta: float = 0.05,
         kappa: float = 0.000025,
         latent_dim: int = 128,
+        storage_size: int = 10000,
+        num_envs: int = 1,
         k: int = 5,
         average_entropy: bool = False,
     ) -> None:
@@ -123,7 +129,12 @@ class RE3(BaseIntrinsicRewardModule):
             p.requires_grad = False
 
         self.k = k
+        self.idx = 0
+        self.num_envs = num_envs
+        self.storage_size = storage_size
+        self.tgt_feats = th.zeros(size=(storage_size, num_envs, latent_dim))
         self.average_entropy = average_entropy
+        self.running_mean_std = TorchRunningMeanStd(shape=(num_envs,), device=self._device)
 
     def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
         """Compute the intrinsic rewards for current samples.
@@ -150,7 +161,9 @@ class RE3(BaseIntrinsicRewardModule):
         with th.no_grad():
             for i in range(num_envs):
                 src_feats = self.random_encoder(obs_tensor[:, i])
-                dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
+                dist = th.linalg.vector_norm(
+                    src_feats.unsqueeze(1) - self.tgt_feats[: self.idx, i].to(self._device), ord=2, dim=2
+                )
                 if self.average_entropy:
                     for sub_k in range(self.k):
                         intrinsic_rewards[:, i] += th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
@@ -158,7 +171,10 @@ class RE3(BaseIntrinsicRewardModule):
                 else:
                     intrinsic_rewards[:, i] = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
 
-        return intrinsic_rewards * beta_t
+        # update the running mean and std
+        self.running_mean_std.update(intrinsic_rewards)
+
+        return intrinsic_rewards / self.running_mean_std.std * beta_t
 
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.
@@ -173,3 +189,21 @@ class RE3(BaseIntrinsicRewardModule):
         Returns:
             None
         """
+
+    def add(self, samples: Dict) -> None:
+        """Calculate the random embeddings and insert them into the storage.
+
+        Args:
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
+        Returns:
+            None
+        """
+        with th.no_grad():
+            for j in range(samples["obs"].size()[0]):
+                self.tgt_feats[self.idx] = self.random_encoder(samples["obs"][j])
+                self.idx = (self.idx + 1) % self.storage_size

@@ -36,7 +36,7 @@ ResNet-like encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L181)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/espeholt_residual_encoder.py/#L183)
 ```python
 .forward(
    obs: th.Tensor

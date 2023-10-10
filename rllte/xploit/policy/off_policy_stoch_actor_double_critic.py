@@ -24,25 +24,24 @@
 
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
 
-from torch.distributions import Distribution
-
-from rllte.common.base_policy import BasePolicy
+from rllte.common.prototype import BaseDistribution as Distribution
+from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.off_policy_det_actor_double_critic import DoubleCritic
+
+from .utils import OffPolicyDoubleCritic, get_off_policy_actor
+
+# from torch.distributions import Distribution
 
 
 class OffPolicyStochActorDoubleCritic(BasePolicy):
     """Stochastic actor network and double critic network for off-policy algortithms like `SAC`.
         Here the 'self.dist' refers to an sampling distribution instance.
-
-        Structure: self.encoder (shared by actor and critic), self.actor, self.critic, self.critic_target
-        Optimizers: self.encoder_opt, self.critic_opt -> (self.encoder, self.critic), self.actor_opt -> (self.actor)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -50,9 +49,9 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
         log_std_range (Tuple): Range of log standard deviation.
-        init_fn (Optional[str]): Parameters initialization method.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network.
@@ -66,9 +65,11 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        log_std_range: Tuple = (-10, 2),
-        init_fn: Optional[str] = None,
+        log_std_range: Tuple = (-5, 2),
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -80,18 +81,40 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         )
 
         # build actor and critic
-        self.actor = nn.Sequential(
-            nn.Linear(self.feature_dim, self.hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, 2 * self.action_dim),
+        actor_kwargs = {"action_dim": self.policy_action_dim, "hidden_dim": self.hidden_dim, "feature_dim": self.feature_dim}
+        if self.action_type == "Box":
+            actor_kwargs["log_std_range"] = log_std_range # type: ignore[assignment]
+
+        self.actor = get_off_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
+
+        self.critic = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+            action_type=self.action_type,
+        )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+            action_type=self.action_type,
         )
 
-        self.critic = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-        self.critic_target = DoubleCritic(action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
-
-        self.log_std_min, self.log_std_max = log_std_range
+    @staticmethod
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OffPolicyStochActorDoubleCritic")
+        print(f"{'Structure'.ljust(10)} : self.encoder (shared by actor and critic), self.actor")
+        print(f"{''.ljust(10)} : self.critic, self.critic_target")
+        print(f"{'Forward'.ljust(10)} : obs -> self.encoder -> self.actor -> actions")
+        print(f"{''.ljust(10)} : obs -> self.encoder -> self.critic -> double values")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['encoder_opt'] -> self.encoder")
+        print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.encoder, self.critic)")
+        print(f"{''.ljust(10)} : self.optimizers['actor_opt'] -> self.actor")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -114,35 +137,22 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         # synchronize the parameters of critic and target critic
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self.encoder_opt = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self.actor_opt = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self.critic_opt = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
-    
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
+        self._optimizers["encoder_opt"] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers["actor_opt"] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers["critic_opt"] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-        return th.rand(size=(obs.size()[0], self.action_dim), device=obs.device).uniform_(-1.0, 1.0)
-
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> Tuple[th.Tensor]:
+    def forward(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
             obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
-            step (int): Global training step.
 
         Returns:
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
-
+        dist = self.get_dist(obs=encoded_obs)
         if not training:
             actions = dist.mean
         else:
@@ -150,7 +160,7 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
 
         return actions
 
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
+    def get_dist(self, obs: th.Tensor) -> Distribution:
         """Get sample distribution.
 
         Args:
@@ -160,40 +170,23 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         Returns:
             Action distribution.
         """
-        mu, log_std = self.actor(obs).chunk(2, dim=-1)
+        policy_outputs = self.actor.get_policy_outputs(obs)
 
-        log_std = th.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1)
+        return self.dist(*policy_outputs)
 
-        std = log_std.exp()
-
-        return self.dist(mu, std)
-
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

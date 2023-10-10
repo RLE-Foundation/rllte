@@ -26,7 +26,6 @@
 from typing import Dict
 
 import numpy as np
-import pandas as pd
 from huggingface_hub import hf_hub_download
 
 
@@ -46,18 +45,15 @@ class Procgen:
         """Returns final performance."""
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="procgen_data.json", subfolder="datasets"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="procgen_scores.npy", subfolder="procgen"
         )
 
-        scores_data = pd.read_json(file)
-        scores_dict = dict()
-        for algo in scores_data.keys():
-            scores_dict[algo] = np.array([value for _, value in scores_data[algo].items()]).T
+        scores_dict = np.load(file, allow_pickle=True).item()
 
         return scores_dict
 
     def load_curves(self) -> Dict[str, np.ndarray]:
-        """Returns learning curves using a Dict of arrays:
+        """Returns learning curves using a `Dict` of NumPy arrays:
         curves = {
             "ppo": {
                 "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},

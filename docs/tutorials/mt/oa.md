@@ -1,5 +1,19 @@
 # Observation Augmentation for Sample Efficiency and Generalization
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/observation_augmentation.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/observation_augmentation.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 Observation augmentation is an efficient approach to improve sample efficiency and generalization, which is also a basic primitive of **RLLTE**.
 
 > - Laskin M, Lee K, Stooke A, et al. Reinforcement learning with augmented data[J]. Advances in neural information processing systems, 2020, 33: 19884-19895.

@@ -7,7 +7,10 @@ pytest:
 pytype:
 	pytype -j auto ${LINT_PATHS}
 
-type: pytype
+mypy:
+	mypy ${LINT_PATHS}
+
+type: pytype mypy
 
 lint:
 	# stop the build if there are Python syntax errors or undefined names
@@ -21,12 +24,6 @@ format:
 	isort ${LINT_PATHS}
 	# Reformat using black
 	black ${LINT_PATHS}
-
-check-codestyle:
-	# Sort imports
-	isort --check ${LINT_PATHS}
-	# Reformat using black
-	black --check ${LINT_PATHS}
 
 commit-checks: format type lint
 

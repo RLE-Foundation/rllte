@@ -79,25 +79,20 @@ class AdapterEnv(gym.Wrapper):
 
 
 def make_bullet_env(
-    env_id: str = "AntBulletEnv-v0", 
-    num_envs: int = 1, 
-    device: str = "cpu", 
-    seed: int = 0, 
-    parallel: bool = True
-) -> gym.Env:
-    """Build PyBullet robotics environments.
+    env_id: str = "AntBulletEnv-v0", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
+) -> Gymnasium2Torch:
+    """Create PyBullet robotics environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device to convert the data.
         seed (int): Random seed.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        parallel (bool): `True` for creating asynchronous environments, and `False`
+            for creating synchronous environments.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
     def make_env(env_id: str, seed: int) -> Callable:

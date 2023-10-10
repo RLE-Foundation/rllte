@@ -79,7 +79,7 @@ extra:
 nav:
   - Overview: 
     - Overview: index.md
-    - Tenet: assets/pdf/tenet.pdf
+    - White Paper: assets/pdf/White Paper.pdf
     - Changelog: changelog.md
     - Contribution: contributing.md
     - License: license.md
@@ -93,17 +93,17 @@ nav:
   - API Documentation:
     - Overview: api.md
     - Common: 
-      - Base Classes:
-        - BaseAgent: api_docs/common/base_agent.md
-        - OnPolicyAgent: api_docs/common/on_policy_agent.md
-        - OffPolicyAgent: api_docs/common/off_policy_agent.md
-        - DistributedAgent: api_docs/common/distributed_agent.md
-        - BasePolicy: api_docs/common/base_policy.md
-        - BaseEncoder: api_docs/common/base_encoder.md
-        - BaseStorage: api_docs/common/base_storage.md
-        - BaseDistribution: api_docs/common/base_distribution.md
-        - BaseAugmentation: api_docs/common/base_augmentation.md
-        - BaseIntrinsicRewardModule: api_docs/common/base_reward.md
+      - Prototypes:
+        - BaseAgent: api_docs/common/prototype/base_agent.md
+        - OnPolicyAgent: api_docs/common/prototype/on_policy_agent.md
+        - OffPolicyAgent: api_docs/common/prototype/off_policy_agent.md
+        - DistributedAgent: api_docs/common/prototype/distributed_agent.md
+        - BasePolicy: api_docs/common/prototype/base_policy.md
+        - BaseEncoder: api_docs/common/prototype/base_encoder.md
+        - BaseStorage: api_docs/common/prototype/base_storage.md
+        - BaseDistribution: api_docs/common/prototype/base_distribution.md
+        - BaseAugmentation: api_docs/common/prototype/base_augmentation.md
+        - BaseIntrinsicRewardModule: api_docs/common/prototype/base_reward.md
       - Auxiliaries:
         - Logger: api_docs/common/logger.md
         - Timer: api_docs/common/timer.md
@@ -116,12 +116,15 @@ nav:
         - A2C: api_docs/agent/legacy/a2c.md
         - DQN: api_docs/agent/legacy/dqn.md
         - SAC: api_docs/agent/legacy/sac.md
+        - SACDiscrete: api_docs/agent/legacy/sacd.md
         - DDPG: api_docs/agent/legacy/ddpg.md
+        - TD3: api_docs/agent/legacy/td3.md
       - Current:
         - DrQv2: api_docs/agent/drqv2.md
         - DAAC: api_docs/agent/daac.md
         - DrAC: api_docs/agent/drac.md
         - DrDAAC: api_docs/agent/drdaac.md
+        - PPG: api_docs/agent/ppg.md
         - IMPALA: api_docs/agent/impala.md
 
     - Xploit:
@@ -129,8 +132,9 @@ nav:
         - OnPolicySharedActorCritic: api_docs/xploit/policy/on_policy_shared_actor_critic.md
         - OnPolicyDecoupledActorCritic: api_docs/xploit/policy/on_policy_decoupled_actor_critic.md
         - OffPolicyDoubleQNetwork: api_docs/xploit/policy/off_policy_double_qnetwork.md
-        - OffPolicyDeterministicActorDoubleCritic: api_docs/xploit/policy/off_policy_det_actor_double_critic.md
-        - OffPolicyStochasticActorDoubleCritic: api_docs/xploit/policy/off_policy_stoch_actor_double_critic.md
+        - OffPolicyDoubleActorDoubleCritic: api_docs/xploit/policy/off_policy_double_actor_double_critic.md
+        - OffPolicyDetActorDoubleCritic: api_docs/xploit/policy/off_policy_det_actor_double_critic.md
+        - OffPolicyStochActorDoubleCritic: api_docs/xploit/policy/off_policy_stoch_actor_double_critic.md
         - DistributedActorLearner: api_docs/xploit/policy/distributed_actor_learner.md
 
       - encoder:
@@ -190,26 +194,30 @@ nav:
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
     
     - Hub: 
-      - apps: 
-        - ppo_procgen: ...
+      - applications: 
+        - Atari: api_docs/hub/applications/atari.md
+        - DMControl: api_docs/hub/applications/dmc.md
+        - Procgen: api_docs/hub/applications/procgen.md
+        - MiniGrid: api_docs/hub/applications/minigrid.md
       - datasets:
         - Atari: api_docs/hub/datasets/atari.md
-        - PyBullet: api_docs/hub/datasets/pybullet.md
+        - DMControl: api_docs/hub/datasets/dmc.md
         - Procgen: api_docs/hub/datasets/procgen.md
+        - MiniGrid: api_docs/hub/datasets/minigrid.md
       - models:
+        - Atari: api_docs/hub/models/atari.md
+        - DMControl: api_docs/hub/models/dmc.md
         - Procgen: api_docs/hub/models/procgen.md
+        - MiniGrid: api_docs/hub/models/minigrid.md
     
     - Env:
       - Packaged Environments:
         - make_atari_env: api_docs/env/atari/__init__.md
         - make_bullet_env: api_docs/env/bullet/__init__.md
-        - make_bitflipping_env: api_docs/env/bitflipping/__init__.md
         - make_dmc_env: api_docs/env/dmc/__init__.md
-        - make_minigrid_env: api_docs/env/minigrid/__init__.md
-        - make_multibinary_env: api_docs/env/multibinary/__init__.md
         - make_procgen_env: api_docs/env/procgen/__init__.md
-        - make_robosuite_env: api_docs/env/robosuite/__init__.md
         - make_envpool_atari_env: api_docs/env/atari/__init__.md
+        - make_envpool_procgen_env: api_docs/env/procgen/__init__.md
       - make_rllte_env: api_docs/env/utils.md
     
     - Evaluation:

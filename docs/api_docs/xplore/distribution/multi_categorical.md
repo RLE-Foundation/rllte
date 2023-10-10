@@ -2,33 +2,21 @@
 
 
 ## MultiCategorical
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L32)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L36)
 ```python 
-MultiCategorical(
-   logits: Tuple[th.Tensor, ...]
-)
+
 ```
 
 
 ---
-Categorical distribution for sampling actions for 'MultiDiscrete' tasks.
-
-
-**Args**
-
-* **logits** (Tuple[th.Tensor, ...]) : The event log probabilities (unnormalized).
-
-
-**Returns**
-
-Categorical distribution instance.
+Multi-categorical distribution for sampling actions for 'MultiDiscrete' tasks.
 
 
 **Methods:**
 
 
 ### .probs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L47)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L56)
 ```python
 .probs()
 ```
@@ -37,7 +25,7 @@ Categorical distribution instance.
 Return probabilities.
 
 ### .logits
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L52)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L61)
 ```python
 .logits()
 ```
@@ -46,7 +34,7 @@ Return probabilities.
 Returns the unnormalized log probabilities.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L65)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -68,7 +56,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L68)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L77)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -89,7 +77,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L81)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L90)
 ```python
 .entropy()
 ```
@@ -98,7 +86,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L86)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L95)
 ```python
 .mode()
 ```
@@ -107,7 +95,7 @@ Returns the Shannon entropy of distribution.
 Returns the mode of the distribution.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L91)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/multi_categorical.py/#L100)
 ```python
 .mean()
 ```

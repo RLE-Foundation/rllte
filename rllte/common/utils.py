@@ -23,13 +23,13 @@
 # =============================================================================
 
 
-from typing import Callable, Tuple, Dict, List
-
 import json
+import os
+import re
+from typing import Dict, List, Tuple
+
 import numpy as np
 import torch as th
-import gymnasium as gym
-
 from torch import nn
 
 
@@ -119,10 +119,65 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
 
     Args:
         infos (Dict): Information.
-    
+
     Returns:
         Episode rewards and lengths.
     """
-    indices = np.nonzero(infos["episode"]["l"])
-        
-    return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    if "episode" in infos.keys():
+        indices = np.nonzero(infos["episode"]["l"])
+        return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    elif "final_info" in infos.keys():
+        r: List = []
+        l: List = []
+        # to handle with the Atari environments
+        for info in infos['final_info']:
+            if info is not None and "episode" in info.keys():
+                r.extend(info["episode"]["r"].tolist())
+                l.extend(info["episode"]["l"].tolist())
+        return r, l
+    else:
+        return [], []
+
+
+def get_npu_name() -> str:
+    """Get NPU name."""
+    str_command = "npu-smi info"
+    out = os.popen(str_command)
+    text_content = out.read()
+    out.close()
+    lines = text_content.split("\n")
+    npu_name_line = lines[6]
+    name_part = npu_name_line.split("|")[1]
+    npu_name = name_part.split()[-1]
+
+    return npu_name
+
+
+def schedule(schdl: str, step: int) -> float:
+    """Exploration noise schedule.
+
+    Args:
+        schdl (str): Schedule mode.
+        step (int): global training step.
+
+    Returns:
+        Standard deviation.
+    """
+    try:
+        return float(schdl)
+    except ValueError:
+        match = re.match(r"linear\((.+),(.+),(.+)\)", schdl)
+        if match:
+            init, final, duration = (float(g) for g in match.groups())
+            mix = np.clip(step / duration, 0.0, 1.0)
+            return (1.0 - mix) * init + mix * final
+        match = re.match(r"step_linear\((.+),(.+),(.+),(.+),(.+)\)", schdl)
+        if match:
+            init, final1, duration1, final2, duration2 = (float(g) for g in match.groups())
+            if step <= duration1:
+                mix = np.clip(step / duration1, 0.0, 1.0)
+                return (1.0 - mix) * init + mix * final1
+            else:
+                mix = np.clip((step - duration1) / duration2, 0.0, 1.0)
+                return (1.0 - mix) * final1 + mix * final2
+    raise NotImplementedError(schdl)

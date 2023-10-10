@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple
+from typing import Deque, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -33,7 +33,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from rllte.common.base_reward import BaseIntrinsicRewardModule
+from rllte.common.prototype import BaseIntrinsicRewardModule
 
 
 class Encoder(nn.Module):
@@ -199,7 +199,7 @@ class RIDE(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss()
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss()  # type: ignore[assignment]
 
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, action_dim=self._action_dim).to(self._device)
 
@@ -209,7 +209,7 @@ class RIDE(BaseIntrinsicRewardModule):
         self.batch_size = batch_size
 
         # episodic memory
-        self.episodic_memory = deque(maxlen=capacity)
+        self.episodic_memory: Deque = deque(maxlen=capacity)
         self.k = k
         self.kernel_cluster_distance = kernel_cluster_distance
         self.kernel_epsilon = kernel_epsilon
@@ -282,8 +282,6 @@ class RIDE(BaseIntrinsicRewardModule):
                 dist = th.linalg.vector_norm(encoded_next_obs - encoded_obs, ord=2, dim=1)
                 intrinsic_rewards[:, i] = dist.cpu() * n_eps
 
-        self.update(samples)
-
         return intrinsic_rewards * beta_t
 
     def update(self, samples: Dict) -> None:
@@ -332,3 +330,6 @@ class RIDE(BaseIntrinsicRewardModule):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
+    
+    def add(self, samples: Dict) -> None:
+        """Add new samples to the intrinsic reward module."""

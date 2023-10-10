@@ -22,38 +22,47 @@
 # SOFTWARE.
 # =============================================================================
 
-from typing import Tuple
+
+from typing import Tuple, TypeVar
+
 import torch as th
 import torch.distributions as pyd
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
+
+SelfMutliCategorical = TypeVar("SelfMutliCategorical", bound="MultiCategorical")
 
 
 class MultiCategorical(BaseDistribution):
-    """Categorical distribution for sampling actions for 'MultiDiscrete' tasks.
+    """Multi-categorical distribution for sampling actions for 'MultiDiscrete' tasks."""
 
-    Args:
-        logits (Tuple[th.Tensor, ...]): The event log probabilities (unnormalized).
+    def __init__(self) -> None:
+        super().__init__()
 
-    Returns:
-        Categorical distribution instance.
-    """
+    def __call__(self: SelfMutliCategorical, logits: Tuple[th.Tensor, ...]) -> SelfMutliCategorical:
+        """Create the distribution.
 
-    def __init__(self, logits: Tuple[th.Tensor, ...]) -> None:
+        Args:
+            logits (Tuple[th.Tensor, ...]): The event log probabilities (unnormalized).
+
+        Returns:
+            Multi-categorical distribution instance.
+        """
         super().__init__()
         self.dist = [pyd.Categorical(logits=logits_) for logits_ in logits]
+        return self
 
     @property
     def probs(self) -> Tuple[th.Tensor, ...]:
         """Return probabilities."""
-        return (dist.probs for dist in self.dist)
+        return (dist.probs for dist in self.dist)  # type: ignore
 
     @property
     def logits(self) -> Tuple[th.Tensor, ...]:
         """Returns the unnormalized log probabilities."""
-        return (dist.logits for dist in self.dist)
+        return (dist.logits for dist in self.dist)  # type: ignore
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
@@ -74,9 +83,9 @@ class MultiCategorical(BaseDistribution):
         Returns:
             The log_prob value.
         """
-        return th.stack([dist.log_prob(action) for dist, action in zip(self.dist, th.unbind(actions, dim=1))],
-                        dim=1
-                        ).sum(dim=1)
+        return th.stack([dist.log_prob(action) for dist, action in zip(self.dist, th.unbind(actions, dim=1))], dim=1).sum(
+            dim=1
+        )
 
     def entropy(self) -> th.Tensor:
         """Returns the Shannon entropy of distribution."""

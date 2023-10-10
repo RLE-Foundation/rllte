@@ -26,28 +26,52 @@
 from typing import Dict
 
 import numpy as np
-import pandas as pd
 from huggingface_hub import hf_hub_download
 
 
-class DeepMindControl:
+class DMControl:
     """Scores and learning cures of various RL algorithms on the full
-    DeepMind Control Suite benchmark.
+        DeepMind Control Suite benchmark.
+    Environment link: https://github.com/google-deepmind/dm_control
+    Number of environments: 24
+    Number of training steps: 1,000,000
+    Number of seeds: 10
+    Added algorithms: [SAC, DrQ-v2]
     """
 
     def __init__(self) -> None:
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="dm_control.json", subfolder="datasets"
-        )
-        self.dm_control_data = pd.read_json(file)
+        pass
 
     def load_scores(self) -> Dict[str, np.ndarray]:
-        """Returns final performance"""
-        scores_dict = dict()
-        for algo in self.dm_control_data.keys():
-            scores_dict[algo] = np.array([value for _, value in self.dm_control_data[algo].items()]).T
+        """Returns final performance."""
+
+        file = hf_hub_download(
+            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="dmc_scores.npy", subfolder="dmc"
+        )
+
+        scores_dict = np.load(file, allow_pickle=True).item()
 
         return scores_dict
 
-    def load_curves(self) -> None:
-        pass
+    def load_curves(self) -> Dict[str, np.ndarray]:
+        """Returns learning curves using a `Dict` of NumPy arrays:
+        curves = {
+            "ppo": {
+                "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+                "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+            },
+            "daac": {
+                "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+                "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+            },
+            ...
+        }
+        """
+
+        file = hf_hub_download(
+            repo_id="RLE-Foundation/rllte-hub", repo_type="dataset", filename="dmc_curves.npy", subfolder="dmc"
+        )
+
+        curves_dict = np.load(file, allow_pickle=True).item()
+
+        return curves_dict

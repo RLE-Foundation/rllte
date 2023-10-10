@@ -27,7 +27,7 @@ import gymnasium as gym
 import torch as th
 from torch import nn
 
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 
 
 class VanillaMlpEncoder(BaseEncoder):
@@ -50,6 +50,7 @@ class VanillaMlpEncoder(BaseEncoder):
     ) -> None:
         super().__init__(observation_space, feature_dim)
 
+        assert observation_space.shape is not None, "The observation shape cannot be None!"
         input_dim = observation_space.shape[0]
         self.trunk = nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, feature_dim), nn.Tanh())
 

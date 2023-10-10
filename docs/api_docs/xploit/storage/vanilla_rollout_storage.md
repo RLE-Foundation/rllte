@@ -2,12 +2,12 @@
 
 
 ## VanillaRolloutStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L35)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L36)
 ```python 
 VanillaRolloutStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   num_steps: int = 256, num_envs: int = 8, batch_size: int = 64, discount: float = 0.999,
-   gae_lambda: float = 0.95
+   storage_size: int = 256, batch_size: int = 64, num_envs: int = 8,
+   discount: float = 0.999, gae_lambda: float = 0.95
 )
 ```
 
@@ -20,11 +20,11 @@ Vanilla rollout storage for on-policy algorithms.
 
 * **observation_space** (gym.Space) : The observation space of environment.
 * **action_space** (gym.Space) : The action space of environment.
-* **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
-* **num_steps** (int) : The sample length of per rollout.
-* **num_envs** (int) : The number of parallel environments.
+* **device** (str) : Device to convert the data.
+* **storage_size** (int) : The capacity of the storage. Here it refers to the length of per rollout.
 * **batch_size** (int) : Batch size of samples.
-* **discount** (float) : discount factor.
+* **num_envs** (int) : The number of parallel environments.
+* **discount** (float) : The discount factor.
 * **gae_lambda** (float) : Weighting coefficient for generalized advantage estimation (GAE).
 
 
@@ -36,12 +36,21 @@ Vanilla rollout storage.
 **Methods:**
 
 
+### .reset
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L69)
+```python
+.reset()
+```
+
+---
+Reset the storage.
+
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L116)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L89)
 ```python
 .add(
    observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
-   terminateds: th.Tensor, truncateds: th.Tensor, info: Dict,
+   terminateds: th.Tensor, truncateds: th.Tensor, infos: Dict,
    next_observations: th.Tensor, log_probs: th.Tensor, values: th.Tensor
 )
 ```
@@ -57,7 +66,7 @@ Add sampled transitions into storage.
 * **rewards** (th.Tensor) : Rewards.
 * **terminateds** (th.Tensor) : Termination signals.
 * **truncateds** (th.Tensor) : Truncation signals.
-* **info** (Dict) : Extra information.
+* **infos** (Dict) : Extra information.
 * **next_observations** (th.Tensor) : Next observations.
 * **log_probs** (th.Tensor) : Log of the probability evaluated at `actions`.
 * **values** (th.Tensor) : Estimated values.
@@ -68,16 +77,16 @@ Add sampled transitions into storage.
 None.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L155)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L129)
 ```python
 .update()
 ```
 
 ---
-Reset the terminal state of each env.
+Update the terminal state of each env.
 
 ### .compute_returns_and_advantages
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L160)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L134)
 ```python
 .compute_returns_and_advantages(
    last_values: th.Tensor
@@ -91,8 +100,6 @@ Perform generalized advantage estimation (GAE).
 **Args**
 
 * **last_values** (th.Tensor) : Estimated values of the last step.
-* **gamma** (float) : Discount factor.
-* **gae_lamdba** (float) : Coefficient of GAE.
 
 
 **Returns**
@@ -100,7 +107,7 @@ Perform generalized advantage estimation (GAE).
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L187)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_rollout_storage.py/#L159)
 ```python
 .sample()
 ```

@@ -2,11 +2,11 @@
 
 
 ## VanillaReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L34)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L36)
 ```python 
 VanillaReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   storage_size: int = 1000000, num_envs: int = 1, batch_size: int = 1024
+   storage_size: int = 1000000, batch_size: int = 1024, num_envs: int = 1
 )
 ```
 
@@ -19,10 +19,10 @@ Vanilla replay storage for off-policy algorithms.
 
 * **observation_space** (gym.Space) : Observation space.
 * **action_space** (gym.Space) : Action space.
-* **device** (str) : Device to store the data.
-* **storage_size** (int) : Storage size.
+* **device** (str) : Device to convert the data.
+* **storage_size** (int) : The capacity of the storage.
 * **num_envs** (int) : The number of parallel environments.
-* **batch_size** (int) : Batch size.
+* **batch_size** (int) : Batch size of samples.
 
 
 **Returns**
@@ -33,12 +33,21 @@ Vanilla replay storage.
 **Methods:**
 
 
+### .reset
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L65)
+```python
+.reset()
+```
+
+---
+Reset the storage.
+
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L86)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L81)
 ```python
 .add(
    observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
-   terminateds: th.Tensor, truncateds: th.Tensor, info: Dict[str, Any],
+   terminateds: th.Tensor, truncateds: th.Tensor, infos: Dict[str, Any],
    next_observations: th.Tensor
 )
 ```
@@ -54,7 +63,7 @@ Add sampled transitions into storage.
 * **rewards** (th.Tensor) : Rewards.
 * **terminateds** (th.Tensor) : Termination flag.
 * **truncateds** (th.Tensor) : Truncation flag.
-* **info** (Dict[str, Any]) : Additional information.
+* **infos** (Dict[str, Any]) : Additional information.
 * **next_observations** (th.Tensor) : Next observations.
 
 
@@ -63,28 +72,16 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L120)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L116)
 ```python
-.sample(
-   step: int
-)
+.sample()
 ```
 
 ---
 Sample from the storage.
 
-
-**Args**
-
-* **step** (int) : Global training step.
-
-
-**Returns**
-
-Batched samples.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L153)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_replay_storage.py/#L143)
 ```python
 .update(
    *args

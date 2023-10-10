@@ -29,7 +29,7 @@ from torch import nn
 
 
 class Procgen:
-    """Trained models various RL algorithms on the full Procgen benchmark.
+    """Trained models of various RL algorithms on the full Procgen benchmark.
     Environment link: https://github.com/openai/procgen
     Number of environments: 16
     Number of training steps: 25,000,000

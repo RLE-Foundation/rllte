@@ -26,25 +26,24 @@
 import itertools
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
 
-from torch.distributions import Distribution
+# from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from rllte.common.base_policy import BasePolicy
+from rllte.common.prototype import BaseDistribution as Distribution
+from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
-from rllte.xploit.policy.on_policy_shared_actor_critic import BoxActor, DiscreteActor, MultiBinaryActor
+
+from .utils import OnPolicyCritic, OnPolicyGAE, get_on_policy_actor
 
 
 class OnPolicyDecoupledActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `DAAC`.
-
-        Structure: self.actor_encoder, self.actor, self.critic_encoder, self.critic
-        Optimizers: self.actor_opt -> (self.actor_encoder, self.actor), self.critic_opt -> (self.critic_encoder, self.critic)
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -52,8 +51,8 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -64,11 +63,13 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         observation_space: gym.Space,
         action_space: gym.Space,
         feature_dim: int,
-        hidden_dim: int,
+        hidden_dim: int = 512,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -79,40 +80,52 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
             init_fn=init_fn,
         )
 
-        # choose an actor class based on action space type
-        if self.action_type == "Discrete":
-            actor_class = DiscreteActor
-        elif self.action_type == "Box":
-            actor_class = BoxActor
-        elif self.action_type == "MultiBinary":
-            actor_class = MultiBinaryActor
-        else:
-            raise NotImplementedError("Unsupported action type!")
+        assert self.action_type in [
+            "Discrete",
+            "Box",
+            "MultiBinary",
+            "MultiDiscrete",
+        ], f"Unsupported action type {self.action_type}!"
 
-        # build actor and critic
-        self.actor = actor_class(
-            obs_shape=self.obs_shape, action_dim=self.action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        # build actor, critic and advantage estimator
+        actor_kwargs = dict(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+        if self.nvec is not None:
+            actor_kwargs["nvec"] = self.nvec
+        self.actor = get_on_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
+
+        self.critic = OnPolicyCritic(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+        # TODO: revise the action_dim for `MultiDiscrete`
+        self.gae = OnPolicyGAE(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim if self.action_type != "MultiDiscrete" else self.action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
         )
 
-        if len(self.obs_shape) > 1:
-            self.gae = nn.Linear(feature_dim + self.action_dim, 1)
-            self.critic = nn.Linear(feature_dim, 1)
-        else:
-            # for state-based observations and `IdentityEncoder`
-            self.gae = nn.Sequential(
-                nn.Linear(feature_dim + self.action_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, 1),
-            )
-            self.critic = nn.Sequential(
-                nn.Linear(feature_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, 1),
-            )
+    @staticmethod
+    def describe() -> None:
+        """Describe the policy."""
+        print("\n")
+        print("=" * 80)
+        print(f"{'Name'.ljust(10)} : OnPolicyDecoupledActorCritic")
+        print(f"{'Structure'.ljust(10)} : self.actor_encoder, self.actor, self.critic_encoder, self.critic")
+        print(f"{'Forward'.ljust(10)} : obs -> self.actor_encoder -> self.actor -> actions")
+        print(f"{''.ljust(10)} : obs -> self.critic_encoder -> self.critic -> values")
+        print(f"{''.ljust(10)} : actions -> log_probs")
+        print(f"{'Optimizers'.ljust(10)} : self.optimizers['actor_opt'] -> (self.actor_encoder, self.actor)")
+        print(f"{''.ljust(10)} : self.optimizers['critic_opt'] -> (self.critic_encoder, self.critic)")
+        print("=" * 80)
+        print("\n")
 
     def freeze(self, encoder: nn.Module, dist: Distribution) -> None:
         """Freeze all the elements like `encoder` and `dist`.
@@ -138,8 +151,8 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
-        self.actor_opt = th.optim.Adam(self.actor_params, **self.opt_kwargs)
-        self.critic_opt = th.optim.Adam(self.critic_params, **self.opt_kwargs)
+        self._optimizers["actor_opt"] = th.optim.Adam(self.actor_params, **self.opt_kwargs)
+        self._optimizers["critic_opt"] = th.optim.Adam(self.critic_params, **self.opt_kwargs)
 
     def forward(self, obs: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
@@ -175,7 +188,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         """
         return self.critic(self.critic_encoder(obs))
 
-    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
+    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Evaluate actions according to the current policy given the observations.
 
         Args:
@@ -190,7 +203,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         dist = self.dist(*policy_outputs)
 
         if self.action_type == "Discrete":
-            encoded_actions = F.one_hot(actions.long(), self.action_dim).to(h.device)
+            encoded_actions = F.one_hot(actions.long(), self.policy_action_dim).to(h.device)
         else:
             encoded_actions = actions
 
@@ -200,31 +213,19 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
 
         return gae, self.critic(self.critic_encoder(obs)), log_probs, entropy
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.actor_encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

@@ -23,27 +23,28 @@
 # =============================================================================
 
 
-from typing import Dict, Optional, Generator
+from typing import Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.on_policy_agent import OnPolicyAgent
+from rllte.common.prototype import OnPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
-from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian
-from rllte.xplore.augmentation import RandomCrop
+from rllte.xplore.augmentation import GaussianNoise, RandomCrop
+from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
+
 
 class DrAC(OnPolicyAgent):
     """Data Regularized Actor-Critic (DrAC) agent.
         Based on: https://github.com/rraileanu/auto-drac
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (Optional[gym.Env]): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -62,6 +63,7 @@ class DrAC(OnPolicyAgent):
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
         max_grad_norm (float): Maximum norm of gradients.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -70,8 +72,8 @@ class DrAC(OnPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -89,6 +91,7 @@ class DrAC(OnPolicyAgent):
         ent_coef: float = 0.01,
         aug_coef: float = 0.1,
         max_grad_norm: float = 0.5,
+        discount: float = 0.999,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -112,22 +115,28 @@ class DrAC(OnPolicyAgent):
         self.aug_coef = aug_coef
         self.max_grad_norm = max_grad_norm
 
-        # default encoder
+        # default encoder and augmentation
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            aug = RandomCrop(out=self.observation_space.shape[1]).to(self.device)  # type: ignore[index]
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
+            aug = GaussianNoise().to(self.device)  # type: ignore[assignment]
 
         # default distribution
         if self.action_type == "Discrete":
-            dist = Categorical
+            dist = Categorical()
         elif self.action_type == "Box":
-            dist = DiagonalGaussian
+            dist = DiagonalGaussian()  # type: ignore[assignment]
         elif self.action_type == "MultiBinary":
-            dist = Bernoulli
+            dist = Bernoulli()  # type: ignore[assignment]
+        elif self.action_type == "MultiDiscrete":
+            dist = MultiCategorical()  # type: ignore[assignment]
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
         policy = OnPolicySharedActorCritic(
@@ -145,29 +154,30 @@ class DrAC(OnPolicyAgent):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            num_steps=self.num_steps,
+            storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            discount=discount
         )
-
-        # default augmentation
-        aug = RandomCrop(out=64).to(self.device)
 
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist, augmentation=aug)
 
-    def update(self) -> Dict[str, float]:
-        """Update function that returns training metrics such as policy loss, value loss, etc..
-        """
+    def update(self) -> None:
+        """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
         total_entropy_loss = [0.0]
         total_aug_loss = [0.0]
 
+        assert self.aug is not None, "An augmentation module is necessary for DrAC agent!"
+
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(obs=batch.observations, actions=batch.actions)
+                new_values, new_log_probs, entropy = self.policy.evaluate_actions(
+                    obs=batch.observations, actions=batch.actions
+                )
 
                 # policy loss part
                 ratio = th.exp(new_log_probs - batch.old_log_probs)
@@ -190,25 +200,24 @@ class DrAC(OnPolicyAgent):
                 batch_obs_aug = self.aug(batch.observations)
                 new_batch_actions, _ = self.policy(obs=batch.observations)
                 values_aug, log_probs_aug, _ = self.policy.evaluate_actions(obs=batch_obs_aug, actions=new_batch_actions)
-                policy_loss_aug = - log_probs_aug.mean()
+                policy_loss_aug = -log_probs_aug.mean()
                 value_loss_aug = 0.5 * (th.detach(new_values) - values_aug).pow(2).mean()
                 aug_loss = policy_loss_aug + value_loss_aug
 
                 # update
-                self.policy.opt.zero_grad(set_to_none=True)
+                self.policy.optimizers["opt"].zero_grad(set_to_none=True)
                 loss = value_loss * self.vf_coef + policy_loss - entropy * self.ent_coef + self.aug_coef * aug_loss
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-                self.policy.opt.step()
-                
+                self.policy.optimizers["opt"].step()
+
                 total_policy_loss.append(policy_loss.item())
                 total_value_loss.append(value_loss.item())
                 total_entropy_loss.append(entropy.item())
                 total_aug_loss.append(aug_loss.item())
 
-        return {
-            "Policy Loss": np.mean(total_policy_loss),
-            "Value Loss": np.mean(total_value_loss),
-            "Entropy Loss": np.mean(total_entropy_loss),
-            "Augmentation Loss": np.mean(total_aug_loss),
-        }
+        # record metrics
+        self.logger.record("train/policy_loss", np.mean(total_policy_loss))
+        self.logger.record("train/value_loss", np.mean(total_value_loss))
+        self.logger.record("train/entropy_loss", np.mean(total_entropy_loss))
+        self.logger.record("train/aug_loss", np.mean(total_aug_loss))

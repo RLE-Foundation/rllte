@@ -2,11 +2,9 @@
 
 
 ## Categorical
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L32)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L36)
 ```python 
-Categorical(
-   logits: th.Tensor
-)
+
 ```
 
 
@@ -14,21 +12,11 @@ Categorical(
 Categorical distribution for sampling actions for 'Discrete' tasks.
 
 
-**Args**
-
-* **logits** (th.Tensor) : The event log probabilities (unnormalized).
-
-
-**Returns**
-
-Categorical distribution instance.
-
-
 **Methods:**
 
 
 ### .probs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L47)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L55)
 ```python
 .probs()
 ```
@@ -37,7 +25,7 @@ Categorical distribution instance.
 Return probabilities.
 
 ### .logits
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L52)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L60)
 ```python
 .logits()
 ```
@@ -46,7 +34,7 @@ Return probabilities.
 Returns the unnormalized log probabilities.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L56)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L64)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -68,7 +56,7 @@ samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L68)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L76)
 ```python
 .log_prob(
    actions: th.Tensor
@@ -89,7 +77,7 @@ Returns the log of the probability density/mass function evaluated at actions.
 The log_prob value.
 
 ### .entropy
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L79)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L87)
 ```python
 .entropy()
 ```
@@ -98,7 +86,7 @@ The log_prob value.
 Returns the Shannon entropy of distribution.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L84)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L92)
 ```python
 .mode()
 ```
@@ -107,7 +95,7 @@ Returns the Shannon entropy of distribution.
 Returns the mode of the distribution.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L89)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/categorical.py/#L97)
 ```python
 .mean()
 ```

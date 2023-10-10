@@ -1,7 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env.dmc import make_dmc_env
+from rllte.env.testing import make_box_env
 from rllte.xplore.augmentation import (
     GaussianNoise,
     GrayScale,
@@ -19,7 +19,8 @@ from rllte.xplore.augmentation import (
 )
 
 
-@pytest.mark.parametrize("aug_cls",
+@pytest.mark.parametrize(
+    "aug_cls",
     [
         GrayScale,
         Identity,
@@ -36,10 +37,11 @@ from rllte.xplore.augmentation import (
 )
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_image_augmentation(aug_cls, device):
-    env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=True, visualize_reward=False, device=device)
-    time_step = env.reset()
+    envs = make_box_env(env_id="PixelObsEnv", num_envs=7, device=device, seed=1, asynchronous=True)
+
+    obs, _ = envs.reset()
     aug = aug_cls().to(th.device(device))
-    aug(time_step.observations / 255.0)
+    aug(obs / 255.0)
 
     print("Image augmentation test passed!")
 
@@ -47,9 +49,9 @@ def test_image_augmentation(aug_cls, device):
 @pytest.mark.parametrize("aug_cls", [RandomAmplitudeScaling, GaussianNoise])
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 def test_state_augmentation(aug_cls, device):
-    env = make_dmc_env(env_id="hopper_hop", seed=1, from_pixels=False, visualize_reward=True, device=device)
-    time_step = env.reset()
+    envs = make_box_env(env_id="StateObsEnv", num_envs=7, device=device, seed=1, asynchronous=True)
+    obs, _ = envs.reset()
     aug = aug_cls().to(th.device(device))
-    aug(time_step.observations)
+    aug(obs)
 
     print("State augmentation test passed!")

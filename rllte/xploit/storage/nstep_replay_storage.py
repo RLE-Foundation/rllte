@@ -22,21 +22,24 @@
 # SOFTWARE.
 # =============================================================================
 
-import warnings
+
 import datetime
 import random
 import traceback
-from collections import defaultdict, namedtuple
+import warnings
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict, Iterator, List, Tuple
 
 import gymnasium as gym
 import numpy as np
 import torch as th
 from torch.utils.data import IterableDataset
 
-from rllte.common.base_storage import BaseStorage, NStepReplayBatch
+from rllte.common.prototype import BaseStorage
+from rllte.common.type_alias import NStepReplayBatch
 from rllte.xploit.storage.utils import episode_len, load_episode, save_episode, worker_init_fn
+
 
 class ReplayStorage:
     """Replay storage for storing transitions.
@@ -52,7 +55,7 @@ class ReplayStorage:
     def __init__(self, replay_dir: Path) -> None:
         self._replay_dir = replay_dir
         replay_dir.mkdir(exist_ok=True)
-        self._current_episode = defaultdict(list)
+        self._current_episode: Dict[str, List] = defaultdict(list)
         self._preload()
 
     def __len__(self) -> int:
@@ -65,7 +68,7 @@ class ReplayStorage:
         reward: np.ndarray,
         terminated: np.ndarray,
         truncated: np.ndarray,
-        info: Dict[str, Any],
+        infos: Dict[str, Any],
         next_obs: np.ndarray,
     ) -> None:
         """Add a new transition to the storage.
@@ -76,7 +79,7 @@ class ReplayStorage:
             reward (float): Reward.
             terminated (bool): Termination flag.
             truncated (bool): Truncation flag.
-            info (Dict): Additional information.
+            infos (Dict): Additional information.
             next_obs (np.ndarray): Next observation.
 
         Returns:
@@ -91,7 +94,7 @@ class ReplayStorage:
 
         if terminated or truncated:
             # final next observation
-            self._current_episode["observation"].append(info["final_observation"][0])
+            self._current_episode["observation"].append(infos["final_observation"][0])
             episode = dict()
             for key in self._current_episode.keys():
                 episode[key] = np.array(self._current_episode[key])
@@ -157,8 +160,8 @@ class ReplayStorageDataset(IterableDataset):
         self._size = 0
         self._max_size = max_size
         self._num_workers = max(1, num_workers)
-        self._episode_fns = []
-        self._episodes = dict()
+        self._episode_fns: List = []
+        self._episodes: Dict = dict()
         self._nstep = nstep
         self._discount = discount
         self._fetch_every = fetch_every
@@ -197,7 +200,7 @@ class ReplayStorageDataset(IterableDataset):
             return
         self._samples_since_last_fetch = 0
         try:
-            worker_id = th.utils.data.get_worker_info().id
+            worker_id = th.utils.data.get_worker_info().id  # type: ignore[union-attr]
         except Exception:
             worker_id = 0
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
@@ -247,10 +250,10 @@ class NStepReplayStorage(BaseStorage):
     Args:
         observation_space (gym.Space): Observation space.
         action_space (gym.Space): Action space.
-        device (str): Device to store replay data.
+        device (str): Device to convert replay data.
         storage_size (int): Max number of element in the storage.
         num_envs (int): The number of parallel environments.
-        batch_size (int): Batch size.
+        batch_size (int): Batch size of samples.
         num_workers (int): Subprocesses to use for data loading.
         pin_memory (bool): Pin memory or not.
         nstep (int): The number of transitions to consider when computing n-step returns
@@ -277,13 +280,13 @@ class NStepReplayStorage(BaseStorage):
         fetch_every: int = 1000,
         save_snapshot: bool = False,
     ) -> None:
-        super().__init__(observation_space=observation_space, action_space=action_space, device=device)
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
         # build storage
         self.replay_dir = Path.cwd() / "storage"
         self.replay_storage = ReplayStorage(self.replay_dir)
         max_size_per_worker = storage_size // max(1, num_workers)
-        dataset = ReplayStorageDataset(
+        self.dataset = ReplayStorageDataset(
             replay_dir=self.replay_dir,
             max_size=max_size_per_worker,
             num_workers=num_workers,
@@ -292,72 +295,75 @@ class NStepReplayStorage(BaseStorage):
             fetch_every=fetch_every,
             save_snapshot=save_snapshot,
         )
-        # build dataloader
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.reset()
+
+    def reset(self) -> None:
+        """Reset the storage."""
         self.replay_loader = th.utils.data.DataLoader(
-            dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, worker_init_fn=worker_init_fn
+            self.dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            worker_init_fn=worker_init_fn,
         )
         self._replay_iter = None
 
     def add(
         self,
-        obs: np.ndarray,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        terminateds: np.ndarray,
-        truncateds: np.ndarray,
-        info: Dict[str, Any],
-        next_obs: np.ndarray,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
         Args:
-            obs (np.ndarray): Observation.
-            actions (np.ndarray): Action.
-            rewards (np.ndarray): Reward.
-            terminateds (np.ndarray): Termination flag.
-            truncateds (np.ndarray): Truncation flag.
-            info (Dict[str, Any]): Additional information.
-            next_obs (np.ndarray): Next observation.
+            observations (th.Tensor): Observations.
+            actions (th.Tensor): Actions.
+            rewards (th.Tensor): Rewards.
+            terminateds (th.Tensor): Termination flag.
+            truncateds (th.Tensor): Truncation flag.
+            infos (Dict[str, Any]): Additional information.
+            next_observations (th.Tensor): Next observations.
 
         Returns:
             None.
         """
         # TODO: add parallel env support
         self.replay_storage.add(
-            obs=obs[0].cpu().numpy(),
+            obs=observations[0].cpu().numpy(),
             action=actions[0].cpu().numpy(),
             reward=rewards[0].cpu().numpy(),
             terminated=terminateds[0].cpu().numpy(),
             truncated=truncateds[0].cpu().numpy(),
-            info=info,
-            next_obs=next_obs[0].cpu().numpy(),
+            infos=infos,
+            next_obs=next_observations[0].cpu().numpy(),
         )
 
     @property
     def replay_iter(self) -> Iterator:
         """Create iterable dataloader."""
         if self._replay_iter is None:
-            self._replay_iter = iter(self.replay_loader)
-        return self._replay_iter
+            self._replay_iter = iter(self.replay_loader)  # type: ignore[assignment]
+        return self._replay_iter  # type: ignore[return-value]
 
-    def sample(self, step: int) -> NStepReplayBatch:
-        """Sample from the storage.
-
-        Args:
-            step (int): Global training step.
-
-        Returns:
-            Sampled data.
-        """
+    def sample(self) -> NStepReplayBatch:
+        """Sample from the storage."""
         # to device
         obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
 
-        return NStepReplayBatch(observations=self.to_torch(obs), 
-                                actions=self.to_torch(actions), 
-                                rewards=self.to_torch(rewards), 
-                                discounts=self.to_torch(discounts), 
-                                next_observations=self.to_torch(next_obs)
-                                )
+        return NStepReplayBatch(
+            observations=self.to_torch(obs),
+            actions=self.to_torch(actions),
+            rewards=self.to_torch(rewards),
+            discounts=self.to_torch(discounts),
+            next_observations=self.to_torch(next_obs),
+        )
 
     def update(self, *args) -> None:
         """Update the storage if necessary."""

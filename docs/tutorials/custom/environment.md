@@ -1,5 +1,19 @@
 # Custom Environment
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/custom_environment.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/custom_environment.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 ## Environment definition
 To use custom environments in **RLLTE**, it suffices to follow the [gymnasium](https://gymnasium.farama.org/) interface and prepare your environment following [Tutorials: Make Your Own Custom Environment](https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#). A example is:
 ``` py title="example.py"

@@ -93,7 +93,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L289)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L287)
 ```python
 .update(
    samples: Dict

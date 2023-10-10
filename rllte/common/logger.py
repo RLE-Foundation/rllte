@@ -56,6 +56,7 @@ ERROR_PREFIX = "[" + colored("ERROR".ljust(NUMBER_OF_PREFIX_SPACES, " "), "white
 TRAIN_PREFIX = "[" + colored("TRAIN".ljust(NUMBER_OF_PREFIX_SPACES, " "), "red", attrs=["bold"]) + "] - "
 EVAL_PREFIX = "[" + colored("EVAL.".ljust(NUMBER_OF_PREFIX_SPACES, " "), "green", attrs=["bold"]) + "] - "
 
+
 class Logger:
     """The logger class.
 
@@ -73,6 +74,20 @@ class Logger:
         self._eval_file = self._log_dir / "eval.log"
         self._train_file_write_header = True
         self._eval_file_write_header = True
+
+        self.metrics: Dict[str, Any] = {}
+
+    def record(self, key: str, value: Any) -> None:
+        """Record the metric.
+
+        Args:
+            key (str): The key of the metric.
+            value (Any): The value of the metric.
+
+        Returns:
+            None.
+        """
+        self.metrics[key] = value
 
     def _format(self, key: str, value: Any, ty: str) -> str:
         """Format the value according to the type.

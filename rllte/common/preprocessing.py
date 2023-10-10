@@ -22,37 +22,21 @@
 # SOFTWARE.
 # =============================================================================
 
-from typing import Callable, Tuple, Dict, Union
-from gymnasium import spaces
-from torch.nn import functional as F
+import warnings
+from typing import Dict, Tuple, Union
 
 import gymnasium as gym
 import numpy as np
 import torch as th
-import warnings
+from gymnasium import spaces
+from torch.nn import functional as F
+
+ObsShape = Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]
 
 
-def process_env_info(observation_space: gym.Space, action_space: gym.Space) -> Tuple[Tuple, ...]:
-    """Process the environment information.
-
-    Args:
-        observation_space (gym.Space): Observation space.
-        action_space (gym.Space): Action space.
-
-    Returns:
-        Information of the observation and action space.
-    """
-    # observation part
-    obs_shape = process_observation_space(observation_space)
-    # action part
-    action_shape, action_dim, action_type, action_range = process_action_space(action_space)
-
-    return obs_shape, action_shape, action_dim, action_type, action_range
-
-
-def process_observation_space(observation_space: gym.Space) -> Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]:
+def process_observation_space(observation_space: gym.Space) -> ObsShape:
     """Process the observation space.
-    
+
     Args:
         observation_space (gym.Space): Observation space.
 
@@ -72,13 +56,15 @@ def process_observation_space(observation_space: gym.Space) -> Union[Tuple[int, 
         # Number of binary features
         return observation_space.shape
     elif isinstance(observation_space, spaces.Dict):
-        return {key: process_observation_space(subspace) for (key, subspace) in observation_space.spaces.items()}  # type: ignore[misc]
-
+        return {
+            key: process_observation_space(subspace)  # type: ignore[misc]
+            for (key, subspace) in observation_space.spaces.items()
+        }
     else:
         raise NotImplementedError(f"{observation_space} observation space is not supported")
-    
 
-def process_action_space(action_space: gym.Space) -> Tuple[int, str, Union[int, float]]:
+
+def process_action_space(action_space: gym.Space) -> Tuple[Tuple[int, ...], int, int, str]:
     """Get the dimension of the action space.
 
     Args:
@@ -88,31 +74,32 @@ def process_action_space(action_space: gym.Space) -> Tuple[int, str, Union[int, 
         Information of the action space.
     """
     # TODO: revise the action_range
+    assert action_space.shape is not None, "The action data shape cannot be `None`!"
     action_shape = action_space.shape
-    if action_space.__class__.__name__ == "Discrete":
-        action_dim = int(action_space.n)
+    if isinstance(action_space, spaces.Discrete):
+        policy_action_dim = int(action_space.n)
+        action_dim = 1
         action_type = "Discrete"
-        action_range = [0, int(action_space.n) - 1]
-    elif action_space.__class__.__name__ == "Box":
-        action_dim = int(np.prod(action_space.shape))
+    elif isinstance(action_space, spaces.Box):
+        policy_action_dim = int(np.prod(action_space.shape))
+        action_dim = policy_action_dim
         action_type = "Box"
-        action_range = [
-            float(action_space.low[0]),
-            float(action_space.high[0]),
-        ]
-    elif action_space.__class__.__name__ == "MultiDiscrete":
+    elif isinstance(action_space, spaces.MultiDiscrete):
+        policy_action_dim = sum(list(action_space.nvec))
         action_dim = int(len(action_space.nvec))
         action_type = "MultiDiscrete"
-        action_range = [0, int(action_space.nvec[0]) - 1]
-    elif action_space.__class__.__name__ == "MultiBinary":
-        action_dim = int(action_space.shape[0])
+    elif isinstance(action_space, spaces.MultiBinary):
+        assert isinstance(
+            action_space.n, int
+        ), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
+        policy_action_dim = int(action_space.n)
+        action_dim = policy_action_dim
         action_type = "MultiBinary"
-        action_range = [0, 1]
     else:
         raise NotImplementedError(f"{action_space} action space is not supported")
-    
-    return action_shape, action_dim, action_type, action_range
-    
+
+    return action_shape, action_dim, policy_action_dim, action_type
+
 
 def get_flattened_obs_dim(observation_space: spaces.Space) -> int:
     """Get the dimension of the observation space when flattened. It does not apply to image observation space.
@@ -133,12 +120,12 @@ def get_flattened_obs_dim(observation_space: spaces.Space) -> int:
 
 def is_image_space_channels_first(observation_space: spaces.Box) -> bool:
     """Check if an image observation space (see ``is_image_space``)
-        is channels-first (CxHxW, True) or channels-last (HxWxC, False).       
+        is channels-first (CxHxW, True) or channels-last (HxWxC, False).
         Use a heuristic that channel dimension is the smallest of the three.
         If second dimension is smallest, raise an exception (no support).
 
         Borrowed from: https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/preprocessing.py#L10
-    
+
     Args:
         observation_space (spaces.Box): Observation space.
 
@@ -151,10 +138,7 @@ def is_image_space_channels_first(observation_space: spaces.Box) -> bool:
     return smallest_dimension == 0
 
 
-def is_image_space(observation_space: gym.Space,
-                   check_channels: bool = False,
-                   normalized_image: bool = False
-                   ) -> bool:
+def is_image_space(observation_space: gym.Space, check_channels: bool = False, normalized_image: bool = False) -> bool:
     """
     Check if a observation space has the shape, limits and dtype of a valid image.
     The check is conservative, so that it returns False if there is a doubt.
@@ -164,13 +148,13 @@ def is_image_space(observation_space: gym.Space,
 
     Args:
         observation_space (gym.Space): Observation space.
-        check_channels (bool): Whether to do or not the check for the number of channels. 
+        check_channels (bool): Whether to do or not the check for the number of channels.
             e.g., with frame-stacking, the observation space may have more channels than expected.
         normalized_image (bool): Whether to assume that the image is already normalized
             or not (this disables dtype and bounds checks): when True, it only checks that
             the space is a Box and has 3 dimensions.
             Otherwise, it checks that it has expected dtype (uint8) and bounds (values in [0, 255]).
-    
+
     Returns:
         True if observation space is channels-first image, False if channels-last.
     """

@@ -23,13 +23,13 @@
 # =============================================================================
 
 
-from typing import Dict
+from typing import Callable, Dict
 
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
-from minigrid.wrappers import FlatObsWrapper, FullyObsWrapper, DictObservationSpaceWrapper
+from minigrid.wrappers import DictObservationSpaceWrapper, FlatObsWrapper, FullyObsWrapper
 
 from rllte.env.utils import FrameStack, Gymnasium2Torch
 
@@ -59,6 +59,7 @@ class Minigrid2Image(gym.ObservationWrapper):
         """Convert MiniGrid observation to image."""
         return np.transpose(observation["image"], axes=[2, 0, 1])
 
+
 class ImageTranspose(gym.ObservationWrapper):
     """Transpose observation from channels last to channels first.
 
@@ -80,10 +81,11 @@ class ImageTranspose(gym.ObservationWrapper):
             dtype=dtype,
         )
 
-    def observation(self, observation: Dict) -> np.ndarray:
+    def observation(self, observation: Dict) -> Dict[str, np.ndarray]:
         """Convert MiniGrid observation to image."""
         observation["image"] = np.transpose(observation["image"], axes=[2, 0, 1])
         return observation
+
 
 def make_minigrid_env(
     env_id: str = "MiniGrid-DoorKey-5x5-v0",
@@ -93,29 +95,28 @@ def make_minigrid_env(
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
-    parallel: bool = True,
-) -> gym.Env:
-    """Build MiniGrid environments.
+    asynchronous: bool = True,
+) -> Gymnasium2Torch:
+    """Create MiniGrid environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
         fully_observable (bool): Fully observable gridworld using a compact grid encoding instead of the agent view.
-        fully_numerical (bool): Transforms the observation space (that has a textual component) to a fully numerical 
-            observation space, where the textual instructions are replaced by arrays representing the indices of each 
+        fully_numerical (bool): Transforms the observation space (that has a textual component) to a fully numerical
+            observation space, where the textual instructions are replaced by arrays representing the indices of each
             word in a fixed vocabulary.
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        parallel (bool): `True` for `AsyncVectorEnv` and `False` for `SyncVectorEnv`. 
-            For `Distributed` algorithms, in which `SyncVectorEnv` is required
-            and reward clip will be used before environment vectorization.
+        device (str): Device to convert the data.
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
 
     Returns:
-        The vectorized environment.
+        The vectorized environments.
     """
 
-    def make_env(env_id: str, seed: int) -> gym.Env:
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
 
@@ -138,7 +139,7 @@ def make_minigrid_env(
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
 
-    if parallel:
+    if asynchronous:
         envs = AsyncVectorEnv(envs)
     else:
         envs = SyncVectorEnv(envs)

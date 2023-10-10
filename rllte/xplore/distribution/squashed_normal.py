@@ -24,12 +24,15 @@
 
 
 import math
+from typing import TypeVar
 
 import torch as th
 from torch import distributions as pyd
 from torch.nn import functional as F
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
+
+SelfSquashedNormal = TypeVar("SelfSquashedNormal", bound="SquashedNormal")
 
 
 class TanhTransform(pyd.transforms.Transform):
@@ -62,27 +65,30 @@ class TanhTransform(pyd.transforms.Transform):
 
 
 class SquashedNormal(BaseDistribution):
-    """Squashed normal distribution for Soft Actor-Critic learner.
+    """Squashed normal distribution for `Box` tasks."""
 
-    Args:
-        loc (th.Tensor): The mean of the distribution (often referred to as mu).
-        scale (th.Tensor): The standard deviation of the distribution (often referred to as sigma).
-
-    Returns:
-        Squashed normal distribution instance.
-    """
-
-    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
-        self.loc = loc
-        self.scale = scale
+    def __call__(self: SelfSquashedNormal, mu: th.Tensor, sigma: th.Tensor) -> SelfSquashedNormal:
+        """Create the distribution.
+
+        Args:
+            mu (th.Tensor): The mean of the distribution.
+            sigma (th.Tensor): The standard deviation of the distribution.
+
+        Returns:
+            Squashed normal distribution instance.
+        """
+        self.mu = mu
+        self.sigma = sigma
         self.dist = pyd.TransformedDistribution(
-            base_distribution=pyd.Normal(loc=loc, scale=scale),
+            base_distribution=pyd.Normal(loc=mu, scale=sigma),
             transforms=[TanhTransform()],
         )
+        return self
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped sample or sample_shape shaped
             batch of samples if the distribution parameters are batched.
 
@@ -94,7 +100,7 @@ class SquashedNormal(BaseDistribution):
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped
             batch of reparameterized samples if the distribution parameters are batched.
 
@@ -109,7 +115,7 @@ class SquashedNormal(BaseDistribution):
     @property
     def mean(self) -> th.Tensor:
         """Return the transformed mean."""
-        loc = self.loc
+        loc = self.mu
         for tr in self.dist.transforms:
             loc = tr(loc)
         return loc

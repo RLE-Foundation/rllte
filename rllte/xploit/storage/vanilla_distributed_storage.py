@@ -22,14 +22,16 @@
 # SOFTWARE.
 # =============================================================================
 
+
 import threading
-from typing import Any, Dict, Generator, List, Tuple
-from torch import multiprocessing as mp
+from typing import Any, Dict, List
 
 import gymnasium as gym
 import torch as th
+from torch import multiprocessing as mp
 
-from rllte.common.base_storage import BaseStorage
+from rllte.common.preprocessing import is_image_space
+from rllte.common.prototype import BaseStorage
 
 
 class VanillaDistributedStorage(BaseStorage):
@@ -39,12 +41,13 @@ class VanillaDistributedStorage(BaseStorage):
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
-        num_steps (int): The sample steps of per rollout.
+        storage_size (int): The capacity of the storage. Here it refers to the length of per rollout.
         num_storages (int): The number of shared-memory storages.
+        num_envs (int): The number of parallel environments.
         batch_size (int): The batch size.
 
     Returns:
-        Vanilla rollout storage.
+        Vanilla distributed storage.
     """
 
     def __init__(
@@ -52,60 +55,46 @@ class VanillaDistributedStorage(BaseStorage):
         observation_space: gym.Space,
         action_space: gym.Space,
         device: str = "cpu",
-        num_steps: int = 100,
+        storage_size: int = 100,
         num_storages: int = 80,
+        num_envs: int = 45,
         batch_size: int = 32,
     ) -> None:
-        super().__init__(observation_space, action_space, device)
-        self.num_steps = num_steps
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.num_storages = num_storages
-        self.batch_size = batch_size
+        self.reset()
 
-        # data containers
-        ###########################################################################################################
-        if self.action_type == "Discrete":
-            specs = dict(
-                observation=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
-                reward=dict(size=(num_steps + 1,), dtype=th.float32),
-                terminated=dict(size=(num_steps + 1,), dtype=th.bool),
-                truncated=dict(size=(num_steps + 1,), dtype=th.bool),
-                episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
-                episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-                last_action=dict(size=(num_steps + 1,), dtype=th.int64),
-                policy_outputs=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
-                baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-                action=dict(size=(num_steps + 1,), dtype=th.int64),
-            )
+    def reset(self) -> None:
+        """Reset the storage."""
+        obs_dtype = th.uint8 if is_image_space(self.observation_space) else th.float32
+        action_dtype = th.float32 if self.action_type == "Box" else th.int64
+        policy_outputs_dim = self.policy_action_dim * 2 if self.action_type == "Box" else self.policy_action_dim
+        specs = dict(
+            observations=dict(size=(self.storage_size + 1, *self.obs_shape), dtype=obs_dtype),
+            actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
+            rewards=dict(size=(self.storage_size + 1,), dtype=th.float32),
+            terminateds=dict(size=(self.storage_size + 1,), dtype=th.bool),
+            truncateds=dict(size=(self.storage_size + 1,), dtype=th.bool),
+            episode_returns=dict(size=(self.storage_size + 1,), dtype=th.float32),
+            episode_steps=dict(size=(self.storage_size + 1,), dtype=th.int32),
+            last_actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
+            policy_outputs=dict(size=(self.storage_size + 1, policy_outputs_dim), dtype=th.float32),
+            baselines=dict(size=(self.storage_size + 1,), dtype=th.float32),
+        )
 
-        elif self.action_type == "Box":
-            specs = dict(
-                observation=dict(size=(num_steps + 1, *self.obs_shape), dtype=th.uint8),
-                reward=dict(size=(num_steps + 1,), dtype=th.float32),
-                terminated=dict(size=(num_steps + 1,), dtype=th.bool),
-                truncated=dict(size=(num_steps + 1,), dtype=th.bool),
-                episode_return=dict(size=(num_steps + 1,), dtype=th.float32),
-                episode_step=dict(size=(num_steps + 1,), dtype=th.int32),
-                last_action=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
-                policy_outputs=dict(size=(num_steps + 1, self.action_dim * 2), dtype=th.float32),
-                baseline=dict(size=(num_steps + 1,), dtype=th.float32),
-                action=dict(size=(num_steps + 1, self.action_dim), dtype=th.float32),
-            )
-        else:
-            raise NotImplementedError(f"Unsupported action space {self.action_type}.")
-        ###########################################################################################################
+        # create memory-shared storages
+        self.storages: Dict[str, List[th.Tensor]] = {key: [] for key in specs}
+        for _ in range(self.num_storages):
+            for key in self.storages.keys():
+                self.storages[key].append(th.empty(**specs[key]).share_memory_())  # type: ignore
 
-        # Create memory-shared storages.
-        self.storages = {key: [] for key in specs}
-        for _ in range(num_storages):
-            for key in self.storages:
-                self.storages[key].append(th.empty(**specs[key]).share_memory_())
-
-    def add(self, 
-            idx: int,
-            timestep: int,
-            actor_output: Dict[str, Any],
-            env_output: Dict[str, Any],
-            ) -> None:
+    def add(
+        self,
+        idx: int,
+        timestep: int,
+        actor_output: Dict[str, Any],
+        env_output: Dict[str, Any],
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -113,7 +102,7 @@ class VanillaDistributedStorage(BaseStorage):
             timestep (int): The timestep of rollout.
             actor_output (Dict): Actor output.
             env_output (Dict): Environment output.
-        
+
         Returns:
             None
         """
@@ -122,11 +111,9 @@ class VanillaDistributedStorage(BaseStorage):
         for key in actor_output:
             self.storages[key][idx][timestep, ...] = actor_output[key]
 
-    def sample(self, # noqa B008
-               free_queue: mp.SimpleQueue, 
-               full_queue: mp.SimpleQueue, 
-               lock=threading.Lock()
-               ) -> Tuple[Dict, Generator[Any, Any, None]]:
+    def sample(
+        self, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock=threading.Lock()  # B008
+    ) -> Dict[str, th.Tensor]:
         """Sample transitions from the storage.
 
         Args:
@@ -148,6 +135,6 @@ class VanillaDistributedStorage(BaseStorage):
         batch = {key: tensor.to(device=self.device, non_blocking=True) for key, tensor in batch.items()}
         return batch
 
-    def update(self, *args) -> None:
+    def update(self, *args, **kwargs) -> None:
         """Update the storage"""
         return None

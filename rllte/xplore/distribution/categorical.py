@@ -23,25 +23,33 @@
 # =============================================================================
 
 
+from typing import TypeVar
+
 import torch as th
 import torch.distributions as pyd
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
+
+SelfCategorical = TypeVar("SelfCategorical", bound="Categorical")
 
 
 class Categorical(BaseDistribution):
-    """Categorical distribution for sampling actions for 'Discrete' tasks.
+    """Categorical distribution for sampling actions for 'Discrete' tasks."""
 
-    Args:
-        logits (th.Tensor): The event log probabilities (unnormalized).
-
-    Returns:
-        Categorical distribution instance.
-    """
-
-    def __init__(self, logits: th.Tensor) -> None:
+    def __init__(self) -> None:
         super().__init__()
+
+    def __call__(self: SelfCategorical, logits: th.Tensor) -> SelfCategorical:
+        """Create the distribution.
+
+        Args:
+            logits (th.Tensor): The event log probabilities (unnormalized).
+
+        Returns:
+            Categorical distribution instance.
+        """
         self.dist = pyd.Categorical(logits=logits)
+        return self
 
     @property
     def probs(self) -> th.Tensor:
@@ -53,7 +61,7 @@ class Categorical(BaseDistribution):
         """Returns the unnormalized log probabilities."""
         return self.dist.logits
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 

@@ -5,13 +5,13 @@
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L40)
 ```python 
 DAAC(
-   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
-   eval_every_episodes: int = 10, feature_dim: int = 512, batch_size: int = 256,
-   lr: float = 0.00025, eps: float = 1e-05, hidden_dim: int = 256, clip_range: float = 0.2,
-   clip_range_vf: float = 0.2, policy_epochs: int = 1, value_freq: int = 1,
-   value_epochs: int = 9, vf_coef: float = 0.5, ent_coef: float = 0.01,
-   adv_coef: float = 0.25, max_grad_norm: float = 0.5, init_fn: str = 'xavier_uniform'
+   feature_dim: int = 512, batch_size: int = 256, lr: float = 0.00025, eps: float = 1e-05,
+   hidden_dim: int = 256, clip_range: float = 0.2, clip_range_vf: float = 0.2,
+   policy_epochs: int = 1, value_freq: int = 1, value_epochs: int = 9, vf_coef: float = 0.5,
+   ent_coef: float = 0.01, adv_coef: float = 0.25, max_grad_norm: float = 0.5,
+   init_fn: str = 'xavier_uniform'
 )
 ```
 
@@ -23,14 +23,13 @@ Based on: https://github.com/rraileanu/idaac
 
 **Args**
 
-* **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **env** (VecEnv) : Vectorized environments for training.
+* **eval_env** (VecEnv) : Vectorized environments for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **pretraining** (bool) : Turn on the pre-training mode.
 * **num_steps** (int) : The sample length of per rollout.
-* **eval_every_episodes** (int) : Evaluation interval.
 * **feature_dim** (int) : Number of features extracted by the encoder.
 * **batch_size** (int) : Number of samples per batch to load.
 * **lr** (float) : The learning rate.
@@ -58,11 +57,10 @@ DAAC agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L169)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L170)
 ```python
 .update()
 ```
 
 ---
 Update function that returns training metrics such as policy loss, value loss, etc..
-

@@ -6,7 +6,6 @@ pages:
   - page: common/preprocessing.md
     source: rllte/common/preprocessing.py
     functions:
-      - process_env_info
       - process_observation_space
       - process_action_space
       - get_flattened_obs_dim
@@ -21,48 +20,48 @@ pages:
       - _xavier_uniform
       - _orthogonal
       - _identity
-  - page: common/base_agent.md
-    source: rllte/common/base_agent.py
+  - page: common/prototype/base_agent.md
+    source: rllte/common/prototype/base_agent.py
     classes:
       - BaseAgent
-  - page: common/base_augmentation.md
-    source: rllte/common/base_augmentation.py
+  - page: common/prototype/base_augmentation.md
+    source: rllte/common/prototype/base_augmentation.py
     classes:
       - BaseAugmentation
-  - page: common/base_distribution.md
-    source: rllte/common/base_distribution.py
+  - page: common/prototype/base_distribution.md
+    source: rllte/common/prototype/base_distribution.py
     classes:
       - BaseDistribution
-  - page: common/base_encoder.md
-    source: rllte/common/base_encoder.py
+  - page: common/prototype/base_encoder.md
+    source: rllte/common/prototype/base_encoder.py
     classes:
       - BaseEncoder
-  - page: common/base_reward.md
-    source: rllte/common/base_reward.py
+  - page: common/prototype/base_reward.md
+    source: rllte/common/prototype/base_reward.py
     classes:
       - BaseIntrinsicRewardModule
-  - page: common/base_policy.md
-    source: rllte/common/base_policy.py
+  - page: common/prototype/base_policy.md
+    source: rllte/common/prototype/base_policy.py
     classes:
       - BasePolicy
-  - page: common/base_storage.md
-    source: rllte/common/base_storage.py
+  - page: common/prototype/base_storage.md
+    source: rllte/common/prototype/base_storage.py
     classes:
       - BaseStorage
-  - page: common/distributed_agent.md
-    source: rllte/common/distributed_agent.py
+  - page: common/prototype/distributed_agent.md
+    source: rllte/common/prototype/distributed_agent.py
     classes:
       - DistributedAgent
   - page: common/logger.md
     source: rllte/common/logger.py
     classes:
       - Logger
-  - page: common/off_policy_agent.md
-    source: rllte/common/off_policy_agent.py
+  - page: common/prototype/off_policy_agent.md
+    source: rllte/common/prototype/off_policy_agent.py
     classes:
       - OffPolicyAgent
-  - page: common/on_policy_agent.md
-    source: rllte/common/on_policy_agent.py
+  - page: common/prototype/on_policy_agent.md
+    source: rllte/common/prototype/on_policy_agent.py
     classes:
       - OnPolicyAgent
   - page: common/timer.md
@@ -121,6 +120,10 @@ pages:
     source: rllte/agent/drdaac.py
     classes:
       - DrDAAC
+  - page: agent/ppg.md
+    source: rllte/agent/ppg.py
+    classes:
+      - PPG
   - page: agent/drqv2.md
     source: rllte/agent/drqv2.py
     classes:
@@ -137,6 +140,10 @@ pages:
     source: rllte/agent/legacy/sac.py
     classes:
       - SAC
+  - page: agent/legacy/sacd.md
+    source: rllte/agent/legacy/sacd.py
+    classes:
+      - SACDiscrete
   - page: xploit/storage/dict_replay_storage.md
     source: rllte/xploit/storage/dict_replay_storage.py
     classes:
@@ -177,6 +184,10 @@ pages:
     source: rllte/xploit/policy/off_policy_det_actor_double_critic.py
     classes:
       - OffPolicyDetActorDoubleCritic
+  - page: xploit/policy/off_policy_double_actor_double_critic.md
+    source: rllte/xploit/policy/off_policy_double_actor_double_critic.py
+    classes:
+      - OffPolicyDoubleActorDoubleCritic
   - page: xploit/policy/off_policy_double_qnetwork.md
     source: rllte/xploit/policy/off_policy_double_qnetwork.py
     classes:
@@ -200,15 +211,47 @@ pages:
   - page: hub/datasets/dmc.md
     source: rllte/hub/datasets/dmc.py
     classes:
-      - DeepMindControl
+      - DMControl
   - page: hub/datasets/procgen.md
     source: rllte/hub/datasets/procgen.py
     classes:
       - Procgen
+  - page: hub/datasets/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
+  - page: hub/models/atari.md
+    source: rllte/hub/datasets/atari.py
+    classes:
+      - Atari
+  - page: hub/models/dmc.md
+    source: rllte/hub/datasets/dmc.py
+    classes:
+      - DMControl
   - page: hub/models/procgen.md
-    source: rllte/hub/models/procgen.py
+    source: rllte/hub/datasets/procgen.py
     classes:
       - Procgen
+  - page: hub/models/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
+  - page: hub/applications/atari.md
+    source: rllte/hub/datasets/atari.py
+    classes:
+      - Atari
+  - page: hub/applications/dmc.md
+    source: rllte/hub/datasets/dmc.py
+    classes:
+      - DMControl
+  - page: hub/applications/procgen.md
+    source: rllte/hub/datasets/procgen.py
+    classes:
+      - Procgen
+  - page: hub/applications/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
   - page: xplore/reward/girm.md
     source: rllte/xplore/reward/girm.py
     classes:
@@ -329,10 +372,6 @@ pages:
     source: rllte/xplore/distribution/truncated_normal_noise.py
     classes:
       - TruncatedNormalNoise
-  - page: env/bitflipping/__init__.md
-    source: rllte/env/bitflipping/__init__.py
-    functions:
-      - make_bitflipping_env
   - page: env/bullet/__init__.md
     source: rllte/env/bullet/__init__.py
     functions:
@@ -350,14 +389,11 @@ pages:
     source: rllte/env/minigrid/__init__.py
     functions:
       - make_minigrid_env
-  - page: env/multibinary/__init__.md
-    source: rllte/env/multibinary/__init__.py
-    functions:
-      - make_multibinary_env
   - page: env/procgen/__init__.md
     source: rllte/env/procgen/__init__.py
     functions:
       - make_procgen_env
+      - make_envpool_procgen_env
   - page: env/utils.md
     source: rllte/env/utils.py
     functions:

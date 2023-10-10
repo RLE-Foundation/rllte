@@ -23,14 +23,15 @@
 # =============================================================================
 
 
-from typing import Generator, Dict
+from typing import Dict, Generator
 
 import gymnasium as gym
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-from collections import namedtuple
 
-from rllte.common.base_storage import BaseStorage, VanillaRolloutBatch
+from rllte.common.prototype import BaseStorage
+from rllte.common.type_alias import VanillaRolloutBatch
+
 
 class VanillaRolloutStorage(BaseStorage):
     """Vanilla rollout storage for on-policy algorithms.
@@ -38,11 +39,11 @@ class VanillaRolloutStorage(BaseStorage):
     Args:
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        num_steps (int): The sample length of per rollout.
-        num_envs (int): The number of parallel environments.
+        device (str): Device to convert the data.
+        storage_size (int): The capacity of the storage. Here it refers to the length of per rollout.
         batch_size (int): Batch size of samples.
-        discount (float): discount factor.
+        num_envs (int): The number of parallel environments.
+        discount (float): The discount factor.
         gae_lambda (float): Weighting coefficient for generalized advantage estimation (GAE).
 
     Returns:
@@ -54,64 +55,36 @@ class VanillaRolloutStorage(BaseStorage):
         observation_space: gym.Space,
         action_space: gym.Space,
         device: str = "cpu",
-        num_steps: int = 256,
-        num_envs: int = 8,
+        storage_size: int = 256,
         batch_size: int = 64,
+        num_envs: int = 8,
         discount: float = 0.999,
         gae_lambda: float = 0.95,
     ) -> None:
-        super().__init__(observation_space, action_space, device)
-        self.num_steps = num_steps
-        self.num_envs = num_envs
-        self.batch_size = batch_size
+        super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.discount = discount
         self.gae_lambda = gae_lambda
+        self.reset()
 
+    def reset(self) -> None:
+        """Reset the storage."""
         # data containers
-        ###########################################################################################################
-        # initialize this container later, for `DictRolloutStorage`
-        if not isinstance(self.observation_space, gym.spaces.Dict):
-            self.observations = th.empty(
-                size=(num_steps + 1, num_envs, *self.obs_shape),
-                dtype=th.float32,
-                device=self.device,
-            )
-        if self.action_type == "Discrete":
-            self.actions = th.empty(
-                size=(num_steps, num_envs),
-                dtype=th.float32,
-                device=self.device,
-            )
-        elif self.action_type == "Box":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        elif self.action_type == "MultiBinary":
-            self.actions = th.empty(
-                size=(num_steps, num_envs, self.action_shape[0]),
-                dtype=th.float32,
-                device=self.device,
-            )
-        else:
-            raise NotImplementedError
-        
-        self.rewards = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.terminateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
-        self.truncateds = th.empty(size=(num_steps + 1, num_envs), dtype=th.float32, device=self.device)
+        self.observations = th.empty(
+            size=(self.storage_size + 1, self.num_envs, *self.obs_shape), dtype=th.float32, device=self.device
+        )
+        self.actions = th.empty(size=(self.storage_size, self.num_envs, self.action_dim), dtype=th.float32, device=self.device)
+        self.rewards = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.terminateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
+        self.truncateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
         # first next_terminated
-        self.terminateds[0].copy_(th.zeros(num_envs).to(self.device))
-        self.truncateds[0].copy_(th.zeros(num_envs).to(self.device))
+        self.terminateds[0].fill_(0.0)
+        self.truncateds[0].fill_(0.0)
         # extra part
-        self.log_probs = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.values = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.returns = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        self.advantages = th.empty(size=(num_steps, num_envs), dtype=th.float32, device=self.device)
-        ###########################################################################################################
-
-        # counter
-        self.step = 0
+        self.log_probs = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.values = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.returns = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        super().reset()
 
     def add(
         self,
@@ -120,10 +93,10 @@ class VanillaRolloutStorage(BaseStorage):
         rewards: th.Tensor,
         terminateds: th.Tensor,
         truncateds: th.Tensor,
-        info: Dict,
+        infos: Dict,
         next_observations: th.Tensor,
         log_probs: th.Tensor,
-        values: th.Tensor
+        values: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -133,7 +106,7 @@ class VanillaRolloutStorage(BaseStorage):
             rewards (th.Tensor): Rewards.
             terminateds (th.Tensor): Termination signals.
             truncateds (th.Tensor): Truncation signals.
-            info (Dict): Extra information.
+            infos (Dict): Extra information.
             next_observations (th.Tensor): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.
@@ -142,7 +115,7 @@ class VanillaRolloutStorage(BaseStorage):
             None.
         """
         self.observations[self.step].copy_(observations)
-        self.actions[self.step].copy_(actions)
+        self.actions[self.step].copy_(actions.view(self.num_envs, self.action_dim))
         self.rewards[self.step].copy_(rewards)
         self.terminateds[self.step + 1].copy_(terminateds)
         self.truncateds[self.step + 1].copy_(truncateds)
@@ -150,10 +123,11 @@ class VanillaRolloutStorage(BaseStorage):
         self.log_probs[self.step].copy_(log_probs)
         self.values[self.step].copy_(values.flatten())
 
-        self.step = (self.step + 1) % self.num_steps
+        self.full = True if self.step == self.storage_size - 1 else False
+        self.step = (self.step + 1) % self.storage_size
 
     def update(self) -> None:
-        """Reset the terminal state of each env."""
+        """Update the terminal state of each env."""
         self.terminateds[0].copy_(self.terminateds[-1])
         self.truncateds[0].copy_(self.truncateds[-1])
 
@@ -162,15 +136,13 @@ class VanillaRolloutStorage(BaseStorage):
 
         Args:
             last_values (th.Tensor): Estimated values of the last step.
-            gamma (float): Discount factor.
-            gae_lamdba (float): Coefficient of GAE.
 
         Returns:
             None.
         """
         gae = 0
-        for step in reversed(range(self.num_steps)):
-            if step == self.num_steps - 1:
+        for step in reversed(range(self.storage_size)):
+            if step == self.storage_size - 1:
                 next_values = last_values[:, 0]
             else:
                 next_values = self.values[step + 1]
@@ -186,7 +158,8 @@ class VanillaRolloutStorage(BaseStorage):
 
     def sample(self) -> Generator:
         """Sample data from storage."""
-        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
+        assert self.full, "Cannot sample when the storage is not full!"
+        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.storage_size)), self.batch_size, drop_last=True)
 
         for indices in sampler:
             batch_obs = self.observations[:-1].view(-1, *self.obs_shape)[indices]
@@ -206,5 +179,5 @@ class VanillaRolloutStorage(BaseStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ
+                adv_targ=adv_targ,
             )

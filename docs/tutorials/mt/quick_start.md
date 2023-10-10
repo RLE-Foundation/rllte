@@ -1,13 +1,27 @@
 # Quick Start
 
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/quick_start.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/quick_start.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
 **RLLTE** provides reliable implementations for highly-recognized RL algorithms, and users can build applications with very simple code.
 
 ## On NVIDIA GPU
-For example, we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of DeepMind Control Suite, and 
+Suppose we want to use [DrQ-v2](https://openreview.net/forum?id=_SJ-_yyes8) to solve a task of DeepMind Control Suite, and 
 it suffices to write a `train.py` like:
 
 ``` py title="train.py"
-# import `env` and `agent` api
+# import `env` and `agent` module
 from rllte.env import make_dmc_env 
 from rllte.agent import DrQv2
 
@@ -22,7 +36,7 @@ if __name__ == "__main__":
                   device='cuda',
                   tag="drqv2_dmc_pixel")
     # start training
-    agent.train(num_train_steps=5000)
+    agent.train(num_train_steps=5000, log_interval=1000)
 ```
 
 Run `train.py` and you will see the following output:

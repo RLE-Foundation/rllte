@@ -24,14 +24,14 @@
 
 
 import threading
-from typing import Dict, Optional, Tuple, NamedTuple
+from typing import Any, Dict, Optional
 
-import gymnasium as gym
 import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.distributed_agent import DistributedAgent
+from rllte.common.prototype import DistributedAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.storage import VanillaDistributedStorage
@@ -64,21 +64,24 @@ class VTraceLoss:
     def __call__(self, batch):
         _target_dist = batch["target_dist"]
         _behavior_dist = batch["behavior_dist"]
-        _action = batch["action"]
+        if batch["actions"].dtype is th.int64:
+            _actions = th.flatten(batch["actions"], 1, -1)
+        else:
+            _actions = batch["actions"]
         _baseline = batch["values"]
         _bootstrap_value = batch["bootstrap_value"]
         _values = batch["values"]
         _discounts = batch["discounts"]
-        _rewards = batch["reward"]
+        _rewards = batch["rewards"]
 
         with th.no_grad():
-            rhos = self.compute_ISW(target_dist=_target_dist, behavior_dist=_behavior_dist, action=_action)
+            rhos = self.compute_ISW(target_dist=_target_dist, behavior_dist=_behavior_dist, action=_actions)
             if self.clip_rho_threshold is not None:
                 clipped_rhos = th.clamp(rhos, max=self.clip_rho_threshold)
             else:
                 clipped_rhos = rhos
             cs = th.clamp(rhos, max=1.0)
-            # Append bootstrapped value to get [v1, ..., v_t+1]
+            # append bootstrapped value to get [v1, ..., v_t+1]
             values_t_plus_1 = th.cat([_values[1:], th.unsqueeze(_bootstrap_value, 0)], dim=0)
             deltas = clipped_rhos * (_rewards + _discounts * values_t_plus_1 - _values)
 
@@ -90,9 +93,9 @@ class VTraceLoss:
             result.reverse()
             vs_minus_v_xs = th.stack(result)
 
-            # Add V(x_s) to get v_s.
+            # add V(x_s) to get v_s
             vs = th.add(vs_minus_v_xs, _values)
-            # Advantage for policy gradient.
+            # advantage for policy gradient
             broadcasted_bootstrap_values = th.ones_like(vs[0]) * _bootstrap_value
             vs_t_plus_1 = th.cat([vs[1:], broadcasted_bootstrap_values.unsqueeze(0)], dim=0)
             if self.clip_pg_rho_threshold is not None:
@@ -101,7 +104,7 @@ class VTraceLoss:
                 clipped_pg_rhos = rhos
             pg_advantages = clipped_pg_rhos * (_rewards + _discounts * vs_t_plus_1 - _values)
 
-        pg_loss = -(_target_dist.log_prob(_action) * pg_advantages).sum()
+        pg_loss = -(_target_dist.log_prob(_actions) * pg_advantages).sum()
         baseline_loss = F.mse_loss(vs, _baseline, reduction="sum") * 0.5
         entropy_loss = (_target_dist.entropy()).sum()
 
@@ -113,8 +116,8 @@ class IMPALA(DistributedAgent):
         Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -141,8 +144,8 @@ class IMPALA(DistributedAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -189,16 +192,18 @@ class IMPALA(DistributedAgent):
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
         if self.action_type == "Discrete":
-            dist = Categorical
+            dist = Categorical()
         elif self.action_type == "Box":
-            dist = DiagonalGaussian
+            dist = DiagonalGaussian()  # type: ignore[assignment]
         else:
-            raise NotImplementedError("Unsupported action type!")
+            raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
         policy = DistributedActorLearner(
@@ -217,7 +222,7 @@ class IMPALA(DistributedAgent):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            num_steps=self.num_steps,
+            storage_size=self.num_steps,
             num_storages=num_storages,
             batch_size=batch_size,
         )
@@ -225,9 +230,8 @@ class IMPALA(DistributedAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
-    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]: # noqa B008
-        """
-        Update the learner model.
+    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Any]:  # type: ignore[override]
+        """Update the learner model.
 
         Args:
             batch (Batch): Batch samples.
@@ -236,47 +240,50 @@ class IMPALA(DistributedAgent):
         Returns:
             Training metrics.
         """
+
         with lock:
             learner_outputs = self.policy.learner(batch)
 
-            # Take final value function slice for bootstrapping.
-            bootstrap_value = learner_outputs["baseline"][-1]
+            # take final value function slice for bootstrapping.
+            bootstrap_value = learner_outputs["baselines"][-1]
 
-            # Move from obs[t] -> action[t] to action[t] -> obs[t].
+            # move from obs[t] -> action[t] to action[t] -> obs[t].
             batch = {key: tensor[1:] for key, tensor in batch.items()}
             learner_outputs = {key: tensor[:-1] for key, tensor in learner_outputs.items()}
 
-            discounts = (~batch["terminated"]).float() * self.discount
+            discounts = (~batch["terminateds"]).float() * self.discount
 
             batch.update(
                 {
                     "discounts": discounts,
                     "bootstrap_value": bootstrap_value,
-                    "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),
-                    "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),
-                    "values": learner_outputs["baseline"],
+                    "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),  # type: ignore
+                    "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),  # type: ignore
+                    "values": learner_outputs["baselines"],
                 }
             )
 
             pg_loss, baseline_loss, entropy_loss = VTraceLoss()(batch)
             total_loss = pg_loss + self.baseline_coef * baseline_loss - self.ent_coef * entropy_loss
 
-            episode_returns = batch["episode_return"][batch["terminated"]]
-            episode_steps = batch["episode_step"][batch["terminated"]]
+            episode_returns = batch["episode_returns"][batch["terminateds"]]
+            episode_steps = batch["episode_steps"][batch["terminateds"]]
 
-            self.policy.opt.zero_grad()
+            self.policy.optimizers["opt"].zero_grad()
             total_loss.backward()
             nn.utils.clip_grad_norm_(self.policy.learner.parameters(), self.max_grad_norm)
-            self.policy.opt.step()
+            self.policy.optimizers["opt"].step()
             self.lr_scheduler.step()
 
             self.policy.actor.load_state_dict(self.policy.learner.state_dict())
 
+            # record metrics
+            self.logger.record("train/policy_loss", pg_loss.item())
+            self.logger.record("train/value_loss", baseline_loss.item())
+            self.logger.record("train/entropy_loss", entropy_loss.item())
+            self.logger.record("train/total_loss", total_loss.item())
+
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
-                "Total Loss": total_loss.item(),
-                "Policy Loss": pg_loss.item(),
-                "Value Loss": baseline_loss.item(),
-                "Entropy Loss": entropy_loss.item(),
             }

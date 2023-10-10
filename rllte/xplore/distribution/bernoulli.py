@@ -22,27 +22,34 @@
 # SOFTWARE.
 # =============================================================================
 
+
+from typing import TypeVar
+
 import torch as th
 import torch.distributions as pyd
 
-from rllte.common.base_distribution import BaseDistribution
+from rllte.common.prototype import BaseDistribution
+
+SelfBernoulli = TypeVar("SelfBernoulli", bound="Bernoulli")
 
 
 class Bernoulli(BaseDistribution):
-    """Bernoulli distribution for sampling actions for 'MultiBinary' tasks.
-    Args:
-        logits (th.Tensor): The event log probabilities (unnormalized).
+    """Bernoulli distribution for sampling actions for 'MultiBinary' tasks."""
 
-    Returns:
-        Categorical distribution instance.
-    """
-
-    def __init__(
-        self,
-        logits: th.Tensor,
-    ) -> None:
+    def __init__(self) -> None:
         super().__init__()
+
+    def __call__(self: SelfBernoulli, logits: th.Tensor) -> SelfBernoulli:
+        """Create the distribution.
+
+        Args:
+            logits (th.Tensor): The event log probabilities (unnormalized).
+
+        Returns:
+            Bernoulli distribution instance.
+        """
         self.dist = pyd.Bernoulli(logits=logits)
+        return self
 
     @property
     def probs(self) -> th.Tensor:
@@ -54,7 +61,7 @@ class Bernoulli(BaseDistribution):
         """Returns the unnormalized log probabilities."""
         return self.dist.logits
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 

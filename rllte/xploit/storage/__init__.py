@@ -22,14 +22,11 @@
 # SOFTWARE.
 # =============================================================================
 
-# distributed storage
-from .vanilla_distributed_storage import VanillaDistributedStorage as VanillaDistributedStorage
-# rollout storage
-from .vanilla_rollout_storage import VanillaRolloutStorage as VanillaRolloutStorage
+from .dict_replay_storage import DictReplayStorage as DictReplayStorage
 from .dict_rollout_storage import DictRolloutStorage as DictRolloutStorage
-# replay storage
+from .her_replay_storage import HerReplayStorage as HerReplayStorage
 from .nstep_replay_storage import NStepReplayStorage as NStepReplayStorage
 from .prioritized_replay_storage import PrioritizedReplayStorage as PrioritizedReplayStorage
+from .vanilla_distributed_storage import VanillaDistributedStorage as VanillaDistributedStorage
 from .vanilla_replay_storage import VanillaReplayStorage as VanillaReplayStorage
-from .dict_replay_storage import DictReplayStorage as DictReplayStorage
-from .her_replay_storage import HerReplayStorage as HerReplayStorage
+from .vanilla_rollout_storage import VanillaRolloutStorage as VanillaRolloutStorage

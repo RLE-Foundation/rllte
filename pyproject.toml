@@ -13,7 +13,7 @@ packages = ["rllte"]
 
 [project]
 name = "rllte-core"
-version = "0.0.1.beta03"
+version = "0.0.1.beta07"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
@@ -33,10 +33,9 @@ classifiers = [
 ]
 
 dependencies = [
-  "gymnasium[accept-rom-license]==0.28.1",
-  "torch==2.0.0",
-  "torchvision==0.15.1",
-  "opencv-python",
+  "gymnasium[accept-rom-license]",
+  "torch",
+  "torchvision",
   "termcolor",
   "scipy>= 1.7.0",
   "arch==5.3.0",
@@ -48,7 +47,7 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-  "build-0.10.0",
+  "build",
   "pytest",
   "pytest-cov",
   "pytest-env",
@@ -59,16 +58,12 @@ tests = [
   "black"
 ]
 envs = [
-  "gym==0.21.0", # for Procgen games, PyBullet envs, and Robosuite envs.
+  "envpool",
   "ale-py==0.8.1",
-  "robosuite==1.4.0",
   "gymnasium[accept-rom-license]",
-  "dm-control==1.0.11",
-  "procgen==0.10.7",
-  "minigrid",
-  "scikit-image",
-  "scikit-video",
-  "imageio"
+  "dm-control",
+  "procgen",
+  "minigrid"
 ]
 docs = [
   "mkdocs-material",
@@ -85,11 +80,11 @@ docs = [
 # Same as Black.
 line-length = 127
 # Assume Python 3.7
-target-version = "py37"
+target-version = "py38"
 # See https://beta.ruff.rs/docs/rules/
 select = ["E", "F", "B", "UP", "C90", "RUF"]
 # Ignore explicit stacklevel`
-ignore = ["B028"]
+ignore = ["B028", "B008"]
 
 [tool.black]
 line-length = 127
@@ -102,3 +97,12 @@ src_paths = ["rllte"]
 [tool.pytype]
 inputs = ["rllte"]
 disable = ["pyi-error"]
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
+exclude = ["rllte/env", 
+"rllte/evaluation/visualization.py"
+]
+# disable_error_code = ["union-attr", "operator", "arg-type", "assignment"]

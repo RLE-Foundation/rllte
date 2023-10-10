@@ -2,10 +2,10 @@
 
 
 ## IMPALA
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L111)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L114)
 ```python 
 IMPALA(
-   env: gym.Env, eval_env: Optional[gym.Env] = None, tag: str = 'default', seed: int = 1,
+   env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
    device: str = 'cpu', num_steps: int = 80, num_actors: int = 45, num_learners: int = 4,
    num_storages: int = 60, feature_dim: int = 512, batch_size: int = 4, lr: float = 0.0004,
    eps: float = 0.01, hidden_dim: int = 512, use_lstm: bool = False, ent_coef: float = 0.01,
@@ -22,8 +22,8 @@ Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/mo
 
 **Args**
 
-* **env** (gym.Env) : A Gym-like environment for training.
-* **eval_env** (gym.Env) : A Gym-like environment for evaluation.
+* **env** (VecEnv) : Vectorized environments for training.
+* **eval_env** (VecEnv) : Vectorized environments for evaluation.
 * **tag** (str) : An experiment tag.
 * **seed** (int) : Random seed for reproduction.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
@@ -54,7 +54,7 @@ IMPALA agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L228)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/impala.py/#L233)
 ```python
 .update(
    batch: Dict, lock = threading.Lock()

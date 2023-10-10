@@ -27,11 +27,11 @@ from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.spaces.box import Box
+from gymnasium.spaces import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.utils import EnvPoolAsync2Gymnasium, EnvPoolSync2Gymnasium, Gymnasium2Torch
 
 
 class AdapterEnv(gym.Wrapper):
@@ -75,6 +75,66 @@ class AdapterEnv(gym.Wrapper):
         return obs, {}
 
 
+def make_envpool_procgen_env(
+    env_id: str = "bigfish",
+    num_envs: int = 64,
+    device: str = "cpu",
+    seed: int = 1,
+    gamma: float = 0.99,
+    num_levels: int = 200,
+    start_level: int = 0,
+    distribution_mode: str = "easy",
+    asynchronous: bool = True,
+) -> Gymnasium2Torch:
+    """Create Procgen environments.
+
+    Args:
+        env_id (str): Name of environment.
+        num_envs (int): Number of environments.
+        device (str): Device to convert the data.
+        seed (int): Random seed.
+        gamma (float): A discount factor.
+        num_levels (int): The number of unique levels that can be generated.
+            Set to 0 to use unlimited levels.
+        start_level (int): The lowest seed that will be used to generated levels.
+            'start_level' and 'num_levels' fully specify the set of possible levels.
+        distribution_mode (str): What variant of the levels to use, the options are "easy",
+            "hard", "extreme", "memory", "exploration".
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
+
+    Returns:
+        The vectorized environments.
+    """
+    if distribution_mode == "easy":
+        task_id = env_id.capitalize() + "Easy-v0"
+    elif distribution_mode == "hard":
+        task_id = env_id.capitalize() + "Hard-v0"
+    else:
+        raise NotImplementedError(f"Distribution mode `{distribution_mode}` is not implemented in `EnvPool`!")
+
+    env_kwargs = dict(
+        task_id=task_id,
+        env_type="gymnasium",
+        num_envs=num_envs,
+        batch_size=num_envs,
+        seed=seed,
+        env_name=env_id,
+        num_levels=num_levels,
+        start_level=start_level,
+    )
+    if asynchronous:
+        envs = EnvPoolAsync2Gymnasium(env_kwargs)
+    else:
+        envs = EnvPoolSync2Gymnasium(env_kwargs)
+
+    envs = RecordEpisodeStatistics(envs)
+    envs = NormalizeReward(envs, gamma=gamma)
+    envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
+
+    return Gymnasium2Torch(envs, device=device, envpool=True)
+
+
 def make_procgen_env(
     env_id: str = "bigfish",
     num_envs: int = 64,
@@ -84,13 +144,13 @@ def make_procgen_env(
     num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
-) -> gym.Env:
-    """Build Prcogen environments.
+) -> Gymnasium2Torch:
+    """Create Procgen environments.
 
     Args:
         env_id (str): Name of environment.
         num_envs (int): Number of environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
+        device (str): Device to convert the data.
         seed (int): Random seed.
         gamma (float): A discount factor.
         num_levels (int): The number of unique levels that can be generated.

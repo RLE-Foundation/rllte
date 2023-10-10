@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import numpy as np
 from numpy import random
@@ -71,7 +71,7 @@ class Comparison:
         self.confidence_interval_size = confidence_interval_size
         self.random_state = random_state
 
-    def compute_poi(self) -> np.floating:
+    def compute_poi(self) -> Tuple[np.ndarray, np.ndarray]:
         """Compute the overall probability of imporvement of algorithm `X` over `Y`."""
 
         def _thunk(scores_x, scores_y):
@@ -104,7 +104,7 @@ class Comparison:
         scores_x: np.ndarray,
         scores_y: np.ndarray,
         metric: Callable,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+    ) -> np.ndarray:
         """Computes interval estimation of the above performance evaluators.
 
         Args:
@@ -119,6 +119,6 @@ class Comparison:
         """
         stratified_bs = StratifiedIndependentBootstrap(*[scores_x, scores_y], random_state=self.random_state)
         interval_estimates = stratified_bs.conf_int(
-            metric, reps=self.reps, size=self.confidence_interval_size, method=self.method
+            metric, reps=self.reps, size=self.confidence_interval_size, method=self.method  # type: ignore
         )
         return interval_estimates

@@ -1,11 +1,24 @@
 # Custom Module
 
-**RLLTE** is an open platform that supports custom modules. Just write a new module based on the `BaseClass`, then we can 
-insert it into an agent directly. Suppose we want to build a new encoder entitled `CustomEncoder`. An example is
+<div class="badge">
+<a href="https://colab.research.google.com/github/RLE-Foundation/rllte/blob/main/examples/custom_module.ipynb">
+<img src="../../../assets/images/colab-logo.svg" style="height: 32px; vertical-align:middle;">
+Open in Colab
+</a>
+</div>
+
+<div class="badge">
+<a href="https://github.com/RLE-Foundation/rllte/blob/main/examples/custom_module.ipynb">
+<img src="../../../assets/images/github-logo.svg" style="height: 32px; vertical-align:middle;">
+View on GitHub
+</a>
+</div>
+
+**RLLTE** is an extremely open platform that supports custom modules, including `encoder`, `storage`, `policy`, etc. Just write a new module based on the `BaseClass`, then we can insert it into an agent directly. Suppose we want to build a new encoder entitled `CustomEncoder`. An example is
 ```py title="example.py"
 from rllte.agent import PPO
 from rllte.env import make_atari_env
-from rllte.common.base_encoder import BaseEncoder
+from rllte.common.prototype import BaseEncoder
 from gymnasium.spaces import Space
 from torch import nn
 import torch as th
