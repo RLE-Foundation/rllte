@@ -65,6 +65,7 @@ class PPG(OnPolicyAgent):
         kl_coef (float): Weighting coefficient of divergence loss.
         num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
         num_aux_grad_accum (int): Number of gradient accumulation for auxiliary phase update.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -95,7 +96,8 @@ class PPG(OnPolicyAgent):
         kl_coef: float = 1.0,
         num_aux_mini_batch: int = 4,
         num_aux_grad_accum: int = 1,
-        init_fn: str = "xavier_uniform",
+        discount: float = 0.999,
+        init_fn: str = "xavier_uniform"
     ) -> None:
         super().__init__(
             env=env,
@@ -160,6 +162,7 @@ class PPG(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            discount=discount
         )
 
         # set all the modules [essential operation!!!]

@@ -50,8 +50,10 @@ class Atari:
         if agent == "PPO":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-            envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
-            eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed)
+            # envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
+            # eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            envs = make_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
+            eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
 
             self.agent = PPO(
                 env=envs,
@@ -70,13 +72,17 @@ class Atari:
                 vf_coef=0.5,
                 ent_coef=0.01,
                 max_grad_norm=0.5,
-                init_fn="orthogonal",
+                discount=0.99,
+                init_fn="orthogonal"
             )
         elif agent == "A2C":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-            envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
-            eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed)
+            # envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
+            # eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            envs = make_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
+            eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+
             self.agent = A2C( # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,

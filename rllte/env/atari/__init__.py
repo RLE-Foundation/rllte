@@ -97,8 +97,7 @@ def make_atari_env(
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
-            if not asynchronous:
-                env = TransformReward(env, lambda reward: np.sign(reward))
+            env = RecordEpisodeStatistics(env)
             env = NoopResetEnv(env, noop_max=30)
             env = MaxAndSkipEnv(env, skip=frame_stack)
             env = EpisodicLifeEnv(env)
@@ -108,7 +107,7 @@ def make_atari_env(
             env = GrayScaleObservation(env)
             env = ResizeObservation(env, shape=(84, 84))
             env = FrameStack(env, frame_stack)
-
+            env = TransformReward(env, lambda reward: np.sign(reward))
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
@@ -122,10 +121,7 @@ def make_atari_env(
 
     if asynchronous:
         envs = AsyncVectorEnv(envs)
-        envs = RecordEpisodeStatistics(envs)
-        envs = TransformReward(envs, lambda reward: np.sign(reward))
     else:
         envs = SyncVectorEnv(envs)
-        envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(envs, device)

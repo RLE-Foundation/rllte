@@ -126,10 +126,9 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
 
                 # get episode information
-                if "episode" in infos:
-                    eps_r, eps_l = utils.get_episode_statistics(infos)
-                    episode_rewards.extend(eps_r)
-                    episode_steps.extend(eps_l)
+                eps_r, eps_l = utils.get_episode_statistics(infos)
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
 
                 # set the current observation
                 obs = next_obs

@@ -64,6 +64,7 @@ class DAAC(OnPolicyAgent):
         ent_coef (float): Weighting coefficient of entropy bonus.
         adv_ceof (float): Weighting coefficient of advantage loss.
         max_grad_norm (float): Maximum norm of gradients.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -93,7 +94,8 @@ class DAAC(OnPolicyAgent):
         ent_coef: float = 0.01,
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
-        init_fn: str = "xavier_uniform",
+        discount: float = 0.999,
+        init_fn: str = "xavier_uniform"
     ) -> None:
         super().__init__(
             env=env,
@@ -162,6 +164,7 @@ class DAAC(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            discount=discount
         )
 
         # set all the modules [essential operation!!!]

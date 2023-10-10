@@ -123,9 +123,20 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
     Returns:
         Episode rewards and lengths.
     """
-    indices = np.nonzero(infos["episode"]["l"])
-
-    return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    if "episode" in infos.keys():
+        indices = np.nonzero(infos["episode"]["l"])
+        return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    elif "final_info" in infos.keys():
+        r: List = []
+        l: List = []
+        # to handle with the Atari environments
+        for info in infos['final_info']:
+            if info is not None and "episode" in info.keys():
+                r.extend(info["episode"]["r"].tolist())
+                l.extend(info["episode"]["l"].tolist())
+        return r, l
+    else:
+        return [], []
 
 
 def get_npu_name() -> str:

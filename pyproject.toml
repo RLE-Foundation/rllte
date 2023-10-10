@@ -13,7 +13,7 @@ packages = ["rllte"]
 
 [project]
 name = "rllte-core"
-version = "0.0.1.beta06"
+version = "0.0.1.beta07"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
@@ -59,15 +59,11 @@ tests = [
 ]
 envs = [
   "envpool",
-  "gym==0.21.0", # for Procgen games, PyBullet envs.
   "ale-py==0.8.1",
   "gymnasium[accept-rom-license]",
-  "dm-control==1.0.11",
-  "procgen==0.10.7",
-  "minigrid",
-  "scikit-image",
-  "scikit-video",
-  "imageio"
+  "dm-control",
+  "procgen",
+  "minigrid"
 ]
 docs = [
   "mkdocs-material",

@@ -144,8 +144,7 @@ class OffPolicyAgent(BaseAgent):
             for idx, (term, trunc) in enumerate(zip(terms, truncs)):
                 if term.item() or trunc.item():
                     # TODO: deal with dict observations
-                    real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], 
-                                                      device=self.device) # type: ignore[index]
+                    real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], device=self.device) # type: ignore[index]
 
             # add new transitions
             self.storage.add(obs, actions, rews, terms, truncs, infos, real_next_obs)
@@ -159,11 +158,10 @@ class OffPolicyAgent(BaseAgent):
                 self.irs.add(samples={"obs": obs, "actions": actions, "next_obs": real_next_obs})  # type: ignore
 
             # get episode information
-            if "episode" in infos:
-                eps_r, eps_l = utils.get_episode_statistics(infos)
-                episode_rewards.extend(eps_r)
-                episode_steps.extend(eps_l)
-                self.global_episode += len(eps_r)
+            eps_r, eps_l = utils.get_episode_statistics(infos)
+            episode_rewards.extend(eps_r)
+            episode_steps.extend(eps_l)
+            self.global_episode += len(eps_r)
 
             # log training information
             if len(episode_rewards) >= 1 and (self.global_step % log_interval) == 0:

@@ -55,11 +55,11 @@ class A2C(OnPolicyAgent):
         lr (float): The learning rate.
         eps (float): Term added to the denominator to improve numerical stability.
         hidden_dim (int): The size of the hidden layers.
-
         n_epochs (int): Times of updating the policy.
         vf_coef (float): Weighting coefficient of value loss.
         ent_coef (float): Weighting coefficient of entropy bonus.
         max_grad_norm (float): Maximum norm of gradients.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -84,6 +84,7 @@ class A2C(OnPolicyAgent):
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
         max_grad_norm: float = 0.5,
+        discount: float = 0.99,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -138,6 +139,7 @@ class A2C(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            discount=discount
         )
 
         # set all the modules [essential operation!!!]

@@ -63,6 +63,7 @@ class DrAC(OnPolicyAgent):
         ent_coef (float): Weighting coefficient of entropy bonus.
         aug_coef (float): Weighting coefficient of augmentation loss.
         max_grad_norm (float): Maximum norm of gradients.
+        discount (float): Discount factor.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -90,6 +91,7 @@ class DrAC(OnPolicyAgent):
         ent_coef: float = 0.01,
         aug_coef: float = 0.1,
         max_grad_norm: float = 0.5,
+        discount: float = 0.999,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -155,6 +157,7 @@ class DrAC(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
+            discount=discount
         )
 
         # set all the modules [essential operation!!!]
