@@ -4,12 +4,7 @@ hide:
   - navigation
 ---
 
-**RLLTE** is committed to achieve the goal of "RL for Everyone". Therefore, we develop a copilot to help you use the framework more efficiently. This copilot is 
-built based on [LocalGPT](https://github.com/PromtEngineer/localGPT) and [Vicuna-7B](https://huggingface.co/lmsys/vicuna-7b-v1.3) of [LMSYS](https://lmsys.org/blog/2023-03-30-vicuna/), which can answer any questions (e.g., algorithm theory, training, and programming.) about RL.
+**Copilot** is the first attempt to integrate an LLM into an RL framework, which aims to help developers reduce the learning cost and facilitate application construction. We follow the design of [LocalGPT](https://github.com/PromtEngineer/localGPT) that interacts privately with documents using the power of GPT. The source documents are first ingested by an instructor embedding tool to create a local vector database. After that, a local LLM is used to understand questions and create answers based on the database. In practice, we utilize [Vicuna-7B](https://huggingface.co/lmsys/vicuna-7b-v1.3) as the base model and build the database using various corpora, including API documentation, tutorials, and RL references. The powerful understanding ability of the LLM model enables the copilot to accurately answer questions about the use of the framework and any other questions of RL. Moreover, no additional training is required, and users are free to replace the base model according to their computing power. In future work, we will further enrich the corpus and add the code completion function to build a more intelligent copilot for RL.
 
-<script
-	type="module"
-	src="https://gradio.s3-us-west-2.amazonaws.com/3.44.1/gradio.js"
-></script>
-
-<gradio-app src="https://rle-foundation-copilot.hf.space"></gradio-app>
+- **GitHub Repository**: [https://github.com/RLE-Foundation/rllte-copilot](https://github.com/RLE-Foundation/rllte-copilot)
+- **Hugging Face Space**: [Coming soon...]()
