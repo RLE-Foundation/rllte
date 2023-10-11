@@ -52,8 +52,8 @@ class Atari:
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
             if envpool:
-                # The asynchronous mode A achieved much lower performance than the synchronous mode.
-                # Therefore, we recommend using the synchronous mode.
+                # Since the asynchronous mode achieved much lower training performance than the synchronous mode, 
+                # we recommend using the synchronous mode currently.
                 envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
                 eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
             else:
@@ -62,7 +62,7 @@ class Atari:
 
             self.agent = PPO(
                 env=envs,
-                # eval_env=eval_envs,
+                eval_env=eval_envs,
                 tag=f"ppo_atari_{env_id}_seed_{seed}",
                 seed=seed,
                 device=device,
@@ -80,6 +80,7 @@ class Atari:
                 discount=0.99,
                 init_fn="orthogonal"
             )
+            self.anneal_lr = True
         elif agent == "A2C":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
@@ -108,6 +109,7 @@ class Atari:
                 max_grad_norm=0.5,
                 init_fn="orthogonal",
             )
+            self.anneal_lr = False
         elif agent == "IMPALA":
             # The following hyperparameters are from the repository:
             # https://github.com/facebookresearch/torchbeast
@@ -157,4 +159,5 @@ class Atari:
             save_interval=save_interval,
             num_eval_episodes=num_eval_episodes,
             th_compile=th_compile,
+            anneal_lr=self.anneal_lr
         )

@@ -181,3 +181,20 @@ def schedule(schdl: str, step: int) -> float:
                 mix = np.clip((step - duration1) / duration2, 0.0, 1.0)
                 return (1.0 - mix) * final1 + mix * final2
     raise NotImplementedError(schdl)
+
+
+def linear_lr_scheduler(optimizer, steps, total_num_steps, initial_lr) -> None:
+    """Decreases the learning rate linearly.
+
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        steps (int): Current step.
+        total_num_steps (int): Total number of steps.
+        initial_lr (float): Initial learning rate.
+    
+    Returns:
+        None.
+    """
+    lr = initial_lr - (initial_lr * (steps / float(total_num_steps)))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr

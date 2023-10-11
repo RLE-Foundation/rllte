@@ -79,6 +79,7 @@ class OnPolicyAgent(BaseAgent):
         save_interval: int = 100,
         num_eval_episodes: int = 10,
         th_compile: bool = True,
+        anneal_lr: bool = False
     ) -> None:
         """Training function.
 
@@ -90,6 +91,7 @@ class OnPolicyAgent(BaseAgent):
             save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
+            anneal_lr (bool): Whether to anneal the learning rate or not.
 
         Returns:
             None.
@@ -110,6 +112,11 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
+            
+            # update the learning rate
+            if anneal_lr:
+                for key in self.policy.optimizers.keys():
+                    utils.linear_lr_scheduler(self.policy.optimizers[key], update, num_updates, self.lr)
 
             for _ in range(self.num_steps):
                 # sample actions
