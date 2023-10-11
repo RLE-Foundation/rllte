@@ -82,6 +82,7 @@ class OffPolicyAgent(BaseAgent):
         save_interval: int = 5000,
         num_eval_episodes: int = 10,
         th_compile: bool = False,
+        anneal_lr: bool = False
     ) -> None:
         """Training function.
 
@@ -93,6 +94,7 @@ class OffPolicyAgent(BaseAgent):
             save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
+            anneal_lr (bool): Whether to anneal the learning rate or not.
 
         Returns:
             None.
@@ -121,6 +123,11 @@ class OffPolicyAgent(BaseAgent):
                     actions = th.stack([th.as_tensor(self.action_space.sample()) for _ in range(self.num_envs)])
                 else:
                     actions = self.policy(obs, training=True)
+            
+            # update the learning rate
+            if anneal_lr:
+                for key in self.policy.optimizers.keys():
+                    utils.linear_lr_scheduler(self.policy.optimizers[key], self.global_step, num_train_steps, self.lr)
 
             # update agent
             if self.global_step >= self.num_init_steps:
