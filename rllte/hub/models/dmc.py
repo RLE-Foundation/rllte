@@ -58,7 +58,7 @@ class DMControl:
         Returns:
             The loaded model.
         """
-        model_file = f"{agent.lower()}_dmc_{env_id.lower()}_seed_{seed}.pth"
+        model_file = f"{agent.lower()}_dmc_{env_id}_seed_{seed}.pth"
         subfolder = f"dmc/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)
