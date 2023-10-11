@@ -47,8 +47,8 @@ class EnvPoolAsync2Gymnasium(gym.Wrapper):
     """
 
     def __init__(self, env_kwargs: Dict) -> None:
-        env = envpool.make(**env_kwargs)
-        super().__init__(env)
+        envs = envpool.make(**env_kwargs)
+        super().__init__(envs)
         self.num_envs = env_kwargs.get("num_envs", 1)
         self.is_vector_env = True
 
@@ -88,8 +88,8 @@ class EnvPoolSync2Gymnasium(gym.Wrapper):
     """
 
     def __init__(self, env_kwargs: Dict) -> None:
-        env = envpool.make(**env_kwargs)
-        super().__init__(env)
+        envs = envpool.make(**env_kwargs)
+        super().__init__(envs)
         self.num_envs = env_kwargs.get("num_envs", 1)
         self.is_vector_env = True
 

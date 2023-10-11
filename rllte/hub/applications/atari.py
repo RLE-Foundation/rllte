@@ -41,23 +41,28 @@ class Atari:
         env_id (str): The environment name.
         seed (int): The random seed.
         device (str): The device to train on.
+        envpool (bool): Whether to use envpool or not.
 
     Returns:
         Training applications.
     """
 
-    def __init__(self, agent: str = "PPO", env_id: str = "Pong-v5", seed: int = 1, device: str = "cuda") -> None:
+    def __init__(self, agent: str = "PPO", env_id: str = "Pong-v5", seed: int = 1, device: str = "cuda", envpool: bool = False) -> None:
         if agent == "PPO":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-            # envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
-            # eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
-            envs = make_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
-            eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            if envpool:
+                # The asynchronous mode A achieved much lower performance than the synchronous mode.
+                # Therefore, we recommend using the synchronous mode.
+                envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
+                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            else:
+                envs = make_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
+                eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
 
             self.agent = PPO(
                 env=envs,
-                eval_env=eval_envs,
+                # eval_env=eval_envs,
                 tag=f"ppo_atari_{env_id}_seed_{seed}",
                 seed=seed,
                 device=device,
@@ -78,10 +83,12 @@ class Atari:
         elif agent == "A2C":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-            # envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
-            # eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
-            envs = make_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
-            eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            if envpool:
+                envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
+                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+            else:
+                envs = make_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
+                eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
 
             self.agent = A2C( # type: ignore[assignment]
                 env=envs,
@@ -105,7 +112,6 @@ class Atari:
             # The following hyperparameters are from the repository:
             # https://github.com/facebookresearch/torchbeast
             envs = make_atari_env(env_id=env_id, device=device, seed=seed, num_envs=45, asynchronous=False)
-
             eval_envs = make_atari_env(env_id=env_id, device=device, seed=seed, num_envs=1, asynchronous=False)
             self.agent = IMPALA( # type: ignore[assignment]
                 env=envs,
@@ -129,7 +135,7 @@ class Atari:
         eval_interval: int = 100,
         save_interval: int = 100,
         num_eval_episodes: int = 10,
-        th_compile: bool = False,
+        th_compile: bool = False
     ) -> None:
         """Training function.
 
