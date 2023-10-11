@@ -28,9 +28,17 @@ from typing import Callable
 import gymnasium as gym
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
-from gymnasium.wrappers import FrameStack, GrayScaleObservation, RecordEpisodeStatistics, ResizeObservation, TransformReward
+from gymnasium.wrappers import (FrameStack, 
+                                GrayScaleObservation, 
+                                RecordEpisodeStatistics, 
+                                ResizeObservation, 
+                                TransformReward)
 
-from rllte.env.atari.wrappers import EpisodicLifeEnv, FireResetEnv, MaxAndSkipEnv, NoopResetEnv
+from rllte.env.atari.wrappers import (EpisodicLifeEnv, 
+                                      FireResetEnv, 
+                                      MaxAndSkipEnv, 
+                                      NoopResetEnv,
+                                      RecordEpisodeStatistics4EnvPool)
 from rllte.env.utils import EnvPoolAsync2Gymnasium, EnvPoolSync2Gymnasium, Gymnasium2Torch
 
 
@@ -57,7 +65,7 @@ def make_envpool_atari_env(
         batch_size=num_envs,
         seed=seed,
         episodic_life=True,
-        reward_clip=False,
+        reward_clip=True
     )
 
     if asynchronous:
@@ -65,8 +73,7 @@ def make_envpool_atari_env(
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
 
-    envs = RecordEpisodeStatistics(envs)
-    envs = TransformReward(envs, lambda reward: np.sign(reward))
+    envs = RecordEpisodeStatistics4EnvPool(envs)
 
     return Gymnasium2Torch(envs, device, envpool=True)
 
