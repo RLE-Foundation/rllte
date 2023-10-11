@@ -110,6 +110,15 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
+            
+            def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
+                """Decreases the learning rate linearly"""
+                lr = initial_lr - (initial_lr * (epoch / float(total_num_epochs)))
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = lr
+            
+            # update the learning rate
+            update_linear_schedule(self.policy.optimizers['opt'], update, num_updates, self.lr)
 
             for _ in range(self.num_steps):
                 # sample actions
