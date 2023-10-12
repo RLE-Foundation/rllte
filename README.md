@@ -56,7 +56,7 @@ Why **RLLTE**?
 - 💾 Large number of reusable benchmarks;
 - 👨‍✈️ Large language model-empowered copilot ([Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
 
-> ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30). **Training datasets**: [hub.rllte.dev](hub.rllte.dev). **Model weights**: [hub.rllte.dev](hub.rllte.dev). **Wandb**: [wandb.rllte.dev](wandb.rllte.dev)
+> ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30). **Training datasets**: [hub.rllte.dev](https://hub.rllte.dev). **Model weights**: [hub.rllte.dev](https://hub.rllte.dev). **Wandb**: [wandb.rllte.dev](https://wandb.rllte.dev)
 
 See the project structure below:
 <div align=center>
