@@ -53,6 +53,7 @@ class Procgen:
                 num_levels=200,
                 start_level=0,
                 distribution_mode="easy",
+                asynchronous=False
             )
         eval_envs = make_envpool_procgen_env(
                 env_id=env_id,
@@ -90,6 +91,29 @@ class Procgen:
                 init_fn="xavier_uniform",
             )
         elif agent == "DAAC":
+            # Best hyperparameters for DAAC reported in
+            # https://github.com/rraileanu/idaac/blob/main/hyperparams.py
+            if env_id in ['plunder', 'chaser']:
+                value_epochs = 1
+            else:
+                value_epochs = 9
+            
+            if env_id in ['miner', 'bigfish', 'dodgeball']:
+                value_freq = 32
+            elif env_id == 'plunder':
+                value_freq = 8
+            else:
+                value_freq = 1
+            
+            if env_id == 'plunder':
+                adv_coef = 0.3
+            elif env_id == 'chaser':
+                adv_coef = 0.15
+            elif env_id in ['climber', 'bigfish']:
+                adv_coef = 0.05
+            else:
+                adv_coef = 0.25
+
             self.agent = DAAC( # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
@@ -104,11 +128,11 @@ class Procgen:
                 clip_range=0.2,
                 clip_range_vf=0.2,
                 policy_epochs=1,
-                value_epochs=9,
-                value_freq=3,
+                value_epochs=value_epochs,
+                value_freq=value_freq,
                 vf_coef=0.5,
                 ent_coef=0.01,
-                adv_coef=0.05,
+                adv_coef=adv_coef,
                 max_grad_norm=0.5,
                 init_fn="xavier_uniform",
             )
