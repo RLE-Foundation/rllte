@@ -9,7 +9,7 @@ hide:
 
 ---
 
-Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
+Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/PMF6fa72bmE?si=oDLvQqxVrMP31Iqk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
