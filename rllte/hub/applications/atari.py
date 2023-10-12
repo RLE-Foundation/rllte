@@ -55,10 +55,10 @@ class Atari:
                 # Since the asynchronous mode achieved much lower training performance than the synchronous mode, 
                 # we recommend using the synchronous mode currently.
                 envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
-                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
             else:
                 envs = make_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed)
-                eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+                eval_envs = make_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
 
             self.agent = PPO(
                 env=envs,
@@ -86,10 +86,10 @@ class Atari:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
             if envpool:
                 envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
-                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+                eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed, asynchronous=False)
             else:
                 envs = make_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
-                eval_envs = make_atari_env(env_id=env_id, num_envs=1, device=device, seed=seed, asynchronous=False)
+                eval_envs = make_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed, asynchronous=False)
 
             self.agent = A2C( # type: ignore[assignment]
                 env=envs,
