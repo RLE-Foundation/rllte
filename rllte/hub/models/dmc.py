@@ -23,38 +23,44 @@
 # =============================================================================
 
 
-import argparse
-import os
+import torch as th
+from huggingface_hub import hf_hub_download
+from torch import nn
 
-os.environ["OMP_NUM_THREADS"] = "1"
 
-from rllte.agent import IMPALA
-from rllte.env import make_atari_env
+class DMControl:
+    """Trained models of various RL algorithms on the full dmc benchmark.
+    Environment link: https://github.com/google-deepmind/dm_control
+    Number of environments: 24
+    Number of training steps: 1,000,000
+    Number of seeds: 10
+    Added algorithms: [SAC, DrQ-v2]
+    """
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="PongNoFrameskip-v4")
-parser.add_argument("--device", type=str, default="cuda")
-parser.add_argument("--seed", type=int, default=1)
+    def __init__(self) -> None:
+        pass
 
-if __name__ == "__main__":
-    args = parser.parse_args()
-    # create env
-    env = make_atari_env(env_id=args.env_id, device=args.device, seed=args.seed, num_envs=45, parallel=False)
+    def load_models(
+        self,
+        agent: str,
+        env_id: str,
+        seed: int,
+        device: str = "cpu",
+    ) -> nn.Module:
+        """Load the model from the hub.
 
-    eval_env = make_atari_env(env_id=args.env_id, device=args.device, seed=args.seed, num_envs=1, parallel=False)
+        Args:
+            agent (str): The agent to load.
+            env_id (str): The environment id to load.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
 
-    # create agent
-    agent = IMPALA(
-        env=env,
-        eval_env=eval_env,
-        tag=f"impala_atari_{args.env_id}_seed_{args.seed}",
-        seed=args.seed,
-        device=args.device,
-        num_steps=80,
-        num_actors=45,
-        num_learners=4,
-        num_storages=60,
-        feature_dim=512,
-    )
-    # training
-    agent.train(num_train_steps=30000000)
+        Returns:
+            The loaded model.
+        """
+        model_file = f"{agent.lower()}_dmc_{env_id}_seed_{seed}.pth"
+        subfolder = f"dmc/{agent}"
+        file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
+        model = th.load(file, map_location=device)
+
+        return model.eval()

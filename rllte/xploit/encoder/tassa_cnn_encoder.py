@@ -47,6 +47,7 @@ class TassaCnnEncoder(BaseEncoder):
     def __init__(self, observation_space: gym.Space, feature_dim: int = 50) -> None:
         super().__init__(observation_space, feature_dim)
 
+        assert observation_space.shape is not None, "The observation shape cannot be None!"
         obs_shape = observation_space.shape
         assert len(obs_shape) == 3
         self.trunk = nn.Sequential(

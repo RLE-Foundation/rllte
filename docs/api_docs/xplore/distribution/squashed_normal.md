@@ -2,34 +2,21 @@
 
 
 ## SquashedNormal
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L64)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L67)
 ```python 
-SquashedNormal(
-   loc: th.Tensor, scale: th.Tensor
-)
+
 ```
 
 
 ---
-Squashed normal distribution for Soft Actor-Critic learner.
-
-
-**Args**
-
-* **loc** (th.Tensor) : The mean of the distribution (often referred to as mu).
-* **scale** (th.Tensor) : The standard deviation of the distribution (often referred to as sigma).
-
-
-**Returns**
-
-Squashed normal distribution instance.
+Squashed normal distribution for `Box` tasks.
 
 
 **Methods:**
 
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L85)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L91)
 ```python
 .sample(
    sample_shape: th.Size = th.Size()
@@ -51,7 +38,7 @@ batch of samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .rsample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L97)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L103)
 ```python
 .rsample(
    sample_shape: th.Size = th.Size()
@@ -73,7 +60,7 @@ batch of reparameterized samples if the distribution parameters are batched.
 A sample_shape shaped sample.
 
 ### .mean
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L116)
 ```python
 .mean()
 ```
@@ -82,7 +69,7 @@ A sample_shape shaped sample.
 Return the transformed mean.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L118)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L124)
 ```python
 .mode()
 ```
@@ -91,7 +78,7 @@ Return the transformed mean.
 Returns the mode of the distribution.
 
 ### .log_prob
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L122)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/distribution/squashed_normal.py/#L128)
 ```python
 .log_prob(
    actions: th.Tensor

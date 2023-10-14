@@ -22,323 +22,215 @@
 # SOFTWARE.
 # =============================================================================
 
+from typing import Dict, Optional, Tuple
 
-from collections import deque
-from typing import Any, Dict, Tuple
-
-import dm_env
 import gymnasium as gym
 import numpy as np
-from dm_env import specs
+from dm_control import manipulation, suite
+from dm_env import TimeStep, specs
 from gymnasium import spaces
 
 
-class ActionRepeatWrapper(dm_env.Environment):
-    """Repeats the action for a given number of steps.
-        Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/dmc.py
+class DMC2Gymnasium(gym.Env):
+    """A gymnasium wrapper for dm_control environments.
 
     Args:
-        env (dm_env.Environment): Environment to wrap.
-        num_repeats (int): Number of times to repeat the action.
-
-    Returns:
-        Wrapped environment.
+        env_id (str): Name of environment.
+        seed (int): Random seed.
+        visualize_reward (bool): Opposite to `from_pixels`.
+        from_pixels (bool): Provide image-based observations or not.
+        height (int): Image observation height.
+        width (int): Image observation width.
+        frame_stack (int): Number of stacked frames.
+        action_repeat (int): Number of action repeats.
     """
 
-    def __init__(self, env: dm_env.Environment, num_repeats: int) -> None:
-        self._env = env
-        self._num_repeats = num_repeats
+    def __init__(
+        self,
+        env_id: str,
+        seed=1,
+        visualize_reward=True,
+        from_pixels=False,
+        height=84,
+        width=84,
+        frame_stack=3,
+        action_repeat=1,
+    ) -> None:
+        assert visualize_reward != from_pixels, "`visualize_reward` and `from_pixels` cannot be both True or False!"
+        self._from_pixels = from_pixels
+        self._height = height
+        self._width = width
+        self._action_repeat = action_repeat
 
-    def step(self, action: np.ndarray) -> dm_env.TimeStep:
-        """Repeat the action for a given number of steps and return the accumulated reward.
+        domain, task = env_id.split("_", 1)
+        # overwrite cup to ball_in_cup
+        domain = dict(cup="ball_in_cup").get(domain, domain)
+        # create task
+        if (domain, task) in suite.ALL_TASKS:
+            self._env = suite.load(domain, task, task_kwargs={"random": seed}, visualize_reward=False)
+        else:
+            name = f"{domain}_{task}_vision"
+            self._env = manipulation.load(name, seed=seed)
+        # zoom in for quadruped task
+        self._camera_id = dict(quadruped=2).get(domain, 0)
+
+        # create true and normalized action spaces
+        self._true_action_space = self._spec_to_box([self._env.action_spec()], np.float32)
+        self._norm_action_space = spaces.Box(low=-1.0, high=1.0, shape=self._true_action_space.shape, dtype=np.float32)
+
+        # create observation and state space
+        if from_pixels:
+            self._observation_space = spaces.Box(low=0, high=255, shape=[3, height, width], dtype=np.uint8)
+        else:
+            self._observation_space = self._spec_to_box(self._env.observation_spec().values(), np.float32)
+
+        self._state_space = self._spec_to_box(self._env.observation_spec().values(), np.float32)
+
+        # set seed
+        self.seed(seed=seed)
+
+    def _get_obs(self, time_step: TimeStep) -> np.ndarray:
+        """Get observations from dm_control environment.
 
         Args:
-            action (np.ndarray): Action to take.
+            time_step (TimeStep): A dm_control time step.
 
         Returns:
-            dm_env.TimeStep: Time step.
+            Observations.
         """
-        reward = 0.0
-        discount = 1.0
-        for _ in range(self._num_repeats):
+        if self._from_pixels:
+            obs = self.render(height=self._height, width=self._width, camera_id=self._camera_id)
+            obs = obs.transpose(2, 0, 1).copy()
+        else:
+            obs = self._flatten_obs(time_step.observation)
+        return obs
+
+    def _convert_action(self, action: np.ndarray) -> np.ndarray:
+        """Converts actions from normalized to true action space."""
+        action = action.astype(np.float64)
+        true_delta = self._true_action_space.high - self._true_action_space.low
+        norm_delta = self._norm_action_space.high - self._norm_action_space.low
+        action = (action - self._norm_action_space.low) / norm_delta
+        action = action * true_delta + self._true_action_space.low
+        action = action.astype(np.float32)
+        return action
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict]:
+        """Steps the environment.
+
+        Args:
+            action (np.ndarray): A normalized action.
+
+        Returns:
+            Next observation, reward, termination, truncation, and extra information.
+        """
+        assert self._norm_action_space.contains(action)
+        action = self._convert_action(action)
+        assert self._true_action_space.contains(action)
+        reward = 0
+        extra = {"internal_state": self._env.physics.get_state().copy()}
+
+        for _ in range(self._action_repeat):
             time_step = self._env.step(action)
-            reward += (time_step.reward or 0.0) * discount
-            discount *= time_step.discount
-            if time_step.last():
+            reward += time_step.reward or 0
+            truncation = time_step.last()  # never stop
+            if truncation:
                 break
+        obs = self._get_obs(time_step)
+        self.current_state = self._flatten_obs(time_step.observation)
+        extra["discount"] = time_step.discount
+        return obs, reward, False, truncation, extra
 
-        return time_step._replace(reward=reward, discount=discount)
-
-    def observation_spec(self) -> specs.BoundedArray:
-        """Observation spec."""
-        return self._env.observation_spec()
-
-    def action_spec(self) -> specs.BoundedArray:
-        """Action spec."""
-        return self._env.action_spec()
-
-    def reset(self) -> dm_env.TimeStep:
-        """Reset the environment."""
-        return self._env.reset()
-
-    def __getattr__(self, name):
-        return getattr(self._env, name)
-
-
-class FrameStackWrapper(dm_env.Environment):
-    """Stacks consecutive frames together to feed them to the agent.
-        Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/dmc.py
-
-    Args:
-        env (dm_env.Environment): Environment to wrap.
-        num_frames (int): Number of frames to stack.
-        pixels_key (str): Key of the pixels in the observation dictionary.
-
-    Returns:
-        Wrapped environment.
-    """
-
-    def __init__(self, env: dm_env.Environment, num_frames: int, pixels_key: str = "pixels") -> None:
-        self._env = env
-        self._num_frames = num_frames
-        self._frames = deque([], maxlen=num_frames)
-        self._pixels_key = pixels_key
-
-        wrapped_obs_spec = env.observation_spec()
-        assert pixels_key in wrapped_obs_spec
-
-        pixels_shape = wrapped_obs_spec[pixels_key].shape
-        # remove batch dim
-        if len(pixels_shape) == 4:
-            pixels_shape = pixels_shape[1:]
-        self._obs_spec = specs.BoundedArray(
-            shape=np.concatenate([[pixels_shape[2] * num_frames], pixels_shape[:2]], axis=0),
-            dtype=np.uint8,
-            minimum=0,
-            maximum=255,
-            name="observation",
-        )
-
-    def _transform_observation(self, time_step: dm_env.TimeStep) -> dm_env.TimeStep:
-        """Concatenate the frames and return the new observation.
-
-        Args:
-            time_step (dm_env.TimeStep): Time step.
-
-        Returns:
-            dm_env.TimeStep: Time step with the new observation.
-        """
-        assert len(self._frames) == self._num_frames
-        obs = np.concatenate(list(self._frames), axis=0)
-        return time_step._replace(observation=obs)
-
-    def _extract_pixels(self, time_step: dm_env.TimeStep) -> np.ndarray:
-        """Extract pixels from the observation dictionary.
-
-        Args:
-            time_step (dm_env.TimeStep): Time step.
-
-        Returns:
-            np.ndarray: Pixels.
-        """
-        pixels = time_step.observation[self._pixels_key]
-        # remove batch dim
-        if len(pixels.shape) == 4:
-            pixels = pixels[0]
-        return pixels.transpose(2, 0, 1).copy()
-
-    def reset(self) -> dm_env.TimeStep:
-        """Reset the environment and stack the first frame."""
+    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict]:
         time_step = self._env.reset()
-        pixels = self._extract_pixels(time_step)
-        for _ in range(self._num_frames):
-            self._frames.append(pixels)
-        return self._transform_observation(time_step)
+        self.current_state = self._flatten_obs(time_step.observation)
+        obs = self._get_obs(time_step)
+        return obs, {}
 
-    def step(self, action: np.ndarray) -> dm_env.TimeStep:
-        """Take a step in the environment and stack the new frame.
-
-        Args:
-            action (np.ndarray): Action to take.
-
-        Returns:
-            dm_env.TimeStep: Time step.
-        """
-        time_step = self._env.step(action)
-        pixels = self._extract_pixels(time_step)
-        self._frames.append(pixels)
-        return self._transform_observation(time_step)
-
-    def observation_spec(self) -> specs.BoundedArray:
-        """Observation spec."""
-        return self._obs_spec
-
-    def action_spec(self) -> specs.BoundedArray:
-        """Action spec."""
-        return self._env.action_spec()
-
-    def __getattr__(self, name):
-        return getattr(self._env, name)
-
-
-class ActionDTypeWrapper(dm_env.Environment):
-    """A wrapper that converts actions to a given dtype.
-        Borrowed from: https://github.com/facebookresearch/drqv2/blob/main/dmc.py
-
-    Args:
-        env (dm_env.Environment): An environment to be wrapped.
-        dtype (np.dtype): A dtype to convert actions to.
-
-    Returns:
-        Wrapped environment.
-    """
-
-    def __init__(self, env: dm_env.Environment, dtype: np.dtype) -> None:
-        self._env = env
-        wrapped_action_spec = env.action_spec()
-        self._action_spec = specs.BoundedArray(
-            wrapped_action_spec.shape, dtype, wrapped_action_spec.minimum, wrapped_action_spec.maximum, "action"
-        )
-
-    def step(self, action: np.ndarray) -> dm_env.TimeStep:
-        """Take a step in the environment.
+    def render(
+        self,
+        mode: str = "rgb_array",
+        height: Optional[int] = None,
+        width: Optional[int] = None,
+        camera_id: Optional[int] = None,
+    ) -> np.ndarray:
+        """Render the environment.
 
         Args:
-            action (np.ndarray): Action to take.
+            mode (str): Rendering mode.
+            height (Optional[int]): Image height.
+            width (Optional[int]): Image width.
+            camera_id (Optional[int]): Camera id.
 
         Returns:
-            dm_env.TimeStep: Time step.
+            An image of the environment.
         """
-        action = action.astype(self._env.action_spec().dtype)
-        return self._env.step(action)
+        assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode
+        height = height or self._height
+        width = width or self._width
+        camera_id = camera_id or self._camera_id
+        return self._env.physics.render(height=height, width=width, camera_id=camera_id)
 
-    def observation_spec(self) -> specs.BoundedArray:
-        """Observation spec."""
-        return self._env.observation_spec()
+    @property
+    def observation_space(self):
+        return self._observation_space
 
-    def action_spec(self) -> specs.BoundedArray:
-        """Action spec."""
-        return self._action_spec
+    @property
+    def state_space(self):
+        return self._state_space
 
-    def reset(self) -> dm_env.TimeStep:
-        """Reset the environment."""
-        return self._env.reset()
+    @property
+    def action_space(self):
+        return self._norm_action_space
 
-    def __getattr__(self, name):
-        return getattr(self._env, name)
-
-
-class FlatObsWrapper(dm_env.Environment):
-    """Flattens the observation dictionary into a single array.
-
-    Args:
-        env (dm_env.Environment): Environment to wrap.
-
-    Returns:
-        Wrapped environment.
-    """
-
-    def __init__(self, env: dm_env.Environment) -> None:
-        self._env = env
-
-        state_dim = 0
-        for item in env.observation_spec().values():
-            state_dim += item.shape[0]
-
-        self._obs_spec = specs.BoundedArray(
-            shape=(state_dim,), dtype=np.float32, minimum=-np.inf, maximum=np.inf, name="observation"
-        )
+    def seed(self, seed: int) -> None:
+        """Seed the PRNG of this space and possibly the PRNGs of subspaces."""
+        self._true_action_space.seed(seed)
+        self._norm_action_space.seed(seed)
+        self._observation_space.seed(seed)
 
     def _flatten_obs(self, obs: Dict[str, np.ndarray]) -> np.ndarray:
-        """Flatten the observation dictionary into a single array.
+        """Extracts the values from a dm_control observation dict and concatenates them.
 
         Args:
-            obs (Dict[str, np.ndarray]): Observation dictionary.
+            obs (Dict[str, np.ndarray]): A dm_control observation dict.
 
         Returns:
-            np.ndarray: Flattened observation.
+            A flattened numpy array containing the values of the observation dict.
         """
         obs_pieces = []
         for v in obs.values():
             flat = np.array([v]) if np.isscalar(v) else v.ravel()
             obs_pieces.append(flat)
-        return np.concatenate(obs_pieces, axis=0, dtype=np.float32)
+        return np.concatenate(obs_pieces, axis=0)
 
-    def reset(self) -> dm_env.TimeStep:
-        """Reset the environment and flatten the observation."""
-        time_step = self._env.reset()
-        return time_step._replace(observation=self._flatten_obs(time_step.observation))
-
-    def step(self, action: np.ndarray) -> dm_env.TimeStep:
-        """Take a step in the environment and flatten the observation."""
-        time_step = self._env.step(action)
-        return time_step._replace(observation=self._flatten_obs(time_step.observation))
-
-    def observation_spec(self) -> specs.BoundedArray:
-        """Observation spec."""
-        return self._obs_spec
-
-    def action_spec(self) -> specs.BoundedArray:
-        """Action spec."""
-        return self._env.action_spec()
-
-    def __getattr__(self, name):
-        return getattr(self._env, name)
-
-
-class DMC2Gymnasium(gym.Env):
-    """A wrapper for gymnasium interface of DeepMind Control Suite.
-
-    Args:
-        env (dm_env.Environment): An environment to be wrapped.
-
-    Returns:
-        Wrapped environment.
-    """
-
-    def __init__(self, env: dm_env.Environment) -> None:
-        super().__init__()
-        self.env = env
-
-        self.observation_space = self._spec_to_box(self.env.observation_spec())
-        self.action_space = self._spec_to_box(self.env.action_spec())
-
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
-        """Run one timestep of the environment's dynamics using the agent actions.
+    def _spec_to_box(self, spec: specs.Array, dtype: np.dtype) -> spaces.Box:
+        """Transforms a dm_control Array spec into a gymnasium Box space.
 
         Args:
-            action (np.ndarray): Action to take.
+            spec (specs.Array): The dm_control Array spec.
+            dtype (np.dtype): The dtype of the resulting `Box` space.
 
         Returns:
-            Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]: Observation, reward, terminated, truncated, info.
+            A gymnasium Box space with the same shape as the spec and the given dtype.
         """
-        time_step = self.env.step(action)
-        obs = time_step.observation
-        reward = time_step.reward
-        terminated = False  # never stop
-        truncated = time_step.last()
-        info = {"discount": time_step.discount}
 
-        return obs, reward, terminated, truncated, info
+        def _extract_min_max(s):
+            assert s.dtype == np.float64 or s.dtype == np.float32
+            dim = int(np.prod(s.shape))
+            if type(s) == specs.Array:
+                bound = np.inf * np.ones(dim, dtype=np.float32)
+                return -bound, bound
+            elif type(s) == specs.BoundedArray:
+                zeros = np.zeros(dim, dtype=np.float32)
+                return s.minimum + zeros, s.maximum + zeros
 
-    def reset(self, **kwargs) -> Tuple[np.ndarray, Dict[str, Any]]:
-        """Resets the environment."""
-        time_step = self.env.reset()
-        obs = time_step.observation
-        info = {"discount": time_step.discount}
-        return obs, info
-
-    def _spec_to_box(self, spec: specs.Array) -> spaces.Box:
-        """Converts a dm_env spec to a gym Box space.
-
-        Args:
-            spec (specs.Array): A dm_env spec.
-
-        Returns:
-            A gym Box space.
-        """
-        shape = spec.shape
-        low_value = spec.minimum * np.ones(shape, dtype=spec.dtype)
-        high_value = spec.maximum * np.ones(shape, dtype=spec.dtype)
-
-        return spaces.Box(low=low_value, high=high_value, shape=spec.shape, dtype=spec.dtype)
+        mins, maxs = [], []
+        for s in spec:
+            mn, mx = _extract_min_max(s) # type: ignore
+            mins.append(mn)
+            maxs.append(mx)
+        low = np.concatenate(mins, axis=0).astype(dtype)
+        high = np.concatenate(maxs, axis=0).astype(dtype)
+        assert low.shape == high.shape
+        return spaces.Box(low, high, dtype=dtype)

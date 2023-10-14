@@ -29,12 +29,12 @@ from torch import nn
 
 
 class Procgen:
-    """Trained models various RL algorithms on the full Procgen benchmark.
-        Environment link: https://github.com/openai/procgen
-        Number of environments: 16
-        Number of training steps: 25,000,000
-        Number of seeds: 10
-        Added algorithms: [PPO]
+    """Trained models of various RL algorithms on the full Procgen benchmark.
+    Environment link: https://github.com/openai/procgen
+    Number of environments: 16
+    Number of training steps: 25,000,000
+    Number of seeds: 10
+    Added algorithms: [PPO]
     """
 
     def __init__(self) -> None:
@@ -58,7 +58,7 @@ class Procgen:
         Returns:
             The loaded model.
         """
-        model_file = f"{agent.lower()}_procgen_{env_id.lower()}_seed_{seed}.pth"
+        model_file = f"{agent.lower()}_procgen_{env_id}_seed_{seed}.pth"
         subfolder = f"procgen/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)

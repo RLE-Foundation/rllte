@@ -24,14 +24,14 @@
 
 
 import threading
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
-import gymnasium as gym
 import torch as th
 from torch import nn
 from torch.nn import functional as F
 
 from rllte.common.prototype import DistributedAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import DistributedActorLearner
 from rllte.xploit.storage import VanillaDistributedStorage
@@ -116,8 +116,8 @@ class IMPALA(DistributedAgent):
         Based on: https://github.com/facebookresearch/torchbeast/blob/main/torchbeast/monobeast.py
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -144,8 +144,8 @@ class IMPALA(DistributedAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -177,7 +177,7 @@ class IMPALA(DistributedAgent):
             num_storages=num_storages,
             batch_size=batch_size,
             feature_dim=feature_dim,
-            use_lstm=use_lstm
+            use_lstm=use_lstm,
         )
         # hyper parameters
         self.feature_dim = feature_dim
@@ -192,14 +192,16 @@ class IMPALA(DistributedAgent):
         if len(self.obs_shape) == 3:
             encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
         if self.action_type == "Discrete":
-            dist = Categorical
+            dist = Categorical()
         elif self.action_type == "Box":
-            dist = DiagonalGaussian
+            dist = DiagonalGaussian()  # type: ignore[assignment]
         else:
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
@@ -228,7 +230,7 @@ class IMPALA(DistributedAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, storage=storage, policy=policy, distribution=dist)
 
-    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Tuple]:  # noqa B008
+    def update(self, batch: Dict, lock=threading.Lock()) -> Dict[str, Any]:  # type: ignore[override]
         """Update the learner model.
 
         Args:
@@ -255,8 +257,8 @@ class IMPALA(DistributedAgent):
                 {
                     "discounts": discounts,
                     "bootstrap_value": bootstrap_value,
-                    "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),
-                    "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),
+                    "target_dist": self.policy.learner.get_dist(learner_outputs["policy_outputs"]),  # type: ignore
+                    "behavior_dist": self.policy.learner.get_dist(batch["policy_outputs"]),  # type: ignore
                     "values": learner_outputs["baselines"],
                 }
             )
@@ -267,19 +269,21 @@ class IMPALA(DistributedAgent):
             episode_returns = batch["episode_returns"][batch["terminateds"]]
             episode_steps = batch["episode_steps"][batch["terminateds"]]
 
-            self.policy.optimizers['opt'].zero_grad()
+            self.policy.optimizers["opt"].zero_grad()
             total_loss.backward()
             nn.utils.clip_grad_norm_(self.policy.learner.parameters(), self.max_grad_norm)
-            self.policy.optimizers['opt'].step()
+            self.policy.optimizers["opt"].step()
             self.lr_scheduler.step()
 
             self.policy.actor.load_state_dict(self.policy.learner.state_dict())
 
+            # record metrics
+            self.logger.record("train/policy_loss", pg_loss.item())
+            self.logger.record("train/value_loss", baseline_loss.item())
+            self.logger.record("train/entropy_loss", entropy_loss.item())
+            self.logger.record("train/total_loss", total_loss.item())
+
             return {
                 "episode_returns": tuple(episode_returns.cpu().numpy()),
                 "episode_steps": tuple(episode_steps.cpu().numpy()),
-                "Total Loss": total_loss.item(),
-                "Policy Loss": pg_loss.item(),
-                "Value Loss": baseline_loss.item(),
-                "Entropy Loss": entropy_loss.item(),
             }

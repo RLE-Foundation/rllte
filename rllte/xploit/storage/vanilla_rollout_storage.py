@@ -26,7 +26,6 @@
 from typing import Dict, Generator
 
 import gymnasium as gym
-import numpy as np
 import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
@@ -51,25 +50,28 @@ class VanillaRolloutStorage(BaseStorage):
         Vanilla rollout storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 256,
-                 batch_size: int = 64,
-                 num_envs: int = 8,
-                 discount: float = 0.999,
-                 gae_lambda: float = 0.95,
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 256,
+        batch_size: int = 64,
+        num_envs: int = 8,
+        discount: float = 0.999,
+        gae_lambda: float = 0.95,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.discount = discount
         self.gae_lambda = gae_lambda
         self.reset()
-    
+
     def reset(self) -> None:
         """Reset the storage."""
         # data containers
-        self.observations = th.empty(size=(self.storage_size + 1, self.num_envs, *self.obs_shape), dtype=th.float32, device=self.device)
+        self.observations = th.empty(
+            size=(self.storage_size + 1, self.num_envs, *self.obs_shape), dtype=th.float32, device=self.device
+        )
         self.actions = th.empty(size=(self.storage_size, self.num_envs, self.action_dim), dtype=th.float32, device=self.device)
         self.rewards = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
@@ -84,17 +86,18 @@ class VanillaRolloutStorage(BaseStorage):
         self.advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         super().reset()
 
-    def add(self,
-            observations: th.Tensor,
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict,
-            next_observations: th.Tensor,
-            log_probs: th.Tensor,
-            values: th.Tensor
-            ) -> None:
+    def add(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict,
+        next_observations: th.Tensor,
+        log_probs: th.Tensor,
+        values: th.Tensor,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -176,5 +179,5 @@ class VanillaRolloutStorage(BaseStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ
+                adv_targ=adv_targ,
             )

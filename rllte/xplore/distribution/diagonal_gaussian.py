@@ -23,31 +23,38 @@
 # =============================================================================
 
 
+from typing import TypeVar
+
 import torch as th
 from torch import distributions as pyd
 
 from rllte.common.prototype import BaseDistribution
 
+SelfDiagonalGaussian = TypeVar("SelfDiagonalGaussian", bound="DiagonalGaussian")
+
 
 class DiagonalGaussian(BaseDistribution):
-    """Diagonal Gaussian distribution for 'Box' tasks.
+    """Diagonal Gaussian distribution for 'Box' tasks."""
 
-    Args:
-        loc (th.Tensor): The mean of the distribution (often referred to as mu).
-        scale (th.Tensor): The standard deviation of the distribution (often referred to as sigma).
-
-    Returns:
-        Squashed normal distribution instance.
-    """
-
-    def __init__(self, loc: th.Tensor, scale: th.Tensor) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
-        self.loc = loc
-        self.scale = scale
-        self.dist = pyd.Normal(loc=loc, scale=scale)
+    def __call__(self: SelfDiagonalGaussian, mu: th.Tensor, sigma: th.Tensor) -> SelfDiagonalGaussian:
+        """Create the distribution.
 
-    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+        Args:
+            mu (th.Tensor): The mean of the distribution.
+            sigma (th.Tensor): The standard deviation of the distribution.
+
+        Returns:
+            Diagonal Gaussian distribution instance.
+        """
+        self.mu = mu
+        self.sigma = sigma
+        self.dist = pyd.Normal(loc=mu, scale=sigma)
+        return self
+
+    def sample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped sample or sample_shape shaped batch of
             samples if the distribution parameters are batched.
 
@@ -59,7 +66,7 @@ class DiagonalGaussian(BaseDistribution):
         """
         return self.dist.sample(sample_shape)
 
-    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # noqa B008
+    def rsample(self, sample_shape: th.Size = th.Size()) -> th.Tensor:  # B008
         """Generates a sample_shape shaped reparameterized sample or sample_shape shaped batch of
             reparameterized samples if the distribution parameters are batched.
 
@@ -74,17 +81,17 @@ class DiagonalGaussian(BaseDistribution):
     @property
     def mean(self) -> th.Tensor:
         """Returns the mean of the distribution."""
-        return self.loc
+        return self.mu
 
     @property
     def mode(self) -> th.Tensor:
         """Returns the mode of the distribution."""
-        return self.loc
+        return self.mu
 
     @property
     def stddev(self) -> th.Tensor:
         """Returns the standard deviation of the distribution."""
-        raise self.scale
+        raise self.dist.scale
 
     @property
     def variance(self) -> th.Tensor:

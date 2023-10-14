@@ -4,13 +4,13 @@
 <br>
 RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
-<h3> <a href=""> Paper </a> |
+<h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> Paper </a> |
 <a href="https://docs.rllte.dev/api/"> Documentation </a> |
 <a href="https://docs.rllte.dev/tutorials/"> Tutorials </a> |
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
 <a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
 
-<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-98.00%25-green"> 
+<img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-97.00%25-green"> 
 
 | [English](README.md) | [中文](docs/README-zh-Hans.md) |
 
@@ -33,12 +33,13 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
+- [Miscellaneous](#miscellaneous)
 
 # Overview
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <div align="center">
-<a href="https://youtu.be/ShVdiHHyXFM" rel="nofollow">
+<a href="https://youtu.be/PMF6fa72bmE" rel="nofollow">
 <img src='./docs/assets/images/youtube.png' style="width: 70%">
 </a>
 <br>
@@ -52,8 +53,10 @@ Why **RLLTE**?
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
-- 💾 Large number of reusable benchmarks ([rllte-hub](https://hub.rllte.dev));
-- 👨‍✈️ Large language model-empowered copilot.
+- 💾 Large number of reusable benchmarks;
+- 👨‍✈️ Large language model-empowered copilot ([Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
+
+> ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30). **Training datasets**: [hub.rllte.dev](https://hub.rllte.dev). **Model weights**: [hub.rllte.dev](https://hub.rllte.dev). **Wandb**: [wandb.rllte.dev](https://wandb.rllte.dev)
 
 See the project structure below:
 <div align=center>
@@ -151,7 +154,7 @@ OnPolicySharedActorCritic.describe()
 # Optimizers : self.optimizers['opt'] -> (self.encoder, self.actor, self.critic)
 # ================================================================================
 ```
-This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write a `.update` function:
+This will illustrate the structure of the policy and indicate the optimizable parts. Finally, merge these modules and write an `.update` function:
 ``` py
 from torch import nn
 import torch as th
@@ -175,8 +178,9 @@ class A2C(OnPolicyAgent):
                                         num_envs=self.num_envs,
                                         batch_size=256
                                         )
+        dist = Categorical()
         # set all the modules
-        self.set(encoder=encoder, policy=policy, storage=storage, distribution=Categorical)
+        self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
     
     def update(self):
         for _ in range(4):
@@ -227,6 +231,7 @@ agent.set(encoder=encoder)
 | Off-Policy  | [DQN](https://training.incf.org/sites/default/files/2023-05/Human-level%20control%20through%20deep%20reinforcement%20learning.pdf) | ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    | ❌   |
 | Off-Policy  | [DDPG](https://arxiv.org/pdf/1509.02971.pdf?source=post_page---------------------------)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [SAC](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
+| Off-Policy  | [SAC-Discrete](https://arxiv.org/abs/1910.07207)|  ❌  | ✔️    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [TD3](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)| ✔️   | ❌    | ❌    | ❌    | ✔️    | ✔️   |✔️    |❌    |
 | Off-Policy  | [DrQ-v2](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com)| ✔️   | ❌    | ❌    | ❌    | ❌    | ✔️   |✔️    |✔️    |
 | Distributed | [IMPALA](http://proceedings.mlr.press/v80/espeholt18a/espeholt18a.pdf) | ✔️   | ✔️    | ❌    | ❌    | ✔️    | ❌   |❌    |❌    |
@@ -269,14 +274,29 @@ Welcome to contribute to this project! Before you begin writing code, please rea
 
 # Cite the Project
 If you use **RLLTE** in your research, please cite this project like this:
-``` tex
-@software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
-  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
-  url = {https://github.com/RLE-Foundation/rllte},
-  year = {2023},
+```bibtex
+@article{yuan2023rllte,
+  title={RLLTE: Long-Term Evolution Project of Reinforcement Learning}, 
+  author={Mingqi Yuan and Zequn Zhang and Yang Xu and Shihao Luo and Bo Li and Xin Jin and Wenjun Zeng},
+  year={2023},
+  journal={arXiv preprint arXiv:2309.16382}
 }
 ```
 
 # Acknowledgment
 This project is supported by [The Hong Kong Polytechnic University](http://www.polyu.edu.hk/), [Eastern Institute for Advanced Study](http://www.eias.ac.cn/), and [FLW-Foundation](FLW-Foundation). [EIAS HPC](https://hpc.eias.ac.cn/) provides a GPU computing platform, and [HUAWEI Ascend Community](https://www.hiascend.com/) provides an NPU computing platform for our testing. Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
+
+# Miscellaneous
+
+## &#8627; Stargazers, thanks for your support!
+[![Stargazers repo roster for @RLE-Foundation/rllte](https://reporoster.com/stars/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/stargazers)
+
+## &#8627; Forkers, thanks for your support!
+[![Forkers repo roster for @RLE-Foundation/rllte](https://reporoster.com/forks/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/network/members)
+
+## &#8627; Star History
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=RLE-Foundation/rllte&type=Date)](https://star-history.com/#RLE-Foundation/rllte&Date)
+
+</div>

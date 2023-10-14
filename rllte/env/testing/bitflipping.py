@@ -22,10 +22,10 @@
 # SOFTWARE.
 # =============================================================================
 
+
 from collections import OrderedDict
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-import gymnasium as gym
 import numpy as np
 from gymnasium import Env, spaces
 from gymnasium.envs.registration import EnvSpec
@@ -246,14 +246,14 @@ def make_bitflipping_env(
     num_envs: int = 1,
     device: str = "cpu",
     seed: int = 0,
-    parallel: bool = True,
+    asynchronous: bool = True,
     n_bits: int = 15,
     continuous: bool = False,
     max_steps: Optional[int] = 15,
     discrete_obs_space: bool = False,
     image_obs_space: bool = False,
     channel_first: bool = True,
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Create bit flipping environment.
 
     Args:
@@ -261,8 +261,8 @@ def make_bitflipping_env(
         num_envs (int): Number of environments.
         device (str): Device to convert the data.
         seed (int): Random seed.
-        parallel (bool): `True` for creating asynchronous environments, and `False`
-            for creating synchronous environments.
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
         n_bits (int): Number of bits to flip
         continuous (bool): Whether to use the continuous actions version or not,
             by default, it uses the discrete one.
@@ -294,7 +294,7 @@ def make_bitflipping_env(
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
 
-    if parallel:
+    if asynchronous:
         envs = AsyncVectorEnv(envs)
     else:
         envs = SyncVectorEnv(envs)

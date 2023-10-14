@@ -2,14 +2,14 @@
 
 
 ## Procgen
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/models/procgen.py/#L31)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L32)
 ```python 
 
 ```
 
 
 ---
-Trained models various RL algorithms on the full Procgen benchmark.
+Scores and learning cures of various RL algorithms on the full Procgen benchmark.
 Environment link: https://github.com/openai/procgen
 Number of environments: 16
 Number of training steps: 25,000,000
@@ -20,26 +20,28 @@ Added algorithms: [PPO]
 **Methods:**
 
 
-### .load_models
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/models/procgen.py/#L43)
+### .load_scores
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L44)
 ```python
-.load_models(
-   agent: str, env_id: str, seed: int, device: str = 'cpu'
-)
+.load_scores()
 ```
 
 ---
-Load the model from the hub.
+Returns final performance.
 
+### .load_curves
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/hub/datasets/procgen.py/#L55)
+```python
+.load_curves()
+```
 
-**Args**
-
-* **agent** (str) : The agent to load.
-* **env_id** (str) : The environment id to load.
-* **seed** (int) : The seed to load.
-* **device** (str) : The device to load the model on.
-
-
-**Returns**
-
-The loaded model.
+---
+Returns learning curves using a `Dict` of NumPy arrays:
+curves = {
+    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+},
+    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+},
+...
+---
+}

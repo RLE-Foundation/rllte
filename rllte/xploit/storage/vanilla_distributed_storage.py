@@ -22,15 +22,17 @@
 # SOFTWARE.
 # =============================================================================
 
+
 import threading
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import gymnasium as gym
 import torch as th
 from torch import multiprocessing as mp
 
-from rllte.common.prototype import BaseStorage
 from rllte.common.preprocessing import is_image_space
+from rllte.common.prototype import BaseStorage
+
 
 class VanillaDistributedStorage(BaseStorage):
     """Vanilla distributed storage for distributed algorithms like IMPALA.
@@ -48,15 +50,16 @@ class VanillaDistributedStorage(BaseStorage):
         Vanilla distributed storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 100,
-                 num_storages: int = 80,
-                 num_envs: int = 45,
-                 batch_size: int = 32
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 100,
+        num_storages: int = 80,
+        num_envs: int = 45,
+        batch_size: int = 32,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.num_storages = num_storages
         self.reset()
@@ -64,33 +67,34 @@ class VanillaDistributedStorage(BaseStorage):
     def reset(self) -> None:
         """Reset the storage."""
         obs_dtype = th.uint8 if is_image_space(self.observation_space) else th.float32
-        action_dtype = th.float32 if self.action_type is "Box" else th.int64
-        policy_outputs_dim = self.policy_action_dim * 2 if self.action_type is "Box" else self.policy_action_dim
+        action_dtype = th.float32 if self.action_type == "Box" else th.int64
+        policy_outputs_dim = self.policy_action_dim * 2 if self.action_type == "Box" else self.policy_action_dim
         specs = dict(
             observations=dict(size=(self.storage_size + 1, *self.obs_shape), dtype=obs_dtype),
             actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
-            rewards=dict(size=(self.storage_size + 1, ), dtype=th.float32),
-            terminateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
-            truncateds=dict(size=(self.storage_size + 1, ), dtype=th.bool),
-            episode_returns=dict(size=(self.storage_size + 1, ), dtype=th.float32),
-            episode_steps=dict(size=(self.storage_size + 1, ), dtype=th.int32),
+            rewards=dict(size=(self.storage_size + 1,), dtype=th.float32),
+            terminateds=dict(size=(self.storage_size + 1,), dtype=th.bool),
+            truncateds=dict(size=(self.storage_size + 1,), dtype=th.bool),
+            episode_returns=dict(size=(self.storage_size + 1,), dtype=th.float32),
+            episode_steps=dict(size=(self.storage_size + 1,), dtype=th.int32),
             last_actions=dict(size=(self.storage_size + 1, self.action_dim), dtype=action_dtype),
             policy_outputs=dict(size=(self.storage_size + 1, policy_outputs_dim), dtype=th.float32),
-            baselines=dict(size=(self.storage_size + 1, ), dtype=th.float32)
+            baselines=dict(size=(self.storage_size + 1,), dtype=th.float32),
         )
 
         # create memory-shared storages
-        self.storages = {key: [] for key in specs}
+        self.storages: Dict[str, List[th.Tensor]] = {key: [] for key in specs}
         for _ in range(self.num_storages):
-            for key in self.storages:
-                self.storages[key].append(th.empty(**specs[key]).share_memory_())
+            for key in self.storages.keys():
+                self.storages[key].append(th.empty(**specs[key]).share_memory_())  # type: ignore
 
-    def add(self,
-            idx: int,
-            timestep: int,
-            actor_output: Dict[str, Any],
-            env_output: Dict[str, Any],
-            ) -> None:
+    def add(
+        self,
+        idx: int,
+        timestep: int,
+        actor_output: Dict[str, Any],
+        env_output: Dict[str, Any],
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -107,11 +111,9 @@ class VanillaDistributedStorage(BaseStorage):
         for key in actor_output:
             self.storages[key][idx][timestep, ...] = actor_output[key]
 
-    def sample(self, 
-               free_queue: mp.SimpleQueue, 
-               full_queue: mp.SimpleQueue, 
-               lock=threading.Lock()  # noqa B008
-               ) -> Dict[str, th.Tensor]:
+    def sample(
+        self, free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock=threading.Lock()  # B008
+    ) -> Dict[str, th.Tensor]:
         """Sample transitions from the storage.
 
         Args:

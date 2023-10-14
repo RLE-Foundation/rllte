@@ -2,7 +2,7 @@
 
 
 ## VanillaDistributedStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L35)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L37)
 ```python 
 VanillaDistributedStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -36,7 +36,7 @@ Vanilla distributed storage.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L64)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L67)
 ```python
 .reset()
 ```
@@ -45,7 +45,7 @@ Vanilla distributed storage.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L88)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L91)
 ```python
 .add(
    idx: int, timestep: int, actor_output: Dict[str, Any], env_output: Dict[str,
@@ -70,7 +70,7 @@ Add sampled transitions into storage.
 None
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L110)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L114)
 ```python
 .sample(
    free_queue: mp.SimpleQueue, full_queue: mp.SimpleQueue, lock = threading.Lock()
@@ -93,7 +93,7 @@ Sample transitions from the storage.
 Batched samples.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L136)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/vanilla_distributed_storage.py/#L138)
 ```python
 .update(
    *args, **kwargs

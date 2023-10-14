@@ -23,53 +23,44 @@
 # =============================================================================
 
 
-import argparse
 import torch as th
-th.set_float32_matmul_precision('high')
+from huggingface_hub import hf_hub_download
+from torch import nn
 
-from rllte.agent import PPO
-from rllte.env import make_atari_env
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--env-id", type=str, default="SpaceInvadersNoFrameskip-v4")
-parser.add_argument("--device", type=str, default="cuda")
-parser.add_argument("--seed", type=int, default=1)
+class MiniGrid:
+    """Trained models of various RL algorithms on the MiniGrid benchmark.
+    Environment link: https://github.com/Farama-Foundation/Minigrid
+    Number of environments: 16
+    Number of training steps: 1,000,000
+    Number of seeds: 10
+    Added algorithms: [A2C]
+    """
 
-if __name__ == "__main__":
-    args = parser.parse_args()
-    # create env
-    env = make_atari_env(
-        env_id=args.env_id,
-        device=args.device,
-        num_envs=8,
-        seed=args.seed
-    )
-    eval_env = make_atari_env(
-        env_id=args.env_id,
-        device=args.device,
-        num_envs=1,
-        seed=args.seed
-    )
-    # create agent
-    feature_dim = 512
-    agent = PPO(
-        env=env,
-        eval_env=eval_env,
-        tag=f"ppo_atari_{args.env_id}_seed_{args.seed}",
-        seed=args.seed,
-        device=args.device,
-        num_steps=128,
-        feature_dim=feature_dim,
-        batch_size=256,
-        lr=2.5e-4,
-        eps=1e-5,
-        clip_range=0.1,
-        clip_range_vf=0.1,
-        n_epochs=4,
-        vf_coef=0.5,
-        ent_coef=0.01,
-        max_grad_norm=0.5,
-        init_fn="orthogonal",
-    )
-    # training
-    agent.train(num_train_steps=50000000)
+    def __init__(self) -> None:
+        pass
+
+    def load_models(
+        self,
+        agent: str,
+        env_id: str,
+        seed: int,
+        device: str = "cpu",
+    ) -> nn.Module:
+        """Load the model from the hub.
+
+        Args:
+            agent (str): The agent to load.
+            env_id (str): The environment id to load.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
+        Returns:
+            The loaded model.
+        """
+        model_file = f"{agent.lower()}_minigrid_{env_id}_seed_{seed}.pth"
+        subfolder = f"minigrid/{agent}"
+        file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
+        model = th.load(file, map_location=device)
+
+        return model.eval()

@@ -23,24 +23,26 @@
 # =============================================================================
 
 
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
 from copy import deepcopy
+from pathlib import Path
+from typing import Any, Dict, Optional, Type
 
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
 from .utils import OffPolicyDoubleCritic
 
+# from torch.distributions import Distribution
+
 
 class OffPolicyDoubleActorDoubleCritic(BasePolicy):
     """Double deterministic actor network and double critic network for off-policy algortithms like `DDPG`, `TD3`.
-        Here the 'self.dist' refers to an action noise instance.
+        Here the 'self.dist' refers to an action noise.
 
     Args:
         observation_space (gym.Space): Observation space.
@@ -48,8 +50,8 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
-        init_fn (Optional[str]): Parameters initialization method.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network.
@@ -63,8 +65,10 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         hidden_dim: int = 1024,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -88,9 +92,14 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         )
         self.actor_target = deepcopy(self.actor)
 
-        self.critic = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim)
-        self.critic_target = OffPolicyDoubleCritic(action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim)
+        self.critic = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=hidden_dim
+        )
+        self.critic_target = OffPolicyDoubleCritic(
+            action_dim=self.policy_action_dim, feature_dim=self.feature_dim, hidden_dim=self.hidden_dim
+        )
 
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -111,16 +120,16 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
 
         Args:
             encoder (nn.Module): Encoder network.
-            dist (Distribution): Distribution class.
+            dist (Distribution): Distribution.
 
         Returns:
             None.
         """
         # set encoder
-        assert encoder is not None, "Encoder should not be None!"
+        assert encoder is not None, "The encoder should not be None!"
         self.encoder = encoder
         # set distribution
-        assert dist is not None, "Distribution should not be None!"
+        assert dist is not None, "The distribution should not be None!"
         self.dist = dist
         # initialize parameters
         self.apply(self.init_fn)
@@ -128,34 +137,22 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())
         # build optimizers
-        self._optimizers['encoder_opt'] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
-        self._optimizers['actor_opt'] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
-        self._optimizers['critic_opt'] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
+        self._optimizers["encoder_opt"] = self.opt_class(self.encoder.parameters(), **self.opt_kwargs)
+        self._optimizers["actor_opt"] = self.opt_class(self.actor.parameters(), **self.opt_kwargs)
+        self._optimizers["critic_opt"] = self.opt_class(self.critic.parameters(), **self.opt_kwargs)
 
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
-
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-        return th.rand(size=(obs.size()[0], self.policy_action_dim), device=obs.device).uniform_(-1.0, 1.0)
-
-    def forward(self, obs: th.Tensor, training: bool = True, step: int = 0) -> th.Tensor:
+    def forward(self, obs: th.Tensor, training: bool = True) -> th.Tensor:
         """Sample actions based on observations.
 
         Args:
             obs (th.Tensor): Observations.
             training (bool): Training mode, True or False.
-            step (int): Global training step.
 
         Returns:
             Sampled actions.
         """
         encoded_obs = self.encoder(obs)
-        dist = self.get_dist(obs=encoded_obs, step=step)
+        dist = self.get_dist(obs=encoded_obs)
 
         if not training:
             actions = dist.mean
@@ -164,48 +161,32 @@ class OffPolicyDoubleActorDoubleCritic(BasePolicy):
 
         return actions
 
-    def get_dist(self, obs: th.Tensor, step: int) -> Distribution:
+    def get_dist(self, obs: th.Tensor) -> Distribution:
         """Get sample distribution.
 
         Args:
             obs (th.Tensor): Observations.
-            step (int): Global training step.
 
         Returns:
             RLLTE distribution.
         """
         mu = self.actor_target(obs)
 
-        # for Scheduled Exploration Noise
-        self.dist.reset(mu, step)
+        return self.dist(mu)
 
-        return self.dist
-
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

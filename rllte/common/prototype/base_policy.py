@@ -23,7 +23,6 @@
 # =============================================================================
 
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import gymnasium as gym
@@ -31,7 +30,8 @@ import torch as th
 from torch import nn
 
 from rllte.common.initialization import get_init_fn
-from rllte.common.preprocessing import process_observation_space, process_action_space
+from rllte.common.preprocessing import process_action_space, process_observation_space
+from rllte.common.prototype.base_distribution import BaseDistribution
 
 
 class BasePolicy(ABC, nn.Module):
@@ -43,7 +43,7 @@ class BasePolicy(ABC, nn.Module):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -58,8 +58,10 @@ class BasePolicy(ABC, nn.Module):
         hidden_dim: int,
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__()
         self.observation_space = observation_space
         self.action_space = action_space
@@ -78,7 +80,11 @@ class BasePolicy(ABC, nn.Module):
 
         # placeholder for optimizers
         self._optimizers: Dict[str, th.optim.Optimizer] = {}
-        
+
+        # attr annotations
+        self.encoder: nn.Module
+        self.dist: BaseDistribution
+
     @property
     def optimizers(self) -> Dict[str, th.optim.Optimizer]:
         """Get optimizers."""
@@ -89,18 +95,8 @@ class BasePolicy(ABC, nn.Module):
     def describe() -> None:
         """Describe the policy."""
 
-    def explore(self, obs: th.Tensor) -> th.Tensor:
-        """Explore the environment and randomly generate actions.
-
-        Args:
-            obs (th.Tensor): Observation from the environment.
-
-        Returns:
-            Sampled actions.
-        """
-
     @abstractmethod
-    def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor]]:
+    def forward(self, obs: th.Tensor, training: bool = True) -> Union[th.Tensor, Tuple[th.Tensor, Dict[str, th.Tensor]]]:
         """Forward method.
 
         Args:
@@ -112,28 +108,22 @@ class BasePolicy(ABC, nn.Module):
         """
 
     @abstractmethod
-    def freeze(self) -> None:
+    def freeze(self, *args, **kwargs) -> None:
         """Freeze the policy and start training."""
 
     @abstractmethod
-    def save(self, path: Path, pretraining: bool = False) -> None:
-        """Save models.
+    def save(self, *args, **kwargs) -> None:
+        """Save models."""
 
-        Args:
-            path (Path): Save path.
-            pretraining (bool): Pre-training mode.
-
-        Returns:
-            None.
-        """
-
-    @abstractmethod
-    def load(self, path: str) -> None:
+    def load(self, path: str, device: th.device) -> None:
         """Load initial parameters.
 
         Args:
             path (str): Import path.
+            device (th.device): Device to use.
 
         Returns:
             None.
         """
+        params = th.load(path, map_location=device)
+        self.load_state_dict(params)

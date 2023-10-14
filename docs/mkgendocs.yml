@@ -140,6 +140,10 @@ pages:
     source: rllte/agent/legacy/sac.py
     classes:
       - SAC
+  - page: agent/legacy/sacd.md
+    source: rllte/agent/legacy/sacd.py
+    classes:
+      - SACDiscrete
   - page: xploit/storage/dict_replay_storage.md
     source: rllte/xploit/storage/dict_replay_storage.py
     classes:
@@ -207,15 +211,47 @@ pages:
   - page: hub/datasets/dmc.md
     source: rllte/hub/datasets/dmc.py
     classes:
-      - DeepMindControl
+      - DMControl
   - page: hub/datasets/procgen.md
     source: rllte/hub/datasets/procgen.py
     classes:
       - Procgen
+  - page: hub/datasets/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
+  - page: hub/models/atari.md
+    source: rllte/hub/datasets/atari.py
+    classes:
+      - Atari
+  - page: hub/models/dmc.md
+    source: rllte/hub/datasets/dmc.py
+    classes:
+      - DMControl
   - page: hub/models/procgen.md
-    source: rllte/hub/models/procgen.py
+    source: rllte/hub/datasets/procgen.py
     classes:
       - Procgen
+  - page: hub/models/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
+  - page: hub/applications/atari.md
+    source: rllte/hub/datasets/atari.py
+    classes:
+      - Atari
+  - page: hub/applications/dmc.md
+    source: rllte/hub/datasets/dmc.py
+    classes:
+      - DMControl
+  - page: hub/applications/procgen.md
+    source: rllte/hub/datasets/procgen.py
+    classes:
+      - Procgen
+  - page: hub/applications/minigrid.md
+    source: rllte/hub/datasets/minigrid.py
+    classes:
+      - MiniGrid
   - page: xplore/reward/girm.md
     source: rllte/xplore/reward/girm.py
     classes:
@@ -336,10 +372,6 @@ pages:
     source: rllte/xplore/distribution/truncated_normal_noise.py
     classes:
       - TruncatedNormalNoise
-  - page: env/bitflipping/__init__.md
-    source: rllte/env/bitflipping/__init__.py
-    functions:
-      - make_bitflipping_env
   - page: env/bullet/__init__.md
     source: rllte/env/bullet/__init__.py
     functions:
@@ -357,14 +389,11 @@ pages:
     source: rllte/env/minigrid/__init__.py
     functions:
       - make_minigrid_env
-  - page: env/multibinary/__init__.md
-    source: rllte/env/multibinary/__init__.py
-    functions:
-      - make_multibinary_env
   - page: env/procgen/__init__.md
     source: rllte/env/procgen/__init__.py
     functions:
       - make_procgen_env
+      - make_envpool_procgen_env
   - page: env/utils.md
     source: rllte/env/utils.py
     functions:

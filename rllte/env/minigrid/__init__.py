@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict
+from typing import Callable, Dict
 
 import gymnasium as gym
 import numpy as np
@@ -95,8 +95,8 @@ def make_minigrid_env(
     seed: int = 0,
     frame_stack: int = 1,
     device: str = "cpu",
-    parallel: bool = True,
-) -> gym.Env:
+    asynchronous: bool = True,
+) -> Gymnasium2Torch:
     """Create MiniGrid environments.
 
     Args:
@@ -109,14 +109,14 @@ def make_minigrid_env(
         seed (int): Random seed.
         frame_stack (int): Number of stacked frames.
         device (str): Device to convert the data.
-        parallel (bool): `True` for creating asynchronous environments, and `False`
-            for creating synchronous environments.
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
 
     Returns:
         The vectorized environments.
     """
 
-    def make_env(env_id: str, seed: int) -> gym.Env:
+    def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
             env = gym.make(env_id)
 
@@ -139,7 +139,7 @@ def make_minigrid_env(
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
 
-    if parallel:
+    if asynchronous:
         envs = AsyncVectorEnv(envs)
     else:
         envs = SyncVectorEnv(envs)

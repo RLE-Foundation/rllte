@@ -31,7 +31,10 @@ import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
 
-def process_observation_space(observation_space: gym.Space) -> Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]:
+ObsShape = Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]
+
+
+def process_observation_space(observation_space: gym.Space) -> ObsShape:
     """Process the observation space.
 
     Args:
@@ -53,14 +56,15 @@ def process_observation_space(observation_space: gym.Space) -> Union[Tuple[int, 
         # Number of binary features
         return observation_space.shape
     elif isinstance(observation_space, spaces.Dict):
-        return {key: process_observation_space(subspace) 
-                for (key, subspace) in observation_space.spaces.items()}  # type: ignore[misc]
-
+        return {
+            key: process_observation_space(subspace)  # type: ignore[misc]
+            for (key, subspace) in observation_space.spaces.items()
+        }
     else:
         raise NotImplementedError(f"{observation_space} observation space is not supported")
 
 
-def process_action_space(action_space: gym.Space) -> Tuple[Tuple, int, str, Tuple]:
+def process_action_space(action_space: gym.Space) -> Tuple[Tuple[int, ...], int, int, str]:
     """Get the dimension of the action space.
 
     Args:
@@ -70,21 +74,24 @@ def process_action_space(action_space: gym.Space) -> Tuple[Tuple, int, str, Tupl
         Information of the action space.
     """
     # TODO: revise the action_range
+    assert action_space.shape is not None, "The action data shape cannot be `None`!"
     action_shape = action_space.shape
-    if action_space.__class__.__name__ == "Discrete":
+    if isinstance(action_space, spaces.Discrete):
         policy_action_dim = int(action_space.n)
         action_dim = 1
         action_type = "Discrete"
-    elif action_space.__class__.__name__ == "Box":
+    elif isinstance(action_space, spaces.Box):
         policy_action_dim = int(np.prod(action_space.shape))
         action_dim = policy_action_dim
         action_type = "Box"
-    elif action_space.__class__.__name__ == "MultiDiscrete":
+    elif isinstance(action_space, spaces.MultiDiscrete):
         policy_action_dim = sum(list(action_space.nvec))
         action_dim = int(len(action_space.nvec))
         action_type = "MultiDiscrete"
-    elif action_space.__class__.__name__ == "MultiBinary":
-        assert isinstance(action_space.n, int), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
+    elif isinstance(action_space, spaces.MultiBinary):
+        assert isinstance(
+            action_space.n, int
+        ), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
         policy_action_dim = int(action_space.n)
         action_dim = policy_action_dim
         action_type = "MultiBinary"

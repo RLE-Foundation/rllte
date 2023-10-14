@@ -48,22 +48,26 @@ class VanillaReplayStorage(BaseStorage):
         Vanilla replay storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 1000000,
-                 batch_size: int = 1024,
-                 num_envs: int = 1
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 1000000,
+        batch_size: int = 1024,
+        num_envs: int = 1,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         # split the storage size for each environment
         self.storage_size = max(storage_size // num_envs, 1)
         self.reset()
-    
+
     def reset(self) -> None:
         """Reset the storage."""
         self.observations = np.empty((self.storage_size, self.num_envs, *self.obs_shape), dtype=self.observation_space.dtype)
+        self.next_observations = np.empty(
+            (self.storage_size, self.num_envs, *self.obs_shape), dtype=self.observation_space.dtype
+        )
         self.actions = np.empty((self.storage_size, self.num_envs, self.action_dim), dtype=self.action_space.dtype)
         self.rewards = np.empty((self.storage_size, self.num_envs), dtype=np.float32)
         self.terminateds = np.empty((self.storage_size, self.num_envs), dtype=np.float32)
@@ -74,15 +78,16 @@ class VanillaReplayStorage(BaseStorage):
         """Return the number of transitions in storage."""
         return self.storage_size if self.full else self.step
 
-    def add(self,
-            observations: th.Tensor,
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict[str, Any],
-            next_observations: th.Tensor
-            ) -> None:
+    def add(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: th.Tensor,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -100,7 +105,8 @@ class VanillaReplayStorage(BaseStorage):
         np.copyto(self.observations[self.step], observations.cpu().numpy())
         np.copyto(self.actions[self.step], actions.cpu().numpy())
         np.copyto(self.rewards[self.step], rewards.cpu().numpy())
-        np.copyto(self.observations[(self.step + 1) % self.storage_size], next_observations.cpu().numpy())
+        # np.copyto(self.observations[(self.step + 1) % self.storage_size], next_observations.cpu().numpy())
+        np.copyto(self.next_observations[self.step], next_observations.cpu().numpy())
         np.copyto(self.terminateds[self.step], terminateds.cpu().numpy())
         np.copyto(self.truncateds[self.step], truncateds.cpu().numpy())
 
@@ -122,7 +128,8 @@ class VanillaReplayStorage(BaseStorage):
         rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)
         terminateds = self.terminateds[batch_indices, env_indices].reshape(-1, 1)
         truncateds = self.truncateds[batch_indices, env_indices].reshape(-1, 1)
-        next_obs = self.observations[(batch_indices + 1) % self.storage_size, env_indices, :]
+        # next_obs = self.observations[(batch_indices + 1) % self.storage_size, env_indices, :]
+        next_obs = self.next_observations[batch_indices, env_indices, :]
 
         return VanillaReplayBatch(
             observations=self.to_torch(obs),

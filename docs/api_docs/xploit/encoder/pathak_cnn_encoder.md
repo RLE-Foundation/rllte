@@ -32,7 +32,7 @@ CNN-based encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L72)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/pathak_cnn_encoder.py/#L73)
 ```python
 .forward(
    obs: th.Tensor

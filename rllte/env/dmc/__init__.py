@@ -25,29 +25,26 @@
 
 from typing import Callable
 
-import gymnasium as gym
-import numpy as np
-from dm_control import manipulation, suite
-from dm_control.suite.wrappers import action_scale, pixels
-from gymnasium.vector import SyncVectorEnv
+from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 
-from rllte.env.dmc.wrappers import ActionDTypeWrapper, ActionRepeatWrapper, DMC2Gymnasium, FlatObsWrapper, FrameStackWrapper
-from rllte.env.utils import Gymnasium2Torch
+from rllte.env.dmc.wrappers import DMC2Gymnasium
+from rllte.env.utils import FrameStack, Gymnasium2Torch
 
 
 def make_dmc_env(
-    env_id: str = "cartpole_balance",
+    env_id: str = "humanoid_run",
     num_envs: int = 1,
     device: str = "cpu",
     seed: int = 1,
-    visualize_reward: bool = False,
-    from_pixels: bool = True,
+    visualize_reward: bool = True,
+    from_pixels: bool = False,
     height: int = 84,
     width: int = 84,
     frame_stack: int = 3,
-    action_repeat: int = 2,
-) -> gym.Env:
+    action_repeat: int = 1,
+    asynchronous: bool = True,
+) -> Gymnasium2Torch:
     """Create DeepMind Control Suite environments.
 
     Args:
@@ -55,12 +52,14 @@ def make_dmc_env(
         num_envs (int): Number of environments.
         device (str): Device to convert the data.
         seed (int): Random seed.
-        visualize_reward (bool): True when 'from_pixels' is False, False when 'from_pixels' is True.
+        visualize_reward (bool): Opposite to `from_pixels`.
         from_pixels (bool): Provide image-based observations or not.
         height (int): Image observation height.
         width (int): Image observation width.
         frame_stack (int): Number of stacked frames.
         action_repeat (int): Number of action repeats.
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
 
     Returns:
         The vectorized environments.
@@ -68,44 +67,28 @@ def make_dmc_env(
 
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            domain, task = env_id.split("_", 1)
-            # overwrite cup to ball_in_cup
-            domain = dict(cup="ball_in_cup").get(domain, domain)
-            if from_pixels:
-                assert not visualize_reward, "Cannot use visualize reward when learning from pixels!"
-            if (domain, task) in suite.ALL_TASKS:
-                env = suite.load(domain, task, task_kwargs={"random": seed}, visualize_reward=False)
-                pixels_key = "pixels"
-            else:
-                name = f"{domain}_{task}_vision"
-                env = manipulation.load(name, seed=seed)
-                pixels_key = "front_close"
-            # add wrappers
-            env = ActionDTypeWrapper(env, np.float32)
-            env = ActionRepeatWrapper(env, action_repeat if from_pixels else 1)
-            env = action_scale.Wrapper(env, minimum=-1.0, maximum=+1.0)
-
-            if visualize_reward and not from_pixels:
-                env = FlatObsWrapper(env)
-            else:
-                # add renderings for clasical tasks
-                if (domain, task) in suite.ALL_TASKS:
-                    # zoom in camera for quadruped
-                    camera_id = dict(quadruped=2).get(domain, 0)
-                    render_kwargs = dict(height=height, width=width, camera_id=camera_id)
-                    env = pixels.Wrapper(env, pixels_only=True, render_kwargs=render_kwargs)
-                # stack several frames
-                env = FrameStackWrapper(env, frame_stack, pixels_key)
-
             # convert to gym interface
-            env = DMC2Gymnasium(env)
-
+            env = DMC2Gymnasium(
+                env_id=env_id,
+                seed=seed,
+                visualize_reward=visualize_reward,
+                from_pixels=from_pixels,
+                height=height,
+                width=width,
+                frame_stack=frame_stack,
+                action_repeat=action_repeat,
+            )
+            if from_pixels:
+                env = FrameStack(env, frame_stack)
             return env
 
         return _thunk
 
     envs = [make_env(env_id, seed + i) for i in range(num_envs)]
-    envs = SyncVectorEnv(envs)
+    if asynchronous:
+        envs = AsyncVectorEnv(envs)
+    else:
+        envs = SyncVectorEnv(envs)
     envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(envs, device)

@@ -41,7 +41,7 @@ Prioritized replay storage.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L77)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L78)
 ```python
 .reset()
 ```
@@ -50,7 +50,7 @@ Prioritized replay storage.
 Reset the storage.
 
 ### .annealing_beta
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L89)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L90)
 ```python
 .annealing_beta()
 ```
@@ -59,7 +59,7 @@ Reset the storage.
 Linearly increases beta from the initial value to 1 over global training steps.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L93)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L94)
 ```python
 .add(
    observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
@@ -88,7 +88,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L133)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L135)
 ```python
 .sample()
 ```
@@ -97,7 +97,7 @@ None.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L171)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/prioritized_replay_storage.py/#L173)
 ```python
 .update(
    metrics: Dict

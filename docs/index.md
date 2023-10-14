@@ -9,10 +9,10 @@ hide:
 
 ---
 
-Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
+Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <div align="center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ShVdiHHyXFM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/PMF6fa72bmE?si=oDLvQqxVrMP31Iqk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <br>
 An introduction to RLLTE.
 </div>
@@ -39,33 +39,18 @@ See [Fast Algorithm Development]() for detailed examples.
 ## **Project Evolution**
 **RLLTE** selects RL algorithms based on the following tenet:
 
-- Generality takes all;
+- Generality is the most important;
 - Improvements in sample efficiency or generalization ability;
 - Excellent performance on recognized benchmarks;
 - Promising tools for RL.
 
 ## **Cite Us**
 If you use **RLLTE** in your research, please cite this project like this:
-``` tex
-@software{rllte,
-  author = {Mingqi Yuan, Zequn Zhang, Yang Xu, Shihao Luo, Bo Li, Xin Jin, and Wenjun Zeng},
-  title = {RLLTE: Long-Term Evolution Project of Reinforcement Learning},
-  url = {https://github.com/RLE-Foundation/rllte},
-  year = {2023},
-}
-```
-
-<!-- Hsuanwu evolves based on reinforcement learning algorithms and integrates latest tricks. The following figure demonstrates the main evolution roadmap of Hsuanwu:
-<div align=center>
-<img src='./assets/images/roadmap.svg'>
-</div>s -->
-
-<!-- Please cite the following paper if you use Hsuanwu in your work, thank you!
 ```bibtex
 @article{yuan2023rllte,
-  title={Hsuanwu: Long-Term Evolution Project of Reinforcement Learning},
-  author={Yuan, Mingqi and Luo, Shihao and Zhang, Zequn and Yang, Xu and Jin, Xin and Li, Bo and Zeng, Wenjun},
-  journal={arXiv preprint arXiv:2311.15277},
-  year={2023}
+  title={RLLTE: Long-Term Evolution Project of Reinforcement Learning}, 
+  author={Mingqi Yuan and Zequn Zhang and Yang Xu and Shihao Luo and Bo Li and Xin Jin and Wenjun Zeng},
+  year={2023},
+  journal={arXiv preprint arXiv:2309.16382}
 }
-``` -->
+```

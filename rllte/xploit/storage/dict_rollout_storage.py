@@ -23,14 +23,13 @@
 # =============================================================================
 
 
-from typing import Dict, Generator
+from typing import Any, Dict, Generator
 
 import gymnasium as gym
 import torch as th
-import numpy as np
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
-from rllte.common.type_alias import VanillaRolloutBatch
+from rllte.common.type_alias import DictRolloutBatch
 from rllte.xploit.storage.vanilla_rollout_storage import VanillaRolloutStorage
 
 
@@ -51,30 +50,43 @@ class DictRolloutStorage(VanillaRolloutStorage):
         Dict rollout storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 256,
-                 batch_size: int = 64,
-                 num_envs: int = 8,
-                 discount: float = 0.999,
-                 gae_lambda: float = 0.95,
-                 ) -> None:
-        super(VanillaRolloutStorage, self).__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 256,
+        batch_size: int = 64,
+        num_envs: int = 8,
+        discount: float = 0.999,
+        gae_lambda: float = 0.95,
+    ) -> None:
+        super(VanillaRolloutStorage, self).__init__(
+            observation_space, action_space, device, storage_size, batch_size, num_envs
+        )
 
-        assert isinstance(self.obs_shape, dict), "DictRolloutStorage only support Dict observation space."
+        assert isinstance(
+            self.observation_space, gym.spaces.Dict
+        ), "DictRolloutStorage only supports `Dict` observation space!"
 
         self.discount = discount
         self.gae_lambda = gae_lambda
         self.reset()
 
+        # attr annotations
+        self.observation_space: gym.spaces.Dict
+        self.obs_shape: Dict[str, Any]
+        self.observations: Dict[str, th.Tensor]  # type: ignore[assignment]
+
     def reset(self) -> None:
         """Reset the storage."""
+        assert isinstance(self.obs_shape, Dict)
         # data containers
         self.observations = dict()
         for key, shape in self.obs_shape.items():
-            self.observations[key] = th.empty(size=(self.storage_size + 1, self.num_envs, *shape), dtype=th.float32, device=self.device)
+            self.observations[key] = th.empty(
+                size=(self.storage_size + 1, self.num_envs, *shape), dtype=th.float32, device=self.device
+            )
         self.actions = th.empty(size=(self.storage_size, self.num_envs, self.action_dim), dtype=th.float32, device=self.device)
         self.rewards = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         self.terminateds = th.empty(size=(self.storage_size + 1, self.num_envs), dtype=th.float32, device=self.device)
@@ -90,17 +102,18 @@ class DictRolloutStorage(VanillaRolloutStorage):
 
         super(VanillaRolloutStorage, self).reset()
 
-    def add(self,
-            observations: Dict[str, th.Tensor],
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict,
-            next_observations: th.Tensor,
-            log_probs: th.Tensor,
-            values: th.Tensor
-            ) -> None:
+    def add(
+        self,
+        observations: Dict[str, th.Tensor],  # type: ignore[override]
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict,
+        next_observations: Dict[str, th.Tensor],  # type: ignore[override]
+        log_probs: th.Tensor,
+        values: th.Tensor,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -110,7 +123,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
             terminateds (th.Tensor): Termination signals.
             truncateds (th.Tensor): Truncation signals.
             infos (Dict): Extra information.
-            next_observations (th.Tensor): Next observations.
+            next_observations (Dict[str, th.Tensor]): Next observations.
             log_probs (th.Tensor): Log of the probability evaluated at `actions`.
             values (th.Tensor): Estimated values.
 
@@ -141,7 +154,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
     def sample(self) -> Generator:
         """Sample data from storage."""
         assert self.full, "Cannot sample when the storage is not full!"
-        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.num_steps)), self.batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs * self.storage_size)), self.batch_size, drop_last=True)
 
         for indices in sampler:
             batch_obs = {key: item[:-1].view(-1, *self.obs_shape[key])[indices] for (key, item) in self.observations.items()}
@@ -153,7 +166,7 @@ class DictRolloutStorage(VanillaRolloutStorage):
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
 
-            yield VanillaRolloutBatch(
+            yield DictRolloutBatch(
                 observations=batch_obs,
                 actions=batch_actions,
                 values=batch_values,
@@ -161,5 +174,5 @@ class DictRolloutStorage(VanillaRolloutStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
-                adv_targ=adv_targ
+                adv_targ=adv_targ,
             )

@@ -28,42 +28,43 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional, Any
 
-import gymnasium as gym
 import numpy as np
 import pynvml
 import torch as th
-th.set_float32_matmul_precision('high')
 
-# try to load torch_npu
-try:
-    import torch_npu as torch_npu  # type: ignore
-    if th.npu.is_available():
-        NPU_AVAILABLE = True
-except Exception:
-    NPU_AVAILABLE = False
-
+# auxiliary modules
+from rllte.common.logger import Logger
+from rllte.common.preprocessing import process_action_space, process_observation_space
 from rllte.common.prototype.base_augmentation import BaseAugmentation as Augmentation
 from rllte.common.prototype.base_distribution import BaseDistribution as Distribution
 from rllte.common.prototype.base_encoder import BaseEncoder as Encoder
 from rllte.common.prototype.base_policy import BasePolicy as Policy
 from rllte.common.prototype.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
 from rllte.common.prototype.base_storage import BaseStorage as Storage
-from rllte.common.logger import Logger
-from rllte.common.preprocessing import process_observation_space, process_action_space
 from rllte.common.timer import Timer
+from rllte.common.type_alias import VecEnv
 from rllte.common.utils import get_npu_name
 
 NUMBER_OF_SPACES = 17
+
+# try to load torch_npu
+try:
+    import torch_npu as torch_npu  # type: ignore
+
+    if th.npu.is_available():  # type: ignore
+        NPU_AVAILABLE = True
+except Exception:
+    NPU_AVAILABLE = False
 
 
 class BaseAgent(ABC):
     """Base class of the agent.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -75,8 +76,8 @@ class BaseAgent(ABC):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "auto",
@@ -132,27 +133,29 @@ class BaseAgent(ABC):
         random.seed(seed)
 
         # placeholder for Encoder, Storage, Distribution, Augmentation, Reward
-        self.encoder = None
-        self.policy = None
-        self.storage = None
-        self.dist = None
-        self.aug = None
-        self.irs = None
+        self.encoder: Optional[Encoder] = None
+        self.policy: Optional[Policy] = None
+        self.storage: Optional[Storage] = None
+        self.dist: Optional[Distribution] = None
+        self.aug: Optional[Augmentation] = None
+        self.irs: Optional[IntrinsicRewardModule] = None
+        self.attr_names = ("encoder", "policy", "storage", "dist", "aug", "irs")
+        self.module_names = {key: None for key in self.attr_names}
 
         # training tracking
         self.pretraining = pretraining
         self.global_step = 0
         self.global_episode = 0
+        self.metrics: Dict[str, Any] = {}
 
     def freeze(self, **kwargs) -> None:
         """Freeze the agent and get ready for training."""
+        assert self.policy is not None, "A policy must be specified!"
         # freeze the structure of the agent
         self.policy.freeze(encoder=self.encoder, dist=self.dist)
         # torch compilation
-        ## compliation will change the name of the policy into `OptimizedModule`
-        self.policy_name = self.policy.__class__.__name__
         if kwargs.get("th_compile", False):
-            self.policy = th.compile(self.policy)
+            self.policy = th.compile(self.policy)  # type: ignore
         # to device
         self.policy.to(self.device)
         # set the training mode
@@ -168,91 +171,69 @@ class BaseAgent(ABC):
 
     def check(self) -> None:
         """Check the compatibility of selected modules."""
+        # check essential modules
+        for attr_name in ["encoder", "policy", "storage", "dist"]:
+            assert getattr(self, attr_name) is not None, f"The `{attr_name}` must be specified!"
+        # print basic info
         self.logger.info("Invoking RLLTE Engine...")
-        # sep line
+        ## sep line
         self.logger.info("=" * 80)
         self.logger.info(f"{'Tag'.ljust(NUMBER_OF_SPACES)} : {self.tag}")
         self.logger.info(f"{'Device'.ljust(NUMBER_OF_SPACES)} : {self.device_name}")
-        self.logger.debug(f"{'Agent'.ljust(NUMBER_OF_SPACES)} : {self.__class__.__name__}")
-        self.logger.debug(f"{'Encoder'.ljust(NUMBER_OF_SPACES)} : {self.encoder.__class__.__name__}")
-        self.logger.debug(f"{'Policy'.ljust(NUMBER_OF_SPACES)} : {self.policy_name}")
-        self.logger.debug(f"{'Storage'.ljust(NUMBER_OF_SPACES)} : {self.storage.__class__.__name__}")
-        # class for `Distribution` and instance for `Noise`
-        dist_name = self.dist.__name__ if isinstance(self.dist, type) else self.dist.__class__.__name__
-        self.logger.debug(f"{'Distribution'.ljust(NUMBER_OF_SPACES)} : {dist_name}")
-
-        # check augmentation and intrinsic reward
-        if self.aug is not None:
-            self.logger.debug(f"{'Augmentation'.ljust(NUMBER_OF_SPACES)} : True, {self.aug.__class__.__name__}")
-        else:
-            self.logger.debug(f"{'Augmentation'.ljust(NUMBER_OF_SPACES)} : False")
-
+        # output module info
+        titles = ("Agent", "Encoder", "Policy", "Storage", "Distribution", "Augmentation", "Intrinsic Reward")
+        for i in range(len(titles)):
+            if titles[i] == "Agent":
+                name = self.__class__.__name__
+            else:
+                name = self.module_names[self.attr_names[i - 1]]  # type: ignore[assignment]
+            self.logger.debug(f"{titles[i].ljust(NUMBER_OF_SPACES)} : {name}")
+        # check pre-training setting
         if self.pretraining:
             assert self.irs is not None, "When the pre-training mode is turned on, an intrinsic reward must be specified!"
-
-        if self.irs is not None:
-            self.logger.debug(f"{'Intrinsic Reward'.ljust(NUMBER_OF_SPACES)} : True, {self.irs.__class__.__name__}")
-        else:
-            self.logger.debug(f"{'Intrinsic Reward'.ljust(NUMBER_OF_SPACES)} : False")
-
-        if self.pretraining:
             self.logger.info(f"{'Pre-training Mode'.ljust(NUMBER_OF_SPACES)} : On")
-
         # sep line
         self.logger.debug("=" * 80)
 
     def set(
         self,
-        encoder: Optional[Any] = None,
-        policy: Optional[Any] = None,
-        storage: Optional[Any] = None,
-        distribution: Optional[Any] = None,
-        augmentation: Optional[Any] = None,
-        reward: Optional[Any] = None,
+        encoder: Optional[Encoder] = None,
+        policy: Optional[Policy] = None,
+        storage: Optional[Storage] = None,
+        distribution: Optional[Distribution] = None,
+        augmentation: Optional[Augmentation] = None,
+        reward: Optional[IntrinsicRewardModule] = None,
     ) -> None:
         """Set a module for the agent.
 
         Args:
-            encoder (Optional[Any]): An encoder of `rllte.xploit.encoder` or a custom encoder.
-            policy (Optional[Any]): A policy of `rllte.xploit.policy` or a custom policy.
-            storage (Optional[Any]): A storage of `rllte.xploit.storage` or a custom storage.
-            distribution (Optional[Any]): A distribution of `rllte.xplore.distribution` or a custom distribution.
-            augmentation (Optional[Any]): An augmentation of `rllte.xplore.augmentation` or a custom augmentation.
-            reward (Optional[Any]): A reward of `rllte.xplore.reward` or a custom reward.
+            encoder (Optional[Encoder]): An encoder of `rllte.xploit.encoder` or a custom encoder.
+            policy (Optional[Policy]): A policy of `rllte.xploit.policy` or a custom policy.
+            storage (Optional[Storage]): A storage of `rllte.xploit.storage` or a custom storage.
+            distribution (Optional[Distribution]): A distribution of `rllte.xplore.distribution`
+                or a custom distribution.
+            augmentation (Optional[Augmentation]): An augmentation of `rllte.xplore.augmentation`
+                or a custom augmentation.
+            reward (Optional[IntrinsicRewardModule]): A reward of `rllte.xplore.reward` or a custom reward.
 
         Returns:
             None.
         """
-        if encoder is not None:
-            assert isinstance(encoder, Encoder), "The `encoder` must be a subclass of `BaseEncoder`!"
-            if self.encoder is not None:
-                assert (
-                    self.encoder.feature_dim == encoder.feature_dim
-                ), "The feature dimension of `encoder` must be equal to the previous one!"
-            self.encoder = encoder
+        args = [encoder, policy, storage, distribution, augmentation, reward]
+        arg_names = ("encoder", "policy", "storage", "distribution", "augmentation", "reward")
+        types = (Encoder, Policy, Storage, Distribution, Augmentation, IntrinsicRewardModule)
 
-        if policy is not None:
-            assert isinstance(policy, Policy), "The `policy` must be a subclass of `BasePolicy`!"
-            self.policy = policy
+        for i in range(len(args)):
+            if args[i] is not None:
+                assert isinstance(args[i], types[i]), f"The `{arg_names[i]}` must be a subclass of `{types[i].__name__}`!"
+                setattr(self, self.attr_names[i], args[i])
+                self.module_names[self.attr_names[i]] = args[i].__class__.__name__  # type: ignore[assignment]
 
-        if storage is not None:
-            assert isinstance(storage, Storage), "The `storage` must be a subclass of `BaseStorage`!"
-            self.storage = storage
-
-        if distribution is not None:
-            try:
-                assert issubclass(distribution, Distribution), "The `distribution` must be a subclass of `BaseDistribution`!"
-            except TypeError:
-                assert isinstance(distribution, Distribution), "The `noise` must be a subclass of `BaseDistribution`!"
-            self.dist = distribution
-
-        if augmentation is not None:
-            assert isinstance(augmentation, Augmentation), "The `augmentation` must be a subclass of `BaseAugmentation`!"
-            self.aug = augmentation
-
-        if reward is not None:
-            assert isinstance(reward, IntrinsicRewardModule), "The `reward` must be a subclass of `BaseIntrinsicRewardModule`!"
-            self.irs = reward
+        # overwrite the encoder
+        if encoder is not None and self.encoder is not None:
+            assert (
+                self.encoder.feature_dim == encoder.feature_dim
+            ), "The feature dimension of `encoder` must be equal to the previous one!"
 
     def mode(self, training: bool = True) -> None:
         """Set the training mode.
@@ -264,10 +245,21 @@ class BaseAgent(ABC):
             None.
         """
         self.training = training
-        self.policy.train(training)
+        self.policy.train(training)  # type: ignore
+
+    def save(self) -> None:
+        """Save the agent."""
+        if self.pretraining:
+            save_dir = Path.cwd() / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+        else:
+            save_dir = Path.cwd() / "model"
+            save_dir.mkdir(exist_ok=True)
+
+        self.policy.save(path=save_dir, pretraining=self.pretraining, global_step=self.global_step)  # type: ignore
 
     @abstractmethod
-    def update(self) -> Dict[str, float]:
+    def update(self, *args, **kwargs) -> None:
         """Update function of the agent."""
 
     @abstractmethod
@@ -277,6 +269,7 @@ class BaseAgent(ABC):
         init_model_path: Optional[str],
         log_interval: int,
         eval_interval: int,
+        save_interval: int,
         num_eval_episodes: int,
         th_compile: bool,
     ) -> None:
@@ -287,6 +280,7 @@ class BaseAgent(ABC):
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
+            save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
 

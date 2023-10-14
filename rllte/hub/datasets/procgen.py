@@ -30,12 +30,12 @@ from huggingface_hub import hf_hub_download
 
 
 class Procgen:
-    """Scores and learning cures of various RL algorithms on the full Procgen benchmark. 
-        Environment link: https://github.com/openai/procgen
-        Number of environments: 16
-        Number of training steps: 25,000,000
-        Number of seeds: 10
-        Added algorithms: [PPO]
+    """Scores and learning cures of various RL algorithms on the full Procgen benchmark.
+    Environment link: https://github.com/openai/procgen
+    Number of environments: 16
+    Number of training steps: 25,000,000
+    Number of seeds: 10
+    Added algorithms: [PPO]
     """
 
     def __init__(self) -> None:
@@ -53,18 +53,18 @@ class Procgen:
         return scores_dict
 
     def load_curves(self) -> Dict[str, np.ndarray]:
-        """Returns learning curves using a `Dict` of arrays:
-            curves = {
-                "ppo": {
-                    "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
-                    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
-                },
-                "daac": {
-                    "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
-                    "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
-                },
-                ...
-            }
+        """Returns learning curves using a `Dict` of NumPy arrays:
+        curves = {
+            "ppo": {
+                "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+                "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+            },
+            "daac": {
+                "train": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+                "eval": {"bigfish": np.ndarray(shape=(Number of seeds, Number of points)), ...},
+            },
+            ...
+        }
         """
 
         file = hf_hub_download(

@@ -33,7 +33,7 @@ Instance of the base intrinsic reward module.
 
 
 ### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L68)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L70)
 ```python
 .compute_irs(
    samples: Dict, step: int = 0
@@ -59,7 +59,7 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L84)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L86)
 ```python
 .update(
    samples: Dict
@@ -68,6 +68,32 @@ The intrinsic rewards.
 
 ---
 Update the intrinsic reward module if necessary.
+
+
+**Args**
+
+* **samples**  : The collected samples. A python dict like
+    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+    rewards (n_steps, n_envs) <class 'th.Tensor'>,
+    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
+
+**Returns**
+
+None
+
+### .add
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_reward.py/#L104)
+```python
+.add(
+   samples: Dict
+)
+```
+
+---
+Add the samples to the intrinsic reward module if necessary.
+User for modules like `RE3` that have a storage component.
 
 
 **Args**

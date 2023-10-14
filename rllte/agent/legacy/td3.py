@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, Optional
+from typing import Optional
 
 import gymnasium as gym
 import torch as th
@@ -31,6 +31,7 @@ from torch.nn import functional as F
 
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
+from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, TassaCnnEncoder
 from rllte.xploit.policy import OffPolicyDoubleActorDoubleCritic
 from rllte.xploit.storage import VanillaReplayStorage
@@ -41,14 +42,15 @@ class TD3(OffPolicyAgent):
     """Twin Delayed Deep Deterministic Policy Gradient (TD3) agent.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on the pre-training mode.
 
         num_init_steps (int): Number of initial exploration steps.
+        storage_size (int): The capacity of the storage.
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -57,6 +59,7 @@ class TD3(OffPolicyAgent):
         tau: The soft-update rate.
         update_every_steps (int): The agent update frequency.
         discount (float): Discount factor.
+        stddev_clip (float): The exploration std clip range.
         init_fn (str): Parameters initialization method.
 
     Returns:
@@ -65,13 +68,14 @@ class TD3(OffPolicyAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
         pretraining: bool = False,
         num_init_steps: int = 2000,
+        storage_size: int = 1000000,
         feature_dim: int = 50,
         batch_size: int = 256,
         lr: float = 1e-4,
@@ -80,6 +84,7 @@ class TD3(OffPolicyAgent):
         tau: float = 0.01,
         update_every_steps: int = 2,
         discount: float = 0.99,
+        stddev_clip: float = 0.3,
         init_fn: str = "orthogonal",
     ) -> None:
         super().__init__(
@@ -98,16 +103,20 @@ class TD3(OffPolicyAgent):
         self.tau = tau
         self.discount = discount
         self.update_every_steps = update_every_steps
+        self.stddev_clip = stddev_clip
 
         # default encoder
         if len(self.obs_shape) == 3:
             encoder = TassaCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         elif len(self.obs_shape) == 1:
-            feature_dim = self.obs_shape[0]
-            encoder = IdentityEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            feature_dim = self.obs_shape[0]  # type: ignore
+            encoder = IdentityEncoder(
+                observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
+            )
 
         # default distribution
-        dist = TruncatedNormalNoise(low=self.action_space.low[0], high=self.action_space.high[0])
+        self.action_space: gym.spaces.Box
+        dist = TruncatedNormalNoise()
 
         # create policy
         policy = OffPolicyDoubleActorDoubleCritic(
@@ -124,6 +133,7 @@ class TD3(OffPolicyAgent):
         storage = VanillaReplayStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
+            storage_size=storage_size,
             device=device,
             num_envs=self.num_envs,
             batch_size=batch_size,
@@ -132,11 +142,10 @@ class TD3(OffPolicyAgent):
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> None:
         """Update the agent and return training metrics such as actor loss, critic_loss, etc."""
-        metrics = {}
         if self.global_step % self.update_every_steps != 0:
-            return metrics
+            return None
 
         # sample a batch
         batch = self.storage.sample()
@@ -145,9 +154,9 @@ class TD3(OffPolicyAgent):
         if self.irs is not None:
             intrinsic_rewards = self.irs.compute_irs(
                 samples={
-                    "obs": batch.observations,
-                    "actions": batch.actions,
-                    "next_obs": batch.next_observations,
+                    "obs": batch.observations.unsqueeze(1),
+                    "actions": batch.actions.unsqueeze(1),
+                    "next_obs": batch.next_observations.unsqueeze(1),
                 },
                 step=self.global_step,
             )
@@ -159,21 +168,21 @@ class TD3(OffPolicyAgent):
             encoded_next_obs = self.policy.encoder(batch.next_observations)
 
         # update criitc
-        metrics.update(self.update_critic(encoded_obs, 
-                                          batch.actions, 
-                                          batch.rewards, 
-                                          batch.terminateds, 
-                                          batch.truncateds, 
-                                          encoded_next_obs))
+        self.update_critic(
+            obs=encoded_obs,
+            actions=batch.actions,
+            rewards=batch.rewards,
+            terminateds=batch.terminateds,
+            truncateds=batch.truncateds,
+            next_obs=encoded_next_obs,
+        )
 
         # update actor (do not udpate encoder)
-        metrics.update(self.update_actor(encoded_obs.detach()))
+        self.update_actor(encoded_obs.detach())
 
         # udpate actor and critic target
         utils.soft_update_params(self.policy.actor, self.policy.actor_target, self.tau)
         utils.soft_update_params(self.policy.critic, self.policy.critic_target, self.tau)
-
-        return metrics
 
     def update_critic(
         self,
@@ -183,7 +192,7 @@ class TD3(OffPolicyAgent):
         terminateds: th.Tensor,
         truncateds: th.Tensor,
         next_obs: th.Tensor,
-    ) -> Dict[str, float]:
+    ) -> None:
         """Update the critic network.
 
         Args:
@@ -195,55 +204,57 @@ class TD3(OffPolicyAgent):
             next_obs (th.Tensor): Next observations.
 
         Returns:
-            Critic loss.
+            None.
         """
         with th.no_grad():
             # sample actions with actor_target
-            dist = self.policy.get_dist(next_obs, step=self.global_step)
-            next_actions = dist.sample(clip=True)
-
-            target_Q1, target_Q2 = self.policy.critic_target(next_obs, next_actions)
+            dist = self.policy.get_dist(next_obs)
+            next_actions = dist.sample(clip=self.stddev_clip)
+            next_obs_actions = th.concat([next_obs, next_actions], dim=-1)
+            target_Q1, target_Q2 = self.policy.critic_target(next_obs_actions)
             target_V = th.min(target_Q1, target_Q2)
-            target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
+            # TODO: add time limit mask
+            # target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
+            target_Q = rewards + (1.0 - terminateds) * self.discount * target_V
 
         Q1, Q2 = self.policy.critic(obs, actions)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
-        self.policy.optimizers['encoder_opt'].zero_grad(set_to_none=True)
-        self.policy.optimizers['critic_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["encoder_opt"].zero_grad(set_to_none=True)
+        self.policy.optimizers["critic_opt"].zero_grad(set_to_none=True)
         critic_loss.backward()
-        self.policy.optimizers['critic_opt'].step()
-        self.policy.optimizers['encoder_opt'].step()
+        self.policy.optimizers["critic_opt"].step()
+        self.policy.optimizers["encoder_opt"].step()
 
-        return {
-            "Critic Loss": critic_loss.item(),
-            "Q1": Q1.mean().item(),
-            "Q2": Q2.mean().item(),
-            "Target Q": target_Q.mean().item(),
-        }
+        # record metrics
+        self.logger.record("train/critic_loss", critic_loss.item())
+        self.logger.record("train/critic_q1", Q1.mean().item())
+        self.logger.record("train/critic_q2", Q2.mean().item())
+        self.logger.record("train/critic_target_q", target_Q.mean().item())
 
-    def update_actor(self, obs: th.Tensor) -> Dict[str, float]:
+    def update_actor(self, obs: th.Tensor) -> None:
         """Update the actor network.
 
         Args:
             obs (th.Tensor): Observations.
 
         Returns:
-            Actor loss metrics.
+            None.
         """
         # sample actions
-        dist = self.policy.get_dist(obs, step=self.global_step)
-        action = dist.sample(clip=True)
-
-        Q1, Q2 = self.policy.critic(obs, action)
+        dist = self.policy.get_dist(obs)
+        actions = dist.sample(clip=self.stddev_clip)
+        obs_actions = th.concat([obs, actions], dim=-1)
+        Q1, Q2 = self.policy.critic(obs_actions)
         Q = th.min(Q1, Q2)
 
         actor_loss = -Q.mean()
 
         # optimize actor
-        self.policy.optimizers['actor_opt'].zero_grad(set_to_none=True)
+        self.policy.optimizers["actor_opt"].zero_grad(set_to_none=True)
         actor_loss.backward()
-        self.policy.optimizers['actor_opt'].step()
+        self.policy.optimizers["actor_opt"].step()
 
-        return {"Actor Loss": actor_loss.item()}
+        # record metrics
+        self.logger.record("train/actor_loss", actor_loss.item())

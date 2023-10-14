@@ -7,7 +7,7 @@
 .make_minigrid_env(
    env_id: str = 'MiniGrid-DoorKey-5x5-v0', num_envs: int = 8,
    fully_observable: bool = True, fully_numerical: bool = False, seed: int = 0,
-   frame_stack: int = 1, device: str = 'cpu', parallel: bool = True
+   frame_stack: int = 1, device: str = 'cpu', asynchronous: bool = True
 )
 ```
 
@@ -26,8 +26,8 @@ Create MiniGrid environments.
 * **seed** (int) : Random seed.
 * **frame_stack** (int) : Number of stacked frames.
 * **device** (str) : Device to convert the data.
-* **parallel** (bool) : `True` for creating asynchronous environments, and `False`
-    for creating synchronous environments.
+* **asynchronous** (bool) : `True` for creating asynchronous environments,
+    and `False` for creating synchronous environments.
 
 
 **Returns**

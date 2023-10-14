@@ -29,7 +29,7 @@ Identity encoder instance.
 
 
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L52)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/encoder/identity_encoder.py/#L53)
 ```python
 .forward(
    obs: th.Tensor

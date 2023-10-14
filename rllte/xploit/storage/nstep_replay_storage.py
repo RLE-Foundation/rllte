@@ -22,13 +22,14 @@
 # SOFTWARE.
 # =============================================================================
 
+
 import datetime
 import random
 import traceback
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict, Iterator, List, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -54,7 +55,7 @@ class ReplayStorage:
     def __init__(self, replay_dir: Path) -> None:
         self._replay_dir = replay_dir
         replay_dir.mkdir(exist_ok=True)
-        self._current_episode = defaultdict(list)
+        self._current_episode: Dict[str, List] = defaultdict(list)
         self._preload()
 
     def __len__(self) -> int:
@@ -159,8 +160,8 @@ class ReplayStorageDataset(IterableDataset):
         self._size = 0
         self._max_size = max_size
         self._num_workers = max(1, num_workers)
-        self._episode_fns = []
-        self._episodes = dict()
+        self._episode_fns: List = []
+        self._episodes: Dict = dict()
         self._nstep = nstep
         self._discount = discount
         self._fetch_every = fetch_every
@@ -199,7 +200,7 @@ class ReplayStorageDataset(IterableDataset):
             return
         self._samples_since_last_fetch = 0
         try:
-            worker_id = th.utils.data.get_worker_info().id
+            worker_id = th.utils.data.get_worker_info().id  # type: ignore[union-attr]
         except Exception:
             worker_id = 0
         eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
@@ -264,20 +265,21 @@ class NStepReplayStorage(BaseStorage):
         N-step replay storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 1000000,
-                 num_envs: int = 1,
-                 batch_size: int = 256,
-                 num_workers: int = 4,
-                 pin_memory: bool = True,
-                 n_step: int = 3,
-                 discount: float = 0.99,
-                 fetch_every: int = 1000,
-                 save_snapshot: bool = False
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 1000000,
+        num_envs: int = 1,
+        batch_size: int = 256,
+        num_workers: int = 4,
+        pin_memory: bool = True,
+        n_step: int = 3,
+        discount: float = 0.99,
+        fetch_every: int = 1000,
+        save_snapshot: bool = False,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         warnings.warn("NStepReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
         # build storage
@@ -296,26 +298,28 @@ class NStepReplayStorage(BaseStorage):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.reset()
-    
+
     def reset(self) -> None:
         """Reset the storage."""
-        self.replay_loader = th.utils.data.DataLoader(self.dataset,
-                                                      batch_size=self.batch_size,
-                                                      num_workers=self.num_workers, 
-                                                      pin_memory=self.pin_memory,
-                                                      worker_init_fn=worker_init_fn
-                                                      )
+        self.replay_loader = th.utils.data.DataLoader(
+            self.dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            worker_init_fn=worker_init_fn,
+        )
         self._replay_iter = None
 
-    def add(self,
-            observations: th.Tensor,
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict[str, Any],
-            next_observations: th.Tensor
-            ) -> None:
+    def add(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: th.Tensor,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -345,8 +349,8 @@ class NStepReplayStorage(BaseStorage):
     def replay_iter(self) -> Iterator:
         """Create iterable dataloader."""
         if self._replay_iter is None:
-            self._replay_iter = iter(self.replay_loader)
-        return self._replay_iter
+            self._replay_iter = iter(self.replay_loader)  # type: ignore[assignment]
+        return self._replay_iter  # type: ignore[return-value]
 
     def sample(self) -> NStepReplayBatch:
         """Sample from the storage."""

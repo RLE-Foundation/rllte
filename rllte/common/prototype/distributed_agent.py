@@ -28,15 +28,14 @@ import threading
 import time
 import traceback
 from collections import deque
-from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
 from torch import multiprocessing as mp
 
 from rllte.common.prototype.base_agent import BaseAgent
+from rllte.common.type_alias import DistributedPolicyType, DistributedStorageType, VecEnv
 from rllte.env.utils import DistributedWrapper
 
 
@@ -44,8 +43,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
     """Trainer for distributed algorithms.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -62,8 +61,8 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -71,7 +70,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
         num_actors: int = 45,
         num_learners: int = 4,
         num_storages: int = 60,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=False)
 
@@ -82,19 +81,19 @@ class DistributedAgent(BaseAgent):  # type: ignore
 
         # get separate environments
         try:
-            self.env = self.env.envs
+            self.env = self.env.envs  # type: ignore
         except AttributeError:
-            raise AttributeError("Please set `parallel=False` in the environment setting for distributed training!")
+            raise AttributeError("Asynchronous execution is unavailable for distributed training!")  # noqa: B904
 
         # create process and thread pool
         self.ctx = mp.get_context("fork")
         self.free_queue = self.ctx.SimpleQueue()
         self.full_queue = self.ctx.SimpleQueue()
-        self.actor_pool = list()
-        self.learner_threads = list()
+        self.actor_pool: List = list()
+        self.learner_threads: List[threading.Thread] = list()
 
         # linear learning rate scheduler
-        def lr_lambda(num_train_steps: int) -> float:
+        def lr_lambda(num_train_steps: int) -> Callable:
             """Function for learning rate scheduler.
 
             Args:
@@ -104,14 +103,18 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 Learning rate.
             """
             return lambda epoch: 1.0 - min(epoch * self.num_steps * self.num_learners, num_train_steps) / num_train_steps
-        
+
         self.lr_lambda = lr_lambda
 
-    def run(self, env: gym.Env, actor_idx: int) -> None:
+        # attr annotations
+        self.policy: DistributedPolicyType
+        self.storage: DistributedStorageType
+
+    def run(self, env: DistributedWrapper, actor_idx: int) -> None:
         """Sample function of each actor. Implemented by individual algorithms.
 
         Args:
-            env (gym.Env): A Gym-like environment wrapped by `DistributedWrapper`.
+            env (DistributedWrapper): A Gym-like environment wrapped by `DistributedWrapper`.
             actor_idx (int): The index of actor.
 
         Returns:
@@ -149,18 +152,19 @@ class DistributedAgent(BaseAgent):  # type: ignore
             traceback.print_exc()
             raise e
 
-    def update(self) -> Dict[str, float]:
+    def update(self, *args, **kwargs) -> None:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train( # noqa: C901
+    def train(  # noqa: C901
         self,
         num_train_steps: int,
         init_model_path: Optional[str] = None,
         log_interval: int = 1,
         eval_interval: int = 5000,
+        save_interval: int = 5000,
         num_eval_episodes: int = 10,
-        th_compile: bool = False
+        th_compile: bool = False,
     ) -> None:
         """Training function.
 
@@ -169,6 +173,7 @@ class DistributedAgent(BaseAgent):  # type: ignore
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
+            save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
 
@@ -179,36 +184,35 @@ class DistributedAgent(BaseAgent):  # type: ignore
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
         # set learning rate scheduler
-        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.optimizers['opt'], self.lr_lambda(num_train_steps))
+        self.lr_scheduler = th.optim.lr_scheduler.LambdaLR(self.policy.optimizers["opt"], self.lr_lambda(num_train_steps))
 
         # training tracker
         global_step = 0
         global_episode = 0
         metrics = dict()
-        episode_rewards = deque(maxlen=10)
-        episode_steps = deque(maxlen=10)
+        episode_rewards: Deque = deque(maxlen=10)
+        episode_steps: Deque = deque(maxlen=10)
 
-        def sample_and_update(lock=threading.Lock()):  # noqa B008
+        def sample_and_update(lock=threading.Lock()):  # B008
             """Thread target for the learning process."""
             nonlocal global_step, global_episode, metrics
             while global_step < num_train_steps:
                 # sample batch
                 batch = self.storage.sample(free_queue=self.free_queue, full_queue=self.full_queue)
                 # update agent
-                metrics = self.update(batch) # type: ignore
+                metrics = self.update(batch)
                 with lock:
                     global_step += self.num_steps * self.storage.batch_size
                     global_episode += self.storage.batch_size
 
         # start actor processes
         for actor_idx in range(self.num_actors):
-            actor = self.ctx.Process(target=self.run,
-                                     kwargs={
-                                         "env": DistributedWrapper(self.env[actor_idx]),
-                                         "actor_idx": actor_idx
-                                         })
+            actor = self.ctx.Process(  # type: ignore
+                target=self.run,
+                kwargs={"env": DistributedWrapper(self.env[actor_idx]), "actor_idx": actor_idx},  # type: ignore
+            )
             actor.start()
-            self.actor_pool.append(actor)
+            self.actor_pool.append(actor)  # type: ignore
         self.logger.info(f"{self.num_actors} actors started!")
 
         # serialize the data
@@ -239,14 +243,14 @@ class DistributedAgent(BaseAgent):  # type: ignore
                     train_metrics = {
                         "step": global_step,
                         "episode": global_episode,
-                        "episode_length": np.max(episode_steps),
-                        "episode_reward": np.max(episode_rewards),
+                        "episode_length": np.mean(list(episode_steps)),
+                        "episode_reward": np.mean(list(episode_rewards)),
                         "fps": (global_step - start_step) / episode_time,
                         "total_time": total_time,
                     }
                     log_available = True
                     log_times += 1
-                
+
                 if (log_times % log_interval == 0) and log_available:
                     self.logger.train(msg=train_metrics)
 
@@ -260,6 +264,12 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 #         })
                 #     self.logger.eval(msg=eval_metrics)
 
+                # save model
+                if global_episode % save_interval == 0:
+                    self.save()
+            # final save
+            self.save()
+
         except KeyboardInterrupt:
             # TODO: join actors then quit.
             return
@@ -267,18 +277,14 @@ class DistributedAgent(BaseAgent):  # type: ignore
             for thread in self.learner_threads:
                 thread.join()
             self.logger.info("Training Accomplished!")
-            # save model
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-            self.policy.save(path=save_dir)
-            self.logger.info(f"Model saved at: {save_dir}")
+            self.logger.info(f"Model saved at: {self.work_dir / 'model'}")
         finally:
             for _ in range(self.num_actors):
                 self.free_queue.put(None)
             for actor in self.actor_pool:
                 actor.join(timeout=1)
 
-    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+    def eval(self, num_eval_episodes: int) -> Dict[str, Any]:
         """Evaluation function.
 
         Args:
@@ -287,12 +293,13 @@ class DistributedAgent(BaseAgent):  # type: ignore
         Returns:
             The evaluation results.
         """
+        assert self.eval_env is not None, "Please set `eval_env` for evaluation!"
         env = DistributedWrapper(self.eval_env.envs[0])
         seed = self.num_actors * int.from_bytes(os.urandom(4), byteorder="little")
         env_output = env.reset(seed)
 
-        episode_rewards = list()
-        episode_steps = list()
+        episode_rewards: List[float] = []
+        episode_steps = []
         while len(episode_rewards) < num_eval_episodes:
             with th.no_grad():
                 actor_output = self.policy.actor(env_output, training=False)
@@ -301,7 +308,4 @@ class DistributedAgent(BaseAgent):  # type: ignore
                 episode_rewards.append(env_output["episode_returns"].item())
                 episode_steps.append(env_output["episode_steps"].item())
 
-        return {
-            "episode_lengths": np.mean(episode_steps),
-            "episode_rewards": np.mean(episode_rewards)
-        }
+        return {"episode_lengths": np.mean(episode_steps), "episode_rewards": np.mean(episode_rewards)}

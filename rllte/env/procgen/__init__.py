@@ -27,14 +27,12 @@ from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
-
 from gymnasium.spaces import Box
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
-from rllte.env.utils import (Gymnasium2Torch,
-                             EnvPoolAsync2Gymnasium,
-                             EnvPoolSync2Gymnasium)
+from rllte.env.utils import EnvPoolAsync2Gymnasium, EnvPoolSync2Gymnasium, Gymnasium2Torch
+
 
 class AdapterEnv(gym.Wrapper):
     """Procgen games currently doesn't support Gymnasium.
@@ -75,7 +73,7 @@ class AdapterEnv(gym.Wrapper):
         """Reset the environment."""
         obs = self.env.reset()
         return obs, {}
-    
+
 
 def make_envpool_procgen_env(
     env_id: str = "bigfish",
@@ -86,8 +84,8 @@ def make_envpool_procgen_env(
     num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
-    parallel: bool = True,
-) -> gym.Env:
+    asynchronous: bool = True,
+) -> Gymnasium2Torch:
     """Create Procgen environments.
 
     Args:
@@ -102,9 +100,9 @@ def make_envpool_procgen_env(
             'start_level' and 'num_levels' fully specify the set of possible levels.
         distribution_mode (str): What variant of the levels to use, the options are "easy",
             "hard", "extreme", "memory", "exploration".
-        parallel (bool): `True` for creating asynchronous environments, and `False`
-            for creating synchronous environments.
-            
+        asynchronous (bool): `True` for creating asynchronous environments,
+            and `False` for creating synchronous environments.
+
     Returns:
         The vectorized environments.
     """
@@ -125,7 +123,7 @@ def make_envpool_procgen_env(
         num_levels=num_levels,
         start_level=start_level,
     )
-    if parallel:
+    if asynchronous:
         envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
@@ -146,7 +144,7 @@ def make_procgen_env(
     num_levels: int = 200,
     start_level: int = 0,
     distribution_mode: str = "easy",
-) -> gym.Env:
+) -> Gymnasium2Torch:
     """Create Procgen environments.
 
     Args:

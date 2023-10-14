@@ -29,9 +29,8 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.common.type_alias import VanillaReplayBatch
 from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
-
+from rllte.common.type_alias import DictReplayBatch
 
 class DictReplayStorage(VanillaReplayStorage):
     """Dict replay storage for off-policy algorithms and dictionary observations.
@@ -48,25 +47,38 @@ class DictReplayStorage(VanillaReplayStorage):
         Dict replay storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 1000000,
-                 batch_size: int = 1024,
-                 num_envs: int = 1
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 1000000,
+        batch_size: int = 1024,
+        num_envs: int = 1,
+    ) -> None:
         super(VanillaReplayStorage, self).__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
 
-        assert isinstance(self.obs_shape, dict), "DictReplayStorage only support `Dict` observation space!"
+        assert isinstance(self.observation_space, gym.spaces.Dict), "DictReplayStorage only supports `Dict` observation space!"
 
         # split the storage size for each environment
         self.storage_size = max(storage_size // num_envs, 1)
         self.reset()
 
+        # attr annotations
+        self.observation_space: gym.spaces.Dict
+        self.obs_shape: Dict[str, Any]
+        self.observations: Dict[str, np.ndarray]  # type: ignore[assignment]
+        self.next_observations: Dict[str, np.ndarray]  # type: ignore[assignment]
+
     def reset(self) -> None:
         """Reset the storage."""
+        assert isinstance(self.obs_shape, Dict)
+        # data containers
         self.observations = {
+            key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
+            for key, shape in self.obs_shape.items()
+        }
+        self.next_observations = {
             key: np.empty((self.storage_size, self.num_envs, *shape), dtype=self.observation_space[key].dtype)
             for key, shape in self.obs_shape.items()
         }
@@ -76,15 +88,16 @@ class DictReplayStorage(VanillaReplayStorage):
         self.truncateds = np.empty((self.storage_size, self.num_envs), dtype=np.float32)
         super(VanillaReplayStorage, self).reset()
 
-    def add(self,
-            observations: Dict[str, th.Tensor],
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict[str, Any],
-            next_observations: Dict[str, th.Tensor],
-            ) -> None:
+    def add(
+        self,
+        observations: Dict[str, th.Tensor],  # type: ignore[override]
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: Dict[str, th.Tensor],  # type: ignore[override]
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -109,7 +122,8 @@ class DictReplayStorage(VanillaReplayStorage):
                 next_obs_ = next_observations[key]
 
             np.copyto(self.observations[key][self.step], obs_.cpu().numpy())
-            np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
+            np.copyto(self.next_observations[key][self.step], next_obs_.cpu().numpy())
+            # np.copyto(self.observations[key][(self.step + 1) % self.storage_size], next_obs_.cpu().numpy())
 
         np.copyto(self.actions[self.step], actions.cpu().numpy())
         np.copyto(self.rewards[self.step], rewards.cpu().numpy())
@@ -119,7 +133,7 @@ class DictReplayStorage(VanillaReplayStorage):
         self.step = (self.step + 1) % self.storage_size
         self.full = self.full or self.step == 0
 
-    def sample(self) -> VanillaReplayBatch:
+    def sample(self) -> DictReplayBatch:  # type: ignore[override]
         """Sample from the storage."""
         # get batch and env indices
         if self.full:
@@ -130,10 +144,11 @@ class DictReplayStorage(VanillaReplayStorage):
 
         # get batch data
         obs = {key: self.observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
-        next_obs = {
-            key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :]
-            for key in self.observations.keys()
-        }
+        next_obs = {key: self.next_observations[key][batch_indices, env_indices, :] for key in self.observations.keys()}
+        # next_obs = {
+        #     key: self.observations[key][(batch_indices + 1) % self.storage_size, env_indices, :]
+        #     for key in self.observations.keys()
+        # }
 
         actions = self.actions[batch_indices, env_indices, :]
         rewards = self.rewards[batch_indices, env_indices].reshape(-1, 1)
@@ -144,7 +159,7 @@ class DictReplayStorage(VanillaReplayStorage):
         observations = {key: self.to_torch(item) for key, item in obs.items()}
         next_observations = {key: self.to_torch(item) for key, item in next_obs.items()}
 
-        return VanillaReplayBatch(
+        return DictReplayBatch(
             observations=observations,
             actions=self.to_torch(actions),
             rewards=self.to_torch(rewards),

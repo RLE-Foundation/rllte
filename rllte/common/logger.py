@@ -75,6 +75,20 @@ class Logger:
         self._train_file_write_header = True
         self._eval_file_write_header = True
 
+        self.metrics: Dict[str, Any] = {}
+
+    def record(self, key: str, value: Any) -> None:
+        """Record the metric.
+
+        Args:
+            key (str): The key of the metric.
+            value (Any): The value of the metric.
+
+        Returns:
+            None.
+        """
+        self.metrics[key] = value
+
     def _format(self, key: str, value: Any, ty: str) -> str:
         """Format the value according to the type.
 

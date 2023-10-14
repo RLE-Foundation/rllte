@@ -79,12 +79,8 @@ class AdapterEnv(gym.Wrapper):
 
 
 def make_bullet_env(
-    env_id: str = "AntBulletEnv-v0", 
-    num_envs: int = 1, 
-    device: str = "cpu", 
-    seed: int = 0, 
-    parallel: bool = True
-) -> gym.Env:
+    env_id: str = "AntBulletEnv-v0", num_envs: int = 1, device: str = "cpu", seed: int = 0, parallel: bool = True
+) -> Gymnasium2Torch:
     """Create PyBullet robotics environments.
 
     Args:

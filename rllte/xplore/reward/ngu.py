@@ -24,7 +24,7 @@
 
 
 from collections import deque
-from typing import Dict, Tuple
+from typing import Deque, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -154,7 +154,7 @@ class NGU(BaseIntrinsicRewardModule):
             action_dim=self._action_dim,
             latent_dim=latent_dim,
         ).to(self._device)
-        self.episodic_memory = deque(maxlen=capacity)
+        self.episodic_memory: Deque = deque(maxlen=capacity)
         self.k = k
         self.kernel_cluster_distance = kernel_cluster_distance
         self.kernel_epsilon = kernel_epsilon
@@ -166,7 +166,7 @@ class NGU(BaseIntrinsicRewardModule):
         if self._action_type == "Discrete":
             self.episodic_loss = nn.CrossEntropyLoss()
         else:
-            self.episodic_loss = nn.MSELoss()
+            self.episodic_loss = nn.MSELoss()  # type: ignore[assignment]
 
         # life-long part
         self.predictor = Encoder(
@@ -261,6 +261,9 @@ class NGU(BaseIntrinsicRewardModule):
             exit(0)
 
         return intrinsic_rewards * beta_t
+
+    def add(self, samples: Dict) -> None:
+        """Add new samples to the intrinsic reward module."""
 
     def update(self, samples: Dict) -> None:
         """Update the intrinsic reward module if necessary.

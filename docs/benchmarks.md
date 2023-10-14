@@ -15,22 +15,21 @@ are deposited on the [Hugging Face](https://huggingface.co) platform, view them 
 |:-|:-|
 |`rllte.hub.datasets`|Provide **test scores** and **learning cures** of various RL algorithms on different benchmarks. |
 |`rllte.hub.models`|Provide **trained models** of various RL algorithms on different benchmarks.|
-|`rllte.hub.apps`|Provide **fast-APIs** for training RL agents with one-line command.|
+|`rllte.hub.applications`|Provide **fast-APIs** for training RL agents on recognized benchmarks.|
 
 ## Support list
 
 
 
-| Benchmark | Algorithm | Remark | Reproduction | Reference |
-|:-|:-|:-|:-|:-|
-|[Atari Games](https://www.jair.org/index.php/jair/article/download/10819/25823)|PPO|**50M**, 💯📊🤖| `.ppo_atari` | [Paper]() |
-|[PyBullet](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA)|PPO|**2M**, 💯📊🤖| `.ppo_bullet` | [Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
-||SAC|**1M**, 💯📊🤖| `.sac_bullet` | [Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
-|[DeepMind Control (Pixel)](https://arxiv.org/pdf/1801.00690)|DrQ-v2|**1M**, 💯📊🤖| `.drqv2_dmc_pixel` | [Paper](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |
-|[DeepMind Control (State)](https://arxiv.org/pdf/1801.00690)|SAC|**10M**, 💯📊🤖| `.sac_dmc_state` | |
-||DDPG|**10M**, 💯📊🤖| `.ddpg_dmc_state` | |
-|[Procgen Games](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|PPO|**25M**, 💯📊🤖| `.ppo_procgen_envpool`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
-||DAAC|**25M**, 💯📊🤖| `.daac_procgen_envpool`| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+| Benchmark | Algorithm | Remark | Reference |
+|:-|:-|:-|:-|
+|[Atari Games](https://www.jair.org/index.php/jair/article/download/10819/25823)|PPO|**50M**, 💯📊🤖|[Paper]() |
+||SAC|**1M**, 💯📊🤖|[Paper](https://proceedings.mlr.press/v164/raffin22a/raffin22a.pdf) |
+|[DeepMind Control (Pixel)](https://arxiv.org/pdf/1801.00690)|DrQ-v2|**1M**, 💯📊🤖|[Paper](https://arxiv.org/pdf/2107.09645.pdf?utm_source=morioh.com) |
+|[DeepMind Control (State)](https://arxiv.org/pdf/1801.00690)|SAC|**10M**, 💯📊🤖||
+||DDPG|**10M**, 💯📊🤖||
+|[Procgen Games](http://proceedings.mlr.press/v119/cobbe20a/cobbe20a.pdf)|PPO|**25M**, 💯📊🤖| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
+||DAAC|**25M**, 💯📊🤖| [Paper](http://proceedings.mlr.press/v139/raileanu21a/raileanu21a.pdf) |
 |[MiniGrid Games](https://github.com/Farama-Foundation/Minigrid)||
 
 !!! tip
@@ -137,11 +136,11 @@ mean episode length: 296.1
 ```
 
 ## Applications
-Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to run the following command:
-``` sh
-python -m rllte.hub.apps.ppo_procgen \
-    --env_id bigfish \
-    --seed 1 \
-    --device "cuda"
+Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to write a `train.py` like:
+``` py
+from rllte.hub.applications import Procgen
+
+app = Procgen(agent="PPO", env_id="coinrun", seed=1, device="cuda")
+app.train(num_train_steps=2.5e+7)
 ```
-All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.apps`, and all the hyper-parameters can be found in the reference.
+All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.applications`, and all the hyper-parameters can be found in the reference.

@@ -30,12 +30,15 @@ from typing import Any, Dict, Optional, Tuple, Type
 import gymnasium as gym
 import torch as th
 from torch import nn
-from torch.distributions import Distribution
 
+from rllte.common.prototype import BaseDistribution as Distribution
 from rllte.common.prototype import BasePolicy
 from rllte.common.utils import ExportModel
 
-from .utils import get_actor, OnPolicyCritic
+from .utils import OnPolicyCritic, get_on_policy_actor
+
+# from torch.distributions import Distribution
+
 
 class OnPolicySharedActorCritic(BasePolicy):
     """Actor-Critic network for on-policy algorithms like `PPO` and `A2C`.
@@ -46,9 +49,9 @@ class OnPolicySharedActorCritic(BasePolicy):
         feature_dim (int): Number of features accepted.
         hidden_dim (int): Number of units per hidden layer.
         opt_class (Type[th.optim.Optimizer]): Optimizer class.
-        opt_kwargs (Optional[Dict[str, Any]]): Optimizer keyword arguments.
+        opt_kwargs (Dict[str, Any]): Optimizer keyword arguments.
         aux_critic (bool): Use auxiliary critic or not, for `PPG` agent.
-        init_fn (Optional[str]): Parameters initialization method.
+        init_fn (str): Parameters initialization method.
 
     Returns:
         Actor-Critic network instance.
@@ -63,8 +66,10 @@ class OnPolicySharedActorCritic(BasePolicy):
         opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
         opt_kwargs: Optional[Dict[str, Any]] = None,
         aux_critic: bool = False,
-        init_fn: Optional[str] = None,
+        init_fn: str = "orthogonal",
     ) -> None:
+        if opt_kwargs is None:
+            opt_kwargs = {}
         super().__init__(
             observation_space=observation_space,
             action_space=action_space,
@@ -75,26 +80,34 @@ class OnPolicySharedActorCritic(BasePolicy):
             init_fn=init_fn,
         )
 
-        assert self.action_type in ["Discrete", "Box", "MultiBinary", "MultiDiscrete"], \
-            f"Unsupported action type {self.action_type}!"
+        assert self.action_type in [
+            "Discrete",
+            "Box",
+            "MultiBinary",
+            "MultiDiscrete",
+        ], f"Unsupported action type {self.action_type}!"
 
         # build actor and critic
-        actor_kwargs = dict(obs_shape=self.obs_shape,
-                            action_dim=self.policy_action_dim, 
-                            feature_dim=self.feature_dim, 
-                            hidden_dim=self.hidden_dim)
-        if self.action_type == "MultiDiscrete":
-            actor_kwargs['nvec'] = self.nvec
-        self.actor = get_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
+        actor_kwargs = dict(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
+        if self.nvec is not None:
+            actor_kwargs["nvec"] = self.nvec
+        self.actor = get_on_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
 
-        self.critic = OnPolicyCritic(obs_shape=self.obs_shape, 
-                                     action_dim=self.policy_action_dim, 
-                                     feature_dim=self.feature_dim, 
-                                     hidden_dim=self.hidden_dim
-                                     )
+        self.critic = OnPolicyCritic(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            feature_dim=self.feature_dim,
+            hidden_dim=self.hidden_dim,
+        )
         if aux_critic:
             self.aux_critic = deepcopy(self.critic)
-    
+
+    @staticmethod
     def describe() -> None:
         """Describe the policy."""
         print("\n")
@@ -165,7 +178,7 @@ class OnPolicySharedActorCritic(BasePolicy):
         """
         return self.critic(self.encoder(obs))
 
-    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor = None) -> Tuple[th.Tensor, ...]:
+    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Evaluate actions according to the current policy given the observations.
 
         Args:
@@ -197,7 +210,7 @@ class OnPolicySharedActorCritic(BasePolicy):
         policy_outputs = self.actor.get_policy_outputs(h)
         return th.cat(policy_outputs, dim=1)
 
-    def get_dist_and_aux_value(self, obs: th.Tensor) -> Tuple[th.Tensor, ...]:
+    def get_dist_and_aux_value(self, obs: th.Tensor) -> Tuple[Distribution, th.Tensor, th.Tensor]:
         """Get probs and auxiliary estimated values for auxiliary phase update.
 
         Args:
@@ -212,31 +225,19 @@ class OnPolicySharedActorCritic(BasePolicy):
 
         return dist, self.critic(h.detach()), self.aux_critic(h)
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
-
-    def load(self, path: str, device: th.device) -> None:
-        """Load initial parameters.
-
-        Args:
-            path (str): Import path.
-            device (th.device): Device to use.
-
-        Returns:
-            None.
-        """
-        params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+            th.save(export_model, path / f"agent_{global_step}.pth")

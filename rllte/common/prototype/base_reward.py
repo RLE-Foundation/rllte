@@ -24,12 +24,12 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Tuple
 
 import gymnasium as gym
 import torch as th
 
-from rllte.common.preprocessing import process_observation_space, process_action_space
+from rllte.common.preprocessing import process_action_space, process_observation_space
 
 
 class BaseIntrinsicRewardModule(ABC):
@@ -55,10 +55,12 @@ class BaseIntrinsicRewardModule(ABC):
         kappa: float = 0.000025,
     ) -> None:
         # get environment information
-        self._obs_shape = process_observation_space(observation_space)
+        self._obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
+        assert isinstance(self._obs_shape, tuple), "RLLTE currently doesn't support `Dict` observation space!"
         self._action_shape, self._action_dim, self._policy_action_dim, self._action_type = process_action_space(action_space)
         # TODO: revise the action dim
-        self._action_dim = self._policy_action_dim
+        if self._action_type != "MultiDiscrete":
+            self._action_dim = self._policy_action_dim
 
         self._device = th.device(device)
         self._beta = beta
@@ -86,6 +88,25 @@ class BaseIntrinsicRewardModule(ABC):
         samples: Dict,
     ) -> None:
         """Update the intrinsic reward module if necessary.
+
+        Args:
+            samples: The collected samples. A python dict like
+                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
+                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
+                rewards (n_steps, n_envs) <class 'th.Tensor'>,
+                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+
+        Returns:
+            None
+        """
+
+    @abstractmethod
+    def add(
+        self,
+        samples: Dict,
+    ) -> None:
+        """Add the samples to the intrinsic reward module if necessary.
+            User for modules like `RE3` that have a storage component.
 
         Args:
             samples: The collected samples. A python dict like

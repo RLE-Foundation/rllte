@@ -25,6 +25,7 @@
 
 import json
 import os
+import re
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -122,9 +123,20 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
     Returns:
         Episode rewards and lengths.
     """
-    indices = np.nonzero(infos["episode"]["l"])
-
-    return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    if "episode" in infos.keys():
+        indices = np.nonzero(infos["episode"]["l"])
+        return infos["episode"]["r"][indices].tolist(), infos["episode"]["l"][indices].tolist()
+    elif "final_info" in infos.keys():
+        r: List = []
+        l: List = []
+        # to handle with the Atari environments
+        for info in infos['final_info']:
+            if info is not None and "episode" in info.keys():
+                r.extend(info["episode"]["r"].tolist())
+                l.extend(info["episode"]["l"].tolist())
+        return r, l
+    else:
+        return [], []
 
 
 def get_npu_name() -> str:
@@ -139,3 +151,50 @@ def get_npu_name() -> str:
     npu_name = name_part.split()[-1]
 
     return npu_name
+
+
+def schedule(schdl: str, step: int) -> float:
+    """Exploration noise schedule.
+
+    Args:
+        schdl (str): Schedule mode.
+        step (int): global training step.
+
+    Returns:
+        Standard deviation.
+    """
+    try:
+        return float(schdl)
+    except ValueError:
+        match = re.match(r"linear\((.+),(.+),(.+)\)", schdl)
+        if match:
+            init, final, duration = (float(g) for g in match.groups())
+            mix = np.clip(step / duration, 0.0, 1.0)
+            return (1.0 - mix) * init + mix * final
+        match = re.match(r"step_linear\((.+),(.+),(.+),(.+),(.+)\)", schdl)
+        if match:
+            init, final1, duration1, final2, duration2 = (float(g) for g in match.groups())
+            if step <= duration1:
+                mix = np.clip(step / duration1, 0.0, 1.0)
+                return (1.0 - mix) * init + mix * final1
+            else:
+                mix = np.clip((step - duration1) / duration2, 0.0, 1.0)
+                return (1.0 - mix) * final1 + mix * final2
+    raise NotImplementedError(schdl)
+
+
+def linear_lr_scheduler(optimizer, steps, total_num_steps, initial_lr) -> None:
+    """Decreases the learning rate linearly.
+
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        steps (int): Current step.
+        total_num_steps (int): Total number of steps.
+        initial_lr (float): Initial learning rate.
+    
+    Returns:
+        None.
+    """
+    lr = initial_lr - (initial_lr * (steps / float(total_num_steps)))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr

@@ -7,7 +7,7 @@
 OffPolicyDoubleQNetwork(
    observation_space: gym.Space, action_space: gym.Space, feature_dim: int = 64,
    hidden_dim: int = 1024, opt_class: Type[th.optim.Optimizer] = th.optim.Adam,
-   opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: Optional[str] = None
+   opt_kwargs: Optional[Dict[str, Any]] = None, init_fn: str = 'orthogonal'
 )
 ```
 
@@ -26,8 +26,8 @@ Optimizers: self.opt -> (self.qnet, self.qnet_target)
 * **feature_dim** (int) : Number of features accepted.
 * **hidden_dim** (int) : Number of units per hidden layer.
 * **opt_class** (Type[th.optim.Optimizer]) : Optimizer class.
-* **opt_kwargs** (Optional[Dict[str, Any]]) : Optimizer keyword arguments.
-* **init_fn** (Optional[str]) : Parameters initialization method.
+* **opt_kwargs** (Dict[str, Any]) : Optimizer keyword arguments.
+* **init_fn** (str) : Parameters initialization method.
 
 
 **Returns**
@@ -39,7 +39,7 @@ Actor network instance.
 
 
 ### .describe
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L88)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L92)
 ```python
 .describe()
 ```
@@ -48,7 +48,7 @@ Actor network instance.
 Describe the policy.
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L99)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L103)
 ```python
 .freeze(
    encoder: nn.Module, dist: Distribution
@@ -69,29 +69,8 @@ Freeze all the elements like `encoder` and `dist`.
 
 None.
 
-### .explore
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L119)
-```python
-.explore(
-   obs: th.Tensor
-)
-```
-
----
-Explore the environment and randomly generate actions.
-
-
-**Args**
-
-* **obs** (th.Tensor) : Observation from the environment.
-
-
-**Returns**
-
-Sampled actions.
-
 ### .forward
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L130)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L123)
 ```python
 .forward(
    obs: th.Tensor, training: bool = True, step: int = 0
@@ -114,10 +93,10 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L146)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L139)
 ```python
 .save(
-   path: Path, pretraining: bool = False
+   path: Path, pretraining: bool, global_step: int
 )
 ```
 
@@ -129,28 +108,7 @@ Save models.
 
 * **path** (Path) : Save path.
 * **pretraining** (bool) : Pre-training mode.
-
-
-**Returns**
-
-None.
-
-### .load
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L162)
-```python
-.load(
-   path: str, device: th.device
-)
-```
-
----
-Load initial parameters.
-
-
-**Args**
-
-* **path** (str) : Import path.
-* **device** (th.device) : Device to use.
+* **global_step** (int) : Global training step.
 
 
 **Returns**

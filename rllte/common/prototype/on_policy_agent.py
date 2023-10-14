@@ -22,24 +22,24 @@
 # SOFTWARE.
 # =============================================================================
 
-from collections import deque
-from pathlib import Path
-from typing import Dict, Optional
 
-import gymnasium as gym
+from collections import deque
+from typing import Any, Deque, Dict, List, Optional
+
 import numpy as np
 import torch as th
 
 from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
+from rllte.common.type_alias import OnPolicyType, RolloutStorageType, VecEnv
 
 
 class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
 
     Args:
-        env (gym.Env): A Gym-like environment for training.
-        eval_env (gym.Env): A Gym-like environment for evaluation.
+        env (VecEnv): Vectorized environments for training.
+        eval_env (VecEnv): Vectorized environments for evaluation.
         tag (str): An experiment tag.
         seed (int): Random seed for reproduction.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
@@ -52,8 +52,8 @@ class OnPolicyAgent(BaseAgent):
 
     def __init__(
         self,
-        env: gym.Env,
-        eval_env: Optional[gym.Env] = None,
+        env: VecEnv,
+        eval_env: Optional[VecEnv] = None,
         tag: str = "default",
         seed: int = 1,
         device: str = "cpu",
@@ -62,19 +62,25 @@ class OnPolicyAgent(BaseAgent):
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
+        # attr annotations
+        self.policy: OnPolicyType
+        self.storage: RolloutStorageType
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> None:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train(self,
-              num_train_steps: int,
-              init_model_path: Optional[str] = None,
-              log_interval: int = 1,
-              eval_interval: int = 100,
-              num_eval_episodes: int = 10,
-              th_compile: bool = True
-              ) -> None:
+    def train(
+        self,
+        num_train_steps: int,
+        init_model_path: Optional[str] = None,
+        log_interval: int = 1,
+        eval_interval: int = 100,
+        save_interval: int = 100,
+        num_eval_episodes: int = 10,
+        th_compile: bool = True,
+        anneal_lr: bool = False
+    ) -> None:
         """Training function.
 
         Args:
@@ -82,8 +88,10 @@ class OnPolicyAgent(BaseAgent):
             init_model_path (Optional[str]): The path of the initial model.
             log_interval (int): The interval of logging.
             eval_interval (int): The interval of evaluation.
+            save_interval (int): The interval of saving model.
             num_eval_episodes (int): The number of evaluation episodes.
             th_compile (bool): Whether to use `th.compile` or not.
+            anneal_lr (bool): Whether to anneal the learning rate or not.
 
         Returns:
             None.
@@ -92,8 +100,8 @@ class OnPolicyAgent(BaseAgent):
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
 
         # reset the env
-        episode_rewards = deque(maxlen=10)
-        episode_steps = deque(maxlen=10)
+        episode_rewards: Deque = deque(maxlen=10)
+        episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
@@ -104,6 +112,11 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
+            
+            # update the learning rate
+            if anneal_lr:
+                for key in self.policy.optimizers.keys():
+                    utils.linear_lr_scheduler(self.policy.optimizers[key], update, num_updates, self.lr)
 
             for _ in range(self.num_steps):
                 # sample actions
@@ -120,10 +133,9 @@ class OnPolicyAgent(BaseAgent):
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
 
                 # get episode information
-                if "episode" in infos:
-                    eps_r, eps_l = utils.get_episode_statistics(infos)
-                    episode_rewards.extend(eps_r)
-                    episode_steps.extend(eps_l)
+                eps_r, eps_l = utils.get_episode_statistics(infos)
+                episode_rewards.extend(eps_r)
+                episode_steps.extend(eps_l)
 
                 # set the current observation
                 obs = next_obs
@@ -135,13 +147,24 @@ class OnPolicyAgent(BaseAgent):
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
 
-            # compute intrinsic rewards
+            # deal with the intrinsic reward module
             if self.irs is not None:
+                # for modules like RE3, this will calculate the random embeddings
+                # and insert them into the storage. for modules like ICM, this
+                # will update the dynamic models.
+                self.irs.add(
+                    samples={
+                        "obs": self.storage.observations[:-1],  # type: ignore
+                        "actions": self.storage.actions,
+                        "next_obs": self.storage.observations[1:],  # type: ignore
+                    }
+                )
+                # compute intrinsic rewards
                 intrinsic_rewards = self.irs.compute_irs(
                     samples={
-                        "obs": self.storage.observations[:-1],
+                        "obs": self.storage.observations[:-1],  # type: ignore
                         "actions": self.storage.actions,
-                        "next_obs": self.storage.observations[1:],
+                        "next_obs": self.storage.observations[1:],  # type: ignore
                     },
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
@@ -166,30 +189,28 @@ class OnPolicyAgent(BaseAgent):
                 train_metrics = {
                     "step": self.global_step,
                     "episode": self.global_episode,
-                    "episode_length": np.mean(episode_steps),
-                    "episode_reward": np.mean(episode_rewards),
+                    "episode_length": np.mean(list(episode_steps)),
+                    "episode_reward": np.mean(list(episode_rewards)),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
                 }
                 self.logger.train(msg=train_metrics)
 
-        # save model
+            # save model
+            if update % save_interval == 0:
+                self.save()
+
+        # final save
+        self.save()
         self.logger.info("Training Accomplished!")
-        if self.pretraining:  # pretraining
-            save_dir = Path.cwd() / "pretrained"
-            save_dir.mkdir(exist_ok=True)
-        else:
-            save_dir = Path.cwd() / "model"
-            save_dir.mkdir(exist_ok=True)
-        self.policy.save(path=save_dir, pretraining=self.pretraining)
-        self.logger.info(f"Model saved at: {save_dir}")
+        self.logger.info(f"Model saved at: {self.work_dir / 'model'}")
 
         # close env
         self.env.close()
         if self.eval_env is not None:
             self.eval_env.close()
 
-    def eval(self, num_eval_episodes: int) -> Dict[str, float]:
+    def eval(self, num_eval_episodes: int) -> Dict[str, Any]:
         """Evaluation function.
 
         Args:
@@ -198,10 +219,11 @@ class OnPolicyAgent(BaseAgent):
         Returns:
             The evaluation results.
         """
+        assert self.eval_env is not None, "No evaluation environment is provided!"
         # reset the env
         obs, infos = self.eval_env.reset(seed=self.seed)
-        episode_rewards = list()
-        episode_steps = list()
+        episode_rewards: List[float] = []
+        episode_steps: List[int] = []
 
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:

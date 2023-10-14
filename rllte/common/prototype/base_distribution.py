@@ -23,16 +23,21 @@
 # =============================================================================
 
 
+from typing import Any
+import torch as th
 from torch.distributions import Distribution
 
 
 class BaseDistribution(Distribution):
     """Abstract base class of distributions.
-    In rllte, action noise is implemented as a distribution.
+    In rllte, the action noise is implemented as a distribution.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(validate_args=False)
 
-    def reset(self) -> None:
-        """Reset the distribution. This is useful for action noise."""
+    def __call__(self, *args, **kwargs) -> Any:
+        """Call the distribution."""
+
+    def sample(self, *args, **kwargs) -> th.Tensor:  # type: ignore
+        """Generate samples."""

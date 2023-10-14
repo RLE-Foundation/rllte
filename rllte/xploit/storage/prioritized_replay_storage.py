@@ -25,7 +25,7 @@
 
 import warnings
 from collections import deque
-from typing import Any, Dict
+from typing import Any, Deque, Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -56,16 +56,17 @@ class PrioritizedReplayStorage(BaseStorage):
         Prioritized replay storage.
     """
 
-    def __init__(self,
-                 observation_space: gym.Space,
-                 action_space: gym.Space,
-                 device: str = "cpu",
-                 storage_size: int = 1000000,
-                 batch_size: int = 1024,
-                 num_envs: int = 1,
-                 alpha: float = 0.6,
-                 beta: float = 0.4,
-                 ) -> None:
+    def __init__(
+        self,
+        observation_space: gym.Space,
+        action_space: gym.Space,
+        device: str = "cpu",
+        storage_size: int = 1000000,
+        batch_size: int = 1024,
+        num_envs: int = 1,
+        alpha: float = 0.6,
+        beta: float = 0.4,
+    ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         # TODO: add support for parallel environments
         warnings.warn("PrioritizedReplayStorage currently does not support parallel environments.") if num_envs != 1 else None
@@ -73,10 +74,10 @@ class PrioritizedReplayStorage(BaseStorage):
         self.alpha = alpha
         self.beta = beta
         self.reset()
-    
+
     def reset(self) -> None:
         """Reset the storage."""
-        self.transitions = deque(maxlen=self.storage_size)
+        self.transitions: Deque[Tuple[np.ndarray, ...]] = deque(maxlen=self.storage_size)
         self.priorities = np.zeros((self.storage_size,), dtype=np.float32)
         self.global_step = 0
         super().reset()
@@ -90,15 +91,16 @@ class PrioritizedReplayStorage(BaseStorage):
         """Linearly increases beta from the initial value to 1 over global training steps."""
         return min(1.0, self.beta + self.global_step * (1.0 - self.beta) / self.storage_size)
 
-    def add(self,
-            observations: th.Tensor,
-            actions: th.Tensor,
-            rewards: th.Tensor,
-            terminateds: th.Tensor,
-            truncateds: th.Tensor,
-            infos: Dict[str, Any],
-            next_observations: th.Tensor
-            ) -> None:
+    def add(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        infos: Dict[str, Any],
+        next_observations: th.Tensor,
+    ) -> None:
         """Add sampled transitions into storage.
 
         Args:
@@ -165,7 +167,7 @@ class PrioritizedReplayStorage(BaseStorage):
             truncateds=self.to_torch(truncateds),
             next_observations=self.to_torch(next_obs),
             weights=self.to_torch(weights),
-            indices=indices
+            indices=indices,
         )
 
     def update(self, metrics: Dict) -> None:

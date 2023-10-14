@@ -30,6 +30,7 @@ from .bernoulli import Bernoulli
 from .categorical import Categorical
 from .diagonal_gaussian import DiagonalGaussian
 
+
 @register_kl(Bernoulli, Bernoulli)
 def kl_bernoulli_bernoulli(p, q):
     t1 = p.probs * (th.nn.functional.softplus(-q.logits) - th.nn.functional.softplus(-p.logits))
