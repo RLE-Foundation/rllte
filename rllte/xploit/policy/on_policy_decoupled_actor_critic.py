@@ -147,7 +147,7 @@ class OnPolicyDecoupledActorCritic(BasePolicy):
         # initialize parameters
         self.apply(self.init_fn)
         # synchronize the parameters of actor_encoder and critic_encoder
-        self.critic_encoder.load_state_dict(self.actor_encoder.state_dict())
+        # self.critic_encoder.load_state_dict(self.actor_encoder.state_dict())
         # build optimizers
         self.actor_params = itertools.chain(self.actor_encoder.parameters(), self.actor.parameters(), self.gae.parameters())
         self.critic_params = itertools.chain(self.critic_encoder.parameters(), self.critic.parameters())
