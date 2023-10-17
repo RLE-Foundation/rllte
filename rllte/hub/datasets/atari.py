@@ -41,7 +41,7 @@ class Atari(BaseDataset):
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['SpaceInvaders-v5']
+        self.sup_env = ['BeamRider-v5']
         self.sup_algo = ['ppo']
         self.sup_level = ['random', 'expert']
 
@@ -105,7 +105,8 @@ class Atari(BaseDataset):
             subfolder="atari/curves"
         )
 
-        curves_dict = np.load(file, allow_pickle=True).item()
+        curves_dict = np.load(file, allow_pickle=True)
+        curves_dict = dict(curves_dict)
 
         return curves_dict
 

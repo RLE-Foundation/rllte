@@ -225,5 +225,5 @@ nav:
       - Performance: api_docs/evaluation/performance.md
       - Visualization: api_docs/evaluation/visualization.md
 
-  - Benchmarks: benchmarks.md
+  - Hub: hub.md
   - Copilot: copilot.md
