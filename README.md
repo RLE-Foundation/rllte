@@ -53,10 +53,10 @@ Why **RLLTE**?
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
-- 💾 Large number of reusable benchmarks;
-- 👨‍✈️ Large language model-empowered copilot ([Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
+- 💾 Large number of reusable benchmarks ([RLLTE Hub](https://hub.rllte.dev));
+- 👨‍✈️ Large language model-empowered copilot ([RLLTE Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
 
-> ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30). **Training datasets**: [hub.rllte.dev](https://hub.rllte.dev). **Model weights**: [hub.rllte.dev](https://hub.rllte.dev). **Wandb**: [wandb.rllte.dev](https://wandb.rllte.dev)
+> ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30).
 
 See the project structure below:
 <div align=center>
@@ -76,7 +76,7 @@ conda create -n rllte python=3.8
 
 - with pip `recommended`
 
-Open up a terminal and install **rllte** with `pip`:
+Open a terminal and install **rllte** with `pip`:
 ``` shell
 pip install rllte-core # basic installation
 pip install rllte-core[envs] # for pre-defined environments
@@ -84,7 +84,7 @@ pip install rllte-core[envs] # for pre-defined environments
 
 - with git
 
-Open up a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
+Open a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
 ``` sh
 git clone https://github.com/RLE-Foundation/rllte.git
 ```

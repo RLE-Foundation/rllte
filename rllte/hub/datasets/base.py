@@ -23,43 +23,22 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
-from typing import Dict, Optional
-
+from abc import ABC, abstractmethod
+from typing import Dict
 import numpy as np
-from rllte.hub.datasets.base import BaseDataset
 
-class Atari(BaseDataset):
-    """Scores and learning cures of various RL algorithms on the full Atari benchmark.
-    Environment link: https://github.com/Farama-Foundation/Arcade-Learning-Environment
-    Number of environments: 57
-    Number of training steps: 10,000,000
-    Number of seeds: 10
-    Added algorithms: [PPO]
-    """
 
+class BaseDataset(ABC):
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['BeamRider-v5']
-        self.sup_algo = ['ppo']
-        self.sup_level = ['random', 'expert']
 
-    def is_available(self, type: str, env_id: str, agent: str, level: Optional[str] = None) -> None:
+    @abstractmethod
+    def is_available(self, *args, **kwargs) -> None:
         """Returns True if the dataset is available, False otherwise."""
+    
 
-        if type == "scores":
-            assert env_id in self.sup_env and agent in self.sup_algo, \
-                f"Scores for `{env_id}` and `{agent}` are not available currently!"
-        elif type == "curves":
-            assert env_id in self.sup_env and agent in self.sup_algo, \
-                f"Curves for `{env_id}` and `{agent}` are not available currently!"
-        elif type == "demonstrations":
-            assert env_id in self.sup_env and level in self.sup_level, \
-                f"Demonstrations for `{env_id}` and level `{level}` are not available currently!"
-        else:
-            raise NotImplementedError
-
+    @abstractmethod
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
         """Returns final performance.
         
@@ -70,19 +49,9 @@ class Atari(BaseDataset):
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
-        self.is_available(type="scores", env_id=env_id, agent=agent.lower())
+        
 
-        scores_file = f'{agent.lower()}_atari_{env_id}_scores.npy'
-
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="dataset", 
-            filename=scores_file, 
-            subfolder="atari/scores"
-        )
-
-        return np.load(file)
-
+    @abstractmethod
     def load_curves(self, env_id: str, agent: str) -> Dict[str, np.ndarray]:
         """Returns learning curves using a `Dict` of NumPy arrays.
 
@@ -96,20 +65,8 @@ class Atari(BaseDataset):
             ├── train: np.ndarray(shape=(N_SEEDS, N_POINTS))
             └── eval:  np.ndarray(shape=(N_SEEDS, N_POINTS))
         """
-        curves_file = f'{agent.lower()}_atari_{env_id}_curves.npz'
-
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="dataset", 
-            filename=curves_file,
-            subfolder="atari/curves"
-        )
-
-        curves_dict = np.load(file, allow_pickle=True)
-        curves_dict = dict(curves_dict)
-
-        return curves_dict
-
+    
+    @abstractmethod
     def load_demonstrations(self, env_id: str, level: str) -> Dict[str, np.ndarray]:
         """Returns demonstrations using a `Dict` of NumPy arrays.
 
@@ -134,16 +91,3 @@ class Atari(BaseDataset):
             │   └── truncateds
             └── ...
         """
-
-        demons_file = f'{env_id}_{level}_demonstrations.npz'
-        file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub",
-            repo_type="dataset",
-            filename=demons_file,
-            subfolder="atari/demonstrations",
-        )
-
-        demonstrations_dict = np.load(file, allow_pickle=True)
-        demonstrations_dict = {key: value.item() for key, value in demonstrations_dict.items()}
-
-        return demonstrations_dict
