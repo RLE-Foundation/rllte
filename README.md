@@ -53,8 +53,8 @@ Why **RLLTE**?
 - 🚀 Optimized workflow for full hardware acceleration;
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
-- 💾 Large number of reusable benchmarks [Hub](https://hub.rllte.dev);
-- 👨‍✈️ Large language model-empowered copilot ([Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
+- 💾 Large number of reusable benchmarks ([RLLTE Hub](https://hub.rllte.dev));
+- 👨‍✈️ Large language model-empowered copilot ([RLLTE Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
 
 > ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30).
 
