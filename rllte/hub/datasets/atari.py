@@ -37,7 +37,6 @@ class Atari(BaseDataset):
     Number of seeds: 10
     Added algorithms: [PPO]
     """
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -45,7 +44,7 @@ class Atari(BaseDataset):
         self.sup_algo = ['ppo']
         self.sup_level = ['random', 'expert']
 
-    def is_available(self, type: str, env_id: str, agent: str, level: Optional[str] = None) -> None:
+    def is_available(self, type: str, env_id: str, agent: Optional[str] = None, level: Optional[str] = None) -> None:
         """Returns True if the dataset is available, False otherwise."""
 
         if type == "scores":
@@ -76,7 +75,7 @@ class Atari(BaseDataset):
 
         file = hf_hub_download(
             repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="dataset", 
+            repo_type="model", 
             filename=scores_file, 
             subfolder="atari/scores"
         )
@@ -96,11 +95,13 @@ class Atari(BaseDataset):
             ├── train: np.ndarray(shape=(N_SEEDS, N_POINTS))
             └── eval:  np.ndarray(shape=(N_SEEDS, N_POINTS))
         """
+        self.is_available(type="curves", env_id=env_id, agent=agent.lower())
+
         curves_file = f'{agent.lower()}_atari_{env_id}_curves.npz'
 
         file = hf_hub_download(
             repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="dataset", 
+            repo_type="model", 
             filename=curves_file,
             subfolder="atari/curves"
         )
@@ -134,11 +135,12 @@ class Atari(BaseDataset):
             │   └── truncateds
             └── ...
         """
+        self.is_available(type="demonstrations", env_id=env_id, level=level)
 
         demons_file = f'{env_id}_{level}_demonstrations.npz'
         file = hf_hub_download(
             repo_id="RLE-Foundation/rllte-hub",
-            repo_type="dataset",
+            repo_type="model",
             filename=demons_file,
             subfolder="atari/demonstrations",
         )

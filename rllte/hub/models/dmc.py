@@ -46,6 +46,7 @@ class DMControl:
         env_id: str,
         seed: int,
         device: str = "cpu",
+        obs_type: str = "state"
     ) -> nn.Module:
         """Load the model from the hub.
 
@@ -54,11 +55,12 @@ class DMControl:
             env_id (str): The environment id to load.
             seed (int): The seed to load.
             device (str): The device to load the model on.
+            obs_type (str): A type from ['state', 'pixel'].
 
         Returns:
             The loaded model.
         """
-        model_file = f"{agent.lower()}_dmc_{env_id}_seed_{seed}.pth"
+        model_file = f"{agent.lower()}_dmc_{obs_type}_{env_id}_seed_{seed}.pth"
         subfolder = f"dmc/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)
