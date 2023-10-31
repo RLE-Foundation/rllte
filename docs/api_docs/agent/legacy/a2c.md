@@ -9,7 +9,7 @@ A2C(
    device: str = 'cpu', pretraining: bool = False, num_steps: int = 128,
    feature_dim: int = 512, batch_size: int = 256, lr: float = 0.00025, eps: float = 1e-05,
    hidden_dim: int = 512, n_epochs: int = 4, vf_coef: float = 0.5, ent_coef: float = 0.01,
-   max_grad_norm: float = 0.5, init_fn: str = 'orthogonal'
+   max_grad_norm: float = 0.5, discount: float = 0.99, init_fn: str = 'orthogonal'
 )
 ```
 
@@ -37,8 +37,8 @@ Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 * **vf_coef** (float) : Weighting coefficient of value loss.
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **max_grad_norm** (float) : Maximum norm of gradients.
+* **discount** (float) : Discount factor.
 * **init_fn** (str) : Parameters initialization method.
-
 
 
 
@@ -51,7 +51,7 @@ A2C agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L146)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/a2c.py/#L148)
 ```python
 .update()
 ```

@@ -86,7 +86,7 @@ Update the critic network.
 None.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L235)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L236)
 ```python
 .update_actor(
    obs: th.Tensor

@@ -15,7 +15,6 @@ RLLTE Hub: Large-Scale and Comprehensive Data Hub for Reinforcement Learning
     - [Training Curves](#training-curves)
     - [Test Scores](#test-scores)
   - [RL Training Applications](#rl-training-applications)
-  - [Demonstration Datasets](#demonstration-datasets)
 - [Cite the Project](#cite-the-project)
 
 # Overview
@@ -119,10 +118,10 @@ Developers can also train RL agents on well-recognized benchmarks rapidly using 
 ``` py
 from rllte.hub import Procgen
 
-app = Procgen.load_apis(agent="PPO", env_id="coinrun", seed=1, device="cuda")
+app = Procgen().load_apis(agent="PPO", env_id="coinrun", seed=1, device="cuda")
 app.train(num_train_steps=2.5e+7)
 ```
-All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.applications`, and all the hyper-parameters can be found in the reference of the support list.
+All the curves, scores, and models were trained via `.load_apis()`, and all the hyper-parameters can be found in the reference of the support list.
 
 <!-- ## Demonstration Datasets
 **RLLTE Hub** also provides comprehensive demonstration datasets for tasks like offline RL, inverse RL and imitation learning. We consider the following four settings:

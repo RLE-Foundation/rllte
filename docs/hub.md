@@ -25,13 +25,12 @@ hide:
     - **📊Curves**: Available training curves.
     - **🤖Models**: Available trained models.
 
-# We Provide
 ## Trained RL Models
 
 The following example illustrates how to download an `PPO` agent trained the [Atari](https://envpool.readthedocs.io/en/latest/env/atari.html) benchmark:
 
 ``` py
-from rllte.hub.models import Atari
+from rllte.hub import Atari
 
 agent = Atari().load_models(agent='ppo',
                             env_id='BeamRider-v5',
@@ -79,7 +78,7 @@ Download training logs of various RL algorithms on well-recognized benchmarks fo
 The following example illustrates how to download training curves of the `SAC` agent on the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control) benchmark:
 
 ``` py
-from rllte.hub.datasets import DMControl
+from rllte.hub import DMControl
 
 curves = DMControl().load_curves(agent='sac', env_id="cheetah_run")
 ```
@@ -92,7 +91,7 @@ curves
 
 Visualize the training curves:
 <div align="center">
-<img src='./assets/images/curves_example.png' style="width: 100%">
+<img src='../assets/images/curves_example.png' style="width: 100%">
 </div>
 
 ### Test Scores
@@ -104,45 +103,11 @@ scores = DMControl().load_scores(agent='sac', env_id="cheetah_run")
 This will return a data array with shape `(N_SEEDS, N_POINTS)`.
 
 ## RL Training Applications
-`rllte.hub.applications` enables developers to train RL agents on well-recognized benchmarks rapidly using simple interfaces. Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to write a `train.py` like:
+Developers can also train RL agents on well-recognized benchmarks rapidly using simple interfaces. Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to write a `train.py` like:
 ``` py
-from rllte.hub.applications import Procgen
+from rllte.hub import Procgen
 
-app = Procgen(agent="PPO", env_id="coinrun", seed=1, device="cuda")
+app = Procgen().load_apis(agent="PPO", env_id="coinrun", seed=1, device="cuda")
 app.train(num_train_steps=2.5e+7)
 ```
-All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.applications`, and all the hyper-parameters can be found in the reference of the support list.
-
-## Demonstration Datasets
-**RLLTE Hub** also provides comprehensive demonstration datasets for tasks like offline RL, inverse RL and imitation learning. We consider the following four settings:
-
-- **random**: Uniform samples from the action space.
-- **expert**: Rollouts of a fixed expert-level policy.
-- **noise**: Rollouts of a noise-injected policy.
-- **exploration**: Rollouts of a fixed policy that is trained solely by intrinsic rewards.
-
-Suppose we want to download the random demonstrations of an [Atari](https://envpool.readthedocs.io/en/latest/env/atari.html) task, here is an example:
-``` py
-from rllte.hub.datasets import Atari
-
-demonstrations = Atari().load_demonstrations(env_id='BeamRider-v5',
-                                             level='random')
-```
-
-This will return a Python `Dict` of NumPy array like:
-``` txt
-demonstrations
-├── episode_0
-│   ├── observations
-│   ├── actions
-│   ├── rewards
-│   ├── terminateds
-│   └── truncateds
-├── episode_1
-│   ├── observations
-│   ├── actions
-│   ├── rewards
-│   ├── terminateds
-│   └── truncateds
-└── ...
-```
+All the curves, scores, and models were trained via `.load_apis()`, and all the hyper-parameters can be found in the reference of the support list.

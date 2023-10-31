@@ -2,7 +2,7 @@
 
 
 ## DictReplayStorage
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L36)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L35)
 ```python 
 DictReplayStorage(
    observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
@@ -34,7 +34,7 @@ Dict replay storage.
 
 
 ### .reset
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L74)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L73)
 ```python
 .reset()
 ```
@@ -43,7 +43,7 @@ Dict replay storage.
 Reset the storage.
 
 ### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L92)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L91)
 ```python
 .add(
    observations: Dict[str, th.Tensor], actions: th.Tensor, rewards: th.Tensor,
@@ -72,7 +72,7 @@ Add sampled transitions into storage.
 None.
 
 ### .sample
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L137)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L136)
 ```python
 .sample()
 ```
@@ -81,7 +81,7 @@ None.
 Sample from the storage.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L172)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/storage/dict_replay_storage.py/#L171)
 ```python
 .update(
    *args, **kwargs
