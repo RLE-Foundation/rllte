@@ -64,8 +64,19 @@ Compute the intrinsic rewards for current samples.
 
 The intrinsic rewards.
 
-### .update
+### .add
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L189)
+```python
+.add(
+   samples: Dict
+)
+```
+
+---
+Add new samples to the intrinsic reward module.
+
+### .update
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/revd.py/#L192)
 ```python
 .update(
    samples: Dict

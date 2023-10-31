@@ -11,7 +11,7 @@ PPG(
    hidden_dim: int = 512, clip_range: float = 0.2, clip_range_vf: float = 0.2,
    vf_coef: float = 0.5, ent_coef: float = 0.01, max_grad_norm: float = 0.5,
    policy_epochs: int = 32, aux_epochs: int = 6, kl_coef: float = 1.0,
-   num_aux_mini_batch: int = 4, num_aux_grad_accum: int = 1,
+   num_aux_mini_batch: int = 4, num_aux_grad_accum: int = 1, discount: float = 0.999,
    init_fn: str = 'xavier_uniform'
 )
 ```
@@ -45,6 +45,7 @@ Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppg_procgen.py
 * **aux_epochs** (int) : Number of iterations in the auxiliary phase.
 * **kl_coef** (float) : Weighting coefficient of divergence loss.
 * **num_aux_grad_accum** (int) : Number of gradient accumulation for auxiliary phase update.
+* **discount** (float) : Discount factor.
 * **init_fn** (str) : Parameters initialization method.
 
 num_aux_mini_batch (int) Number of mini-batches in auxiliary phase.
@@ -59,7 +60,7 @@ PPG agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppg.py/#L183)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/ppg.py/#L186)
 ```python
 .update()
 ```

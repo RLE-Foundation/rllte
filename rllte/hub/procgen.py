@@ -23,27 +23,134 @@
 # =============================================================================
 
 
-from rllte.agent import DAAC, PPO
-from rllte.env import make_envpool_procgen_env
+from huggingface_hub import hf_hub_download
+from typing import Dict, Optional
+from torch import nn
+
+import numpy as np
+import torch as th
+from rllte.hub.bucket import Bucket
+from rllte.agent import PPO, PPG, DAAC
 from rllte.xploit.encoder import EspeholtResidualEncoder
+from rllte.env import make_envpool_procgen_env
+from rllte.common.prototype import BaseAgent
 
 
-class Procgen:
-    """Train an agent on the Atari games.
-        Environment link: https://github.com/openai/procgen
-        Added algorithms: [PPO, DAAC, PPG]
-
-    Args:
-        agent (str): The agent to train.
-        env_id (str): The environment name.
-        seed (int): The random seed.
-        device (str): The device to train on.
-
-    Returns:
-        Training applications.
+class Procgen(Bucket):
+    """Scores and learning cures of various RL algorithms on the full Procgen benchmark.
+    Environment link: https://github.com/openai/procgen
+    Number of environments: 16
+    Number of training steps: 25,000,000
+    Number of seeds: 10
+    Added algorithms: [PPO]
     """
+    def __init__(self) -> None:
+        super().__init__()
 
-    def __init__(self, agent: str = "PPO", env_id: str = "bigfish", seed: int = 1, device: str = "cuda") -> None:
+        self.sup_env = ['bigfish', 'bossfight', 'caveflyer', 'chaser',
+                        'climber', 'coinrun', 'dodgeball', 'fruitbot',
+                        'heist', 'jumper', 'leaper', 'maze',
+                        'miner', 'ninja', 'plunder', 'starpilot'
+                        ]
+        self.sup_algo = ['ppo']
+
+
+    def load_scores(self, env_id: str, agent: str) -> np.ndarray:
+        """Returns final performance.
+        
+        Args:
+            env_id (str): Environment ID.
+            agent_id (str): Agent name.
+        
+        Returns:
+            Test scores data array with shape (N_SEEDS, N_POINTS).
+        """
+        self.is_available(env_id=env_id, agent=agent.lower())
+
+        scores_file = f'{agent.lower()}_procgen_{env_id}_scores.npy'
+
+        file = hf_hub_download(
+            repo_id="RLE-Foundation/rllte-hub", 
+            repo_type="model", 
+            filename=scores_file, 
+            subfolder="procgen/scores"
+        )
+
+        return np.load(file)
+
+    def load_curves(self, env_id: str, agent: str) -> Dict[str, np.ndarray]:
+        """Returns learning curves using a `Dict` of NumPy arrays.
+
+        Args:
+            env_id (str): Environment ID.
+            agent_id (str): Agent name.
+        
+        Returns:
+            Learning curves data with structure:
+            curves
+            ├── train: np.ndarray(shape=(N_SEEDS, N_POINTS))
+            └── eval:  np.ndarray(shape=(N_SEEDS, N_POINTS))
+        """
+        self.is_available(env_id=env_id, agent=agent.lower())
+
+        curves_file = f'{agent.lower()}_procgen_{env_id}_curves.npz'
+
+        file = hf_hub_download(
+            repo_id="RLE-Foundation/rllte-hub", 
+            repo_type="model", 
+            filename=curves_file,
+            subfolder="procgen/curves"
+        )
+
+        curves_dict = np.load(file, allow_pickle=True)
+        curves_dict = dict(curves_dict)
+
+        return curves_dict
+
+    def load_models(self, 
+                    env_id: str, 
+                    agent: str, 
+                    seed: int, 
+                    device: str = "cpu"
+                    ) -> nn.Module:
+        """Load the model from the hub.
+
+        Args:
+            env_id (str): Environment ID.
+            agent (str): Agent name.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
+        Returns:
+            The loaded model.
+        """
+        self.is_available(env_id=env_id, agent=agent.lower())
+        
+        model_file = f"{agent.lower()}_procgen_{env_id}_seed_{seed}.pth"
+        subfolder = f"procgen/{agent}"
+        file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
+        model = th.load(file, map_location=device)
+
+        return model.eval()
+
+
+    def load_apis(self, 
+                  env_id: str, 
+                  agent: str, 
+                  seed: int, 
+                  device: str = "cpu"
+                  ) -> BaseAgent:
+        """Load the a training API.
+
+        Args:
+            env_id (str): Environment ID.
+            agent (str): Agent name.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
+        Returns:
+            The loaded API.
+        """
         envs = make_envpool_procgen_env(
                 env_id=env_id,
                 num_envs=64,
@@ -68,10 +175,10 @@ class Procgen:
             )
 
         feature_dim = 256
-        if agent == "PPO":
+        if agent.lower() == "ppo":
             # The following hyperparameters are from the repository:
             # https://github.com/rraileanu/auto-drac
-            self.agent = PPO(
+            api = PPO(
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"ppo_procgen_{env_id}_seed_{seed}",
@@ -90,7 +197,7 @@ class Procgen:
                 max_grad_norm=0.5,
                 init_fn="xavier_uniform",
             )
-        elif agent == "DAAC":
+        elif agent.lower() == "daac":
             # Best hyperparameters for DAAC reported in
             # https://github.com/rraileanu/idaac/blob/main/hyperparams.py
             if env_id in ['plunder', 'chaser']:
@@ -114,7 +221,7 @@ class Procgen:
             else:
                 adv_coef = 0.25
 
-            self.agent = DAAC( # type: ignore[assignment]
+            api = DAAC( # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"daac_procgen_{env_id}_seed_{seed}",
@@ -141,35 +248,6 @@ class Procgen:
 
         # set the residual encoder
         encoder = EspeholtResidualEncoder(observation_space=envs.observation_space, feature_dim=feature_dim)
-        self.agent.set(encoder=encoder)
+        api.set(encoder=encoder)
 
-    def train(
-        self,
-        num_train_steps: int = 25000000,
-        log_interval: int = 1,
-        eval_interval: int = 100,
-        save_interval: int = 100,
-        num_eval_episodes: int = 10,
-        th_compile: bool = False,
-    ) -> None:
-        """Training function.
-
-        Args:
-            num_train_steps (int): The number of training steps.
-            log_interval (int): The interval (in episodes) of logging.
-            eval_interval (int): The interval (in episodes) of evaluation.
-            save_interval (int): The interval (in episodes) of saving model.
-            num_eval_episodes (int): The number of evaluation episodes.
-            th_compile (bool): Whether to use `th.compile` or not.
-
-        Returns:
-            None.
-        """
-        self.agent.train(
-            num_train_steps=num_train_steps,
-            log_interval=log_interval,
-            eval_interval=eval_interval,
-            save_interval=save_interval,
-            num_eval_episodes=num_eval_episodes,
-            th_compile=th_compile,
-        )
+        return api

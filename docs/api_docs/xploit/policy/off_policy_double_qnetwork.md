@@ -73,7 +73,7 @@ None.
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L123)
 ```python
 .forward(
-   obs: th.Tensor, training: bool = True, step: int = 0
+   obs: th.Tensor, training: bool = True
 )
 ```
 
@@ -85,7 +85,6 @@ Sample actions based on observations.
 
 * **obs** (th.Tensor) : Observations.
 * **training** (bool) : Training mode, True or False.
-* **step** (int) : Global training step.
 
 
 **Returns**
@@ -93,7 +92,7 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L139)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_qnetwork.py/#L138)
 ```python
 .save(
    path: Path, pretraining: bool, global_step: int
