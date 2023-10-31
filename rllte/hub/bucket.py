@@ -24,19 +24,26 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Callable, Dict, List, Optional
+from torch import nn
 import numpy as np
 
+from rllte.common.prototype import BaseAgent
 
-class BaseDataset(ABC):
+class Bucket(ABC):
+    """Bucket class for storing scores, learning curves, and models."""
     def __init__(self) -> None:
         super().__init__()
 
+        self.sup_env: List = []
+        self.sup_algo: List = []
 
-    @abstractmethod
-    def is_available(self, *args, **kwargs) -> None:
-        """Returns True if the dataset is available, False otherwise."""
-    
+
+    def is_available(self, env_id: str, agent: Optional[str] = None) -> None:
+        """Check if the dataset is available."""
+        assert env_id in self.sup_env and agent in self.sup_algo, \
+            f"Datasets for `{env_id}` and `{agent}` are not available currently!"
+
 
     @abstractmethod
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
@@ -67,27 +74,39 @@ class BaseDataset(ABC):
         """
     
     @abstractmethod
-    def load_demonstrations(self, env_id: str, level: str) -> Dict[str, np.ndarray]:
-        """Returns demonstrations using a `Dict` of NumPy arrays.
+    def load_models(self, 
+                    env_id: str, 
+                    agent: str, 
+                    seed: int, 
+                    device: str = "cpu"
+                    ) -> nn.Module:
+        """Load the model from the hub.
 
         Args:
             env_id (str): Environment ID.
-            level (str): A level from ['expert', 'random', 'exploration'].
-        
+            agent (str): Agent name.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
         Returns:
-            Demonstrations data with structure:
-            demonstrations
-            ├── episode_0
-            │   ├── observations
-            │   ├── actions
-            │   ├── rewards
-            │   ├── terminateds
-            │   └── truncateds
-            ├── episode_1
-            │   ├── observations
-            │   ├── actions
-            │   ├── rewards
-            │   ├── terminateds
-            │   └── truncateds
-            └── ...
+            The loaded model.
+        """
+
+    @abstractmethod
+    def load_apis(self, 
+                  env_id: str, 
+                  agent: str, 
+                  seed: int, 
+                  device: str = "cpu"
+                  ) -> BaseAgent:
+        """Load the a training API.
+
+        Args:
+            env_id (str): Environment ID.
+            agent (str): Agent name.
+            seed (int): The seed to load.
+            device (str): The device to load the model on.
+
+        Returns:
+            The loaded API.
         """

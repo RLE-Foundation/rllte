@@ -23,11 +23,10 @@ RLLTE Hub: Large-Scale and Comprehensive Data Hub for Reinforcement Learning
 
 | **Module** | **Function**|
 |:--|:--|
-|📊 `rllte.hub.datasets`|`.load_curves`: Load learning curves of an RL algorithm on a task.|
-||`.load_scores`: Load test scores of an RL algorithm on a task.|
-||`.load_demonstrations`: Load demonstrations dataset of a task.|
-|🗃️ `rllte.hub.models`|`.load_models`: Load a trained RL agent on a task. |
-|🎮 `rllte.hub.applications`|	Provide fast-APIs for training RL agents on recognized benchmarks.|
+| `rllte.hub.***`|📊 `.load_curves`: Load learning curves of an RL algorithm on a task.|
+||💯 `.load_scores`: Load test scores of an RL algorithm on a task.|
+||🗃️ `.load_models`: Load a trained RL agent on a task.|
+||🎮 `.load_apis`: Load a training API.|
 
 A complete support list for RL algorithms and environments can be found in [https://docs.rllte.dev/hub](https://docs.rllte.dev/hub).
 
@@ -43,7 +42,7 @@ pip install rllte-core
 The following example illustrates how to download an `PPO` agent trained the [Atari](https://envpool.readthedocs.io/en/latest/env/atari.html) benchmark:
 
 ``` py
-from rllte.hub.models import Atari
+from rllte.hub import Atari
 
 agent = Atari().load_models(agent='ppo',
                             env_id='BeamRider-v5',
@@ -91,7 +90,7 @@ Download training logs of various RL algorithms on well-recognized benchmarks fo
 The following example illustrates how to download training curves of the `SAC` agent on the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control) benchmark:
 
 ``` py
-from rllte.hub.datasets import DMControl
+from rllte.hub import DMControl
 
 curves = DMControl().load_curves(agent='sac', env_id="cheetah_run")
 ```
@@ -116,16 +115,16 @@ scores = DMControl().load_scores(agent='sac', env_id="cheetah_run")
 This will return a data array with shape `(N_SEEDS, N_POINTS)`.
 
 ## RL Training Applications
-`rllte.hub.applications` enables developers to train RL agents on well-recognized benchmarks rapidly using simple interfaces. Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to write a `train.py` like:
+Developers can also train RL agents on well-recognized benchmarks rapidly using simple interfaces. Suppose we want to train an `PPO` agent on [Procgen](https://github.com/openai/procgen) benchmark, it suffices to write a `train.py` like:
 ``` py
-from rllte.hub.applications import Procgen
+from rllte.hub import Procgen
 
-app = Procgen(agent="PPO", env_id="coinrun", seed=1, device="cuda")
+app = Procgen.load_apis(agent="PPO", env_id="coinrun", seed=1, device="cuda")
 app.train(num_train_steps=2.5e+7)
 ```
 All the results of `rllte.hub.datasets` and `rllte.hub.models` were trained via `rllte.hub.applications`, and all the hyper-parameters can be found in the reference of the support list.
 
-## Demonstration Datasets
+<!-- ## Demonstration Datasets
 **RLLTE Hub** also provides comprehensive demonstration datasets for tasks like offline RL, inverse RL and imitation learning. We consider the following four settings:
 
 - **random**: Uniform samples from the action space.
@@ -157,7 +156,7 @@ demonstrations
 │   ├── terminateds
 │   └── truncateds
 └── ...
-```
+``` -->
 
 # Cite the Project
 If you use this project in your research, please cite this project like this:
