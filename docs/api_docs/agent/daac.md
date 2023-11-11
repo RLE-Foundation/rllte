@@ -11,7 +11,7 @@ DAAC(
    hidden_dim: int = 256, clip_range: float = 0.2, clip_range_vf: float = 0.2,
    policy_epochs: int = 1, value_freq: int = 1, value_epochs: int = 9, vf_coef: float = 0.5,
    ent_coef: float = 0.01, adv_coef: float = 0.25, max_grad_norm: float = 0.5,
-   init_fn: str = 'xavier_uniform'
+   discount: float = 0.999, init_fn: str = 'xavier_uniform'
 )
 ```
 
@@ -44,6 +44,7 @@ Based on: https://github.com/rraileanu/idaac
 * **ent_coef** (float) : Weighting coefficient of entropy bonus.
 * **adv_ceof** (float) : Weighting coefficient of advantage loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
+* **discount** (float) : Discount factor.
 * **init_fn** (str) : Parameters initialization method.
 
 
@@ -57,7 +58,7 @@ DAAC agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L170)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/daac.py/#L173)
 ```python
 .update()
 ```

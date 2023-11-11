@@ -71,7 +71,7 @@ None.
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L144)
 ```python
 .forward(
-   obs: th.Tensor, training: bool = True, step: int = 0
+   obs: th.Tensor, training: bool = True
 )
 ```
 
@@ -83,7 +83,6 @@ Sample actions based on observations.
 
 * **obs** (th.Tensor) : Observations.
 * **training** (bool) : Training mode, True or False.
-* **step** (int) : Global training step.
 
 
 **Returns**
@@ -91,10 +90,10 @@ Sample actions based on observations.
 Sampled actions.
 
 ### .get_dist
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L165)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L164)
 ```python
 .get_dist(
-   obs: th.Tensor, step: int
+   obs: th.Tensor
 )
 ```
 
@@ -105,7 +104,6 @@ Get sample distribution.
 **Args**
 
 * **obs** (th.Tensor) : Observations.
-* **step** (int) : Global training step.
 
 
 **Returns**
@@ -113,7 +111,7 @@ Get sample distribution.
 RLLTE distribution.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L179)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_double_actor_double_critic.py/#L177)
 ```python
 .save(
    path: Path, pretraining: bool, global_step: int
