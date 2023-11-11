@@ -136,3 +136,30 @@ If the gpu message is showed, then everything is okay.
 >+ `./sample_build.sh`
 >+ `./chmod +x sample_run.sh`
 >+ `./sample_run.sh`
+
+##  deployment with NCNN
+
+### what is NCNN
+>+ ncnn is a high-performance neural network inference computing framework optimized for mobile platforms. ncnn is deeply considerate about deployment and uses on mobile phones from the beginning of design. ncnn does not have third party dependencies. It is cross-platform, and runs faster than all known open source frameworks on mobile phone cpu. Developers can easily deploy deep learning algorithm models to the mobile platform by using efficient ncnn implementation, create intelligent APPs, and bring the artificial intelligence to your fingertips. ncnn is currently being used in many Tencent applications, such as QQ, Qzone, WeChat, Pitu and so on.  
+Ref: https://github.com/Tencent/ncnn   
+ ![Alt text](docs/ncnn.png)  
+
+### deployment on PC with NCNN
+>+ `cd deployment/ncnn`  
+>+ install requirements of NCNN  
+`sudo apt install build-essential git cmake libprotobuf-dev protobuf-compiler libvulkan-dev vulkan-utils libopencv-dev`  
+>+ your onnx model may contains many redundant operators such as Shape, Gather and Unsqueeze that is not supported in ncnn. Use handy tool developed by daquexian to eliminate them.   
+Ref:https://github.com/daquexian/onnx-simplifier  
+`python3 -m pip install onnxsim`  
+`python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
+>+ convert the model to ncnn using tools/onnx2ncnn    
+`./tools/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
+>+ now, you should have test_model-sim.bin  test_model-sim.onnx  test_model-sim.param in the ncnn directory.   
+![Alt text](docs/ncnn_1.png)  
+>+ before compile the executable, change the ncnn lib directory to your own path int the CMakeLists.txt, for example  
+![Alt text](docs/ncnn_2.png)  
+`mkdir build && cd build && cmake .. && make`  
+`./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin `  
+>+ After running it, it will output a 1*50 tensor.   
+![Alt text](docs/ncnn_3.png)  
+
