@@ -49,7 +49,7 @@ Update the agent. Implemented by individual algorithms.
 .train(
    num_train_steps: int, init_model_path: Optional[str] = None, log_interval: int = 1,
    eval_interval: int = 100, save_interval: int = 100, num_eval_episodes: int = 10,
-   th_compile: bool = True
+   th_compile: bool = True, anneal_lr: bool = False
 )
 ```
 
@@ -66,6 +66,7 @@ Training function.
 * **save_interval** (int) : The interval of saving model.
 * **num_eval_episodes** (int) : The number of evaluation episodes.
 * **th_compile** (bool) : Whether to use `th.compile` or not.
+* **anneal_lr** (bool) : Whether to anneal the learning rate or not.
 
 
 **Returns**
@@ -73,7 +74,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/on_policy_agent.py/#L207)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/on_policy_agent.py/#L213)
 ```python
 .eval(
    num_eval_episodes: int

@@ -204,52 +204,20 @@ pages:
     source: rllte/xploit/policy/on_policy_shared_actor_critic.py
     classes:
       - OnPolicySharedActorCritic
-  - page: hub/datasets/atari.md
-    source: rllte/hub/datasets/atari.py
+  - page: hub/atari.md
+    source: rllte/hub/atari.py
     classes:
       - Atari
-  - page: hub/datasets/dmc.md
-    source: rllte/hub/datasets/dmc.py
+  - page: hub/dmc.md
+    source: rllte/hub/dmc.py
     classes:
       - DMControl
-  - page: hub/datasets/procgen.md
-    source: rllte/hub/datasets/procgen.py
+  - page: hub/procgen.md
+    source: rllte/hub/procgen.py
     classes:
       - Procgen
-  - page: hub/datasets/minigrid.md
-    source: rllte/hub/datasets/minigrid.py
-    classes:
-      - MiniGrid
-  - page: hub/models/atari.md
-    source: rllte/hub/datasets/atari.py
-    classes:
-      - Atari
-  - page: hub/models/dmc.md
-    source: rllte/hub/datasets/dmc.py
-    classes:
-      - DMControl
-  - page: hub/models/procgen.md
-    source: rllte/hub/datasets/procgen.py
-    classes:
-      - Procgen
-  - page: hub/models/minigrid.md
-    source: rllte/hub/datasets/minigrid.py
-    classes:
-      - MiniGrid
-  - page: hub/applications/atari.md
-    source: rllte/hub/datasets/atari.py
-    classes:
-      - Atari
-  - page: hub/applications/dmc.md
-    source: rllte/hub/datasets/dmc.py
-    classes:
-      - DMControl
-  - page: hub/applications/procgen.md
-    source: rllte/hub/datasets/procgen.py
-    classes:
-      - Procgen
-  - page: hub/applications/minigrid.md
-    source: rllte/hub/datasets/minigrid.py
+  - page: hub/minigrid.md
+    source: rllte/hub/minigrid.py
     classes:
       - MiniGrid
   - page: xplore/reward/girm.md

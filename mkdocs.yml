@@ -194,21 +194,10 @@ nav:
         - TruncatedNormalNoise: api_docs/xplore/distribution/truncated_normal_noise.md
     
     - Hub: 
-      - applications: 
-        - Atari: api_docs/hub/applications/atari.md
-        - DMControl: api_docs/hub/applications/dmc.md
-        - Procgen: api_docs/hub/applications/procgen.md
-        - MiniGrid: api_docs/hub/applications/minigrid.md
-      - datasets:
-        - Atari: api_docs/hub/datasets/atari.md
-        - DMControl: api_docs/hub/datasets/dmc.md
-        - Procgen: api_docs/hub/datasets/procgen.md
-        - MiniGrid: api_docs/hub/datasets/minigrid.md
-      - models:
-        - Atari: api_docs/hub/models/atari.md
-        - DMControl: api_docs/hub/models/dmc.md
-        - Procgen: api_docs/hub/models/procgen.md
-        - MiniGrid: api_docs/hub/models/minigrid.md
+      - Atari: api_docs/hub/atari.md
+      - DMControl: api_docs/hub/dmc.md
+      - Procgen: api_docs/hub/procgen.md
+      - MiniGrid: api_docs/hub/minigrid.md
     
     - Env:
       - Packaged Environments:
@@ -225,5 +214,5 @@ nav:
       - Performance: api_docs/evaluation/performance.md
       - Visualization: api_docs/evaluation/visualization.md
 
-  - Benchmarks: benchmarks.md
+  - Hub: hub.md
   - Copilot: copilot.md

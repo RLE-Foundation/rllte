@@ -116,3 +116,14 @@ Update the intrinsic reward module if necessary.
 **Returns**
 
 None
+
+### .add
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ride.py/#L334)
+```python
+.add(
+   samples: Dict
+)
+```
+
+---
+Add new samples to the intrinsic reward module.

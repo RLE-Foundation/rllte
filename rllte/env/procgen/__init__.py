@@ -27,7 +27,7 @@ from typing import Dict, Tuple
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.spaces import Box
+from gymnasium.spaces import Box, Discrete
 from gymnasium.wrappers import NormalizeReward, RecordEpisodeStatistics, TransformObservation, TransformReward
 from procgen import ProcgenEnv
 
@@ -53,7 +53,7 @@ class AdapterEnv(gym.Wrapper):
             shape=[3, 64, 64],
             dtype=env.observation_space["rgb"].dtype,
         )
-        self.single_action_space = env.action_space
+        self.single_action_space = Discrete(env.action_space.n)
         self.is_vector_env = True
         self.num_envs = num_envs
 
@@ -169,7 +169,7 @@ def make_procgen_env(
         num_levels=num_levels,
         start_level=start_level,
         distribution_mode=distribution_mode,
-        rand_seed=seed,
+        # rand_seed=seed,
     )
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))
