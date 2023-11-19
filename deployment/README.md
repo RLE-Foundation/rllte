@@ -145,21 +145,27 @@ Ref: https://github.com/Tencent/ncnn
  ![Alt text](docs/ncnn.png)  
 
 ### deployment on PC with NCNN
->+ `cd deployment/ncnn`  
 >+ install requirements of NCNN  
 `sudo apt install build-essential git cmake libprotobuf-dev protobuf-compiler libvulkan-dev vulkan-utils libopencv-dev`  
+>+ `cd deployment/ncnn`  
+download the ncnn repo into deployment/ncnn/ncnn  
+>+ `git submodule init && git submodule update`  
+>+ `cd ncnn`  
+compile the ncnn library. Note: if you don't want to use vulkan or have problem with vulkan on your PC, jsut set -DNCNN_VULKAN=OFF  
+>+ `git  submodule update --init  &&  mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../toolchains/host.gcc.toolchain.cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=ON   -DNCNN_BUILD_TOOLS=ON .. && make -j$(nproc) && make install`
 >+ your onnx model may contains many redundant operators such as Shape, Gather and Unsqueeze that is not supported in ncnn. Use handy tool developed by daquexian to eliminate them.   
 Ref:https://github.com/daquexian/onnx-simplifier  
 `python3 -m pip install onnxsim`  
-`python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
->+ convert the model to ncnn using tools/onnx2ncnn    
-`./tools/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
+`cd ../../ && python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
+![Alt text](docs/ncnn_sim.png) 
+>+ convert the model to ncnn using tools/onnx2ncnn      
+`./ncnn/build/install/bin/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
 >+ now, you should have test_model-sim.bin  test_model-sim.onnx  test_model-sim.param in the ncnn directory.   
 ![Alt text](docs/ncnn_1.png)  
->+ before compile the executable, change the ncnn lib directory to your own path int the CMakeLists.txt, for example  
+>+ before compile the executable, change the ncnn lib directory to your own path in the CMakeLists.txt, for example  
 ![Alt text](docs/ncnn_2.png)  
 `mkdir build && cd build && cmake .. && make`  
-`./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin `  
+`./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin`  
 >+ After running it, it will output a 1*50 tensor.   
 ![Alt text](docs/ncnn_3.png)  
 
