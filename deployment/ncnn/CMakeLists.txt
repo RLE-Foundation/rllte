@@ -9,9 +9,9 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 
-include_directories("~/Documents/Hsuanwu/deployment/ncnn/include")
-
-set(ncnn_DIR "~/Documents/Hsuanwu/deployment/ncnn/lib/cmake/ncnn" CACHE PATH "Directory that contains ncnnConfig.cmake")
+include_directories("~/Documents/Hsuanwu/deployment/ncnn/ncnn/build/install/include")
+set(ncnn_DIR "~/Documents/Hsuanwu/deployment/ncnn/ncnn/build/install/lib/cmake/ncnn" 
+    CACHE PATH "Directory that contains ncnnConfig.cmake")
 find_package(ncnn REQUIRED)
 
 add_executable(NCNNDeployTest NCNNDeployeTest.cpp)

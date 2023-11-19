@@ -1,0 +1,4 @@
+[submodule "deployment/ncnn/ncnn"]
+	path = deployment/ncnn/ncnn
+	url = https://github.com/Tencent/ncnn.git
+	branch = master

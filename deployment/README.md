@@ -145,21 +145,58 @@ Ref: https://github.com/Tencent/ncnn
  ![Alt text](docs/ncnn.png)  
 
 ### deployment on PC with NCNN
->+ `cd deployment/ncnn`  
 >+ install requirements of NCNN  
 `sudo apt install build-essential git cmake libprotobuf-dev protobuf-compiler libvulkan-dev vulkan-utils libopencv-dev`  
+>+ `cd deployment/ncnn`  
+download the ncnn repo into deployment/ncnn/ncnn  
+>+ `git submodule init && git submodule update`  
+>+ `cd ncnn`  
+compile the ncnn library. Note: if you don't want to use vulkan or have problem with vulkan on your PC, jsut set -DNCNN_VULKAN=OFF  
+>+ `git  submodule update --init  &&  mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../toolchains/host.gcc.toolchain.cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=ON   -DNCNN_BUILD_TOOLS=ON .. && make -j$(nproc) && make install`
+>+ your onnx model may contains many redundant operators such as Shape, Gather and Unsqueeze that is not supported in ncnn. Use handy tool developed by daquexian to eliminate them.   
+Ref:https://github.com/daquexian/onnx-simplifier  
+>+ `python3 -m pip install onnxsim`  
+>+ `cd ../../ && python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
+![Alt text](docs/ncnn_sim.png) 
+>+ convert the model to ncnn using tools/onnx2ncnn      
+`./ncnn/build/install/bin/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
+>+ now, you should have test_model-sim.bin  test_model-sim.onnx  test_model-sim.param in the ncnn directory.   
+![Alt text](docs/ncnn_1.png)  
+>+ before compile the executable, change the ncnn lib directory to your own path in the CMakeLists.txt, for example  
+![Alt text](docs/ncnn_2.png)  
+>+ `mkdir build && cd build && cmake .. && make`  
+>+ `./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin`  
+>+ After running, it will output a 1*50 tensor.   
+![Alt text](docs/ncnn_3.png)  
+
+### deployment on RaspberryPi with NCNN
+>+ first, ssh to your RaspberryPi or directly operate on it  
+>+ clone this  repo into RespberryPi.  
+>+ `git clone https://github.com/RLE-Foundation/rllte.git && cd rllte/deployment/ncnn`      
+>+ install requirements  
+>+ `wget https://cmake.org/files/v3.22/cmake-3.22.0.tar.gz`  
+>+ `tar -xvzf cmake-3.22.0.tar.gz`  
+>+ `cd cmake-3.22.0 && sudo ./bootstrap && sudo make -j$(nproc) && sudo make install`  
+>+ `sudo apt update  && sudo apt install build-essential git libprotobuf-dev protobuf-compiler libvulkan-dev libopencv-dev libxcb-randr0-dev libxrandr-dev libxcb-xinerama0-dev libxinerama-dev libxcursor-dev libxcb-cursor-dev libxkbcommon-dev xutils-dev xutils-dev libpthread-stubs0-dev libpciaccess-dev libffi-dev x11proto-xext-dev libxcb1-dev libxcb-*dev libssl-dev libgnutls28-dev x11proto-dri2-dev x11proto-dri3-dev libx11-dev libxcb-glx0-dev libx11-xcb-dev libxext-dev libxdamage-dev libxfixes-dev libva-dev x11proto-randr-dev x11proto-present-dev libclc-dev libelf-dev mesa-utils libvulkan-dev libvulkan1 libassimp-dev libdrm-dev libxshmfence-dev libxxf86vm-dev libunwind-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev valgrind libzstd-dev vulkan-tools bison flex ninja-build python3-mako`  
+download the ncnn repo into deployment/ncnn/ncnn  
+>+ `git submodule init && git submodule update`  
+>+ `cd ncnn`  
+compile the ncnn library. Note: if you don't want to use vulkan or have problem with vulkan on your RaspberryPi, jsut set -DNCNN_VULKAN=OFF  
+>+ `git submodule update --init  &&  mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../toolchains/pi3.toolchain.cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=ON   -DNCNN_BUILD_TOOLS=ON .. && make -j$(nproc) && make install`  
 >+ your onnx model may contains many redundant operators such as Shape, Gather and Unsqueeze that is not supported in ncnn. Use handy tool developed by daquexian to eliminate them.   
 Ref:https://github.com/daquexian/onnx-simplifier  
 `python3 -m pip install onnxsim`  
-`python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
->+ convert the model to ncnn using tools/onnx2ncnn    
-`./tools/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
+`cd ../../ && python3 -m onnxsim ../model/test_model.onnx test_model-sim.onnx`   
+![Alt text](docs/ncnn_sim.png) 
+>+ convert the model to ncnn using tools/onnx2ncnn      
+`./ncnn/build/install/bin/onnx2ncnn test_model-sim.onnx test_model-sim.param test_model-sim.bin`  
 >+ now, you should have test_model-sim.bin  test_model-sim.onnx  test_model-sim.param in the ncnn directory.   
 ![Alt text](docs/ncnn_1.png)  
->+ before compile the executable, change the ncnn lib directory to your own path int the CMakeLists.txt, for example  
+>+ before compile the executable, change the ncnn lib directory to your own path in the CMakeLists.txt, for example  
 ![Alt text](docs/ncnn_2.png)  
 `mkdir build && cd build && cmake .. && make`  
-`./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin `  
->+ After running it, it will output a 1*50 tensor.   
+`./NCNNDeployTest ../test_model-sim.param ../test_model-sim.bin`  
+>+ After running, it will output a 1*50 tensor.   
 ![Alt text](docs/ncnn_3.png)  
+
 
