@@ -34,24 +34,15 @@ class PeriodicPadCropResize(BaseAugmentation):
     Periodically applies PadCrop and PadResizePlus transformations to images.
 
     Args:
-        T (int): Number of cycles to apply the transformations. Each cycle consists of one application of PadCrop followed by one application of PadResizePlus.
         pad (int): The padding size.
         highest_pad_strength (int): The maximum strength of padding.
+        T (int): Number of cycles to apply the transformations. Each cycle consists of one application of PadCrop followed by one application of PadResizePlus.
 
-    Note:
-        - The PadCrop instance should be initialized with the desired padding size. This size determines how much the images will be padded (and subsequently shifted) in each cycle.
-        - The PadResizePlus instance should be initialized with the highest padding strength. This strength determines the range of padding variability that can be applied during the resize and crop operations.
+    
     """
 
     def __init__(self, pad: int, highest_pad_strength: int,T: int) -> None:
-        """
-        Initializes the PeriodicPadCropResize module with specified instances of PadCrop and PadResizePlus and the number of cycles.
 
-        Args:
-            pad_crop (PadCrop): An initialized instance of the PadCrop class. It applies padding and random shifts to the images.
-            pad_resize_plus (PadResizePlus): An initialized instance of the PadResizePlus class. It applies padding, cropping, and resizing to the images.
-            T (int): The number of cycles for applying the transformations. In each cycle, PadCrop is applied first, followed by PadResizePlus.
-        """
         super().__init__()
         self.pad_crop = PadCrop(pad)
         self.pad_resize_plus = PadResizePlus(highest_pad_strength)
