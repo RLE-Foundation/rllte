@@ -24,6 +24,7 @@
 
 from .dict_replay_storage import DictReplayStorage as DictReplayStorage
 from .dict_rollout_storage import DictRolloutStorage as DictRolloutStorage
+from .episodic_rollout_storage import EpisodicRolloutStorage as EpisodicRolloutStorage
 from .her_replay_storage import HerReplayStorage as HerReplayStorage
 from .nstep_replay_storage import NStepReplayStorage as NStepReplayStorage
 from .prioritized_replay_storage import PrioritizedReplayStorage as PrioritizedReplayStorage

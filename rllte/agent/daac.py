@@ -95,7 +95,7 @@ class DAAC(OnPolicyAgent):
         adv_coef: float = 0.25,
         max_grad_norm: float = 0.5,
         discount: float = 0.999,
-        init_fn: str = "xavier_uniform"
+        init_fn: str = "xavier_uniform",
     ) -> None:
         super().__init__(
             env=env,
@@ -164,7 +164,7 @@ class DAAC(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            discount=discount
+            discount=discount,
         )
 
         # set all the modules [essential operation!!!]

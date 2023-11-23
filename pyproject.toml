@@ -42,7 +42,7 @@ dependencies = [
   "pynvml==11.5.0",
   "matplotlib==3.6.0",
   "seaborn==0.12.2",
-  "huggingface_hub==0.14.1"
+  "huggingface_hub==0.14.1",
 ]
 
 [project.optional-dependencies]

@@ -29,7 +29,7 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.type_alias import ObsShape, BaseDistribution
+from rllte.common.type_alias import BaseDistribution, ObsShape
 
 
 class OnPolicyDiscreteActor(nn.Module):
@@ -548,7 +548,7 @@ def get_off_policy_actor(action_type: str, actor_kwargs: Dict) -> Union[OffPolic
     if action_type in ["Discrete"]:
         actor_class = OffPolicyDiscreteActor
     elif action_type == "Box":
-        actor_class = OffPolicyBoxActor # type: ignore[assignment]
+        actor_class = OffPolicyBoxActor  # type: ignore[assignment]
     else:
         raise NotImplementedError(f"Unsupported action type {action_type}!")
     return actor_class(**actor_kwargs)

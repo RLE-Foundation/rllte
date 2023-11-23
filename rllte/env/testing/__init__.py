@@ -23,8 +23,8 @@
 # =============================================================================
 
 
+from .bitflipping import make_bitflipping_env as make_bitflipping_env
 from .box import make_box_env as make_box_env
 from .discrete import make_discrete_env as make_discrete_env
-from .bitflipping import make_bitflipping_env as make_bitflipping_env
 from .multibinary import make_multibinary_env as make_multibinary_env
 from .multidiscrete import make_multidiscrete_env as make_multidiscrete_env

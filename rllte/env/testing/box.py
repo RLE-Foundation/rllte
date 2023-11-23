@@ -118,15 +118,18 @@ class PixelEnv(gym.Env):
 
         return obs, reward, terminated, truncated, info
 
+
 class DictEnv(gym.Env):
     """Environment with dict-based observation space and `Box` action space for testing."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.observation_space = gym.spaces.Dict(spaces={
-            "image": gym.spaces.Box(low=-1.0, high=1.0, shape=(3, 84, 84), dtype=np.float32),
-            "state": gym.spaces.Box(low=-1.0, high=1.0, shape=(49,), dtype=np.float32),
-        })
+        self.observation_space = gym.spaces.Dict(
+            spaces={
+                "image": gym.spaces.Box(low=-1.0, high=1.0, shape=(3, 84, 84), dtype=np.float32),
+                "state": gym.spaces.Box(low=-1.0, high=1.0, shape=(49,), dtype=np.float32),
+            }
+        )
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32)
 
     def reset(self, seed: Optional[int] = None, options=Optional[Dict[str, Any]]) -> Tuple[Any, Dict[str, Any]]:
@@ -160,6 +163,7 @@ class DictEnv(gym.Env):
         info = {}
 
         return obs, reward, terminated, truncated, info
+
 
 def make_box_env(
     env_id: str = "StateObsEnv", num_envs: int = 1, device: str = "cpu", seed: int = 0, asynchronous: bool = True

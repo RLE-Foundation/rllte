@@ -29,8 +29,9 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 
-from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
 from rllte.common.type_alias import DictReplayBatch
+from rllte.xploit.storage.vanilla_replay_storage import VanillaReplayStorage
+
 
 class DictReplayStorage(VanillaReplayStorage):
     """Dict replay storage for off-policy algorithms and dictionary observations.

@@ -73,7 +73,7 @@ class OffPolicyAgent(BaseAgent):
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
 
-    def train( # noqa: C901
+    def train(  # noqa: C901
         self,
         num_train_steps: int,
         init_model_path: Optional[str] = None,
@@ -82,7 +82,7 @@ class OffPolicyAgent(BaseAgent):
         save_interval: int = 5000,
         num_eval_episodes: int = 10,
         th_compile: bool = False,
-        anneal_lr: bool = False
+        anneal_lr: bool = False,
     ) -> None:
         """Training function.
 
@@ -123,7 +123,7 @@ class OffPolicyAgent(BaseAgent):
                     actions = th.stack([th.as_tensor(self.action_space.sample()) for _ in range(self.num_envs)])
                 else:
                     actions = self.policy(obs, training=True)
-            
+
             # update the learning rate
             if anneal_lr:
                 for key in self.policy.optimizers.keys():
@@ -151,10 +151,10 @@ class OffPolicyAgent(BaseAgent):
             for idx, (term, trunc) in enumerate(zip(terms, truncs)):
                 if term.item() or trunc.item():
                     # TODO: deal with dict observations
-                    real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], device=self.device) # type: ignore[index]
+                    real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], device=self.device)  # type: ignore[index]
 
             # add new transitions
-            self.storage.add(obs, actions, rews, terms, truncs, infos, real_next_obs)
+            self.storage.add(obs, actions.unsqueeze(-1), rews, terms, truncs, infos, real_next_obs)
             self.global_step += self.num_envs
 
             # deal with the intrinsic reward module

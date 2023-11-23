@@ -227,7 +227,7 @@ class DMC2Gymnasium(gym.Env):
 
         mins, maxs = [], []
         for s in spec:
-            mn, mx = _extract_min_max(s) # type: ignore
+            mn, mx = _extract_min_max(s)  # type: ignore
             mins.append(mn)
             maxs.append(mx)
         low = np.concatenate(mins, axis=0).astype(dtype)

@@ -24,11 +24,10 @@
 
 
 from .testing import make_bitflipping_env as make_bitflipping_env
-from .testing import make_multibinary_env as make_multibinary_env
-from .testing import make_multidiscrete_env as make_multidiscrete_env
 from .testing import make_box_env as make_box_env
 from .testing import make_discrete_env as make_discrete_env
-
+from .testing import make_multibinary_env as make_multibinary_env
+from .testing import make_multidiscrete_env as make_multidiscrete_env
 from .utils import make_rllte_env as make_rllte_env
 
 try:

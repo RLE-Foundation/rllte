@@ -24,39 +24,40 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional
-from torch import nn
+from typing import Dict, List, Optional
+
 import numpy as np
+from torch import nn
 
 from rllte.common.prototype import BaseAgent
 
+
 class Bucket(ABC):
     """Bucket class for storing scores, learning curves, and models."""
+
     def __init__(self) -> None:
         super().__init__()
 
         self.sup_env: List = []
         self.sup_algo: List = []
 
-
     def is_available(self, env_id: str, agent: Optional[str] = None) -> None:
         """Check if the dataset is available."""
-        assert env_id in self.sup_env and agent in self.sup_algo, \
-            f"Datasets for `{env_id}` and `{agent}` are not available currently!"
-
+        assert (
+            env_id in self.sup_env and agent in self.sup_algo
+        ), f"Datasets for `{env_id}` and `{agent}` are not available currently!"
 
     @abstractmethod
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
         """Returns final performance.
-        
+
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
-        
 
     @abstractmethod
     def load_curves(self, env_id: str, agent: str) -> Dict[str, np.ndarray]:
@@ -65,21 +66,16 @@ class Bucket(ABC):
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Learning curves data with structure:
             curves
             ├── train: np.ndarray(shape=(N_SEEDS, N_POINTS))
             └── eval:  np.ndarray(shape=(N_SEEDS, N_POINTS))
         """
-    
+
     @abstractmethod
-    def load_models(self, 
-                    env_id: str, 
-                    agent: str, 
-                    seed: int, 
-                    device: str = "cpu"
-                    ) -> nn.Module:
+    def load_models(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> nn.Module:
         """Load the model from the hub.
 
         Args:
@@ -93,12 +89,7 @@ class Bucket(ABC):
         """
 
     @abstractmethod
-    def load_apis(self, 
-                  env_id: str, 
-                  agent: str, 
-                  seed: int, 
-                  device: str = "cpu"
-                  ) -> BaseAgent:
+    def load_apis(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> BaseAgent:
         """Load the a training API.
 
         Args:

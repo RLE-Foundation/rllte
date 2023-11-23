@@ -170,7 +170,7 @@ class DrDAAC(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            discount=discount
+            discount=discount,
         )
 
         # set all the modules [essential operation!!!]

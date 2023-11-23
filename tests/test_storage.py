@@ -1,7 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env.testing import make_box_env, make_bitflipping_env
+from rllte.env.testing import make_bitflipping_env, make_box_env
 from rllte.xploit.storage import (
     DictReplayStorage,
     DictRolloutStorage,
@@ -22,7 +22,7 @@ from rllte.xploit.storage import (
         VanillaRolloutStorage,
         DictReplayStorage,
         DictRolloutStorage,
-        HerReplayStorage
+        HerReplayStorage,
     ],
 )
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
@@ -45,7 +45,7 @@ def test_storage(storage_cls, device):
             device=device,
             num_envs=num_envs,
             storage_size=num_steps,
-            batch_size=batch_size
+            batch_size=batch_size,
         )
     elif storage_cls is HerReplayStorage:
         storage = storage_cls(
@@ -54,7 +54,7 @@ def test_storage(storage_cls, device):
             device=device,
             num_envs=num_envs,
             batch_size=batch_size,
-            reward_fn=lambda x, y, z: th.rand(size=(int(batch_size * 0.8), 1))
+            reward_fn=lambda x, y, z: th.rand(size=(int(batch_size * 0.8), 1)),
         )
     else:
         storage = storage_cls(
@@ -62,7 +62,7 @@ def test_storage(storage_cls, device):
             action_space=env.action_space,
             device=device,
             num_envs=num_envs,
-            batch_size=batch_size
+            batch_size=batch_size,
         )
 
     obs, infos = env.reset()

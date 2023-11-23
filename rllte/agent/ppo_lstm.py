@@ -32,14 +32,14 @@ from torch import nn
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.policy import OnPolicySharedActorCritic
-from rllte.xploit.storage import VanillaRolloutStorage
+from rllte.xploit.policy import OnPolicySharedActorCriticLSTM
+from rllte.xploit.storage import EpisodicRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
 
 
-class PPO(OnPolicyAgent):
-    """Proximal Policy Optimization (PPO) agent.
-        Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
+class PPO_LSTM(OnPolicyAgent):
+    """Proximal Policy Optimization (PPO) with LSTM agent.
+        Based on: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo_atari_lstm.py
 
     Args:
         env (VecEnv): Vectorized environments for training.
@@ -49,7 +49,6 @@ class PPO(OnPolicyAgent):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         pretraining (bool): Turn on the pre-training mode.
         num_steps (int): The sample length of per rollout.
-
         feature_dim (int): Number of features extracted by the encoder.
         batch_size (int): Number of samples per batch to load.
         lr (float): The learning rate.
@@ -65,7 +64,7 @@ class PPO(OnPolicyAgent):
         init_fn (str): Parameters initialization method.
 
     Returns:
-        PPO agent instance.
+        PPO_LSTM agent instance.
     """
 
     def __init__(
@@ -90,6 +89,7 @@ class PPO(OnPolicyAgent):
         max_grad_norm: float = 0.5,
         discount: float = 0.99,
         init_fn: str = "orthogonal",
+        num_batches: int = 4,
     ) -> None:
         super().__init__(
             env=env,
@@ -99,6 +99,7 @@ class PPO(OnPolicyAgent):
             device=device,
             pretraining=pretraining,
             num_steps=num_steps,
+            use_lstm=True,
         )
 
         # hyper parameters
@@ -133,7 +134,7 @@ class PPO(OnPolicyAgent):
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
-        policy = OnPolicySharedActorCritic(
+        policy = OnPolicySharedActorCriticLSTM(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -144,14 +145,14 @@ class PPO(OnPolicyAgent):
         )
 
         # default storage
-        storage = VanillaRolloutStorage(
+        storage = EpisodicRolloutStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
             storage_size=self.num_steps,
             num_envs=self.num_envs,
-            batch_size=batch_size,
             discount=discount,
+            num_batches=num_batches,
         )
 
         # set all the modules [essential operation!!!]
@@ -165,9 +166,14 @@ class PPO(OnPolicyAgent):
 
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
+                done = th.logical_or(batch.terminateds, batch.truncateds)
+
                 # evaluate sampled actions
                 new_values, new_log_probs, entropy = self.policy.evaluate_actions(
-                    obs=batch.observations, actions=batch.actions
+                    obs=batch.observations,
+                    actions=batch.actions,
+                    lstm_state=(self.initial_lstm_state[0][:, batch.env_inds], self.initial_lstm_state[1][:, batch.env_inds]),
+                    done=done,
                 )
 
                 # policy loss part

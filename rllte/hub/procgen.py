@@ -23,17 +23,18 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
 from typing import Dict, Optional
-from torch import nn
 
 import numpy as np
 import torch as th
-from rllte.hub.bucket import Bucket
-from rllte.agent import PPO, PPG, DAAC
-from rllte.xploit.encoder import EspeholtResidualEncoder
-from rllte.env import make_envpool_procgen_env
+from huggingface_hub import hf_hub_download
+from torch import nn
+
+from rllte.agent import DAAC, PPG, PPO
 from rllte.common.prototype import BaseAgent
+from rllte.env import make_envpool_procgen_env
+from rllte.hub.bucket import Bucket
+from rllte.xploit.encoder import EspeholtResidualEncoder
 
 
 class Procgen(Bucket):
@@ -44,36 +45,46 @@ class Procgen(Bucket):
     Number of seeds: 10
     Added algorithms: [PPO]
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['bigfish', 'bossfight', 'caveflyer', 'chaser',
-                        'climber', 'coinrun', 'dodgeball', 'fruitbot',
-                        'heist', 'jumper', 'leaper', 'maze',
-                        'miner', 'ninja', 'plunder', 'starpilot'
-                        ]
-        self.sup_algo = ['ppo']
-
+        self.sup_env = [
+            "bigfish",
+            "bossfight",
+            "caveflyer",
+            "chaser",
+            "climber",
+            "coinrun",
+            "dodgeball",
+            "fruitbot",
+            "heist",
+            "jumper",
+            "leaper",
+            "maze",
+            "miner",
+            "ninja",
+            "plunder",
+            "starpilot",
+        ]
+        self.sup_algo = ["ppo"]
 
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
         """Returns final performance.
-        
+
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        scores_file = f'{agent.lower()}_procgen_{env_id}_scores.npy'
+        scores_file = f"{agent.lower()}_procgen_{env_id}_scores.npy"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=scores_file, 
-            subfolder="procgen/scores"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=scores_file, subfolder="procgen/scores"
         )
 
         return np.load(file)
@@ -84,7 +95,7 @@ class Procgen(Bucket):
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Learning curves data with structure:
             curves
@@ -93,13 +104,10 @@ class Procgen(Bucket):
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        curves_file = f'{agent.lower()}_procgen_{env_id}_curves.npz'
+        curves_file = f"{agent.lower()}_procgen_{env_id}_curves.npz"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=curves_file,
-            subfolder="procgen/curves"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=curves_file, subfolder="procgen/curves"
         )
 
         curves_dict = np.load(file, allow_pickle=True)
@@ -107,12 +115,7 @@ class Procgen(Bucket):
 
         return curves_dict
 
-    def load_models(self, 
-                    env_id: str, 
-                    agent: str, 
-                    seed: int, 
-                    device: str = "cpu"
-                    ) -> nn.Module:
+    def load_models(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> nn.Module:
         """Load the model from the hub.
 
         Args:
@@ -125,7 +128,7 @@ class Procgen(Bucket):
             The loaded model.
         """
         self.is_available(env_id=env_id, agent=agent.lower())
-        
+
         model_file = f"{agent.lower()}_procgen_{env_id}_seed_{seed}.pth"
         subfolder = f"procgen/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
@@ -133,13 +136,7 @@ class Procgen(Bucket):
 
         return model.eval()
 
-
-    def load_apis(self, 
-                  env_id: str, 
-                  agent: str, 
-                  seed: int, 
-                  device: str = "cpu"
-                  ) -> BaseAgent:
+    def load_apis(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> BaseAgent:
         """Load the a training API.
 
         Args:
@@ -152,27 +149,27 @@ class Procgen(Bucket):
             The loaded API.
         """
         envs = make_envpool_procgen_env(
-                env_id=env_id,
-                num_envs=64,
-                device=device,
-                seed=seed,
-                gamma=0.99,
-                num_levels=200,
-                start_level=0,
-                distribution_mode="easy",
-                asynchronous=False
-            )
+            env_id=env_id,
+            num_envs=64,
+            device=device,
+            seed=seed,
+            gamma=0.99,
+            num_levels=200,
+            start_level=0,
+            distribution_mode="easy",
+            asynchronous=False,
+        )
         eval_envs = make_envpool_procgen_env(
-                env_id=env_id,
-                num_envs=1,
-                device=device,
-                seed=seed,
-                gamma=0.99,
-                num_levels=0,
-                start_level=0,
-                distribution_mode="easy",
-                asynchronous=False,
-            )
+            env_id=env_id,
+            num_envs=1,
+            device=device,
+            seed=seed,
+            gamma=0.99,
+            num_levels=0,
+            start_level=0,
+            distribution_mode="easy",
+            asynchronous=False,
+        )
 
         feature_dim = 256
         if agent.lower() == "ppo":
@@ -200,28 +197,28 @@ class Procgen(Bucket):
         elif agent.lower() == "daac":
             # Best hyperparameters for DAAC reported in
             # https://github.com/rraileanu/idaac/blob/main/hyperparams.py
-            if env_id in ['plunder', 'chaser']:
+            if env_id in ["plunder", "chaser"]:
                 value_epochs = 1
             else:
                 value_epochs = 9
-            
-            if env_id in ['miner', 'bigfish', 'dodgeball']:
+
+            if env_id in ["miner", "bigfish", "dodgeball"]:
                 value_freq = 32
-            elif env_id == 'plunder':
+            elif env_id == "plunder":
                 value_freq = 8
             else:
                 value_freq = 1
-            
-            if env_id == 'plunder':
+
+            if env_id == "plunder":
                 adv_coef = 0.3
-            elif env_id == 'chaser':
+            elif env_id == "chaser":
                 adv_coef = 0.15
-            elif env_id in ['climber', 'bigfish']:
+            elif env_id in ["climber", "bigfish"]:
                 adv_coef = 0.05
             else:
                 adv_coef = 0.25
 
-            api = DAAC( # type: ignore[assignment]
+            api = DAAC(  # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"daac_procgen_{env_id}_seed_{seed}",

@@ -139,6 +139,18 @@ class VanillaRolloutBatch(NamedTuple):
     adv_targ: th.Tensor
 
 
+class EpisodicRolloutBatch(NamedTuple):
+    observations: th.Tensor
+    actions: th.Tensor
+    values: th.Tensor
+    returns: th.Tensor
+    terminateds: th.Tensor
+    truncateds: th.Tensor
+    old_log_probs: th.Tensor
+    adv_targ: th.Tensor
+    env_inds: th.Tensor
+
+
 class DictRolloutBatch(NamedTuple):
     observations: Dict[str, th.Tensor]
     actions: th.Tensor
