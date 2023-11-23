@@ -87,7 +87,7 @@ class PPO_LSTM(OnPolicyAgent):
         vf_coef: float = 0.5,
         ent_coef: float = 0.01,
         max_grad_norm: float = 0.5,
-        discount: float = 0.999,
+        discount: float = 0.99,
         init_fn: str = "orthogonal",
         num_batches: int = 4,
     ) -> None:
