@@ -44,31 +44,29 @@ class MiniGrid(Bucket):
     Number of seeds: 10
     Added algorithms: [A2C]
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['Empty-6x6-v0']
-        self.sup_algo = ['ppo']
+        self.sup_env = ["Empty-6x6-v0"]
+        self.sup_algo = ["ppo"]
 
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
         """Returns final performance.
-        
+
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        scores_file = f'{agent.lower()}_minigrid_{env_id}_scores.npy'
+        scores_file = f"{agent.lower()}_minigrid_{env_id}_scores.npy"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=scores_file, 
-            subfolder="minigrid/scores"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=scores_file, subfolder="minigrid/scores"
         )
 
         return np.load(file)
@@ -79,7 +77,7 @@ class MiniGrid(Bucket):
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Learning curves data with structure:
             curves
@@ -88,13 +86,10 @@ class MiniGrid(Bucket):
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        curves_file = f'{agent.lower()}_minigrid_{env_id}_curves.npz'
+        curves_file = f"{agent.lower()}_minigrid_{env_id}_curves.npz"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=curves_file,
-            subfolder="minigrid/curves"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=curves_file, subfolder="minigrid/curves"
         )
 
         curves_dict = np.load(file, allow_pickle=True)
@@ -102,13 +97,7 @@ class MiniGrid(Bucket):
 
         return curves_dict
 
-
-    def load_models(self, 
-                    env_id: str, 
-                    agent: str, 
-                    seed: int, 
-                    device: str = "cpu"
-                    ) -> nn.Module:
+    def load_models(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> nn.Module:
         """Load the model from the hub.
 
         Args:
@@ -121,21 +110,15 @@ class MiniGrid(Bucket):
             The loaded model.
         """
         self.is_available(env_id=env_id, agent=agent.lower())
-        
+
         model_file = f"{agent.lower()}_minigrid_{env_id}_seed_{seed}.pth"
         subfolder = f"minigrid/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)
 
         return model.eval()
-    
 
-    def load_apis(self, 
-                  env_id: str, 
-                  agent: str, 
-                  seed: int, 
-                  device: str = "cpu"
-                  ) -> BaseAgent:
+    def load_apis(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> BaseAgent:
         """Load the a training API.
 
         Args:
@@ -178,7 +161,7 @@ class MiniGrid(Bucket):
             # https://github.com/lcswillems/rl-starter-files
             envs = make_minigrid_env(env_id=env_id, num_envs=1, device=device, seed=seed)
             eval_envs = make_minigrid_env(env_id=env_id, num_envs=1, device=device, seed=seed)
-            api = A2C( # type: ignore[assignment]
+            api = A2C(  # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"a2c_{env_id}_seed_{seed}",

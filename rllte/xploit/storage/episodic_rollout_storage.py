@@ -35,7 +35,7 @@ from rllte.common.type_alias import EpisodicRolloutBatch
 
 
 class EpisodicRolloutStorage(BaseStorage):
-    """Episodic rollout storage for on-policy algorithms that use an LSTM. 
+    """Episodic rollout storage for on-policy algorithms that use an LSTM.
     It is the same as VanillaRolloutStorage but samples enitre trajectories instead of batches of different steps.
 
     Args:
@@ -161,8 +161,8 @@ class EpisodicRolloutStorage(BaseStorage):
         self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self) -> Generator:
-        """ 
-        Choose a minibatch of environment indices and sample the entire rollout for those minibatches. 
+        """
+        Choose a minibatch of environment indices and sample the entire rollout for those minibatches.
         By not sampling uniform transitions, we can now train an LSTM model on entire trajectories
         """
         assert self.full, "Cannot sample when the storage is not full!"

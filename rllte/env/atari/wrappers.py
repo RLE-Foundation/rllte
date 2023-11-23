@@ -194,22 +194,23 @@ class MaxAndSkipEnv(gym.Wrapper):
 
 
 class RecordEpisodeStatistics4EnvPool(gym.Wrapper):
-    """Keep track of cumulative rewards and episode lengths. 
+    """Keep track of cumulative rewards and episode lengths.
     This wrapper is dedicated to EnvPool-based Atari games.
 
     Args:
         env (gym.Env): Environment to wrap.
         deque_size (int): The size of the buffers :attr:`return_queue` and :attr:`length_queue`
-    
+
     Returns:
         RecordEpisodeStatistics4EnvPool instance.
     """
+
     def __init__(self, env: gym.Env, deque_size: int = 100) -> None:
         super().__init__(env)
         self.num_envs = getattr(env, "num_envs", 1)
         self.episode_returns: Optional[np.ndarray] = None
         self.episode_lengths: Optional[np.ndarray] = None
-    
+
     def reset(self, **kwargs):
         observations, infos = super().reset(**kwargs)
         self.episode_returns = np.zeros(self.num_envs, dtype=np.float32)
@@ -217,7 +218,7 @@ class RecordEpisodeStatistics4EnvPool(gym.Wrapper):
         self.returned_episode_returns = np.zeros(self.num_envs, dtype=np.float32)
         self.returned_episode_lengths = np.zeros(self.num_envs, dtype=np.int32)
         return observations, infos
-    
+
     def step(self, actions):
         observations, rewards, terms, truncs, infos = super().step(actions)
         self.episode_returns += infos["reward"]
@@ -231,8 +232,8 @@ class RecordEpisodeStatistics4EnvPool(gym.Wrapper):
         infos["episode"]["l"] = self.returned_episode_lengths
 
         for idx, d in enumerate(terms):
-                if not d or infos["lives"][idx] != 0:
-                    infos["episode"]["r"][idx] = 0
-                    infos["episode"]["l"][idx] = 0
+            if not d or infos["lives"][idx] != 0:
+                infos["episode"]["r"][idx] = 0
+                infos["episode"]["l"][idx] = 0
 
         return observations, rewards, terms, truncs, infos

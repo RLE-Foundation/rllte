@@ -97,7 +97,7 @@ class PPG(OnPolicyAgent):
         num_aux_mini_batch: int = 4,
         num_aux_grad_accum: int = 1,
         discount: float = 0.999,
-        init_fn: str = "xavier_uniform"
+        init_fn: str = "xavier_uniform",
     ) -> None:
         super().__init__(
             env=env,
@@ -162,7 +162,7 @@ class PPG(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            discount=discount
+            discount=discount,
         )
 
         # set all the modules [essential operation!!!]

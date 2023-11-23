@@ -242,7 +242,7 @@ class SACDiscrete(OffPolicyAgent):
         with th.no_grad():
             dist = self.policy.get_dist(next_obs)
             # deal with situation of 0.0 probabilities
-            action_probs, log_probs = self.deal_with_zero_probs(dist.probs) # type: ignore[attr-defined]
+            action_probs, log_probs = self.deal_with_zero_probs(dist.probs)  # type: ignore[attr-defined]
             target_Q1, target_Q2 = self.policy.critic_target(next_obs)
             target_V = (th.min(target_Q1, target_Q2) - self.alpha.detach() * log_probs) * action_probs
             # TODO: add time limit mask
@@ -278,7 +278,7 @@ class SACDiscrete(OffPolicyAgent):
         """
         # sample actions
         dist = self.policy.get_dist(obs)
-        action_probs, log_probs = self.deal_with_zero_probs(dist.probs) # type: ignore[attr-defined]
+        action_probs, log_probs = self.deal_with_zero_probs(dist.probs)  # type: ignore[attr-defined]
         actor_Q1, actor_Q2 = self.policy.critic(obs)
         actor_Q = th.min(actor_Q1, actor_Q2)
 

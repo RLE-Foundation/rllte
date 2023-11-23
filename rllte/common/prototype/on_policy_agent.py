@@ -81,7 +81,7 @@ class OnPolicyAgent(BaseAgent):
         save_interval: int = 100,
         num_eval_episodes: int = 10,
         th_compile: bool = True,
-        anneal_lr: bool = False
+        anneal_lr: bool = False,
     ) -> None:
         """Training function.
 
@@ -126,7 +126,7 @@ class OnPolicyAgent(BaseAgent):
                 eval_metrics = self.eval(num_eval_episodes)
                 # log to console
                 self.logger.eval(msg=eval_metrics)
-            
+
             # update the learning rate
             if anneal_lr:
                 for key in self.policy.optimizers.keys():
@@ -141,10 +141,10 @@ class OnPolicyAgent(BaseAgent):
                         del extra_policy_outputs["lstm_state"]
                     else:
                         actions, extra_policy_outputs = self.policy(obs, training=True)
-                        
+
                     # observe rewards and next obs
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)
-                    
+
                     if self.use_lstm:
                         done = th.logical_or(terms, truncs)
 
@@ -264,7 +264,7 @@ class OnPolicyAgent(BaseAgent):
                 if self.use_lstm:
                     actions, extra_policy_outputs = self.policy(obs, lstm_state, done, training=False)
                     lstm_state = extra_policy_outputs["lstm_state"]
-                    del extra_policy_outputs["lstm_state"]                    
+                    del extra_policy_outputs["lstm_state"]
                 else:
                     actions, _ = self.policy(obs, training=False)
 
@@ -278,14 +278,14 @@ class OnPolicyAgent(BaseAgent):
                 eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
-                
+
                 if self.use_lstm:
                     lstm_state = (
                         th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
                         th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
                     )
                     done = th.zeros(self.num_envs, dtype=th.bool, device=self.device)
-                
+
             # set the current observation
             obs = next_obs
 

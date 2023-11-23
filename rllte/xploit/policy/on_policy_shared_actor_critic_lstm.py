@@ -92,7 +92,7 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
                 nn.init.constant_(param, 0)
             elif "weight" in name:
                 nn.init.orthogonal_(param, 1.0)
-        
+
         # build actor and critic
         actor_kwargs = dict(
             obs_shape=self.obs_shape,
@@ -171,7 +171,9 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
         new_hidden = th.flatten(th.cat(new_hidden), 0, 1)
         return new_hidden, lstm_state
 
-    def forward(self, obs: th.Tensor, lstm_state: th.Tensor, done: th.Tensor, training: bool = True) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
+    def forward(
+        self, obs: th.Tensor, lstm_state: th.Tensor, done: th.Tensor, training: bool = True
+    ) -> Tuple[th.Tensor, Dict[str, th.Tensor]]:
         """Get actions and estimated values for observations.
 
         Args:
@@ -206,7 +208,9 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
         """
         return self.critic(self.get_states(obs, lstm_state, done)[0])
 
-    def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor, lstm_state: th.Tensor, done: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
+    def evaluate_actions(
+        self, obs: th.Tensor, actions: th.Tensor, lstm_state: th.Tensor, done: th.Tensor
+    ) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
         """Evaluate actions according to the current policy given the observations.
 
         Args:
@@ -238,7 +242,9 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
         policy_outputs = self.actor.get_policy_outputs(h)
         return th.cat(policy_outputs, dim=1)
 
-    def get_dist_and_aux_value(self, obs: th.Tensor, lstm_state: th.Tensor, done: th.Tensor) -> Tuple[Distribution, th.Tensor, th.Tensor]:
+    def get_dist_and_aux_value(
+        self, obs: th.Tensor, lstm_state: th.Tensor, done: th.Tensor
+    ) -> Tuple[Distribution, th.Tensor, th.Tensor]:
         """Get probs and auxiliary estimated values for auxiliary phase update.
 
         Args:

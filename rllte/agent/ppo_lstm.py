@@ -31,7 +31,7 @@ from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import EspeholtResidualEncoder, IdentityEncoder, MnihCnnEncoder, PathakCnnEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCriticLSTM
 from rllte.xploit.storage import EpisodicRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
@@ -163,7 +163,7 @@ class PPO_LSTM(OnPolicyAgent):
         total_policy_loss = [0.0]
         total_value_loss = [0.0]
         total_entropy_loss = [0.0]
-        
+
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 done = th.logical_or(batch.terminateds, batch.truncateds)
@@ -173,7 +173,7 @@ class PPO_LSTM(OnPolicyAgent):
                     obs=batch.observations,
                     actions=batch.actions,
                     lstm_state=(self.initial_lstm_state[0][:, batch.env_inds], self.initial_lstm_state[1][:, batch.env_inds]),
-                    done=done
+                    done=done,
                 )
 
                 # policy loss part

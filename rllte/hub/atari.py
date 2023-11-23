@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Callable, Dict
+from typing import Dict
 
 import numpy as np
 import torch as th
@@ -44,39 +44,87 @@ class Atari(Bucket):
     Number of seeds: 10
     Added algorithms: [PPO]
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['Alien-v5', 'Amidar-v5', 'Assault-v5', 'Asterix-v5', 'Asteroids-v5', 'Atlantis-v5', 'YarsRevenge-v5',
-                        'BankHeist-v5', 'BattleZone-v5', 'BeamRider-v5', 'Berzerk-v5', 'Bowling-v5', 'Boxing-v5', 'Breakout-v5',
-                        'Centipede-v5', 'ChopperCommand-v5', 'CrazyClimber-v5', 'Defender-v5', 'DemonAttack-v5', 'DoubleDunk-v5', 'Zaxxon-v5',
-                        'Enduro-v5', 'FishingDerby-v5', 'Freeway-v5', 'Frostbite-v5', 'Gopher-v5', 'Gravitar-v5', 'Hero-v5',
-                        'IceHockey-v5', 'Jamesbond-v5', 'Kangaroo-v5', 'Krull-v5', 'KungFuMaster-v5', 'MontezumaRevenge-v5', 'Pitfall-v5',
-                        'PrivateEye-v5', 'Qbert-v5', 'Riverraid-v5', 'RoadRunner-v5', 'Robotank-v5', 'Seaquest-v5', 'Phoenix-v5', 'Pong-v5',
-                        'Skiing-v5', 'Solaris-v5', 'SpaceInvaders-v5', 'StarGunner-v5', 'Surround-v5', 'Tennis-v5', 'TimePilot-v5',
-                        'Tutankham-v5', 'UpNDown-v5', 'Venture-v5', 'VideoPinball-v5', 'WizardOfWor-v5', 'MsPacman-v5', 'NameThisGame-v5'
-                        ]
-        self.sup_algo = ['ppo']
+        self.sup_env = [
+            "Alien-v5",
+            "Amidar-v5",
+            "Assault-v5",
+            "Asterix-v5",
+            "Asteroids-v5",
+            "Atlantis-v5",
+            "YarsRevenge-v5",
+            "BankHeist-v5",
+            "BattleZone-v5",
+            "BeamRider-v5",
+            "Berzerk-v5",
+            "Bowling-v5",
+            "Boxing-v5",
+            "Breakout-v5",
+            "Centipede-v5",
+            "ChopperCommand-v5",
+            "CrazyClimber-v5",
+            "Defender-v5",
+            "DemonAttack-v5",
+            "DoubleDunk-v5",
+            "Zaxxon-v5",
+            "Enduro-v5",
+            "FishingDerby-v5",
+            "Freeway-v5",
+            "Frostbite-v5",
+            "Gopher-v5",
+            "Gravitar-v5",
+            "Hero-v5",
+            "IceHockey-v5",
+            "Jamesbond-v5",
+            "Kangaroo-v5",
+            "Krull-v5",
+            "KungFuMaster-v5",
+            "MontezumaRevenge-v5",
+            "Pitfall-v5",
+            "PrivateEye-v5",
+            "Qbert-v5",
+            "Riverraid-v5",
+            "RoadRunner-v5",
+            "Robotank-v5",
+            "Seaquest-v5",
+            "Phoenix-v5",
+            "Pong-v5",
+            "Skiing-v5",
+            "Solaris-v5",
+            "SpaceInvaders-v5",
+            "StarGunner-v5",
+            "Surround-v5",
+            "Tennis-v5",
+            "TimePilot-v5",
+            "Tutankham-v5",
+            "UpNDown-v5",
+            "Venture-v5",
+            "VideoPinball-v5",
+            "WizardOfWor-v5",
+            "MsPacman-v5",
+            "NameThisGame-v5",
+        ]
+        self.sup_algo = ["ppo"]
 
     def load_scores(self, env_id: str, agent: str) -> np.ndarray:
         """Returns final performance.
-        
+
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        scores_file = f'{agent.lower()}_atari_{env_id}_scores.npy'
+        scores_file = f"{agent.lower()}_atari_{env_id}_scores.npy"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=scores_file, 
-            subfolder="atari/scores"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=scores_file, subfolder="atari/scores"
         )
 
         return np.load(file)
@@ -87,7 +135,7 @@ class Atari(Bucket):
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Learning curves data with structure:
             curves
@@ -96,26 +144,18 @@ class Atari(Bucket):
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
-        curves_file = f'{agent.lower()}_atari_{env_id}_curves.npz'
+        curves_file = f"{agent.lower()}_atari_{env_id}_curves.npz"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=curves_file,
-            subfolder="atari/curves"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=curves_file, subfolder="atari/curves"
         )
 
         curves_dict = np.load(file, allow_pickle=True)
         curves_dict = dict(curves_dict)
 
         return curves_dict
-    
-    def load_models(self, 
-                    env_id: str, 
-                    agent: str, 
-                    seed: int, 
-                    device: str = "cpu"
-                    ) -> nn.Module:
+
+    def load_models(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> nn.Module:
         """Load the model from the hub.
 
         Args:
@@ -128,20 +168,15 @@ class Atari(Bucket):
             The loaded model.
         """
         self.is_available(env_id=env_id, agent=agent.lower())
-        
+
         model_file = f"{agent.lower()}_atari_{env_id}_seed_{seed}.pth"
         subfolder = f"atari/{agent}"
         file = hf_hub_download(repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=model_file, subfolder=subfolder)
         model = th.load(file, map_location=device)
 
         return model.eval()
-    
-    def load_apis(self, 
-                  env_id: str, 
-                  agent: str, 
-                  seed: int, 
-                  device: str = "cpu"
-                  ) -> BaseAgent:
+
+    def load_apis(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> BaseAgent:
         """Load the a training API.
 
         Args:
@@ -156,7 +191,7 @@ class Atari(Bucket):
         if agent.lower() == "ppo":
             # The following hyperparameters are from the repository:
             # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-            # Since the asynchronous mode achieved much lower training performance than the synchronous mode, 
+            # Since the asynchronous mode achieved much lower training performance than the synchronous mode,
             # we recommend using the synchronous mode currently.
             envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
             eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=8, device=device, seed=seed, asynchronous=False)
@@ -179,7 +214,7 @@ class Atari(Bucket):
                 ent_coef=0.01,
                 max_grad_norm=0.5,
                 discount=0.99,
-                init_fn="orthogonal"
+                init_fn="orthogonal",
             )
         elif agent.lower() == "a2c":
             # The following hyperparameters are from the repository:
@@ -187,7 +222,7 @@ class Atari(Bucket):
             envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed)
             eval_envs = make_envpool_atari_env(env_id=env_id, num_envs=16, device=device, seed=seed, asynchronous=False)
 
-            api = A2C( # type: ignore[assignment]
+            api = A2C(  # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"a2c_atari_{env_id}_seed_{seed}",
@@ -210,7 +245,7 @@ class Atari(Bucket):
             # https://github.com/facebookresearch/torchbeast
             envs = make_atari_env(env_id=env_id, device=device, seed=seed, num_envs=45, asynchronous=False)
             eval_envs = make_atari_env(env_id=env_id, device=device, seed=seed, num_envs=1, asynchronous=False)
-            self.agent = IMPALA( # type: ignore[assignment]
+            self.agent = IMPALA(  # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"impala_atari_{env_id}_seed_{seed}",

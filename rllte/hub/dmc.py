@@ -35,9 +35,10 @@ from rllte.common.prototype import BaseAgent
 from rllte.env import make_dmc_env
 from rllte.hub.bucket import Bucket
 
-# cheetah_run quadruped_walk quadruped_run walker_walk walker_run hopper_hop arcobot_swingup cup_catch 
+# cheetah_run quadruped_walk quadruped_run walker_walk walker_run hopper_hop arcobot_swingup cup_catch
 # cartpole_balance cartpole_balance_sparse cartpole_swingup cartpole_swingup_sparse finger_spin finger_turn_easy
 # finger_turn_hard fish_swim fish_upright hopper_stand pendulum_swingup quadruped_run reacher_easy reacher_hard swimmer_swimmer6 swimmer_swimmer15
+
 
 class DMControl(Bucket):
     """Scores and learning cures of various RL algorithms on the full
@@ -48,53 +49,70 @@ class DMControl(Bucket):
     Number of seeds: 10
     Added algorithms: [SAC, DrQ-v2]
     """
+
     def __init__(self) -> None:
         super().__init__()
 
-        self.sup_env = ['acrobot_swingup', 'cartpole_balance', 'cartpole_balance_sparse', 
-                        'cartpole_swingup', 'cartpole_swingup_sparse', 'cheetah_run', 
-                        'cup_catch', 'finger_spin', 'finger_turn_easy', 
-                        'finger_turn_hard', 'fish_swim', 'fish_upright', 
-                        'hopper_hop', 'hopper_stand', 'pendulum_swingup',
-                        'quadruped_run', 'quadruped_walk', 'reacher_easy',
-                        'reacher_hard', 'swimmer_swimmer6', 'swimmer_swimmer15', 
-                        'walker_run', 'walker_walk', 'walker_stand',
-                        'humanoid_walk', 'humanoid_run', 'humanoid_stand'
-                        ]
-        self.sup_algo = ['sac']
-    
+        self.sup_env = [
+            "acrobot_swingup",
+            "cartpole_balance",
+            "cartpole_balance_sparse",
+            "cartpole_swingup",
+            "cartpole_swingup_sparse",
+            "cheetah_run",
+            "cup_catch",
+            "finger_spin",
+            "finger_turn_easy",
+            "finger_turn_hard",
+            "fish_swim",
+            "fish_upright",
+            "hopper_hop",
+            "hopper_stand",
+            "pendulum_swingup",
+            "quadruped_run",
+            "quadruped_walk",
+            "reacher_easy",
+            "reacher_hard",
+            "swimmer_swimmer6",
+            "swimmer_swimmer15",
+            "walker_run",
+            "walker_walk",
+            "walker_stand",
+            "humanoid_walk",
+            "humanoid_run",
+            "humanoid_stand",
+        ]
+        self.sup_algo = ["sac"]
+
     def get_obs_type(self, agent: str) -> str:
         """Returns the observation type of the agent.
-        
+
         Args:
             agent (str): Agent name.
-        
+
         Returns:
             Observation type.
         """
-        obs_type = 'state' if agent in ['sac'] else 'pixel'
+        obs_type = "state" if agent in ["sac"] else "pixel"
         return obs_type
 
     def load_scores(self, env_id: str, agent: str) -> Dict[str, np.ndarray]:
         """Returns final performance.
-        
+
         Args:
             env_id (str): Environment ID.
             agent_id (str): Agent name.
-        
+
         Returns:
             Test scores data array with shape (N_SEEDS, N_POINTS).
         """
         self.is_available(env_id=env_id, agent=agent.lower())
 
         obs_type = self.get_obs_type(agent=agent.lower())
-        scores_file = f'{agent.lower()}_dmc_{obs_type}_{env_id}_scores.npy'
+        scores_file = f"{agent.lower()}_dmc_{obs_type}_{env_id}_scores.npy"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=scores_file, 
-            subfolder="dmc/scores"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=scores_file, subfolder="dmc/scores"
         )
 
         return np.load(file)
@@ -106,7 +124,7 @@ class DMControl(Bucket):
             env_id (str): Environment ID.
             agent_id (str): Agent name.
             obs_type (str): A type from ['state', 'pixel'].
-        
+
         Returns:
             Learning curves data with structure:
             curves
@@ -116,13 +134,10 @@ class DMControl(Bucket):
         self.is_available(env_id=env_id, agent=agent.lower())
 
         obs_type = self.get_obs_type(agent=agent.lower())
-        curves_file = f'{agent.lower()}_dmc_{obs_type}_{env_id}_curves.npz'
+        curves_file = f"{agent.lower()}_dmc_{obs_type}_{env_id}_curves.npz"
 
         file = hf_hub_download(
-            repo_id="RLE-Foundation/rllte-hub", 
-            repo_type="model", 
-            filename=curves_file,
-            subfolder="dmc/curves"
+            repo_id="RLE-Foundation/rllte-hub", repo_type="model", filename=curves_file, subfolder="dmc/curves"
         )
 
         curves_dict = np.load(file, allow_pickle=True)
@@ -130,12 +145,7 @@ class DMControl(Bucket):
 
         return curves_dict
 
-    def load_models(self, 
-                    env_id: str, 
-                    agent: str, 
-                    seed: int, 
-                    device: str = "cpu"
-                    ) -> nn.Module:
+    def load_models(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> nn.Module:
         """Load the model from the hub.
 
         Args:
@@ -157,13 +167,7 @@ class DMControl(Bucket):
 
         return model.eval()
 
-
-    def load_apis(self, 
-                  env_id: str, 
-                  agent: str, 
-                  seed: int, 
-                  device: str = "cpu"
-                  ) -> BaseAgent:
+    def load_apis(self, env_id: str, agent: str, seed: int, device: str = "cpu") -> BaseAgent:
         """Load the a training API.
 
         Args:
@@ -213,7 +217,7 @@ class DMControl(Bucket):
                 visualize_reward=False,
                 frame_stack=3,
                 action_repeat=2,
-                asynchronous=False
+                asynchronous=False,
             )
             eval_envs = make_dmc_env(
                 env_id=env_id,
@@ -224,10 +228,10 @@ class DMControl(Bucket):
                 visualize_reward=False,
                 frame_stack=3,
                 action_repeat=2,
-                asynchronous=False
+                asynchronous=False,
             )
             # create agent
-            api = DrQv2( # type: ignore[assignment]
+            api = DrQv2(  # type: ignore[assignment]
                 env=envs,
                 eval_env=eval_envs,
                 tag=f"drqv2_dmc_pixel_{env_id}_seed_{seed}",

@@ -32,13 +32,7 @@ def test_reward(reward, env_cls, device):
         action = th.randint(0, 2, (num_steps, num_envs, env.action_space.n)).float().to(device)
 
     for i in range(num_steps):
-        irs.add(
-            samples={
-                'obs': obs[i],
-                'actions': action[i],
-                'next_obs': obs[i]
-            }
-        )
+        irs.add(samples={"obs": obs[i], "actions": action[i], "next_obs": obs[i]})
 
     samples = {
         "obs": obs,

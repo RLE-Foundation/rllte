@@ -130,7 +130,7 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
         r: List = []
         l: List = []
         # to handle with the Atari environments
-        for info in infos['final_info']:
+        for info in infos["final_info"]:
             if info is not None and "episode" in info.keys():
                 r.extend(info["episode"]["r"].tolist())
                 l.extend(info["episode"]["l"].tolist())
@@ -191,10 +191,10 @@ def linear_lr_scheduler(optimizer, steps, total_num_steps, initial_lr) -> None:
         steps (int): Current step.
         total_num_steps (int): Total number of steps.
         initial_lr (float): Initial learning rate.
-    
+
     Returns:
         None.
     """
     lr = initial_lr - (initial_lr * (steps / float(total_num_steps)))
     for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+        param_group["lr"] = lr

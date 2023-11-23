@@ -83,7 +83,7 @@ class OffPolicyStochActorDoubleCritic(BasePolicy):
         # build actor and critic
         actor_kwargs = {"action_dim": self.policy_action_dim, "hidden_dim": self.hidden_dim, "feature_dim": self.feature_dim}
         if self.action_type == "Box":
-            actor_kwargs["log_std_range"] = log_std_range # type: ignore[assignment]
+            actor_kwargs["log_std_range"] = log_std_range  # type: ignore[assignment]
 
         self.actor = get_off_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
 

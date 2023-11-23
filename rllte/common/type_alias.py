@@ -137,7 +137,8 @@ class VanillaRolloutBatch(NamedTuple):
     truncateds: th.Tensor
     old_log_probs: th.Tensor
     adv_targ: th.Tensor
-    
+
+
 class EpisodicRolloutBatch(NamedTuple):
     observations: th.Tensor
     actions: th.Tensor

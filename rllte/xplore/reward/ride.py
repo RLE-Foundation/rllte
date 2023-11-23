@@ -330,6 +330,6 @@ class RIDE(BaseIntrinsicRewardModule):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
-    
+
     def add(self, samples: Dict) -> None:
         """Add new samples to the intrinsic reward module."""
