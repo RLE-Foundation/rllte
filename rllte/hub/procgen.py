@@ -23,17 +23,18 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
 from typing import Dict, Optional
-from torch import nn
 
 import numpy as np
 import torch as th
-from rllte.hub.bucket import Bucket
-from rllte.agent import PPO, PPG, DAAC
-from rllte.xploit.encoder import EspeholtResidualEncoder
-from rllte.env import make_envpool_procgen_env
+from huggingface_hub import hf_hub_download
+from torch import nn
+
+from rllte.agent import DAAC, PPG, PPO
 from rllte.common.prototype import BaseAgent
+from rllte.env import make_envpool_procgen_env
+from rllte.hub.bucket import Bucket
+from rllte.xploit.encoder import EspeholtResidualEncoder
 
 
 class Procgen(Bucket):

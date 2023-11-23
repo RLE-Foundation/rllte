@@ -1,7 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env.testing import make_box_env, make_bitflipping_env
+from rllte.env.testing import make_bitflipping_env, make_box_env
 from rllte.xploit.storage import (
     DictReplayStorage,
     DictRolloutStorage,

@@ -23,16 +23,17 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
 from typing import Dict, Optional
-from torch import nn
 
 import numpy as np
 import torch as th
-from rllte.hub.bucket import Bucket
+from huggingface_hub import hf_hub_download
+from torch import nn
+
 from rllte.agent import SAC, DrQv2
-from rllte.env import make_dmc_env
 from rllte.common.prototype import BaseAgent
+from rllte.env import make_dmc_env
+from rllte.hub.bucket import Bucket
 
 # cheetah_run quadruped_walk quadruped_run walker_walk walker_run hopper_hop arcobot_swingup cup_catch 
 # cartpole_balance cartpole_balance_sparse cartpole_swingup cartpole_swingup_sparse finger_spin finger_turn_easy

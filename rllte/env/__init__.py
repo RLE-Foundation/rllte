@@ -23,8 +23,36 @@
 # =============================================================================
 
 
-from .bitflipping import make_bitflipping_env as make_bitflipping_env
-from .box import make_box_env as make_box_env
-from .discrete import make_discrete_env as make_discrete_env
-from .multibinary import make_multibinary_env as make_multibinary_env
-from .multidiscrete import make_multidiscrete_env as make_multidiscrete_env
+from .testing import make_bitflipping_env as make_bitflipping_env
+from .testing import make_box_env as make_box_env
+from .testing import make_discrete_env as make_discrete_env
+from .testing import make_multibinary_env as make_multibinary_env
+from .testing import make_multidiscrete_env as make_multidiscrete_env
+from .utils import make_rllte_env as make_rllte_env
+
+try:
+    from .atari import make_atari_env as make_atari_env
+    from .atari import make_envpool_atari_env as make_envpool_atari_env
+except Exception:
+    pass
+
+try:
+    from .bullet import make_bullet_env as make_bullet_env
+except Exception:
+    pass
+
+try:
+    from .dmc import make_dmc_env as make_dmc_env
+except Exception:
+    pass
+
+try:
+    from .minigrid import make_minigrid_env as make_minigrid_env
+except Exception:
+    pass
+
+try:
+    from .procgen import make_envpool_procgen_env as make_envpool_procgen_env
+    from .procgen import make_procgen_env as make_procgen_env
+except Exception:
+    pass

@@ -31,7 +31,7 @@ from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder, PathakCnnEncoder
+from rllte.xploit.encoder import EspeholtResidualEncoder, IdentityEncoder, MnihCnnEncoder, PathakCnnEncoder
 from rllte.xploit.policy import OnPolicySharedActorCriticLSTM
 from rllte.xploit.storage import EpisodicRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical

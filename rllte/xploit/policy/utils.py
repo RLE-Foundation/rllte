@@ -29,7 +29,7 @@ import torch as th
 from torch import nn
 from torch.nn import functional as F
 
-from rllte.common.type_alias import ObsShape, BaseDistribution
+from rllte.common.type_alias import BaseDistribution, ObsShape
 
 
 class OnPolicyDiscreteActor(nn.Module):

@@ -25,10 +25,12 @@
 
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional
-from torch import nn
+
 import numpy as np
+from torch import nn
 
 from rllte.common.prototype import BaseAgent
+
 
 class Bucket(ABC):
     """Bucket class for storing scores, learning curves, and models."""

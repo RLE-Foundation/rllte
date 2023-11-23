@@ -23,16 +23,17 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
 from typing import Dict, Optional
-from torch import nn
 
 import numpy as np
 import torch as th
-from rllte.hub.bucket import Bucket
+from huggingface_hub import hf_hub_download
+from torch import nn
+
 from rllte.agent import A2C, PPO
-from rllte.env import make_minigrid_env
 from rllte.common.prototype import BaseAgent
+from rllte.env import make_minigrid_env
+from rllte.hub.bucket import Bucket
 
 
 class MiniGrid(Bucket):

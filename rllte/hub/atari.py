@@ -23,17 +23,17 @@
 # =============================================================================
 
 
-from huggingface_hub import hf_hub_download
-from typing import Dict, Callable
-from torch import nn
+from typing import Callable, Dict
 
 import numpy as np
 import torch as th
+from huggingface_hub import hf_hub_download
+from torch import nn
 
-from rllte.hub.bucket import Bucket
-from rllte.agent import A2C, PPO, IMPALA
-from rllte.env import make_atari_env, make_envpool_atari_env
+from rllte.agent import A2C, IMPALA, PPO
 from rllte.common.prototype import BaseAgent
+from rllte.env import make_atari_env, make_envpool_atari_env
+from rllte.hub.bucket import Bucket
 
 
 class Atari(Bucket):

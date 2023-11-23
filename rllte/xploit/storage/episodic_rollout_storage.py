@@ -26,8 +26,8 @@
 from typing import Dict, Generator
 
 import gymnasium as gym
-import torch as th
 import numpy as np
+import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from rllte.common.prototype import BaseStorage

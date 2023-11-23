@@ -28,7 +28,7 @@ import random
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pynvml

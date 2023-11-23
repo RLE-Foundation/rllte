@@ -1,11 +1,7 @@
 import pytest
 import torch as th
 
-from rllte.env.testing import (make_box_env, 
-                               make_discrete_env,
-                               make_multibinary_env,
-                               make_multidiscrete_env
-                               )
+from rllte.env.testing import make_box_env, make_discrete_env, make_multibinary_env, make_multidiscrete_env
 from rllte.xplore.reward import GIRM, ICM, NGU, RE3, REVD, RIDE, RISE, RND, PseudoCounts
 
 
