@@ -157,6 +157,7 @@ class OnPolicyAgent(BaseAgent):
                         "obs": self.storage.observations[:-1],  # type: ignore
                         "actions": self.storage.actions,
                         "next_obs": self.storage.observations[1:],  # type: ignore
+                        "done": th.logical_or(self.storage.terminateds[:-1], self.storage.truncateds[:-1]) # type: ignore
                     }
                 )
                 # compute intrinsic rewards

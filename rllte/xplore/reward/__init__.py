@@ -32,3 +32,4 @@ from .revd import REVD as REVD
 from .ride import RIDE as RIDE
 from .rise import RISE as RISE
 from .rnd import RND as RND
+from .e3b import E3B as E3B
