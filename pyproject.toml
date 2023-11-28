@@ -63,7 +63,11 @@ envs = [
   "gymnasium[accept-rom-license]",
   "dm-control",
   "procgen",
-  "minigrid"
+  "minigrid",
+  "gym==0.26.2",
+  "gym-super-mario-bros==7.4.0",
+  "opencv-python==4.8.1.78",
+  "imageio==2.33.0",
 ]
 docs = [
   "mkdocs-material",
