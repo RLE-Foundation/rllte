@@ -144,8 +144,9 @@ class OnPolicyAgent(BaseAgent):
             with th.no_grad():
                 last_values = self.policy.get_value(next_obs).detach()
 
-            # perform return and advantage estimation
-            self.storage.compute_returns_and_advantages(last_values)
+            # perform return and advantage estimation if have access to extrinsic rewards
+            if not self.pretraining:
+                self.storage.compute_returns_and_advantages(last_values)
 
             # deal with the intrinsic reward module
             if self.irs is not None:
@@ -169,9 +170,16 @@ class OnPolicyAgent(BaseAgent):
                     },
                     step=self.global_episode * self.num_envs * self.num_steps,
                 )
-                # only add the intrinsic rewards to the advantages and returns
-                self.storage.advantages += intrinsic_rewards.to(self.device)
-                self.storage.returns += intrinsic_rewards.to(self.device)
+
+                # if pretraining, compute intrinsic returns and advantages
+                if self.pretraining:
+                    self.storage.rewards = intrinsic_rewards.to(self.device)
+                    self.storage.compute_returns_and_advantages(last_values)
+                
+                # if combining intrinsic + extrinsic rewards, add intrinsic rewards to extrinsic returns and advantages
+                else:
+                    self.storage.advantages += intrinsic_rewards.to(self.device)
+                    self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
             self.update()
