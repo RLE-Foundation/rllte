@@ -26,7 +26,6 @@ _build/
 /cfgs
 /logs
 /dist
-/experimental
 /outputs
 /test.py
 /test_npu.py
