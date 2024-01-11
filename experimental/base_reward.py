@@ -39,6 +39,7 @@ class BaseReward(ABC):
     Args:
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
+        n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
@@ -52,6 +53,7 @@ class BaseReward(ABC):
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
+        n_envs: int,
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
@@ -61,6 +63,7 @@ class BaseReward(ABC):
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
         self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \
             = process_action_space(action_space)
+        self.n_envs = n_envs
 
         # set device and parameters
         self.device = th.device(device)
@@ -70,7 +73,7 @@ class BaseReward(ABC):
         self.global_step = 0
 
         # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd()
+        self.rms = TorchRunningMeanStd(shape=(1, n_envs)) if self.use_rms else None
 
     @property
     def weight(self) -> float:
@@ -88,6 +91,7 @@ class BaseReward(ABC):
             The scaled intrinsic rewards.
         """
         if self.use_rms:
+            self.rms.update(rewards)
             return rewards / self.rms.std * self.weight
         else:
             return rewards * self.weight

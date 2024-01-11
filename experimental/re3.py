@@ -39,13 +39,13 @@ class RE3(BaseReward):
     Args:
         observation_space (Space): The observation space of environment.
         action_space (Space): The action space of environment.
+        n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         use_rms (bool): Use running mean and std for normalization.
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.
-        n_envs (int): The number of parallel environments.
         k (int): Use the k-th neighbors.
         average_entropy (bool): Use the average of entropy estimation.
 
@@ -63,15 +63,15 @@ class RE3(BaseReward):
         kappa: float = 1.0,
         use_rms: bool = True,
         latent_dim: int = 128,
-        storage_size: int = 10000,
+        storage_size: int = 1000,
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
         # build the storage for random embeddings
-        self.storage_size = storage_size // n_envs
-        self.storage = th.zeros(size=(self.storage_size, n_envs, latent_dim))
+        self.storage_size = storage_size
+        self.storage = th.zeros(size=(storage_size, n_envs, latent_dim))
         self.storage_idx = 0
         self.storage_full = False
         # set parameters
@@ -138,23 +138,21 @@ class RE3(BaseReward):
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            # get the target features
-            tgt_feats = self.storage[: self.storage_idx].view(-1, self.latent_dim) if not self.storage_full \
-                else self.storage.view(-1, self.latent_dim)
-            # get the source features
-            src_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
-            # compute the distance
-            dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2)
-            # compute the entropy with average estimation
-            if self.average_entropy:
-                for sub_k in range(self.k):
-                    intrinsic_rewards = th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
-                intrinsic_rewards /= self.k
-            else:
-                intrinsic_rewards = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
-            # reshape the intrinsic rewards
-            intrinsic_rewards = intrinsic_rewards.view(n_steps, n_envs)
-
+            for i in range(n_envs):
+                # get the target features
+                tgt_feats = self.storage[:self.storage_idx, i] if not self.storage_full else self.storage[:, i]
+                # get the source features
+                src_feats = self.random_encoder(obs_tensor[:, i])
+                # compute the distance
+                dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2)
+                # compute the entropy with average estimation
+                if self.average_entropy:
+                    for sub_k in range(self.k):
+                        intrinsic_rewards[:, i] += th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
+                    intrinsic_rewards[:, i] /= self.k
+                else:
+                    intrinsic_rewards[:, i] = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
+        
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
     
