@@ -23,77 +23,72 @@
 # =============================================================================
 
 
-from abc import ABC, abstractmethod
-from typing import Dict, Tuple
-
+from typing import Dict
 import gymnasium as gym
-import numpy as np
 import torch as th
 
-from rllte.common.preprocessing import process_action_space, process_observation_space
-from rllte.common.utils import TorchRunningMeanStd
+from base_reward import BaseReward
+from model import CnnObservationEncoder, MlpObservationEncoder
 
-class BaseReward(ABC):
-    """Base class of reward module.
+from rllte.common.preprocessing import is_image_space
+
+class RE3(BaseReward):
+    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
+        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
     Args:
-        observation_space (gym.Space): The observation space of environment.
-        action_space (gym.Space): The action space of environment.
+        observation_space (Space): The observation space of environment.
+        action_space (Space): The action space of environment.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         use_rms (bool): Use running mean and std for normalization.
+        latent_dim (int): The dimension of encoding vectors.
+        storage_size (int): The size of the storage for random embeddings.
+        n_envs (int): The number of parallel environments.
+        k (int): Use the k-th neighbors.
+        average_entropy (bool): Use the average of entropy estimation.
 
     Returns:
-        Instance of the base reward module.
+        Instance of RE3.
     """
 
     def __init__(
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
+        n_envs: int,
         device: str = "cpu",
         beta: float = 1.0,
-        kappa: float = 0.0,
-        use_rms: bool = True
-    ) -> None:
-        # get environment information
-        self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
-        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \
-            = process_action_space(action_space)
-
-        # set device and parameters
-        self.device = th.device(device)
-        self.beta = beta
-        self.kappa = kappa
-        self.use_rms = use_rms
-        self.global_step = 0
-
-        # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd()
-
-    @property
-    def weight(self) -> float:
-        """Get the weighting coefficient of the intrinsic rewards.
-        """
-        return self.beta * np.power(1.0 - self.kappa, self.global_step)
-    
-    def scale(self, rewards: th.Tensor) -> th.Tensor:
-        """Scale the intrinsic rewards.
-
-        Args:
-            rewards (th.Tensor): The intrinsic rewards with shape (n_steps, n_envs).
+        kappa: float = 1.0,
+        use_rms: bool = True,
+        latent_dim: int = 128,
+        storage_size: int = 10000,
+        k: int = 5,
+        average_entropy: bool = False
+        ) -> None:
+        super().__init__(observation_space, action_space, device, beta, kappa, use_rms)
         
-        Returns:
-            The scaled intrinsic rewards.
-        """
-        if self.use_rms:
-            return rewards / self.rms.std * self.weight
+        # build the storage for random embeddings
+        self.storage_size = storage_size // n_envs
+        self.storage = th.zeros(size=(self.storage_size, n_envs, latent_dim))
+        self.storage_idx = 0
+        self.storage_full = False
+        # set parameters
+        self.latent_dim = latent_dim
+        self.k = k
+        self.average_entropy = average_entropy
+        # build the random encoder and freeze the network parameters
+        if is_image_space(observation_space):
+            self.random_encoder = CnnObservationEncoder(obs_shape=self.obs_shape, 
+                                                        latent_dim=latent_dim).to(self.device)
         else:
-            return rewards * self.weight
+            self.random_encoder = MlpObservationEncoder(obs_shape=self.obs_shape,
+                                                        latent_dim=latent_dim).to(self.device)
+        for p in self.random_encoder.parameters():
+            p.requires_grad = False
     
-    @abstractmethod
-    def watch(self,
+    def watch(self, 
               observations: th.Tensor,
               actions: th.Tensor,
               rewards: th.Tensor,
@@ -114,8 +109,13 @@ class BaseReward(ABC):
         Returns:
             None.
         """
-    
-    @abstractmethod
+        with th.no_grad():
+            self.storage[self.storage_idx] = self.random_encoder(observations)
+            self.storage_idx = (self.storage_idx + 1) % self.storage_size
+
+        # update the storage status
+        self.storage_full = self.storage_full or self.storage_idx == 0
+
     def compute(self, samples: Dict) -> th.Tensor:
         """Compute the rewards for current samples.
 
@@ -129,9 +129,35 @@ class BaseReward(ABC):
         Returns:
             The intrinsic rewards.
         """
-        self.global_step += 1
+        super().compute(samples)
+        # get the number of steps and environments
+        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        (n_steps, n_envs) = samples.get("observations").size()[:2]
+        obs_tensor = samples.get("observations").to(self.device)
 
-    @abstractmethod
+        # compute the intrinsic rewards
+        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
+        with th.no_grad():
+            # get the target features
+            tgt_feats = self.storage[: self.storage_idx].view(-1, self.latent_dim) if not self.storage_full \
+                else self.storage.view(-1, self.latent_dim)
+            # get the source features
+            src_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
+            # compute the distance
+            dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2)
+            # compute the entropy with average estimation
+            if self.average_entropy:
+                for sub_k in range(self.k):
+                    intrinsic_rewards = th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
+                intrinsic_rewards /= self.k
+            else:
+                intrinsic_rewards = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
+            # reshape the intrinsic rewards
+            intrinsic_rewards = intrinsic_rewards.view(n_steps, n_envs)
+
+        # scale the intrinsic rewards
+        return self.scale(intrinsic_rewards)
+    
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
 
@@ -145,3 +171,4 @@ class BaseReward(ABC):
         Returns:
             None.
         """
+        raise NotImplementedError
