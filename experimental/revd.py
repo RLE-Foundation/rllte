@@ -23,65 +23,68 @@
 # =============================================================================
 
 
-
-from typing import Dict, Tuple
-
+from typing import Dict, List
 import gymnasium as gym
 import torch as th
-import torch.nn.functional as F
-from torch.utils.data import TensorDataset, DataLoader
 
 from base_reward import BaseReward
 from model import ObservationEncoder
 
-
-class RND(BaseReward):
-    """Exploration by Random Network Distillation (RND).
-        See paper: https://arxiv.org/pdf/1810.12894.pdf
+class REVD(BaseReward):
+    """Rewarding Episodic Visitation Discrepancy for Exploration in Reinforcement Learning (REVD).
+        See paper: https://openreview.net/pdf?id=V2pw1VYMrDo
 
     Args:
         observation_space (Space): The observation space of environment.
         action_space (Space): The action space of environment.
+        n_envs (int): The number of parallel environments.
+        episode_length (int): The maximum length of an episode.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         use_rms (bool): Use running mean and std for normalization.
         latent_dim (int): The dimension of encoding vectors.
-        n_envs (int): The number of parallel environments.
-        lr (float): The learning rate.
-        batch_size (int): The batch size for training.
+        alpha (alpha): The The order of Rényi entropy.
+        k (int): Use the k-th neighbors.
+        average_divergence (bool): Use the average of divergence estimation.
 
     Returns:
-        Instance of RND.
+        Instance of RISE.
     """
 
     def __init__(
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
+        n_envs: int,
+        episode_length: int,
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        latent_dim: int = 128,
-        lr: float = 0.001,
         use_rms: bool = True,
-        n_envs: int = 1,
-        batch_size: int = 64,
-    ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa)
+        latent_dim: int = 128,
+        alpha: float = 0.5,
+        k: int = 5,
+        average_divergence: bool = False
+        ) -> None:
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
-                                                   latent_dim=latent_dim).to(self.device)
-        self.target = ObservationEncoder(obs_shape=self.obs_shape,
-                                            latent_dim=latent_dim).to(self.device)            
-
-        # freeze the randomly initialized target network parameters
-        for p in self.target.parameters():
+        # build the storage for random embeddings
+        self.storage_size = episode_length
+        self.storage = th.zeros(size=(episode_length, n_envs, latent_dim))
+        # set parameters
+        self.latent_dim = latent_dim
+        self.alpha = alpha
+        self.k = k
+        self.average_divergence = average_divergence
+        # build the random encoder and freeze the network parameters
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim).to(self.device)
+        for p in self.random_encoder.parameters():
             p.requires_grad = False
-
-        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
-        self.batch_size = batch_size
-
+        
+        self.first_update = True
+        self.last_encoded_obs: List = list()
+    
     def watch(self, 
               observations: th.Tensor,
               actions: th.Tensor,
@@ -103,7 +106,7 @@ class RND(BaseReward):
         Returns:
             None.
         """
-        
+
     def compute(self, samples: Dict) -> th.Tensor:
         """Compute the rewards for current samples.
 
@@ -119,26 +122,50 @@ class RND(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
-        next_obs_tensor = samples.get("next_observations").to(self.device)
-        
+        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        (n_steps, n_envs) = samples.get("observations").size()[:2]
+        obs_tensor = samples.get("observations").to(self.device)
+
         # compute the intrinsic rewards
+        assert n_steps == self.storage_size, "REVD must be invoked after the episode is finished!"
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
+
+        # first update to fill in the storage
+        if self.first_update:
+            with th.no_grad():
+                for i in range(n_envs):
+                    self.storage_last[:, i] = self.random_encoder(obs_tensor[:, i])
+            self.first_update = False
+            return intrinsic_rewards
+        # REVD requires at least two episodes
         with th.no_grad():
-            # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
-            # compute the distance
-            dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-            intrinsic_rewards = dist.view(n_steps, n_envs)
-
-        # udpate the module
-        self.update(samples)
-
+            for i in range(n_envs):
+                # get the target features
+                tgt_feats = self.storage[:, i]
+                # get the source features
+                src_feats = self.random_encoder(obs_tensor[:, i])
+                # compute the intra and outer distances
+                dist_intra = th.linalg.vector_norm(src_feats.unsqueeze(1) - src_feats, ord=2, dim=2)
+                dist_outer = th.linalg.vector_norm(src_feats.unsqueeze(1) - tgt_feats, ord=2, dim=2)
+                # compute the divergence with average estimation
+                if self.average_divergence:
+                    for sub_k in range(self.k):
+                        # L = th.kthvalue(dist_intra, 2, dim=1).values.sum() / n_steps
+                        D_step_intra = th.kthvalue(dist_intra, sub_k + 1, dim=1).values
+                        D_step_outer = th.kthvalue(dist_outer, sub_k + 1, dim=1).values
+                        intrinsic_rewards[:, i] += th.pow(D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha)
+                else:
+                    D_step_intra = th.kthvalue(dist_intra, self.k + 1, dim=1).values
+                    D_step_outer = th.kthvalue(dist_outer, self.k + 1, dim=1).values
+                    # L = th.kthvalue(dist_intra, 2, dim=1).values.sum() / num_steps
+                    intrinsic_rewards[:, i] = th.pow(D_step_outer / (D_step_intra + 1e-11), 1.0 - self.alpha)
+                
+                # save the observations of the last episode
+                self.storage[:, i] = src_feats
+        
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
-
+    
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
 
@@ -152,19 +179,4 @@ class RND(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
-        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-
-        dataset = TensorDataset(obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
-
-        for _idx, batch_data in enumerate(loader):
-            obs = batch_data[0]
-            src_feats = self.predictor(obs)
-            with th.no_grad():
-                tgt_feats = self.target(obs)
-
-            self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
-            loss.backward()
-            self.opt.step()
+        raise NotImplementedError

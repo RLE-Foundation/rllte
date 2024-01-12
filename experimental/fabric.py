@@ -38,7 +38,7 @@ class Fabric(object):
         Instance of RE3.
     """
 
-    def __init__(self, *rewards) -> None:
+    def __init__(self, *rewards: BaseReward) -> None:
         for rwd in rewards:
             assert isinstance(rwd, BaseReward), "The input rewards must be the instance of BaseReward!"
         self.rewards = list(rewards)
