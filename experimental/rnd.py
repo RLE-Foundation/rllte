@@ -32,8 +32,8 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 
 from base_reward import BaseReward
-from model import CnnObservationEncoder, MlpObservationEncoder
-from rllte.common.preprocessing import is_image_space
+from model import ObservationEncoder
+
 
 class RND(BaseReward):
     """Exploration by Random Network Distillation (RND).
@@ -60,8 +60,8 @@ class RND(BaseReward):
         observation_space: gym.Space,
         action_space: gym.Space,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
+        beta: float = 1.0,
+        kappa: float = 0.0,
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
@@ -70,16 +70,10 @@ class RND(BaseReward):
     ) -> None:
         super().__init__(observation_space, action_space, device, beta, kappa)
         
-        if is_image_space(observation_space):
-            self.predictor = CnnObservationEncoder(obs_shape=self.obs_shape, 
-                                                        latent_dim=latent_dim).to(self.device)
-            self.target = CnnObservationEncoder(obs_shape=self.obs_shape,
-                                                        latent_dim=latent_dim).to(self.device)
-        else:
-            self.random_encoder = MlpObservationEncoder(obs_shape=self.obs_shape,
-                                                        latent_dim=latent_dim).to(self.device)
-            self.target = MlpObservationEncoder(obs_shape=self.obs_shape,
-                                                        latent_dim=latent_dim).to(self.device)            
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
+                                                   latent_dim=latent_dim).to(self.device)
+        self.target = ObservationEncoder(obs_shape=self.obs_shape,
+                                            latent_dim=latent_dim).to(self.device)            
 
         # freeze the randomly initialized target network parameters
         for p in self.target.parameters():
@@ -124,23 +118,27 @@ class RND(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        assert "next_observations" in samples.keys()
-        
+        # get the number of steps and environments
+        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         next_obs_tensor = samples.get("next_observations").to(self.device)
         
+        # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
-
         with th.no_grad():
+            # get source and target features
             src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
             tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
+            # compute the distance
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
+            # TODO: use min-max or rms normalization
             dist = (dist - dist.min()) / (dist.max() - dist.min() + 1e-11)
             intrinsic_rewards = dist.view(n_steps, n_envs)
 
         # udpate the module
         self.update(samples)
 
+        # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
     def update(self, samples: Dict) -> None:

@@ -23,81 +23,27 @@
 # =============================================================================
 
 
-from abc import ABC, abstractmethod
-from typing import Dict, Tuple
-
-import gymnasium as gym
-import numpy as np
+from typing import Dict, List
 import torch as th
 
-from rllte.common.preprocessing import process_action_space, process_observation_space
-from rllte.common.utils import TorchRunningMeanStd
+from base_reward import BaseReward
 
-class BaseReward(ABC):
-    """Base class of reward module.
+class Fabric(object):
+    """Connecting multiple intrinsic reward modules to generate mixed intrinsic rewards.
 
     Args:
-        observation_space (gym.Space): The observation space of environment.
-        action_space (gym.Space): The action space of environment.
-        n_envs (int): The number of parallel environments.
-        device (str): Device (cpu, cuda, ...) on which the code should be run.
-        beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
-        use_rms (bool): Use running mean and std for normalization.
+        rewards (BaseReward): A series of intrinsic reward modules.
 
     Returns:
-        Instance of the base reward module.
+        Instance of RE3.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        n_envs: int,
-        device: str = "cpu",
-        beta: float = 1.0,
-        kappa: float = 0.0,
-        use_rms: bool = True
-    ) -> None:
-        # get environment information
-        self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
-        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \
-            = process_action_space(action_space)
-        self.n_envs = n_envs
-
-        # set device and parameters
-        self.device = th.device(device)
-        self.beta = beta
-        self.kappa = kappa
-        self.use_rms = use_rms
-        self.global_step = 0
-
-        # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd() if self.use_rms else None
-
-    @property
-    def weight(self) -> float:
-        """Get the weighting coefficient of the intrinsic rewards.
-        """
-        return self.beta * np.power(1.0 - self.kappa, self.global_step)
+    def __init__(self, *rewards) -> None:
+        for rwd in rewards:
+            assert isinstance(rwd, BaseReward), "The input rewards must be the instance of BaseReward!"
+        self.rewards = list(rewards)
     
-    def scale(self, rewards: th.Tensor) -> th.Tensor:
-        """Scale the intrinsic rewards.
-
-        Args:
-            rewards (th.Tensor): The intrinsic rewards with shape (n_steps, n_envs).
-        
-        Returns:
-            The scaled intrinsic rewards.
-        """
-        if self.use_rms:
-            self.rms.update(rewards)
-            return rewards / self.rms.std * self.weight
-        else:
-            return rewards * self.weight
-    
-    @abstractmethod
-    def watch(self,
+    def watch(self, 
               observations: th.Tensor,
               actions: th.Tensor,
               rewards: th.Tensor,
@@ -118,9 +64,10 @@ class BaseReward(ABC):
         Returns:
             None.
         """
-    
-    @abstractmethod
-    def compute(self, samples: Dict) -> th.Tensor:
+        for rwd in self.rewards:
+            rwd.watch(observations, actions, rewards, terminateds, truncateds, next_observations)
+
+    def compute(self, samples: Dict) -> List[th.Tensor]:
         """Compute the rewards for current samples.
 
         Args:
@@ -133,9 +80,13 @@ class BaseReward(ABC):
         Returns:
             The intrinsic rewards.
         """
-        self.global_step += 1
-
-    @abstractmethod
+        intrinsic_rewards = []
+        for rwd in self.rewards:
+            rwd.compute(samples)
+            intrinsic_rewards.append(rwd.rewards)
+        
+        return intrinsic_rewards
+    
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
 
@@ -149,3 +100,5 @@ class BaseReward(ABC):
         Returns:
             None.
         """
+        for rwd in self.rewards:
+            rwd.update(samples)

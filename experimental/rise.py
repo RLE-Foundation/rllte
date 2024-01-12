@@ -30,9 +30,9 @@ import torch as th
 from base_reward import BaseReward
 from model import ObservationEncoder
 
-class RE3(BaseReward):
-    """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
-        See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
+class RISE(BaseReward):
+    """Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning (RISE).
+        See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
 
     Args:
         observation_space (Space): The observation space of environment.
@@ -44,11 +44,12 @@ class RE3(BaseReward):
         use_rms (bool): Use running mean and std for normalization.
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.
+        alpha (alpha): The The order of Rényi entropy.
         k (int): Use the k-th neighbors.
         average_entropy (bool): Use the average of entropy estimation.
 
     Returns:
-        Instance of RE3.
+        Instance of RISE.
     """
 
     def __init__(
@@ -62,6 +63,7 @@ class RE3(BaseReward):
         use_rms: bool = True,
         latent_dim: int = 128,
         storage_size: int = 1000,
+        alpha: float = 0.5,
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
@@ -74,6 +76,7 @@ class RE3(BaseReward):
         self.storage_full = False
         # set parameters
         self.latent_dim = latent_dim
+        self.alpha = alpha
         self.k = k
         self.average_entropy = average_entropy
         # build the random encoder and freeze the network parameters
@@ -141,10 +144,10 @@ class RE3(BaseReward):
                 # compute the entropy with average estimation
                 if self.average_entropy:
                     for sub_k in range(self.k):
-                        intrinsic_rewards[:, i] += th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
+                        intrinsic_rewards[:, i] += th.pow(th.kthvalue(dist, sub_k + 1, dim=1).values, 1.0 - self.alpha)
                     intrinsic_rewards[:, i] /= self.k
                 else:
-                    intrinsic_rewards[:, i] = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
+                    intrinsic_rewards[:, i] = th.pow(th.kthvalue(dist, self.k + 1, dim=1).values, 1.0 - self.alpha)
         
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
