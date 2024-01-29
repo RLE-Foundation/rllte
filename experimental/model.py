@@ -93,8 +93,7 @@ class InverseDynamicsEncoder(nn.Module):
         super().__init__()
 
         self.encoder = ObservationEncoder(obs_shape, latent_dim)
-        # TODO: output actions
-        self.policy = nn.Linear(latent_dim * 2, action_dim)
+        self.policy = InverseDynamicsModel(latent_dim, action_dim)
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         """Forward function for outputing predicted actions.
@@ -106,10 +105,10 @@ class InverseDynamicsEncoder(nn.Module):
         Returns:
             Predicted actions.
         """
-        h = F.relu(self.encoder(obs))
-        next_h = F.relu(self.encoder(next_obs))
+        h = self.encoder(obs)
+        next_h = self.encoder(next_obs)
 
-        actions = self.policy(th.cat([h, next_h], dim=1))
+        actions = self.policy(h, next_h)
         return actions
 
     def encode(self, obs: th.Tensor) -> th.Tensor:
@@ -122,3 +121,60 @@ class InverseDynamicsEncoder(nn.Module):
             Encoding tensors.
         """
         return F.relu(self.encoder(obs))
+    
+
+class InverseDynamicsModel(nn.Module):
+    """Inverse model for reconstructing transition process.
+
+    Args:
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
+
+    Returns:
+        Model instance.
+    """
+
+    def __init__(self, latent_dim, action_dim) -> None:
+        super().__init__()
+
+        self.trunk = ObservationEncoder(obs_shape=(latent_dim * 2,), latent_dim=action_dim)
+
+    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted actions.
+
+        Args:
+            obs (th.Tensor): Current observations.
+            next_obs (th.Tensor): Next observations.
+
+        Returns:
+            Predicted actions.
+        """
+        return self.trunk(th.cat([obs, next_obs], dim=1))
+
+class ForwardDynamicsModel(nn.Module):
+    """Forward model for reconstructing transition process.
+
+    Args:
+        latent_dim (int): The dimension of encoding vectors of the observations.
+        action_dim (int): The dimension of predicted actions.
+
+    Returns:
+        Model instance.
+    """
+
+    def __init__(self, latent_dim, action_dim) -> None:
+        super().__init__()
+
+        self.trunk = ObservationEncoder(obs_shape=(latent_dim + action_dim,), latent_dim=latent_dim)
+
+    def forward(self, obs: th.Tensor, pred_actions: th.Tensor) -> th.Tensor:
+        """Forward function for outputing predicted next-obs.
+
+        Args:
+            obs (th.Tensor): Current observations.
+            pred_actions (th.Tensor): Predicted observations.
+
+        Returns:
+            Predicted next-obs.
+        """
+        return self.trunk(th.cat([obs, pred_actions], dim=1))

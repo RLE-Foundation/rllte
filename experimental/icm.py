@@ -28,16 +28,17 @@ from typing import Dict, Tuple
 
 import gymnasium as gym
 import torch as th
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 
 from base_reward import BaseReward
-from model import ObservationEncoder
+from model import ObservationEncoder, InverseDynamicsModel, ForwardDynamicsModel
 
 
-class RND(BaseReward):
-    """Exploration by Random Network Distillation (RND).
-        See paper: https://arxiv.org/pdf/1810.12894.pdf
+class ICM(BaseReward):
+    """Curiosity-driven Exploration by Self-supervised Prediction.
+        See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
 
     Args:
         observation_space (Space): The observation space of environment.
@@ -52,7 +53,7 @@ class RND(BaseReward):
         batch_size (int): The batch size for training.
 
     Returns:
-        Instance of RND.
+        Instance of ICM.
     """
 
     def __init__(
@@ -70,16 +71,25 @@ class RND(BaseReward):
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa)
         
-        self.predictor = ObservationEncoder(obs_shape=self.obs_shape,
+        self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
-        self.target = ObservationEncoder(obs_shape=self.obs_shape,
-                                            latent_dim=latent_dim).to(self.device)            
+        
+        self.im = InverseDynamicsModel(latent_dim=latent_dim,
+                                                    action_dim=self.policy_action_dim).to(self.device)
+        
+        self.fm = ForwardDynamicsModel(latent_dim=latent_dim,
+                                                    action_dim=self.policy_action_dim).to(self.device)
+        
+        if self.action_type == "Discrete":
+            self.im_loss = nn.CrossEntropyLoss()
+        else:
+            self.im_loss = nn.MSELoss()
+                                                   
 
-        # freeze the randomly initialized target network parameters
-        for p in self.target.parameters():
-            p.requires_grad = False
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
+        self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
 
-        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
         self.batch_size = batch_size
 
     def watch(self, 
@@ -119,19 +129,28 @@ class RND(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
+        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
         assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
+        
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        obs_tensor = samples.get("observations").to(self.device)
+        actions_tensor = samples.get("actions").to(self.device)
         next_obs_tensor = samples.get("next_observations").to(self.device)
+
+        if self.action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
         
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
-            # compute the distance
-            dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-            intrinsic_rewards = dist.view(n_steps, n_envs)
+            for i in range(self.n_envs):
+                encoded_obs = self.encoder(obs_tensor[:, i])
+                encoded_next_obs = self.encoder(next_obs_tensor[:, i])
+                pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
+                dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
+                intrinsic_rewards[:, i] = dist.cpu()
+
 
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
@@ -150,18 +169,40 @@ class RND(BaseReward):
             None.
         """
         assert "observations" in samples.keys()
-        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        assert "next_observations" in samples.keys()
+        assert "actions" in samples.keys()
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
 
-        dataset = TensorDataset(obs_tensor)
+        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+        next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+        if self.action_type == "Discrete":
+            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+        else:
+            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
         for _idx, batch_data in enumerate(loader):
-            obs = batch_data[0]
-            src_feats = self.predictor(obs)
-            with th.no_grad():
-                tgt_feats = self.target(obs)
+            obs, actions, next_obs = batch_data
+            obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
 
-            self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
-            loss.backward()
-            self.opt.step()
+            self.encoder_opt.zero_grad()
+            self.im_opt.zero_grad()
+            self.fm_opt.zero_grad()
+
+            encoded_obs = self.encoder(obs)
+            encoded_next_obs = self.encoder(next_obs)
+
+            pred_actions = self.im(encoded_obs, encoded_next_obs)
+            im_loss = self.im_loss(pred_actions, actions)
+            pred_next_obs = self.fm(encoded_obs, actions)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            (im_loss + fm_loss).backward()
+
+            self.encoder_opt.step()
+            self.im_opt.step()
+            self.fm_opt.step()
