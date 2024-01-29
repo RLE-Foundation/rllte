@@ -46,18 +46,16 @@ class ObservationEncoder(nn.Module):
         # visual
         if len(obs_shape) == 3:
             self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
+                nn.Conv2d(obs_shape[0], 32, 8, stride=4),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, 4, stride=2),
+                nn.ReLU(),
+                nn.Conv2d(64, 32, 3, stride=1),
+                nn.ReLU(),
                 nn.Flatten(),
             )
             with th.no_grad():
-                sample = th.ones(size=tuple(obs_shape))
+                sample = th.ones(size=tuple(obs_shape)).float()
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
             self.trunk.append(nn.Linear(n_flatten, latent_dim))
