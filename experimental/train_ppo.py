@@ -1,6 +1,6 @@
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
-from experimental.re3 import RE3
+from experimental.rnd import RND
 
 if __name__ == "__main__":
     # env setup
@@ -21,10 +21,14 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    re3 = RE3(observation_space=env.observation_space,
-              action_space=env.action_space,
-              device=device)
+    rnd = RND(
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        device=device,
+        n_envs=num_envs
+    )
+
     # set the reward module
-    agent.set(reward=re3)
+    agent.set(reward=rnd)
     # start training
     agent.train(num_train_steps=5000)
