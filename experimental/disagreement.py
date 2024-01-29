@@ -32,12 +32,12 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 
 from base_reward import BaseReward
-from model import ObservationEncoder
+from model import ObservationEncoder, ForwardDynamicsModel
 
 
-class RND(BaseReward):
-    """Exploration by Random Network Distillation (RND).
-        See paper: https://arxiv.org/pdf/1810.12894.pdf
+class Disagreement(BaseReward):
+    """Self-Supervised Exploration via Disagreement
+        See paper: https://arxiv.org/pdf/1906.04161.pdf
 
     Args:
         observation_space (Space): The observation space of environment.
@@ -52,7 +52,7 @@ class RND(BaseReward):
         batch_size (int): The batch size for training.
 
     Returns:
-        Instance of RND.
+        Instance of Disagreement.
     """
 
     def __init__(
@@ -67,19 +67,27 @@ class RND(BaseReward):
         use_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
+        ensemble_size: int = 5
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
-        self.predictor = ObservationEncoder(obs_shape=self.obs_shape,
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
-        self.target = ObservationEncoder(obs_shape=self.obs_shape,
-                                            latent_dim=latent_dim).to(self.device)            
 
         # freeze the randomly initialized target network parameters
-        for p in self.target.parameters():
+        for p in self.random_encoder.parameters():
             p.requires_grad = False
 
-        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
+        self.ensemble_size = ensemble_size
+        self.ensemble = [
+            ForwardDynamicsModel(latent_dim=latent_dim,
+                                    action_dim=self.policy_action_dim).to(self.device)
+            for _ in range(self.ensemble_size)
+        ]        
+        self.opt = [
+            th.optim.Adam(self.ensemble[i].parameters(), lr=lr)
+            for i in range(self.ensemble_size)
+        ]
         self.batch_size = batch_size
 
     def watch(self, 
@@ -118,23 +126,31 @@ class RND(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        # get the number of steps and environments
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
-        next_obs_tensor = samples.get("next_observations").to(self.device)
         
-        # compute the intrinsic rewards
-        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
-        with th.no_grad():
-            # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
-            # compute the distance
-            dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-            intrinsic_rewards = dist.view(n_steps, n_envs)
+        # get the number of steps and environments
+        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
+        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
+        (n_steps, n_envs) = samples.get("observations").size()[:2]
 
-        # scale the intrinsic rewards
+        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+
+        if self.action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+
+        # compute the intrinsic rewards
+        with th.no_grad():
+            random_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
+            preds = []
+            for i in range(self.ensemble_size):
+                next_obs_hat = self.ensemble[i](random_feats, actions_tensor)
+                preds.append(next_obs_hat)
+            preds = th.stack(preds, dim=0)
+            intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
+
         return self.scale(intrinsic_rewards)
+
 
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
@@ -150,18 +166,37 @@ class RND(BaseReward):
             None.
         """
         assert "observations" in samples.keys()
+        assert "next_observations" in samples.keys()
+        assert "actions" in samples.keys()
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+        next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
 
-        dataset = TensorDataset(obs_tensor)
+        if self.action_type == "Discrete":
+            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+        else:
+            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
-
+        
         for _idx, batch_data in enumerate(loader):
-            obs = batch_data[0]
-            src_feats = self.predictor(obs)
-            with th.no_grad():
-                tgt_feats = self.target(obs)
+            ensemble_idx = _idx % self.ensemble_size
 
-            self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
-            loss.backward()
-            self.opt.step()
+            obs, actions, next_obs = batch_data
+            obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
+
+            self.opt[ensemble_idx].zero_grad()
+            
+            with th.no_grad():
+                encoded_obs = self.random_encoder(obs)
+                encoded_next_obs = self.random_encoder(next_obs)
+            
+            pred_next_obs = self.ensemble[ensemble_idx](encoded_obs, actions)
+
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss.backward()
+            self.opt[ensemble_idx].step()

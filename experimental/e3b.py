@@ -140,14 +140,14 @@ class E3B(BaseReward):
         terminateds_tensor = samples.get("terminateds").to(self.device)
         truncateds_tensor = samples.get("truncateds").to(self.device)
         
-        self.intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
+        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
             for j in range(n_steps):
                 h = self.encoder(obs_tensor[j])
                 for env_idx in range(n_envs):
                     u = th.mv(self.cov_inverse[env_idx], h[env_idx])
                     b = th.dot(h[env_idx], u).item()
-                    self.intrinsic_rewards[j, env_idx] = b
+                    intrinsic_rewards[j, env_idx] = b
 
                     th.outer(u, u, out=self.outer_product_buffer[env_idx])
                     th.add(self.cov_inverse[env_idx], self.outer_product_buffer[env_idx], alpha=-(1./(1. + b)), out=self.cov_inverse[env_idx])
@@ -155,7 +155,7 @@ class E3B(BaseReward):
                     if terminateds_tensor[j, env_idx] or truncateds_tensor[j, env_idx]:
                         self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
 
-        return self.scale(self.intrinsic_rewards)
+        return self.scale(intrinsic_rewards)
 
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.

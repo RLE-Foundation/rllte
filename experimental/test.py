@@ -6,11 +6,12 @@ from rnd import RND
 from icm import ICM
 from ride import RIDE
 from e3b import E3B
+from disagreement import Disagreement
 from IPython import embed
 
 device = th.device("cuda:0")
 envs = make_atari_env(device=device)
-rnd = E3B(
+rnd = Disagreement(
     observation_space=envs.observation_space,
     action_space=envs.action_space,
     device=device, n_envs=8
@@ -26,11 +27,12 @@ for i in range(10):
         obs = next_obs
 
 obs = th.randn(128, 8, 4, 84, 84)
+next_obs = th.randn(128, 8, 4, 84, 84)
 actions_tensor = th.randint(0, 2, (128, 8))
 samples = {
     "observations": obs,
     "actions": actions_tensor,
-    "next_observations": obs,
+    "next_observations": next_obs,
     "terminateds": th.zeros_like(actions_tensor),
     "truncateds": th.zeros_like(actions_tensor),
 }
