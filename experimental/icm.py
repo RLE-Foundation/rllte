@@ -69,7 +69,7 @@ class ICM(BaseReward):
         n_envs: int = 1,
         batch_size: int = 64,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)

@@ -79,7 +79,7 @@ class RIDE(BaseReward):
         c: float = 0.1,
         sm: float = 0.1,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)

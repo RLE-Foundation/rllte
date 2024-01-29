@@ -53,7 +53,7 @@ class E3B(BaseReward):
         batch_size (int): The batch size for training.
 
     Returns:
-        Instance of RND.
+        Instance of E3B.
     """
 
     def __init__(
@@ -70,7 +70,7 @@ class E3B(BaseReward):
         batch_size: int = 64,
         ridge: float = 0.1,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
