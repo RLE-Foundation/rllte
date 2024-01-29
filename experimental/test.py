@@ -4,11 +4,11 @@ from rllte.env import make_atari_env
 import torch as th
 from rnd import RND
 from icm import ICM
-from IPython import embed
+from ride import RIDE
 
 device = th.device("cuda:0")
 envs = make_atari_env(device=device)
-rnd = ICM(
+rnd = RIDE(
     observation_space=envs.observation_space,
     action_space=envs.action_space,
     device=device, n_envs=8

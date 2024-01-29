@@ -75,6 +75,8 @@ class ObservationEncoder(nn.Module):
         Returns:
             Encoding tensors.
         """
+        if len(obs.shape) > 2:
+            obs = obs / 255.0
         return self.trunk(obs)
     
 class InverseDynamicsEncoder(nn.Module):
@@ -120,7 +122,7 @@ class InverseDynamicsEncoder(nn.Module):
         Returns:
             Encoding tensors.
         """
-        return F.relu(self.encoder(obs))
+        return self.encoder(obs)
     
 
 class InverseDynamicsModel(nn.Module):
