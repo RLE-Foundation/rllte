@@ -1,7 +1,7 @@
 # =============================================================================
 # MIT License
 
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+# Copyright (c) 2024 Reinforcement Learning Evolution Foundation
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,94 +27,122 @@ from abc import ABC, abstractmethod
 from typing import Dict, Tuple
 
 import gymnasium as gym
+import numpy as np
 import torch as th
 
 from rllte.common.preprocessing import process_action_space, process_observation_space
+from rllte.common.utils import TorchRunningMeanStd
 
-
-class BaseIntrinsicRewardModule(ABC):
-    """Base class of intrinsic reward module.
+class BaseReward(ABC):
+    """Base class of reward module.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
         action_space (gym.Space): The action space of environment.
+        n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
+        use_rms (bool): Use running mean and std for normalization.
 
     Returns:
-        Instance of the base intrinsic reward module.
+        Instance of the base reward module.
     """
 
     def __init__(
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
+        n_envs: int,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
+        beta: float = 1.0,
+        kappa: float = 0.0,
+        use_rms: bool = True
     ) -> None:
         # get environment information
-        self._obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
-        assert isinstance(self._obs_shape, tuple), "RLLTE currently doesn't support `Dict` observation space!"
-        self._action_shape, self._action_dim, self._policy_action_dim, self._action_type = process_action_space(action_space)
-        # TODO: revise the action dim
-        if self._action_type != "MultiDiscrete":
-            self._action_dim = self._policy_action_dim
+        self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \
+            = process_action_space(action_space)
+        self.n_envs = n_envs
 
-        self._device = th.device(device)
-        self._beta = beta
-        self._kappa = kappa
+        # set device and parameters
+        self.device = th.device(device)
+        self.beta = beta
+        self.kappa = kappa
+        self.use_rms = use_rms
+        self.global_step = 0
 
-    @abstractmethod
-    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
-        """Compute the intrinsic rewards for current samples.
+        # build the running mean and std for normalization
+        self.rms = TorchRunningMeanStd() if self.use_rms else None
+
+    @property
+    def weight(self) -> float:
+        """Get the weighting coefficient of the intrinsic rewards.
+        """
+        return self.beta * np.power(1.0 - self.kappa, self.global_step)
+    
+    def scale(self, rewards: th.Tensor) -> th.Tensor:
+        """Scale the intrinsic rewards.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-            step (int): The global training step.
+            rewards (th.Tensor): The intrinsic rewards with shape (n_steps, n_envs).
+        
+        Returns:
+            The scaled intrinsic rewards.
+        """
+        if self.use_rms:
+            self.rms.update(rewards)
+            return rewards / self.rms.std * self.weight
+        else:
+            return rewards * self.weight
+    
+    @abstractmethod
+    def watch(self,
+              observations: th.Tensor,
+              actions: th.Tensor,
+              rewards: th.Tensor,
+              terminateds: th.Tensor,
+              truncateds: th.Tensor,
+              next_observations: th.Tensor
+              ) -> None:
+        """Watch the interaction processes and obtain necessary elements for reward computation.
+
+        Args:
+            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
+            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
+            rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
+            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+
+        Returns:
+            None.
+        """
+    
+    @abstractmethod
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+        """Compute the rewards for current samples.
+
+        Args:
+            samples (Dict): The collected samples. A python dict consists of multiple tensors, whose keys are
+            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. 
+            The data shape of each tensor is consistent with the `watch` function.
 
         Returns:
             The intrinsic rewards.
         """
+        for key in ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations']:
+            assert key in samples.keys(), f"Key {key} is not in samples."
+        self.global_step += 1
 
     @abstractmethod
-    def update(
-        self,
-        samples: Dict,
-    ) -> None:
-        """Update the intrinsic reward module if necessary.
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
+        """Update the reward module if necessary.
 
         Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict): The collected samples same as the `compute` function.
+                The `update` function will be invoked after the `compute` function.
 
         Returns:
-            None
-        """
-
-    @abstractmethod
-    def add(
-        self,
-        samples: Dict,
-    ) -> None:
-        """Add the samples to the intrinsic reward module if necessary.
-            User for modules like `RE3` that have a storage component.
-
-        Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-
-        Returns:
-            None
+            None.
         """

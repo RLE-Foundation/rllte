@@ -177,4 +177,5 @@ class ForwardDynamicsModel(nn.Module):
         Returns:
             Predicted next-obs.
         """
+        print(obs.shape, pred_actions.shape)
         return self.trunk(th.cat([obs, pred_actions], dim=1))

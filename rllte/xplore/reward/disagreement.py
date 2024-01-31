@@ -23,67 +23,73 @@
 # =============================================================================
 
 
-from typing import Dict
+
+from typing import Dict, Tuple
+
 import gymnasium as gym
 import torch as th
+import torch.nn.functional as F
+from torch.utils.data import TensorDataset, DataLoader
 
-from base_reward import BaseReward
-from model import ObservationEncoder
+from rllte.common.prototype import BaseReward
+from .model import ObservationEncoder, ForwardDynamicsModel
 
-class RISE(BaseReward):
-    """Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning (RISE).
-        See paper: https://ieeexplore.ieee.org/abstract/document/9802917/
+
+class Disagreement(BaseReward):
+    """Self-Supervised Exploration via Disagreement
+        See paper: https://arxiv.org/pdf/1906.04161.pdf
 
     Args:
         observation_space (Space): The observation space of environment.
         action_space (Space): The action space of environment.
-        n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         use_rms (bool): Use running mean and std for normalization.
         latent_dim (int): The dimension of encoding vectors.
-        storage_size (int): The size of the storage for random embeddings.
-        alpha (alpha): The The order of Rényi entropy.
-        k (int): Use the k-th neighbors.
-        average_entropy (bool): Use the average of entropy estimation.
+        n_envs (int): The number of parallel environments.
+        lr (float): The learning rate.
+        batch_size (int): The batch size for training.
 
     Returns:
-        Instance of RISE.
+        Instance of Disagreement.
     """
 
     def __init__(
         self,
         observation_space: gym.Space,
         action_space: gym.Space,
-        n_envs: int,
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True,
         latent_dim: int = 128,
-        storage_size: int = 1000,
-        alpha: float = 0.5,
-        k: int = 5,
-        average_entropy: bool = False
-        ) -> None:
+        lr: float = 0.001,
+        use_rms: bool = True,
+        n_envs: int = 1,
+        batch_size: int = 64,
+        ensemble_size: int = 5
+    ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
-        # build the storage for random embeddings
-        self.storage_size = storage_size
-        self.storage = th.zeros(size=(storage_size, n_envs, latent_dim))
-        self.storage_idx = 0
-        self.storage_full = False
-        # set parameters
-        self.latent_dim = latent_dim
-        self.alpha = alpha
-        self.k = k
-        self.average_entropy = average_entropy
-        # build the random encoder and freeze the network parameters
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim).to(self.device)
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
+                                                   latent_dim=latent_dim).to(self.device)
+
+        # freeze the randomly initialized target network parameters
         for p in self.random_encoder.parameters():
             p.requires_grad = False
-    
+
+        self.ensemble_size = ensemble_size
+        self.ensemble = [
+            ForwardDynamicsModel(latent_dim=latent_dim,
+                                    action_dim=self.policy_action_dim).to(self.device)
+            for _ in range(self.ensemble_size)
+        ]        
+        self.opt = [
+            th.optim.Adam(self.ensemble[i].parameters(), lr=lr)
+            for i in range(self.ensemble_size)
+        ]
+        self.batch_size = batch_size
+
     def watch(self, 
               observations: th.Tensor,
               actions: th.Tensor,
@@ -105,13 +111,7 @@ class RISE(BaseReward):
         Returns:
             None.
         """
-        with th.no_grad():
-            self.storage[self.storage_idx] = self.random_encoder(observations)
-            self.storage_idx = (self.storage_idx + 1) % self.storage_size
-
-        # update the storage status
-        self.storage_full = self.storage_full or self.storage_idx == 0
-
+        
     def compute(self, samples: Dict) -> th.Tensor:
         """Compute the rewards for current samples.
 
@@ -126,32 +126,32 @@ class RISE(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
+        
         # get the number of steps and environments
         assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
+        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("observations").size()[:2]
-        obs_tensor = samples.get("observations").to(self.device)
+
+        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+
+        if self.action_type == "Discrete":
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
 
         # compute the intrinsic rewards
-        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            for i in range(n_envs):
-                # get the target features
-                tgt_feats = self.storage[:self.storage_idx, i] if not self.storage_full else self.storage[:, i]
-                # get the source features
-                src_feats = self.random_encoder(obs_tensor[:, i])
-                # compute the distance
-                dist = th.linalg.vector_norm(src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2)
-                # compute the entropy with average estimation
-                if self.average_entropy:
-                    for sub_k in range(self.k):
-                        intrinsic_rewards[:, i] += th.pow(th.kthvalue(dist, sub_k + 1, dim=1).values, 1.0 - self.alpha)
-                    intrinsic_rewards[:, i] /= self.k
-                else:
-                    intrinsic_rewards[:, i] = th.pow(th.kthvalue(dist, self.k + 1, dim=1).values, 1.0 - self.alpha)
-        
-        # scale the intrinsic rewards
+            random_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
+            preds = []
+            for i in range(self.ensemble_size):
+                next_obs_hat = self.ensemble[i](random_feats, actions_tensor)
+                preds.append(next_obs_hat)
+            preds = th.stack(preds, dim=0)
+            intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
+
         return self.scale(intrinsic_rewards)
-    
+
+
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
 
@@ -165,4 +165,38 @@ class RISE(BaseReward):
         Returns:
             None.
         """
-        raise NotImplementedError
+        assert "observations" in samples.keys()
+        assert "next_observations" in samples.keys()
+        assert "actions" in samples.keys()
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+
+        obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+        next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+        if self.action_type == "Discrete":
+            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+        else:
+            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        for _idx, batch_data in enumerate(loader):
+            ensemble_idx = _idx % self.ensemble_size
+
+            obs, actions, next_obs = batch_data
+            obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
+
+            self.opt[ensemble_idx].zero_grad()
+            
+            with th.no_grad():
+                encoded_obs = self.random_encoder(obs)
+                encoded_next_obs = self.random_encoder(next_obs)
+            
+            pred_next_obs = self.ensemble[ensemble_idx](encoded_obs, actions)
+
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss.backward()
+            self.opt[ensemble_idx].step()

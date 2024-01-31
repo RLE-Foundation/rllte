@@ -26,7 +26,7 @@
 from typing import Dict, List
 import torch as th
 
-from base_reward import BaseReward
+from rllte.common.prototype import BaseReward
 
 class Fabric(object):
     """Connecting multiple intrinsic reward modules to generate mixed intrinsic rewards.

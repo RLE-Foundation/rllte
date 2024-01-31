@@ -41,8 +41,7 @@ from rllte.common.prototype.base_augmentation import BaseAugmentation as Augment
 from rllte.common.prototype.base_distribution import BaseDistribution as Distribution
 from rllte.common.prototype.base_encoder import BaseEncoder as Encoder
 from rllte.common.prototype.base_policy import BasePolicy as Policy
-#from rllte.common.prototype.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
-from experimental.base_reward import BaseReward as IntrinsicRewardModule
+from rllte.common.prototype.base_reward import BaseReward as Reward
 from rllte.common.prototype.base_storage import BaseStorage as Storage
 from rllte.common.timer import Timer
 from rllte.common.type_alias import VecEnv
@@ -139,7 +138,7 @@ class BaseAgent(ABC):
         self.storage: Optional[Storage] = None
         self.dist: Optional[Distribution] = None
         self.aug: Optional[Augmentation] = None
-        self.irs: Optional[IntrinsicRewardModule] = None
+        self.irs: Optional[Reward] = None
         self.attr_names = ("encoder", "policy", "storage", "dist", "aug", "irs")
         self.module_names = {key: None for key in self.attr_names}
 
@@ -203,7 +202,7 @@ class BaseAgent(ABC):
         storage: Optional[Storage] = None,
         distribution: Optional[Distribution] = None,
         augmentation: Optional[Augmentation] = None,
-        reward: Optional[IntrinsicRewardModule] = None,
+        reward: Optional[Reward] = None,
     ) -> None:
         """Set a module for the agent.
 
@@ -215,14 +214,14 @@ class BaseAgent(ABC):
                 or a custom distribution.
             augmentation (Optional[Augmentation]): An augmentation of `rllte.xplore.augmentation`
                 or a custom augmentation.
-            reward (Optional[IntrinsicRewardModule]): A reward of `rllte.xplore.reward` or a custom reward.
+            reward (Optional[Reward]): A reward of `rllte.xplore.reward` or a custom reward.
 
         Returns:
             None.
         """
         args = [encoder, policy, storage, distribution, augmentation, reward]
         arg_names = ("encoder", "policy", "storage", "distribution", "augmentation", "reward")
-        types = (Encoder, Policy, Storage, Distribution, Augmentation, IntrinsicRewardModule)
+        types = (Encoder, Policy, Storage, Distribution, Augmentation, Reward)
 
         for i in range(len(args)):
             if args[i] is not None:

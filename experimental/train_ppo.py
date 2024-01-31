@@ -1,10 +1,13 @@
+import sys
+sys.path.append("../")
+
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
-from experimental.rnd import RND
+from rllte.xplore.reward import ICM
 
 if __name__ == "__main__":
     # env setup
-    device = "cuda:0"
+    device = "cuda:1"
     num_envs = 8
     env = make_envpool_atari_env(
         device=device,
@@ -21,7 +24,7 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    rnd = RND(
+    rnd = ICM(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=device,
@@ -31,4 +34,4 @@ if __name__ == "__main__":
     # set the reward module
     agent.set(reward=rnd)
     # start training
-    agent.train(num_train_steps=5000)
+    agent.train(num_train_steps=50000)

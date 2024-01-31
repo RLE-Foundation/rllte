@@ -28,16 +28,17 @@ from typing import Dict, Tuple
 
 import gymnasium as gym
 import torch as th
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 
-from base_reward import BaseReward
-from model import ObservationEncoder
+from rllte.common.prototype import BaseReward
+from .model import ObservationEncoder, InverseDynamicsModel
 
 
-class RND(BaseReward):
-    """Exploration by Random Network Distillation (RND).
-        See paper: https://arxiv.org/pdf/1810.12894.pdf
+class E3B(BaseReward):
+    """Exploration via Elliptical Episodic Bonuses (E3B).
+        See paper: https://proceedings.neurips.cc/paper_files/paper/2022/file/f4f79698d48bdc1a6dec20583724182b-Paper-Conference.pdf
 
     Args:
         observation_space (Space): The observation space of environment.
@@ -52,7 +53,7 @@ class RND(BaseReward):
         batch_size (int): The batch size for training.
 
     Returns:
-        Instance of RND.
+        Instance of E3B.
     """
 
     def __init__(
@@ -67,20 +68,31 @@ class RND(BaseReward):
         use_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
+        ridge: float = 0.1,
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
         
-        self.predictor = ObservationEncoder(obs_shape=self.obs_shape,
+        self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
-        self.target = ObservationEncoder(obs_shape=self.obs_shape,
-                                            latent_dim=latent_dim).to(self.device)            
+        
+        self.im = InverseDynamicsModel(latent_dim=latent_dim,
+                                                    action_dim=self.policy_action_dim).to(self.device)
 
-        # freeze the randomly initialized target network parameters
-        for p in self.target.parameters():
-            p.requires_grad = False
+        if self.action_type == "Discrete":
+            self.im_loss = nn.CrossEntropyLoss()
+        else:
+            self.im_loss = nn.MSELoss()
 
-        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
+        self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
+        self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
+        
         self.batch_size = batch_size
+        self.ridge = ridge
+        
+        self.cov_inverse = (th.eye(latent_dim) * (1.0 / ridge)).to(self.device)
+        self.outer_product_buffer = th.empty(latent_dim, latent_dim).to(self.device)
+        self.cov_inverse = self.cov_inverse.repeat(n_envs, 1, 1)
+        self.outer_product_buffer = self.outer_product_buffer.repeat(n_envs, 1, 1)
 
     def watch(self, 
               observations: th.Tensor,
@@ -103,7 +115,7 @@ class RND(BaseReward):
         Returns:
             None.
         """
-        
+
     def compute(self, samples: Dict) -> th.Tensor:
         """Compute the rewards for current samples.
 
@@ -118,22 +130,31 @@ class RND(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        # get the number of steps and environments
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
-        next_obs_tensor = samples.get("next_observations").to(self.device)
         
-        # compute the intrinsic rewards
+        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
+        assert "terminateds" in samples.keys(), "The key `terminateds` must be contained in samples!"
+        assert "truncateds" in samples.keys(), "The key `truncateds` must be contained in samples!"
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        
+        obs_tensor = samples.get("observations").to(self.device)
+        terminateds_tensor = samples.get("terminateds").to(self.device)
+        truncateds_tensor = samples.get("truncateds").to(self.device)
+        
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
-            # compute the distance
-            dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-            intrinsic_rewards = dist.view(n_steps, n_envs)
+            for j in range(n_steps):
+                h = self.encoder(obs_tensor[j])
+                for env_idx in range(n_envs):
+                    u = th.mv(self.cov_inverse[env_idx], h[env_idx])
+                    b = th.dot(h[env_idx], u).item()
+                    intrinsic_rewards[j, env_idx] = b
 
-        # scale the intrinsic rewards
+                    th.outer(u, u, out=self.outer_product_buffer[env_idx])
+                    th.add(self.cov_inverse[env_idx], self.outer_product_buffer[env_idx], alpha=-(1./(1. + b)), out=self.cov_inverse[env_idx])
+                    
+                    if terminateds_tensor[j, env_idx] or truncateds_tensor[j, env_idx]:
+                        self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
+
         return self.scale(intrinsic_rewards)
 
     def update(self, samples: Dict) -> None:
@@ -150,18 +171,36 @@ class RND(BaseReward):
             None.
         """
         assert "observations" in samples.keys()
+        assert "next_observations" in samples.keys()
+        assert "actions" in samples.keys()
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
+        next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
 
-        dataset = TensorDataset(obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        if self.action_type == "Discrete":
+            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+        else:
+            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+
+        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
 
         for _idx, batch_data in enumerate(loader):
-            obs = batch_data[0]
-            src_feats = self.predictor(obs)
-            with th.no_grad():
-                tgt_feats = self.target(obs)
+            obs, actions, next_obs = batch_data
+            obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
 
-            self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
-            loss.backward()
-            self.opt.step()
+            self.encoder_opt.zero_grad()
+            self.im_opt.zero_grad()
+
+            encoded_obs = self.encoder(obs)
+            encoded_next_obs = self.encoder(next_obs)
+
+            pred_actions = self.im(encoded_obs, encoded_next_obs)
+            im_loss = self.im_loss(pred_actions, actions)
+            im_loss.backward()
+
+            self.encoder_opt.step()
+            self.im_opt.step()
