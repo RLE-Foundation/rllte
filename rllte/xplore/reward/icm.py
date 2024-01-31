@@ -66,10 +66,11 @@ class ICM(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -134,6 +135,10 @@ class ICM(BaseReward):
         obs_tensor = samples.get("observations").to(self.device)
         actions_tensor = samples.get("actions").to(self.device)
         next_obs_tensor = samples.get("next_observations").to(self.device)
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        
         # transform the actions to one-hot vectors if the action space is discrete
         if self.action_type == "Discrete":
             # TODO: from [n_steps, n_envs, 1] to [n_steps * n_envs, 1, |A|], so squeeze(2) is needed
@@ -149,6 +154,8 @@ class ICM(BaseReward):
                 dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
 
+
+        self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -171,6 +178,10 @@ class ICM(BaseReward):
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        
         # transform the actions to one-hot vectors if the action space is discrete
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)

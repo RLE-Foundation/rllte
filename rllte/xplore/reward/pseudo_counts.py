@@ -71,6 +71,7 @@ class PseudoCounts(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         use_rms: bool = True,
+        obs_rms: bool = False,
         latent_dim: int = 32,
         lr: float = 0.001,
         batch_size: int = 64,
@@ -81,7 +82,7 @@ class PseudoCounts(BaseReward):
         c: float = 0.001,
         sm: float = 8.0,
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         # set parameters
         self.lr = lr
         self.batch_size = batch_size
@@ -177,11 +178,10 @@ class PseudoCounts(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device)
+        
+        obs_tensor = self.normalize(obs_tensor)
 
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
@@ -214,6 +214,9 @@ class PseudoCounts(BaseReward):
         (n_steps, n_envs) = samples.get("observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device).view((n_steps * n_envs, *self.obs_shape))
         next_obs_tensor = samples.get("next_observations").to(self.device).view((n_steps * n_envs, *self.obs_shape))
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         if self.action_type == "Discrete":
             actions_tensor = samples.get("actions").view(n_steps * n_envs).to(self.device)

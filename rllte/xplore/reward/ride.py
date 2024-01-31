@@ -66,6 +66,7 @@ class RIDE(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
         # episodic memory
@@ -76,7 +77,7 @@ class RIDE(BaseReward):
         c: float = 0.1,
         sm: float = 0.1,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -179,12 +180,13 @@ class RIDE(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device)
         next_obs_tensor = samples.get("next_observations").to(self.device)
+
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
@@ -199,8 +201,7 @@ class RIDE(BaseReward):
 
                 intrinsic_rewards[:, i] = dist.cpu() * n_eps
 
-        print("intrinsic_rewards: ", intrinsic_rewards)
-
+        self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -217,14 +218,14 @@ class RIDE(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
-        assert "next_observations" in samples.keys()
-        assert "actions" in samples.keys()
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
 
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)
@@ -255,5 +256,3 @@ class RIDE(BaseReward):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
-
-            print("im_loss: ", im_loss.item(), "fm_loss: ", fm_loss.item())

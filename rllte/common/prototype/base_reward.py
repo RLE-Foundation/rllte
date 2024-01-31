@@ -57,7 +57,8 @@ class BaseReward(ABC):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True
+        use_rms: bool = True,
+        obs_rms: bool = False
     ) -> None:
         # get environment information
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
@@ -70,11 +71,13 @@ class BaseReward(ABC):
         self.beta = beta
         self.kappa = kappa
         self.use_rms = use_rms
+        self.obs_rms = obs_rms
         self.global_step = 0
 
         # build the running mean and std for normalization
         self.rms = TorchRunningMeanStd() if self.use_rms else None
-
+        self.obs_norm = TorchRunningMeanStd(shape=self.obs_shape) if self.obs_rms else None
+        
     @property
     def weight(self) -> float:
         """Get the weighting coefficient of the intrinsic rewards.
@@ -95,6 +98,18 @@ class BaseReward(ABC):
             return rewards / self.rms.std * self.weight
         else:
             return rewards * self.weight
+        
+    def normalize(self, x: th.Tensor) -> th.Tensor:
+        if self.obs_rms:
+            x = (
+                (
+                    (x - self.obs_norm.mean.to(self.device))
+                )
+                    / th.sqrt(self.obs_norm.var.to(self.device))
+            ).clip(-5, 5)
+        else:
+            x = x / 255.0 if len(self.obs_shape) > 2 else x
+        return x
     
     @abstractmethod
     def watch(self,
@@ -133,7 +148,13 @@ class BaseReward(ABC):
         """
         for key in ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations']:
             assert key in samples.keys(), f"Key {key} is not in samples."
+
+        # update obs RMS if necessary
+        if self.obs_rms:
+            self.obs_norm.update(samples['observations'].reshape(-1, *self.obs_shape).cpu())
+
         self.global_step += 1
+        
 
     @abstractmethod
     def update(self, samples: Dict[str, th.Tensor]) -> None:

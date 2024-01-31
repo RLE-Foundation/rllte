@@ -3,11 +3,11 @@ sys.path.append("../")
 
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
-from rllte.xplore.reward import ICM
+from rllte.xplore.reward.rnd import RND
 
 if __name__ == "__main__":
     # env setup
-    device = "cuda:1"
+    device = "cuda:0"
     num_envs = 8
     env = make_envpool_atari_env(
         device=device,
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    rnd = ICM(
+    rnd = RND(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=device,

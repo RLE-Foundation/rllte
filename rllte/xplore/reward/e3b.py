@@ -66,11 +66,12 @@ class E3B(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
         ridge: float = 0.1,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -131,14 +132,13 @@ class E3B(BaseReward):
         """
         super().compute(samples)
         
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "terminateds" in samples.keys(), "The key `terminateds` must be contained in samples!"
-        assert "truncateds" in samples.keys(), "The key `truncateds` must be contained in samples!"
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         
         obs_tensor = samples.get("observations").to(self.device)
         terminateds_tensor = samples.get("terminateds").to(self.device)
         truncateds_tensor = samples.get("truncateds").to(self.device)
+        
+        obs_tensor = self.normalize(obs_tensor)
         
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
@@ -155,6 +155,8 @@ class E3B(BaseReward):
                     if terminateds_tensor[j, env_idx] or truncateds_tensor[j, env_idx]:
                         self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
 
+
+        self.update(samples)
         return self.scale(intrinsic_rewards)
 
     def update(self, samples: Dict) -> None:
@@ -170,14 +172,14 @@ class E3B(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
-        assert "next_observations" in samples.keys()
-        assert "actions" in samples.keys()
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)

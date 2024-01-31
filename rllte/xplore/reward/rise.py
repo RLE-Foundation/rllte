@@ -61,13 +61,14 @@ class RISE(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         use_rms: bool = True,
+        obs_rms: bool = True,
         latent_dim: int = 128,
         storage_size: int = 1000,
         alpha: float = 0.5,
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         # build the storage for random embeddings
         self.storage_size = storage_size
@@ -127,9 +128,10 @@ class RISE(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device)
+        
+        self.normalize(obs_tensor)
 
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)

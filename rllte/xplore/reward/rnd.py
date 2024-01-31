@@ -65,10 +65,11 @@ class RND(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.predictor = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -119,9 +120,9 @@ class RND(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
-        next_obs_tensor = samples.get("next_observations").to(self.device)
+        next_obs_tensor = samples.get("next_observations").to(self.device)   
+        next_obs_tensor = self.normalize(next_obs_tensor)
         
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
@@ -133,6 +134,7 @@ class RND(BaseReward):
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
 
+        self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -149,8 +151,8 @@ class RND(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        obs_tensor = self.normalize(obs_tensor)
 
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
