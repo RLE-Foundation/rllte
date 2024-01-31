@@ -35,7 +35,7 @@ if __name__ == "__main__":
         max_grad_norm=0.5,
         lr=2.5e-4,
         eps=1e-5,
-        pretraining=False
+        pretraining=True
     )
     
     # create intrinsic reward
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         action_space=env.action_space,
         device=device,
         n_envs=num_envs,
-        beta=0.0
+        latent_dim=256
     )
 
     # set the reward module
     agent.set(reward=rnd)
     # start training
-    agent.train(num_train_steps=10_000_000)
+    agent.train(num_train_steps=20_000_000)
