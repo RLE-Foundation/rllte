@@ -33,5 +33,7 @@ _build/
 /checkpoints_in
 /rllte/copilot/g4f
 /misc
+/launchers/*
+/src/*
 
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf

@@ -18,7 +18,7 @@ from rllte.env.mario.wrappers import (
 
 def make_mario_env(
         env_id: str = "SuperMarioBros-1-1-v0",
-        num_envs: int = 8,
+        n_envs: int = 8,
         device: str = "cpu",
         asynchronous: bool = True,
         seed: int = 0,

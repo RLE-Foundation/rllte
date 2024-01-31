@@ -43,7 +43,7 @@ from rllte.env.utils import EnvPoolAsync2Gymnasium, EnvPoolSync2Gymnasium, Gymna
 
 
 def make_envpool_atari_env(
-    env_id: str = "Alien-v5", num_envs: int = 8, device: str = "cpu", seed: int = 1, asynchronous: bool = True
+    env_id: str = "Alien-v5", n_envs: int = 8, device: str = "cpu", seed: int = 1, asynchronous: bool = True
 ) -> Gymnasium2Torch:
     """Create Atari environments with `envpool`.
 
@@ -61,8 +61,8 @@ def make_envpool_atari_env(
     env_kwargs = dict(
         task_id=env_id,
         env_type="gymnasium",
-        num_envs=num_envs,
-        batch_size=num_envs,
+        num_envs=n_envs,
+        batch_size=n_envs,
         seed=seed,
         episodic_life=True,
         reward_clip=True

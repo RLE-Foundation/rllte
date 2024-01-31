@@ -34,8 +34,6 @@ import torch as th
 from rllte.common.prototype import BaseReward
 from .model import InverseDynamicsEncoder
 
-
-
 class PseudoCounts(BaseReward):
     """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
         See paper: https://arxiv.org/pdf/2002.06038
