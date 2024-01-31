@@ -68,6 +68,7 @@ class RND(BaseReward):
         obs_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
+        update_proportion: float = 1.0,
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
@@ -82,6 +83,7 @@ class RND(BaseReward):
 
         self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
 
     def watch(self, 
               observations: th.Tensor,
@@ -165,6 +167,13 @@ class RND(BaseReward):
                 tgt_feats = self.target(obs)
 
             self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
+            loss = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=-1)
+            
+            mask = th.rand(len(loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            loss = (loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             loss.backward()
             self.opt.step()

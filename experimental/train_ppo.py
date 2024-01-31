@@ -7,6 +7,7 @@ from rllte.xplore.reward.rnd import RND
 from rllte.xplore.reward.icm import ICM
 from rllte.xplore.reward.ride import RIDE
 from rllte.xplore.reward.e3b import E3B
+from rllte.xplore.reward.disagreement import Disagreement
 
 
 if __name__ == "__main__":
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    rnd = RND(
+    rnd = ICM(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=device,

@@ -69,6 +69,7 @@ class ICM(BaseReward):
         obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
+        update_proportion: float = 1.0
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
@@ -82,9 +83,9 @@ class ICM(BaseReward):
                                                     action_dim=self.policy_action_dim).to(self.device)
         
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss()
+            self.im_loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss(reduction="none")
                                                    
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
@@ -92,6 +93,8 @@ class ICM(BaseReward):
         self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
 
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
+        self.latent_dim = latent_dim
 
     def watch(self, 
               observations: th.Tensor,
@@ -205,7 +208,17 @@ class ICM(BaseReward):
             pred_actions = self.im(encoded_obs, encoded_next_obs)
             im_loss = self.im_loss(pred_actions, actions)
             pred_next_obs = self.fm(encoded_obs, actions)
-            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(dim=-1)
+            
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            fm_loss = (fm_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             (im_loss + fm_loss).backward()
 
             self.encoder_opt.step()

@@ -68,7 +68,8 @@ class Disagreement(BaseReward):
         obs_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
-        ensemble_size: int = 5
+        ensemble_size: int = 5,
+        update_proportion: float = 1.0
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
@@ -90,6 +91,7 @@ class Disagreement(BaseReward):
             for i in range(self.ensemble_size)
         ]
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
 
     def watch(self, 
               observations: th.Tensor,
@@ -197,6 +199,14 @@ class Disagreement(BaseReward):
             
             pred_next_obs = self.ensemble[ensemble_idx](encoded_obs, actions)
 
-            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(-1)
+           
+            mask = th.rand(len(fm_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            
+            fm_loss = (fm_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             fm_loss.backward()
             self.opt[ensemble_idx].step()

@@ -81,6 +81,7 @@ class PseudoCounts(BaseReward):
         kernel_epsilon: float = 0.0001,
         c: float = 0.001,
         sm: float = 8.0,
+        update_proportion: float = 1.0,
         ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         # set parameters
@@ -91,6 +92,7 @@ class PseudoCounts(BaseReward):
         self.kernel_epsilon = kernel_epsilon
         self.c = c
         self.sm = sm
+        self.update_proportion = update_proportion
 
         # build the episodic memory
         self.storage_size = episodic_memory_size
@@ -104,9 +106,9 @@ class PseudoCounts(BaseReward):
             action_dim=self.policy_action_dim,
             latent_dim=latent_dim).to(self.device)
         if self.action_type == "Discrete":
-            self.loss = nn.CrossEntropyLoss()
+            self.loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.loss = nn.MSELoss()
+            self.loss = nn.MSELoss(reduction="none")
     
     def watch(self, 
               observations: th.Tensor,
@@ -231,6 +233,13 @@ class PseudoCounts(BaseReward):
             obs, actions, next_obs = batch
             pred_actions = self.encoder(obs, next_obs)
             self.opt.zero_grad()
-            loss = self.loss(pred_actions, actions)
-            loss.backward()
+            im_loss = self.loss(pred_actions, actions)
+            
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
+            im_loss.backward()
             self.opt.step()

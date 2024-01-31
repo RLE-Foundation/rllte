@@ -70,8 +70,10 @@ class E3B(BaseReward):
         n_envs: int = 1,
         batch_size: int = 64,
         ridge: float = 0.1,
+        update_proportion: float = 1.0,
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
+
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -80,15 +82,17 @@ class E3B(BaseReward):
                                                     action_dim=self.policy_action_dim).to(self.device)
 
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss()
+            self.im_loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss(reduction="none")
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
         
         self.batch_size = batch_size
         self.ridge = ridge
+        self.update_proportion = update_proportion
+        self.latent_dim = latent_dim
         
         self.cov_inverse = (th.eye(latent_dim) * (1.0 / ridge)).to(self.device)
         self.outer_product_buffer = th.empty(latent_dim, latent_dim).to(self.device)
@@ -202,6 +206,13 @@ class E3B(BaseReward):
 
             pred_actions = self.im(encoded_obs, encoded_next_obs)
             im_loss = self.im_loss(pred_actions, actions)
+
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
             im_loss.backward()
 
             self.encoder_opt.step()
