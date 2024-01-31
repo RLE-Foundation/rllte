@@ -4,6 +4,10 @@ sys.path.append("../")
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
 from rllte.xplore.reward.rnd import RND
+from rllte.xplore.reward.icm import ICM
+from rllte.xplore.reward.ride import RIDE
+from rllte.xplore.reward.e3b import E3B
+
 
 if __name__ == "__main__":
     # env setup
@@ -34,4 +38,4 @@ if __name__ == "__main__":
     # set the reward module
     agent.set(reward=rnd)
     # start training
-    agent.train(num_train_steps=50000)
+    agent.train(num_train_steps=10_000_000)

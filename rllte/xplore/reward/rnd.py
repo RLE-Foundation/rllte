@@ -122,6 +122,7 @@ class RND(BaseReward):
         # get the number of steps and environments
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         next_obs_tensor = samples.get("next_observations").to(self.device)   
+        
         next_obs_tensor = self.normalize(next_obs_tensor)
         
         # compute the intrinsic rewards

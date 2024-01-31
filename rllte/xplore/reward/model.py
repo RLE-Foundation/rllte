@@ -59,6 +59,7 @@ class ObservationEncoder(nn.Module):
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
             self.trunk.append(nn.Linear(n_flatten, latent_dim))
+            self.trunk.append(nn.ReLU())
         else:
             self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), 
                                        nn.ReLU())
@@ -73,6 +74,7 @@ class ObservationEncoder(nn.Module):
         Returns:
             Encoding tensors.
         """
+        # normalization for intrinsic rewards is dealt with in the base intrinsic reward class
         return self.trunk(obs)
     
 class InverseDynamicsEncoder(nn.Module):
@@ -175,5 +177,4 @@ class ForwardDynamicsModel(nn.Module):
         Returns:
             Predicted next-obs.
         """
-        print(obs.shape, pred_actions.shape)
         return self.trunk(th.cat([obs, pred_actions], dim=1))

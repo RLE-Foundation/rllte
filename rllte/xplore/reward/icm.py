@@ -141,7 +141,6 @@ class ICM(BaseReward):
         
         # transform the actions to one-hot vectors if the action space is discrete
         if self.action_type == "Discrete":
-            # TODO: from [n_steps, n_envs, 1] to [n_steps * n_envs, 1, |A|], so squeeze(2) is needed
             actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float().squeeze(2)
         
         # compute the intrinsic rewards
