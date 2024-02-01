@@ -18,7 +18,7 @@ from rllte.env.mario.wrappers import (
 
 def make_mario_env(
         env_id: str = "SuperMarioBros-1-1-v0",
-        n_envs: int = 8,
+        num_envs: int = 8,
         device: str = "cpu",
         asynchronous: bool = True,
         seed: int = 0,
@@ -37,7 +37,7 @@ def make_mario_env(
             return env
         return _thunk
     
-    envs = [make_env(env_id, seed + i) for i in range(n_envs)]
+    envs = [make_env(env_id, seed + i) for i in range(num_envs)]
     if asynchronous:
         envs = AsyncVectorEnv(envs)
     else:

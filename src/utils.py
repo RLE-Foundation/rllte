@@ -40,7 +40,7 @@ def make_env(args, device):
         from rllte.env import make_mario_env
         env = make_mario_env(
             device=device,
-            n_envs=args.n_envs,
+            num_envs=args.n_envs,
             env_id=args.env_id,
         )
         env_name = args.env_id
@@ -49,7 +49,7 @@ def make_env(args, device):
             from rllte.env import make_envpool_atari_env
             env = make_envpool_atari_env(
                 env_id=args.env_id,
-                n_envs=args.n_envs,
+                num_envs=args.n_envs,
                 device=device,
             )
             env_name = args.env_id
