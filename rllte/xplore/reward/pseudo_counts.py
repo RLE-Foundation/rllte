@@ -49,7 +49,6 @@ class PseudoCounts(BaseReward):
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
-        episodic_memory_size (int): The capacity of the episodic memory.
         k (int): Number of neighbors.
         kernel_cluster_distance (float): The kernel cluster distance.
         kernel_epsilon (float): The kernel constant.
@@ -73,7 +72,6 @@ class PseudoCounts(BaseReward):
         latent_dim: int = 32,
         lr: float = 0.001,
         batch_size: int = 64,
-        episodic_memory_size: int = 1000,
         k: int = 10,
         kernel_cluster_distance: float = 0.008,
         kernel_epsilon: float = 0.0001,
@@ -93,12 +91,6 @@ class PseudoCounts(BaseReward):
         self.update_proportion = update_proportion
 
         # build the episodic memory
-        self.storage_size = episodic_memory_size
-        self.storage = th.zeros(size=(episodic_memory_size, n_envs, latent_dim))
-        self.storage_idx = 0
-        self.storage_full = False
-
-
         self.episodic_memory = [[] for _ in range(n_envs)]
         self.n_eps = [[] for _ in range(n_envs)]
 
