@@ -10,7 +10,7 @@ def parse_args():
     # train config
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--n_envs", type=int, default=32)
-    parser.add_argument("--num_train_steps", type=int, default=100_000_000)
+    parser.add_argument("--num_train_steps", type=int, default=30_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
     parser.add_argument("--num_steps", type=int, default=1024)
@@ -28,8 +28,8 @@ def parse_args():
 
     # intrinsic reward
     parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
-    parser.add_argument("--rew_rms", type=bool, default=True)
-    parser.add_argument("--obs_rms", type=bool, default=True)
+    parser.add_argument("--rew_rms", action="store_true", default=True)
+    parser.add_argument("--obs_rms", action="store_true", default=False)
     parser.add_argument("--update_proportion", type=float, default=1.0)
     args = parser.parse_args()
     return args
@@ -68,7 +68,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -78,7 +78,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -88,7 +88,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -98,7 +98,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -108,7 +108,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -117,7 +117,7 @@ def select_intrinsic_reward(args, env, device):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -126,7 +126,7 @@ def select_intrinsic_reward(args, env, device):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -136,7 +136,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -146,7 +146,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -156,7 +156,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rms,
+            use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )

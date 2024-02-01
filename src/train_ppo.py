@@ -36,7 +36,7 @@ if __name__ == "__main__":
         max_grad_norm=args.max_grad_norm,
         discount=args.discount,
         init_fn=args.init_fn,
-        pretraining=True,
+        pretraining=True if intrinsic_reward is not None else False,
     )
     
     # create intrinsic reward
