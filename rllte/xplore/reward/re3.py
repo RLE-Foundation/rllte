@@ -104,6 +104,7 @@ class RE3(BaseReward):
             None.
         """
         with th.no_grad():
+            observations = self.normalize(observations)
             self.storage[self.storage_idx] = self.random_encoder(observations)
             self.storage_idx = (self.storage_idx + 1) % self.storage_size
 

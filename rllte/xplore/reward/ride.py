@@ -161,7 +161,8 @@ class RIDE(BaseReward):
             None.
         """
         with th.no_grad():
-            self.storage[self.storage_idx] = self.encoder(observations.float())
+            observations = self.normalize(observations)
+            self.storage[self.storage_idx] = self.encoder(observations)
             self.storage_idx = (self.storage_idx + 1) % self.storage_size
 
         # update the storage status

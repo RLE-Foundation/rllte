@@ -71,6 +71,7 @@ class NGU(Fabric):
         beta: float = 1.0,
         kappa: float = 0.0,
         use_rms: bool = True,
+        obs_rms: bool = False,
         latent_dim: int = 32,
         lr: float = 0.001,
         batch_size: int = 64,
@@ -80,7 +81,8 @@ class NGU(Fabric):
         kernel_epsilon: float = 0.0001,
         c: float = 0.001,
         sm: float = 8.0,
-        mrs: float = 5.0
+        mrs: float = 5.0,
+        update_proportion: float = 1.0
         ) -> None:
 
         rnd = RND(observation_space=observation_space,
@@ -90,10 +92,11 @@ class NGU(Fabric):
                   beta=beta,
                   kappa=kappa,
                   use_rms=use_rms,
-                  obs_rms=True,
+                  obs_rms=obs_rms,
                   latent_dim=latent_dim,
                   lr=lr,
-                  batch_size=batch_size
+                  batch_size=batch_size,
+                  update_proportion=update_proportion
                 )
         
         pseudo_counts = PseudoCounts(observation_space=observation_space,
@@ -103,16 +106,16 @@ class NGU(Fabric):
                                      beta=beta,
                                      kappa=kappa,
                                      use_rms=use_rms,
-                                     obs_rms=False,
+                                     obs_rms=obs_rms,
                                      latent_dim=latent_dim,
                                      lr=lr,
                                      batch_size=batch_size,
-                                     episodic_memory_size=episodic_memory_size,
                                      k=k,
                                      kernel_cluster_distance=kernel_cluster_distance,
                                      kernel_epsilon=kernel_epsilon,
                                      c=c,
-                                     sm=sm)
+                                     sm=sm,
+                                     update_proportion=update_proportion)
 
         super().__init__(*[rnd, pseudo_counts])
 
