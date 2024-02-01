@@ -185,12 +185,6 @@ class PseudoCounts(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
-        obs_tensor = samples.get("observations").to(self.device)
-        
-        obs_tensor = self.normalize(obs_tensor)
-
         # compute the intrinsic rewards
         all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
         intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
