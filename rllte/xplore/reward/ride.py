@@ -90,9 +90,9 @@ class RIDE(BaseReward):
                                                     action_dim=self.policy_action_dim).to(self.device)
         
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss(redution="none")
+            self.im_loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.im_loss = nn.MSELoss(redution="none")
+            self.im_loss = nn.MSELoss(reduction="none")
                                                    
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
