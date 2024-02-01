@@ -37,7 +37,7 @@ def make_mario_env(
             return env
         return _thunk
     
-    envs = [make_env(env_id, seed + i) for i in range(num_envs)]
+    envs = [make_env(env_id, seed + i) for i in range(n_envs)]
     if asynchronous:
         envs = AsyncVectorEnv(envs)
     else:
