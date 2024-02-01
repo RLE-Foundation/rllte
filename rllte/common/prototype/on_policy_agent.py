@@ -28,11 +28,11 @@ from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 import torch as th
+from tqdm import tqdm
 
 from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
 from rllte.common.type_alias import OnPolicyType, RolloutStorageType, VecEnv
-
 
 class OnPolicyAgent(BaseAgent):
     """Trainer for on-policy algorithms.
@@ -98,7 +98,7 @@ class OnPolicyAgent(BaseAgent):
         """
         # freeze the agent and get ready for training
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
-
+        
         # reset the env
         episode_rewards: Deque = deque(maxlen=10)
         episode_steps: Deque = deque(maxlen=10)
@@ -106,6 +106,20 @@ class OnPolicyAgent(BaseAgent):
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
+        # if the intrinsic reward uses observation normalization -> Initialize the parameters
+        next_ob = []
+        if self.irs and self.irs.obs_rms:
+            print("Start to initialize observation normalization parameter.....")
+            for step in tqdm(range(self.num_steps * 50)):
+                acs = th.randint(0, self.env.action_space.n, size=(self.num_envs,))
+                s, r, te, tr, _ = self.env.step(acs)
+                next_ob += s.view(-1, *self.obs_shape).cpu()
+
+                if len(next_ob) % (self.num_steps * self.num_envs) == 0:
+                    next_ob = th.stack(next_ob).float()
+                    self.irs.obs_norm.update(next_ob)
+                    next_ob = []
+                    
         for update in range(num_updates):
             # try to eval
             if (update % eval_interval) == 0 and (self.eval_env is not None):

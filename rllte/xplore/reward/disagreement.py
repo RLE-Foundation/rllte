@@ -65,11 +65,13 @@ class Disagreement(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = True,
         n_envs: int = 1,
         batch_size: int = 64,
-        ensemble_size: int = 5
+        ensemble_size: int = 5,
+        update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -89,6 +91,7 @@ class Disagreement(BaseReward):
             for i in range(self.ensemble_size)
         ]
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
 
     def watch(self, 
               observations: th.Tensor,
@@ -128,12 +131,10 @@ class Disagreement(BaseReward):
         super().compute(samples)
         
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("observations").size()[:2]
 
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        obs_tensor = self.normalize(obs_tensor)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
 
         if self.action_type == "Discrete":
@@ -149,6 +150,7 @@ class Disagreement(BaseReward):
             preds = th.stack(preds, dim=0)
             intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
 
+        self.update(samples)
         return self.scale(intrinsic_rewards)
 
 
@@ -165,14 +167,14 @@ class Disagreement(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
-        assert "next_observations" in samples.keys()
-        assert "actions" in samples.keys()
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
 
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)
@@ -197,6 +199,14 @@ class Disagreement(BaseReward):
             
             pred_next_obs = self.ensemble[ensemble_idx](encoded_obs, actions)
 
-            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(-1)
+           
+            mask = th.rand(len(fm_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            
+            fm_loss = (fm_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             fm_loss.backward()
             self.opt[ensemble_idx].step()

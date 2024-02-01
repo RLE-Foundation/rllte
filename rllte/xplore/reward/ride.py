@@ -66,6 +66,7 @@ class RIDE(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
         # episodic memory
@@ -75,8 +76,9 @@ class RIDE(BaseReward):
         kernel_epsilon: float = 0.1,
         c: float = 0.1,
         sm: float = 0.1,
+        update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -88,15 +90,16 @@ class RIDE(BaseReward):
                                                     action_dim=self.policy_action_dim).to(self.device)
         
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss()
+            self.im_loss = nn.CrossEntropyLoss(redution="none")
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss(redution="none")
                                                    
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
         self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
 
         # episodic memory
         self.storage_size = episodic_memory_size
@@ -179,12 +182,13 @@ class RIDE(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device)
         next_obs_tensor = samples.get("next_observations").to(self.device)
+
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
@@ -199,8 +203,7 @@ class RIDE(BaseReward):
 
                 intrinsic_rewards[:, i] = dist.cpu() * n_eps
 
-        print("intrinsic_rewards: ", intrinsic_rewards)
-
+        self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -217,14 +220,14 @@ class RIDE(BaseReward):
         Returns:
             None.
         """
-        assert "observations" in samples.keys()
-        assert "next_observations" in samples.keys()
-        assert "actions" in samples.keys()
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
 
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
 
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)
@@ -249,11 +252,19 @@ class RIDE(BaseReward):
             pred_actions = self.im(encoded_obs, encoded_next_obs)
             im_loss = self.im_loss(pred_actions, actions)
             pred_next_obs = self.fm(encoded_obs, actions)
-            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(dim=-1)
+            
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            fm_loss = (fm_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             (im_loss + fm_loss).backward()
 
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
-
-            print("im_loss: ", im_loss.item(), "fm_loss: ", fm_loss.item())

@@ -90,9 +90,11 @@ class NGU(Fabric):
                   beta=beta,
                   kappa=kappa,
                   use_rms=use_rms,
+                  obs_rms=True,
                   latent_dim=latent_dim,
                   lr=lr,
-                  batch_size=batch_size)
+                  batch_size=batch_size
+                )
         
         pseudo_counts = PseudoCounts(observation_space=observation_space,
                                      action_space=action_space,
@@ -101,6 +103,7 @@ class NGU(Fabric):
                                      beta=beta,
                                      kappa=kappa,
                                      use_rms=use_rms,
+                                     obs_rms=False,
                                      latent_dim=latent_dim,
                                      lr=lr,
                                      batch_size=batch_size,
@@ -127,9 +130,6 @@ class NGU(Fabric):
             The intrinsic rewards.
         """
         # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
         (n_steps, n_envs) = samples.get("observations").size()[:2]
         lifelong_rewards, episodic_rewards = super().compute(samples)
 

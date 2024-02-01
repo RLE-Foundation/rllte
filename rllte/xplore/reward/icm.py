@@ -66,10 +66,12 @@ class ICM(BaseReward):
         latent_dim: int = 128,
         lr: float = 0.001,
         use_rms: bool = True,
+        obs_rms: bool = False,
         n_envs: int = 1,
         batch_size: int = 64,
+        update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
         
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape,
                                                    latent_dim=latent_dim).to(self.device)
@@ -81,9 +83,9 @@ class ICM(BaseReward):
                                                     action_dim=self.policy_action_dim).to(self.device)
         
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss()
+            self.im_loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.im_loss = nn.MSELoss()
+            self.im_loss = nn.MSELoss(reduction="none")
                                                    
 
         self.encoder_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
@@ -91,6 +93,8 @@ class ICM(BaseReward):
         self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
 
         self.batch_size = batch_size
+        self.update_proportion = update_proportion
+        self.latent_dim = latent_dim
 
     def watch(self, 
               observations: th.Tensor,
@@ -134,9 +138,12 @@ class ICM(BaseReward):
         obs_tensor = samples.get("observations").to(self.device)
         actions_tensor = samples.get("actions").to(self.device)
         next_obs_tensor = samples.get("next_observations").to(self.device)
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        
         # transform the actions to one-hot vectors if the action space is discrete
         if self.action_type == "Discrete":
-            # TODO: from [n_steps, n_envs, 1] to [n_steps * n_envs, 1, |A|], so squeeze(2) is needed
             actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float().squeeze(2)
         
         # compute the intrinsic rewards
@@ -149,6 +156,8 @@ class ICM(BaseReward):
                 dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
 
+
+        self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -171,6 +180,10 @@ class ICM(BaseReward):
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+        
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        
         # transform the actions to one-hot vectors if the action space is discrete
         if self.action_type == "Discrete":
             actions_tensor = samples["actions"].view(n_steps * n_envs)
@@ -195,7 +208,17 @@ class ICM(BaseReward):
             pred_actions = self.im(encoded_obs, encoded_next_obs)
             im_loss = self.im_loss(pred_actions, actions)
             pred_next_obs = self.fm(encoded_obs, actions)
-            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs)
+            fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(dim=-1)
+            
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            fm_loss = (fm_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            
             (im_loss + fm_loss).backward()
 
             self.encoder_opt.step()
