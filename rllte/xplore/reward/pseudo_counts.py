@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict
+from typing import Dict, List
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
@@ -97,11 +97,16 @@ class PseudoCounts(BaseReward):
         self.storage_idx = 0
         self.storage_full = False
 
+
+        self.episodic_memory = [[] for _ in range(n_envs)]
+        self.n_eps = [[] for _ in range(n_envs)]
+
         # build the encoder and set the loss function
         self.encoder = InverseDynamicsEncoder(
             obs_shape=self.obs_shape,
             action_dim=self.policy_action_dim,
             latent_dim=latent_dim).to(self.device)
+        self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         if self.action_type == "Discrete":
             self.loss = nn.CrossEntropyLoss()
         else:
@@ -118,49 +123,52 @@ class PseudoCounts(BaseReward):
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
-            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
+            observations (th.Tensor): The observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): The actions data with shape (n_envs, *action_shape).
             rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
-            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
-            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
-            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): The next observations data with shape (n_envs, *obs_shape).
 
         Returns:
             None.
         """
         with th.no_grad():
-            self.storage[self.storage_idx] = self.encoder.encode(observations)
-            self.storage_idx = (self.storage_idx + 1) % self.storage_size
+            # data shape of embeddings: (n_envs, latent_dim)
+            embeddings = self.encoder.encode(observations)
+            for i in range(self.n_envs):
+                # update the episodic memory
+                self.episodic_memory[i].append(embeddings[i])            
+                n_eps = self.pseudo_counts(embeddings=embeddings[i].unsqueeze(0), memory=self.episodic_memory[i])
+                # store the pseudo-counts
+                self.n_eps[i].append(n_eps)
+                # clear the episodic memory if the episode is terminated or truncated
+                if terminateds[i].item() or truncateds[i].item():
+                    self.episodic_memory[i].clear()
+                    # print(terminateds, truncateds)
 
-        # update the storage status
-        self.storage_full = self.storage_full or self.storage_idx == 0
-
-    def pseudo_counts(self, embeddings: th.Tensor, memory: th.Tensor) -> th.Tensor:
+    def pseudo_counts(self, embeddings: th.Tensor, memory: List[th.Tensor]) -> th.Tensor:
         """Pseudo counts.
 
         Args:
             embeddings (th.Tensor): Encoded observations.
-            memory (th.Tensor): Episodic memory.
+            memory (List[th.Tensor]): Episodic memory.
 
         Returns:
             Conut values.
         """
-        num_steps = embeddings.size()[0]
-        counts = th.zeros(size=(num_steps,))
-        for step in range(num_steps):
-            dist = th.norm(embeddings[step] - memory, p=2, dim=1).sort().values[: self.k]
-            # moving average
-            dist = dist / (dist.mean() + 1e-11)
-            dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
-            kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
-            s = th.sqrt(kernel.sum()) + self.c
+        memory = th.stack(memory)
+        dist = th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]
+        # moving average
+        dist = dist / (dist.mean() + 1e-11)
+        dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
+        kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
+        s = th.sqrt(kernel.sum()) + self.c
 
-            if th.isnan(s) or s > self.sm:
-                counts[step] = 0.0
-            else:
-                counts[step] = 1.0 / s
-
-        return counts
+        if th.isnan(s) or s > self.sm:
+            return 0.0
+        else:
+            return 1.0 / s
 
     def compute(self, samples: Dict) -> th.Tensor:
         """Compute the rewards for current samples.
@@ -176,25 +184,16 @@ class PseudoCounts(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        # get the number of steps and environments
-        assert "observations" in samples.keys(), "The key `observations` must be contained in samples!"
-        assert "actions" in samples.keys(), "The key `actions` must be contained in samples!"
-        assert "next_observations" in samples.keys(), "The key `next_observations` must be contained in samples!"
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
-        obs_tensor = samples.get("observations").to(self.device)
-
         # compute the intrinsic rewards
-        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
-        with th.no_grad():
-            for i in range(n_envs):
-                embeddings = self.encoder.encode(obs_tensor[:, i])
-                episodic_memory = self.storage[:self.storage_idx, i] if not self.storage_full else self.storage[:, i]
-                n_eps = self.pseudo_counts(embeddings=embeddings, memory=episodic_memory)
-                intrinsic_rewards[:, i] = n_eps
-            
+        all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+        intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+
+        # flush the episodic memory of intrinsic rewards
+        self.n_eps = [[] for _ in range(self.n_envs)]
+        
         # update the embedding network
         self.update(samples)
-        
+
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
     
