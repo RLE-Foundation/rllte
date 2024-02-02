@@ -138,6 +138,7 @@ class RND(BaseReward):
             # compute the distance
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
+
         # update the reward module
         self.update(samples)
         # scale the intrinsic rewards
@@ -170,6 +171,7 @@ class RND(BaseReward):
             src_feats = self.predictor(obs)
             with th.no_grad():
                 tgt_feats = self.target(obs)
+            
             # compute the loss
             loss = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=-1)
             # use a random mask to select a subset of the training data
