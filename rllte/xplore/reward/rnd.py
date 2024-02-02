@@ -45,7 +45,7 @@ class RND(BaseReward):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
         latent_dim (int): The dimension of encoding vectors.
         n_envs (int): The number of parallel environments.
@@ -66,13 +66,13 @@ class RND(BaseReward):
         kappa: float = 0.0,
         latent_dim: int = 128,
         lr: float = 0.001,
-        rwd_rms: bool = True,
+        rwd_norm_type: str = "rms",
         obs_rms: bool = True,
         n_envs: int = 1,
-        batch_size: int = 64,
+        batch_size: int = 256,
         update_proportion: float = 1.0,
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
         # build the predictor and target networks
         self.predictor = ObservationEncoder(obs_shape=self.obs_shape, 
                                             latent_dim=latent_dim).to(self.device)

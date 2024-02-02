@@ -9,8 +9,8 @@ def parse_args():
 
     # train config
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=16)
-    parser.add_argument("--num_train_steps", type=int, default=25_000_000)
+    parser.add_argument("--n_envs", type=int, default=8)
+    parser.add_argument("--num_train_steps", type=int, default=10_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
     parser.add_argument("--num_steps", type=int, default=2048)
@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=10)
     parser.add_argument("--clip_range", type=float, default=0.2)
-    parser.add_argument("--clip_range_vf", type=float, default=0.1)
+    parser.add_argument("--clip_range_vf", type=float, default=None)
     parser.add_argument("--vf_coef", type=float, default=0.5)
     parser.add_argument("--ent_coef", type=float, default=0.0)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
@@ -28,7 +28,7 @@ def parse_args():
 
     # intrinsic reward
     parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
-    parser.add_argument("--rew_rms", action="store_true", default=True)
+    parser.add_argument("--rwd_norm_type", type=str, default="rms")
     parser.add_argument("--obs_rms", action="store_true", default=False)
     parser.add_argument("--update_proportion", type=float, default=1.0)
     args = parser.parse_args()
@@ -68,7 +68,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -78,7 +78,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -88,7 +88,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -98,7 +98,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -108,7 +108,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -118,7 +118,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
         )
     elif args.intrinsic_reward == "rise":
@@ -127,7 +127,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
         )
     elif args.intrinsic_reward == "revd":
@@ -137,7 +137,7 @@ def select_intrinsic_reward(args, env, device):
             episode_length=args.num_steps,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
         )
     elif args.intrinsic_reward == "e3b":
@@ -146,7 +146,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )
@@ -156,7 +156,7 @@ def select_intrinsic_reward(args, env, device):
             action_space=env.action_space,
             device=device,
             n_envs=args.n_envs,
-            use_rms=args.rew_rms,
+            rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion
         )

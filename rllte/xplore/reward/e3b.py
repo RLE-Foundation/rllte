@@ -49,7 +49,7 @@ class E3B(BaseReward):
         kappa (float): The decay rate of the weighting coefficient.
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (str): Use running mean and std for reward normalization, or minmax or none
         obs_rms (bool): Use running mean and std for observation normalization.
         batch_size (int): The batch size for training.
         ridge (float): The ridge parameter for the covariance matrix.
@@ -69,13 +69,13 @@ class E3B(BaseReward):
         kappa: float = 0.0,
         latent_dim: int = 128,
         lr: float = 0.001,
-        rwd_rms: bool = True,
+        rwd_norm_type: str = "rms",
         obs_rms: bool = False,
-        batch_size: int = 64,
+        batch_size: int = 256,
         ridge: float = 0.1,
         update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
 
         # build the encoder and inverse dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
@@ -182,6 +182,7 @@ class E3B(BaseReward):
         # normalize the observations
         obs_tensor = self.normalize(obs_tensor)
         next_obs_tensor = self.normalize(next_obs_tensor)
+
         # apply one-hot encoding if the action type is discrete
         if self.action_type == "Discrete":
             actions_tensor = samples.get("actions").view(n_steps * n_envs)

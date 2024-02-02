@@ -42,7 +42,7 @@ class REVD(BaseReward):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
         latent_dim (int): The dimension of encoding vectors.
         alpha (alpha): The The order of Rényi entropy.
@@ -62,14 +62,14 @@ class REVD(BaseReward):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        rwd_rms: bool = True,
+        rwd_norm_type: str = "rms",
         obs_rms: bool = True,
         latent_dim: int = 128,
         alpha: float = 0.5,
         k: int = 5,
         average_divergence: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
         
         # build the storage for random embeddings
         self.storage_size = episode_length

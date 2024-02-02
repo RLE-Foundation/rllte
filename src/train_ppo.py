@@ -14,7 +14,7 @@ if __name__ == "__main__":
         device=args.device,
     )
 
-    exp_name = f"ppo_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewRMS:{args.rew_rms}_updateProp:{args.update_proportion}_s{args.seed}"
+    exp_name = f"ppo_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_s{args.seed}"
 
     # create agent and turn on pre-training mode
     agent = PPO(

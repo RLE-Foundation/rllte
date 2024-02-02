@@ -32,7 +32,7 @@ from .model import ObservationEncoder
 
 class RISE(BaseReward):
     """Rényi State Entropy Maximization for Exploration Acceleration in Reinforcement Learning (RISE).
-        See paper: https://ieeexplore.ieee.org/rwd_rms/document/9802917/
+        See paper: https://ieeexplore.ieee.org/rwd_norm_type/document/9802917/
 
     Args:
         observation_space (Space): The observation space of environment.
@@ -41,7 +41,7 @@ class RISE(BaseReward):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.

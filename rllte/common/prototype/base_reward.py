@@ -43,7 +43,7 @@ class BaseReward(ABC):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (bool): Use running mean and std for reward normalization, or minmax or none
         obs_rms (bool): Use running mean and std for observation normalization.
 
     Returns:
@@ -58,7 +58,7 @@ class BaseReward(ABC):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        rwd_rms: bool = True,
+        rwd_norm_type: str = "rms",
         obs_rms: bool = False
     ) -> None:
         # get environment information
@@ -71,12 +71,12 @@ class BaseReward(ABC):
         self.device = th.device(device)
         self.beta = beta
         self.kappa = kappa
-        self.rwd_rms = rwd_rms
+        self.rwd_norm_type = rwd_norm_type
         self.obs_rms = obs_rms
         self.global_step = 0
 
         # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd() if self.rwd_rms else None
+        self.rms = TorchRunningMeanStd() if self.rwd_norm_type=="rms" else None
         self.obs_norm = TorchRunningMeanStd(shape=self.obs_shape) if self.obs_rms else None
         
     @property
@@ -94,9 +94,11 @@ class BaseReward(ABC):
         Returns:
             The scaled intrinsic rewards.
         """
-        if self.rwd_rms:
+        if self.rwd_norm_type == "rms":
             self.rms.update(rewards)
             return rewards / self.rms.std * self.weight
+        elif self.rwd_norm_type == "minmax":
+            return (rewards - rewards.min()) / (rewards.max() - rewards.min()) * self.weight
         else:
             return rewards * self.weight
         

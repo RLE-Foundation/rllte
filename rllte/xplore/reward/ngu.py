@@ -43,7 +43,7 @@ class NGU(Fabric):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
-        rwd_rms (bool): Use running mean and std for reward normalization.
+        rwd_norm_type (bool): Use running mean and std for reward normalization.
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
@@ -66,11 +66,11 @@ class NGU(Fabric):
                  device: str = "cpu", 
                  beta: float = 1.0, 
                  kappa: float = 0.0,
-                 rwd_rms: bool = True,
+                 rwd_norm_type: str = "rms",
                  obs_rms: bool = False,
                  latent_dim: int = 32,
                  lr: float = 0.001,
-                 batch_size: int = 64,
+                 batch_size: int = 256,
                  k: int = 10,
                  kernel_cluster_distance: float = 0.008,
                  kernel_epsilon: float = 0.0001,
@@ -86,7 +86,7 @@ class NGU(Fabric):
                   device=device,
                   beta=beta,
                   kappa=kappa,
-                  rwd_rms=rwd_rms,
+                  rwd_norm_type=rwd_norm_type,
                   obs_rms=obs_rms,
                   latent_dim=latent_dim,
                   lr=lr,
@@ -99,7 +99,7 @@ class NGU(Fabric):
                                      device=device,
                                      beta=beta,
                                      kappa=kappa,
-                                     rwd_rms=rwd_rms,
+                                     rwd_norm_type=rwd_norm_type,
                                      obs_rms=obs_rms,
                                      latent_dim=latent_dim,
                                      lr=lr,
