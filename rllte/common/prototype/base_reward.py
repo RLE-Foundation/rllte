@@ -24,7 +24,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -44,6 +44,8 @@ class BaseReward(ABC):
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
         use_rms (bool): Use running mean and std for normalization.
+        obs_rms (bool): Use running mean and std for observation normalization.
+        is_sync (bool): Whether to synchronize the reward computation with environment step.
 
     Returns:
         Instance of the base reward module.
@@ -58,7 +60,8 @@ class BaseReward(ABC):
         beta: float = 1.0,
         kappa: float = 0.0,
         use_rms: bool = True,
-        obs_rms: bool = False
+        obs_rms: bool = False,
+        is_sync: bool = False
     ) -> None:
         # get environment information
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
@@ -72,6 +75,7 @@ class BaseReward(ABC):
         self.kappa = kappa
         self.use_rms = use_rms
         self.obs_rms = obs_rms
+        self.is_sync = is_sync
         self.global_step = 0
 
         # build the running mean and std for normalization
@@ -119,7 +123,7 @@ class BaseReward(ABC):
               terminateds: th.Tensor,
               truncateds: th.Tensor,
               next_observations: th.Tensor
-              ) -> None:
+              ) -> Optional[Dict[str, th.Tensor]]:
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:

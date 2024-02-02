@@ -138,6 +138,17 @@ class OffPolicyAgent(BaseAgent):
             # observe reward and next obs
             next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
+# ============================================================================= #
+
+            # adapt to intrinsic reward modules
+            if self.irs is not None:
+                feedbacks = self.irs.watch(obs, actions, rews, terms, truncs, next_obs)
+            
+            # for episodic memory-based intrinsic reward modules, we have to compute the intrinsic rewards at each time step
+            if self.irs.is_sync:
+                rews += feedbacks.get("single_step_rewards", th.zeros_like(rews, device=self.device))
+
+# ============================================================================= #
             # pre-training mode
             if self.pretraining:
                 rews = th.zeros_like(rews, device=self.device)

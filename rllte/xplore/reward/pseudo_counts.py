@@ -139,6 +139,11 @@ class PseudoCounts(BaseReward):
                 if terminateds[i].item() or truncateds[i].item():
                     self.episodic_memory[i].clear()
                     # print(terminateds, truncateds)
+        
+        if self.is_sync:
+            return {'single_step_rewards': th.as_tensor(n_eps)}
+        else:
+            return None
 
     def pseudo_counts(self, embeddings: th.Tensor, memory: List[th.Tensor]) -> th.Tensor:
         """Pseudo counts.
@@ -177,18 +182,22 @@ class PseudoCounts(BaseReward):
             The intrinsic rewards.
         """
         super().compute(samples)
-        # compute the intrinsic rewards
-        all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
-        intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
 
-        # flush the episodic memory of intrinsic rewards
-        self.n_eps = [[] for _ in range(self.n_envs)]
-        
-        # update the embedding network
-        self.update(samples)
+        if not self.is_sync:
+            # compute the intrinsic rewards
+            all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+            intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
 
-        # scale the intrinsic rewards
-        return self.scale(intrinsic_rewards)
+            # flush the episodic memory of intrinsic rewards
+            self.n_eps = [[] for _ in range(self.n_envs)]
+            
+            # update the embedding network
+            self.update(samples)
+
+            # scale the intrinsic rewards
+            return self.scale(intrinsic_rewards)
+        else:
+            return th.zeros_like(samples.get("rewards"))
     
     def update(self, samples: Dict) -> None:
         """Update the reward module if necessary.
