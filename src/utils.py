@@ -9,19 +9,19 @@ def parse_args():
 
     # train config
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=32)
-    parser.add_argument("--num_train_steps", type=int, default=30_000_000)
+    parser.add_argument("--n_envs", type=int, default=16)
+    parser.add_argument("--num_train_steps", type=int, default=25_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
-    parser.add_argument("--num_steps", type=int, default=1024)
-    parser.add_argument("--batch_size", type=int, default=512)
-    parser.add_argument("--lr", type=float, default=2.5e-4)
+    parser.add_argument("--num_steps", type=int, default=2048)
+    parser.add_argument("--batch_size", type=int, default=2048)
+    parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=10)
     parser.add_argument("--clip_range", type=float, default=0.2)
     parser.add_argument("--clip_range_vf", type=float, default=0.1)
     parser.add_argument("--vf_coef", type=float, default=0.5)
-    parser.add_argument("--ent_coef", type=float, default=0.008)
+    parser.add_argument("--ent_coef", type=float, default=0.0)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
     parser.add_argument("--discount", type=float, default=0.99)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
@@ -117,28 +117,28 @@ def select_intrinsic_reward(args, env, device):
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
+            n_envs=args.n_envs,
             use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
         )
     elif args.intrinsic_reward == "rise":
         intrinsic_reward = RISE(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
+            n_envs=args.n_envs,
             use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
         )
     elif args.intrinsic_reward == "revd":
         intrinsic_reward = REVD(
             observation_space=env.observation_space,
             action_space=env.action_space,
+            episode_length=args.num_steps,
             device=device,
             n_envs=args.n_envs,
             use_rms=args.rew_rms,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
         )
     elif args.intrinsic_reward == "e3b":
         intrinsic_reward = E3B(

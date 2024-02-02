@@ -128,6 +128,7 @@ class PseudoCounts(BaseReward):
         """
         with th.no_grad():
             # data shape of embeddings: (n_envs, latent_dim)
+            observations = self.normalize(observations)
             embeddings = self.encoder.encode(observations)
             for i in range(self.n_envs):
                 # update the episodic memory

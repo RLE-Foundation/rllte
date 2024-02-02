@@ -140,8 +140,8 @@ class OnPolicyAgent(BaseAgent):
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
                 # pre-training mode
-                # if self.pretraining:
-                    # rews = th.zeros_like(rews, device=self.device)
+                if self.pretraining:
+                    rews = th.zeros_like(rews, device=self.device)
 
 ###############################################################################################################
                 # adapt to intrinsic reward modules
