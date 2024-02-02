@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--clip_range", type=float, default=0.1)
     parser.add_argument("--clip_range_vf", type=float, default=0.1)
     parser.add_argument("--vf_coef", type=float, default=0.5)
-    parser.add_argument("--ent_coef", type=float, default=0.01)
+    parser.add_argument("--ent_coef", type=float, default=0.0)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
     parser.add_argument("--discount", type=float, default=0.99)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
