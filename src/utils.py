@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--lr", type=float, default=0.0002)
     parser.add_argument("--eps", type=float, default=1e-5)
-    parser.add_argument("--n_epochs", type=int, default=5)
+    parser.add_argument("--n_epochs", type=int, default=4)
     parser.add_argument("--clip_range", type=float, default=0.1)
     parser.add_argument("--clip_range_vf", type=float, default=0.1)
     parser.add_argument("--vf_coef", type=float, default=0.5)
