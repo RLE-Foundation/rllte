@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument("--rwd_norm_type", type=str, default="rms")
     parser.add_argument("--obs_rms", action="store_true", default=False)
     parser.add_argument("--update_proportion", type=float, default=1.0)
+    parser.add_argument("--pretraining", action="store_true", default=False)
     args = parser.parse_args()
     return args
 
