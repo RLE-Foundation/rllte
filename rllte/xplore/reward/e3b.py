@@ -191,7 +191,7 @@ class E3B(BaseReward):
             actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
         # update the encoder and inverse dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
