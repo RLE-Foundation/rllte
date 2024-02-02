@@ -29,6 +29,7 @@ from typing import Dict, Tuple, Optional
 import gymnasium as gym
 import numpy as np
 import torch as th
+from tqdm import tqdm
 
 from rllte.common.preprocessing import process_action_space, process_observation_space
 from rllte.common.utils import TorchRunningMeanStd
@@ -114,7 +115,23 @@ class BaseReward(ABC):
         else:
             x = x / 255.0 if len(self.obs_shape) > 2 else x
         return x
-    
+
+    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env) -> None:
+        if self.obs_rms:
+            next_ob = []
+            print("Start to initialize observation normalization parameter.....")
+            for step in tqdm(range(num_steps * num_iters)):
+                acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
+                s, r, te, tr, _ = env.step(acs)
+                next_ob += s.view(-1, *self.obs_shape).cpu()
+
+                if len(next_ob) % (num_steps * self.n_envs) == 0:
+                    next_ob = th.stack(next_ob).float()
+                    self.obs_norm.update(next_ob)
+                    next_ob = []
+                    
+        return env
+
     @abstractmethod
     def watch(self, 
               observations: th.Tensor, 
