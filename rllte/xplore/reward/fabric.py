@@ -23,12 +23,13 @@
 # =============================================================================
 
 
-from typing import Dict, List
+
+from typing import Dict, Optional, List
 import torch as th
 
 from rllte.common.prototype import BaseReward
 
-class Fabric(object):
+class Fabric(BaseReward):
     """Connecting multiple intrinsic reward modules to generate mixed intrinsic rewards.
 
     Args:
@@ -44,57 +45,52 @@ class Fabric(object):
         self.rewards = list(rewards)
     
     def watch(self, 
-              observations: th.Tensor,
+              observations: th.Tensor, 
               actions: th.Tensor,
               rewards: th.Tensor,
               terminateds: th.Tensor,
               truncateds: th.Tensor,
               next_observations: th.Tensor
-              ) -> None:
+              ) -> Optional[Dict[str, th.Tensor]]:
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
-            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
-            rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
-            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
-            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
-            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
 
         Returns:
-            None.
+            Feedbacks for the current samples, e.g., intrinsic rewards for the current samples. This 
+            is useful when applying the memory-based methods to off-policy algorithms.
         """
         for rwd in self.rewards:
             rwd.watch(observations, actions, rewards, terminateds, truncateds, next_observations)
 
-    def compute(self, samples: Dict) -> List[th.Tensor]:
+    def compute(self, samples: Dict[str, th.Tensor]) -> List[th.Tensor]:
         """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-                The derived intrinsic rewards have the shape of (n_steps, n_envs).
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors, whose keys are
+            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. For example, 
+            the data shape of 'observations' is (n_steps, n_envs, *obs_shape). 
 
         Returns:
             The intrinsic rewards.
         """
         intrinsic_rewards = []
         for rwd in self.rewards:
-            rwd.compute(samples)
-            intrinsic_rewards.append(rwd.rewards)
+            intrinsic_rewards.append(rwd.compute(samples))
         
         return intrinsic_rewards
     
-    def update(self, samples: Dict) -> None:
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
         """Update the reward module if necessary.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
                 The `update` function will be invoked after the `compute` function.
 
         Returns:

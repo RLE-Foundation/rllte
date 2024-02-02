@@ -42,10 +42,9 @@ class BaseReward(ABC):
         n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
-        use_rms (bool): Use running mean and std for normalization.
+        kappa (float): The decay rate of the weighting coefficient.
+        rwd_rms (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
-        is_sync (bool): Whether to synchronize the reward computation with environment step.
 
     Returns:
         Instance of the base reward module.
@@ -59,9 +58,8 @@ class BaseReward(ABC):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True,
-        obs_rms: bool = False,
-        is_sync: bool = False
+        rwd_rms: bool = True,
+        obs_rms: bool = False
     ) -> None:
         # get environment information
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
@@ -73,13 +71,12 @@ class BaseReward(ABC):
         self.device = th.device(device)
         self.beta = beta
         self.kappa = kappa
-        self.use_rms = use_rms
+        self.rwd_rms = rwd_rms
         self.obs_rms = obs_rms
-        self.is_sync = is_sync
         self.global_step = 0
 
         # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd() if self.use_rms else None
+        self.rms = TorchRunningMeanStd() if self.rwd_rms else None
         self.obs_norm = TorchRunningMeanStd(shape=self.obs_shape) if self.obs_rms else None
         
     @property
@@ -97,13 +94,14 @@ class BaseReward(ABC):
         Returns:
             The scaled intrinsic rewards.
         """
-        if self.use_rms:
+        if self.rwd_rms:
             self.rms.update(rewards)
             return rewards / self.rms.std * self.weight
         else:
             return rewards * self.weight
         
     def normalize(self, x: th.Tensor) -> th.Tensor:
+        """Normalize the observations."""
         if self.obs_rms:
             x = (
                 (
@@ -116,8 +114,8 @@ class BaseReward(ABC):
         return x
     
     @abstractmethod
-    def watch(self,
-              observations: th.Tensor,
+    def watch(self, 
+              observations: th.Tensor, 
               actions: th.Tensor,
               rewards: th.Tensor,
               terminateds: th.Tensor,
@@ -127,15 +125,16 @@ class BaseReward(ABC):
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
-            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
-            rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
-            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
-            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
-            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
 
         Returns:
-            None.
+            Feedbacks for the current samples, e.g., e.g., intrinsic rewards for the current samples. This 
+            is useful when applying the memory-based methods to off-policy algorithms.
         """
     
     @abstractmethod
@@ -143,9 +142,9 @@ class BaseReward(ABC):
         """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict consists of multiple tensors, whose keys are
-            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. 
-            The data shape of each tensor is consistent with the `watch` function.
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors, whose keys are
+            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. For example, 
+            the data shape of 'observations' is (n_steps, n_envs, *obs_shape). 
 
         Returns:
             The intrinsic rewards.
@@ -165,7 +164,7 @@ class BaseReward(ABC):
         """Update the reward module if necessary.
 
         Args:
-            samples (Dict): The collected samples same as the `compute` function.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
                 The `update` function will be invoked after the `compute` function.
 
         Returns:

@@ -3,7 +3,7 @@ sys.path.append("../")
 
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
-from rllte.xplore.reward import PseudoCounts
+from rllte.xplore.reward import *
 
 if __name__ == "__main__":
     # env setup
@@ -24,11 +24,12 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    rnd = PseudoCounts(
+    rnd = NGU(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=device,
-        n_envs=num_envs
+        n_envs=num_envs,
+        # episode_length=128,
     )
 
     # set the reward module

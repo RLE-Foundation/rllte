@@ -24,9 +24,6 @@
 
 
 from typing import Dict
-from torch import nn
-from torch.nn import functional as F
-from torch.utils.data import DataLoader, TensorDataset
 
 import gymnasium as gym
 import torch as th
@@ -45,67 +42,64 @@ class NGU(Fabric):
         n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
-        use_rms (bool): Use running mean and std for normalization.
+        kappa (float): The decay rate of the weighting coefficient.
+        rwd_rms (bool): Use running mean and std for reward normalization.
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
-        episodic_memory_size (int): The capacity of the episodic memory.
         k (int): Number of neighbors.
         kernel_cluster_distance (float): The kernel cluster distance.
         kernel_epsilon (float): The kernel constant.
         c (float): The pseudo-counts constant.
         sm (float): The kernel maximum similarity.
         mrs (float): The maximum reward scaling.
+        update_proportion (float): The proportion of the training data used for updating the forward dynamics models.
 
     Returns:
         Instance of NGU.
     """
 
-    def __init__(
-        self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
-        n_envs: int,
-        device: str = "cpu",
-        beta: float = 1.0,
-        kappa: float = 0.0,
-        use_rms: bool = True,
-        obs_rms: bool = False,
-        latent_dim: int = 32,
-        lr: float = 0.001,
-        batch_size: int = 64,
-        episodic_memory_size: int = 1000,
-        k: int = 10,
-        kernel_cluster_distance: float = 0.008,
-        kernel_epsilon: float = 0.0001,
-        c: float = 0.001,
-        sm: float = 8.0,
-        mrs: float = 5.0,
-        update_proportion: float = 1.0
+    def __init__(self, 
+                 observation_space: gym.Space, 
+                 action_space: gym.Space, 
+                 n_envs: int, 
+                 device: str = "cpu", 
+                 beta: float = 1.0, 
+                 kappa: float = 0.0,
+                 rwd_rms: bool = True,
+                 obs_rms: bool = False,
+                 latent_dim: int = 32,
+                 lr: float = 0.001,
+                 batch_size: int = 64,
+                 k: int = 10,
+                 kernel_cluster_distance: float = 0.008,
+                 kernel_epsilon: float = 0.0001,
+                 c: float = 0.001,
+                 sm: float = 8.0,
+                 mrs: float = 5.0,
+                 update_proportion: float = 1.0
         ) -> None:
-
+        # build the rnd and pseudo-counts modules
         rnd = RND(observation_space=observation_space,
                   action_space=action_space,
                   n_envs=n_envs,
                   device=device,
                   beta=beta,
                   kappa=kappa,
-                  use_rms=use_rms,
+                  rwd_rms=rwd_rms,
                   obs_rms=obs_rms,
                   latent_dim=latent_dim,
                   lr=lr,
                   batch_size=batch_size,
                   update_proportion=update_proportion
                 )
-        
         pseudo_counts = PseudoCounts(observation_space=observation_space,
                                      action_space=action_space,
                                      n_envs=n_envs,
                                      device=device,
                                      beta=beta,
                                      kappa=kappa,
-                                     use_rms=use_rms,
+                                     rwd_rms=rwd_rms,
                                      obs_rms=obs_rms,
                                      latent_dim=latent_dim,
                                      lr=lr,
@@ -118,22 +112,22 @@ class NGU(Fabric):
                                      update_proportion=update_proportion)
 
         super().__init__(*[rnd, pseudo_counts])
+        # set the maximum reward scaling
+        self.mrs = mrs
+        self.obs_rms = obs_rms
 
-    def compute(self, samples: Dict) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-                The derived intrinsic rewards have the shape of (n_steps, n_envs).
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors, whose keys are
+            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. For example, 
+            the data shape of 'observations' is (n_steps, n_envs, *obs_shape). 
 
         Returns:
             The intrinsic rewards.
         """
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
         lifelong_rewards, episodic_rewards = super().compute(samples)
 
         # compute the intrinsic rewards

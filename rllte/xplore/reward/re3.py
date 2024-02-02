@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict
+from typing import Dict, Optional
 import gymnasium as gym
 import torch as th
 
@@ -40,8 +40,9 @@ class RE3(BaseReward):
         n_envs (int): The number of parallel environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
-        use_rms (bool): Use running mean and std for normalization.
+        kappa (float): The decay rate of the weighting coefficient.
+        rwd_rms (bool): Use running mean and std for reward normalization.
+        obs_rms (bool): Use running mean and std for observation normalization.
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.
         k (int): Use the k-th neighbors.
@@ -59,14 +60,14 @@ class RE3(BaseReward):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True,
+        rwd_rms: bool = True,
         obs_rms: bool = True,
         latent_dim: int = 128,
         storage_size: int = 1000,
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_rms, obs_rms)
         
         # build the storage for random embeddings
         self.storage_size = storage_size
@@ -83,25 +84,26 @@ class RE3(BaseReward):
             p.requires_grad = False
     
     def watch(self, 
-              observations: th.Tensor,
+              observations: th.Tensor, 
               actions: th.Tensor,
               rewards: th.Tensor,
               terminateds: th.Tensor,
               truncateds: th.Tensor,
               next_observations: th.Tensor
-              ) -> None:
+              ) -> Optional[Dict[str, th.Tensor]]:
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
-            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
-            rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
-            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
-            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
-            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
 
         Returns:
-            None.
+            Feedbacks for the current samples, e.g., intrinsic rewards for the current samples. This 
+            is useful when applying the memory-based methods to off-policy algorithms.
         """
         with th.no_grad():
             observations = self.normalize(observations)
@@ -111,15 +113,13 @@ class RE3(BaseReward):
         # update the storage status
         self.storage_full = self.storage_full or self.storage_idx == 0
 
-    def compute(self, samples: Dict) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-                The derived intrinsic rewards have the shape of (n_steps, n_envs).
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors, whose keys are
+            'observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'. For example, 
+            the data shape of 'observations' is (n_steps, n_envs, *obs_shape). 
 
         Returns:
             The intrinsic rewards.
@@ -128,9 +128,8 @@ class RE3(BaseReward):
         # get the number of steps and environments
         (n_steps, n_envs) = samples.get("observations").size()[:2]
         obs_tensor = samples.get("observations").to(self.device)
-
+        # normalize the observations
         obs_tensor = self.normalize(obs_tensor)
-
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
@@ -152,14 +151,11 @@ class RE3(BaseReward):
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
     
-    def update(self, samples: Dict) -> None:
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
         """Update the reward module if necessary.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
                 The `update` function will be invoked after the `compute` function.
 
         Returns:

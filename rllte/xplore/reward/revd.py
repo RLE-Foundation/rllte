@@ -23,7 +23,7 @@
 # =============================================================================
 
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 import gymnasium as gym
 import torch as th
 
@@ -42,7 +42,8 @@ class REVD(BaseReward):
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate.
-        use_rms (bool): Use running mean and std for normalization.
+        rwd_rms (bool): Use running mean and std for reward normalization.
+        obs_rms (bool): Use running mean and std for observation normalization.
         latent_dim (int): The dimension of encoding vectors.
         alpha (alpha): The The order of Rényi entropy.
         k (int): Use the k-th neighbors.
@@ -61,18 +62,18 @@ class REVD(BaseReward):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True,
+        rwd_rms: bool = True,
         obs_rms: bool = True,
         latent_dim: int = 128,
         alpha: float = 0.5,
         k: int = 5,
         average_divergence: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_rms, obs_rms)
         
         # build the storage for random embeddings
         self.storage_size = episode_length
-        self.storage = th.zeros(size=(episode_length, n_envs, latent_dim))
+        self.storage = th.zeros(size=(episode_length, n_envs, latent_dim), device=self.device)
         # set parameters
         self.latent_dim = latent_dim
         self.alpha = alpha
@@ -87,25 +88,26 @@ class REVD(BaseReward):
         self.last_encoded_obs: List = list()
     
     def watch(self, 
-              observations: th.Tensor,
+              observations: th.Tensor, 
               actions: th.Tensor,
               rewards: th.Tensor,
               terminateds: th.Tensor,
               truncateds: th.Tensor,
               next_observations: th.Tensor
-              ) -> None:
+              ) -> Optional[Dict[str, th.Tensor]]:
         """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            observations (th.Tensor): The observations data with shape (n_steps, n_envs, *obs_shape).
-            actions (th.Tensor): The actions data with shape (n_steps, n_envs, *action_shape).
-            rewards (th.Tensor): The rewards data with shape (n_steps, n_envs).
-            terminateds (th.Tensor): Termination signals with shape (n_steps, n_envs).
-            truncateds (th.Tensor): Truncation signals with shape (n_steps, n_envs).
-            next_observations (th.Tensor): The next observations data with shape (n_steps, n_envs, *obs_shape).
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
 
         Returns:
-            None.
+            Feedbacks for the current samples, e.g., intrinsic rewards for the current samples. This 
+            is useful when applying the memory-based methods to off-policy algorithms.
         """
 
     def compute(self, samples: Dict) -> th.Tensor:
@@ -124,8 +126,9 @@ class REVD(BaseReward):
         super().compute(samples)
         # get the number of steps and environments
         (n_steps, n_envs) = samples.get("observations").size()[:2]
+        # get the observations
         obs_tensor = samples.get("observations").to(self.device)
-        
+        # normalize the observations
         obs_tensor = self.normalize(obs_tensor)
 
         # compute the intrinsic rewards
@@ -136,7 +139,7 @@ class REVD(BaseReward):
         if self.first_update:
             with th.no_grad():
                 for i in range(n_envs):
-                    self.storage_last[:, i] = self.random_encoder(obs_tensor[:, i])
+                    self.storage[:, i] = self.random_encoder(obs_tensor[:, i])
             self.first_update = False
             return intrinsic_rewards
         # REVD requires at least two episodes
@@ -168,14 +171,11 @@ class REVD(BaseReward):
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
     
-    def update(self, samples: Dict) -> None:
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
         """Update the reward module if necessary.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                next_observations (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
                 The `update` function will be invoked after the `compute` function.
 
         Returns:
