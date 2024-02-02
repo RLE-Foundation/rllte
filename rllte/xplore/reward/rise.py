@@ -61,7 +61,7 @@ class RISE(BaseReward):
         device: str = "cpu",
         beta: float = 1.0,
         kappa: float = 0.0,
-        use_rms: bool = True,
+        rwd_norm_type: str = "rms",
         obs_rms: bool = True,
         latent_dim: int = 128,
         storage_size: int = 1000,
@@ -69,7 +69,7 @@ class RISE(BaseReward):
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, use_rms, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
         
         # build the storage for random embeddings
         self.storage_size = storage_size
