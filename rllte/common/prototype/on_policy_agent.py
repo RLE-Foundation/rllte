@@ -78,7 +78,7 @@ class OnPolicyAgent(BaseAgent):
         save_interval: int = 100,
         num_eval_episodes: int = 10,
         th_compile: bool = True,
-        anneal_lr: bool = False
+        anneal_lr: bool = True
     ) -> None:
         """Training function.
 

@@ -48,4 +48,4 @@ if __name__ == "__main__":
     print(agent.policy)
 
     # start training
-    agent.train(num_train_steps=args.num_train_steps)
+    agent.train(num_train_steps=args.num_train_steps, anneal_lr=args.anneal_lr)

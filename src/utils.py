@@ -18,12 +18,13 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=10)
-    parser.add_argument("--clip_range", type=float, default=0.2)
-    parser.add_argument("--clip_range_vf", type=float, default=0.1)
+    parser.add_argument("--clip_range", type=float, default=0.1)
+    parser.add_argument("--clip_range_vf", type=float, default=0.05)
     parser.add_argument("--vf_coef", type=float, default=0.5)
     parser.add_argument("--ent_coef", type=float, default=0.0)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
     parser.add_argument("--discount", type=float, default=0.99)
+    parser.add_argument("--anneal_lr", action="store_true", default=True)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
 
     # intrinsic reward
