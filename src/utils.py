@@ -45,7 +45,13 @@ def make_env(args, device):
             num_envs=args.n_envs,
             env_id=args.env_id,
         )
-        env_name = args.env_id
+    elif "MyWayHome" in args.env_id:
+        from rllte.env import make_envpool_vizdoom_env
+        env = make_envpool_vizdoom_env(
+            device=device,
+            num_envs=args.n_envs,
+            env_id=args.env_id,
+        )
     else:
         try:
             from rllte.env import make_envpool_atari_env
@@ -54,11 +60,9 @@ def make_env(args, device):
                 num_envs=args.n_envs,
                 device=device,
             )
-            env_name = args.env_id
         except:
             raise NotImplementedError
-    return env, env_name
-
+    return env, args.env_id
 
 def select_intrinsic_reward(args, env, device):
     # select intrinsic reward
