@@ -4,8 +4,11 @@ from rllte.agent import PPO
 if __name__ == "__main__":
     # env setup
     args = parse_args()
+    eval_args = parse_args()
+    eval_args.n_envs = 1
 
     env, env_name = make_env(args, args.device)
+    eval_env, _ = make_env(eval_args, args.device)
     
     # select intrinsic reward
     intrinsic_reward = select_intrinsic_reward(
@@ -19,6 +22,7 @@ if __name__ == "__main__":
     # create agent and turn on pre-training mode
     agent = PPO(
         env=env, 
+        eval_env=eval_env,
         seed=args.seed,
         device=args.device,
         tag=exp_name,
@@ -48,4 +52,8 @@ if __name__ == "__main__":
     print(agent.policy)
 
     # start training
-    agent.train(num_train_steps=args.num_train_steps, anneal_lr=args.anneal_lr)
+    agent.train(
+        num_train_steps=args.num_train_steps,
+        anneal_lr=args.anneal_lr,
+        #num_eval_episodes=1
+    )

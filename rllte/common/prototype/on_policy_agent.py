@@ -28,6 +28,7 @@ from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 import torch as th
+import imageio
 
 from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
@@ -221,16 +222,25 @@ class OnPolicyAgent(BaseAgent):
             The evaluation results.
         """
         assert self.eval_env is not None, "No evaluation environment is provided!"
+
         # reset the env
         obs, infos = self.eval_env.reset(seed=self.seed)
         episode_rewards: List[float] = []
         episode_steps: List[int] = []
+        images: List[np.ndarray] = []
+        
+        # since render() is not implemented, use image observation
+        img = obs.cpu().numpy()[0].transpose(1, 2, 0)
 
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:
+            images.append(img)
+            
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy(obs, training=False)
+                actions, _ = self.policy(obs, training=True)
                 next_obs, rews, terms, truncs, infos = self.eval_env.step(actions)
+                # since render() is not implemented, use image observation
+                img = next_obs.cpu().numpy()[0].transpose(1, 2, 0)
 
             # get episode information
             if "episode" in infos:
@@ -240,6 +250,9 @@ class OnPolicyAgent(BaseAgent):
 
             # set the current observation
             obs = next_obs
+
+        # save gif
+        imageio.mimsave(f"{self.work_dir}/eval_{self.global_step}.gif", [np.array(img) for i, img in enumerate(images) if i%2 == 0], fps=10)
 
         return {
             "step": self.global_step,

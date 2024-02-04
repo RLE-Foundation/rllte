@@ -14,17 +14,20 @@ class EpisodicLifeEnv(gym.Wrapper):
     def step(self, action):
         obs, reward, terminated, truncated, info = self.env.step(action)
         self.was_real_done = np.logical_or(terminated, truncated)
-        try:
-            lives = self.env.unwrapped.env._life
-            if self.lives > lives > 0:
-                terminated, truncated = True, True
-            self.lives = lives
-        except:
-            pass
+        lives = self.env.unwrapped.env._life
+        if self.lives > lives > 0:
+            terminated, truncated = True, True
+        self.lives = lives
         return obs, reward, terminated, truncated, info
     
     def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
+        if self.was_real_done:
+            obs = self.env.reset(**kwargs)
+        else:
+            # no-op step to advance from terminal/lost life state
+            obs, _, _, _, _ = self.env.step(0)
+        self.lives = self.env.unwrapped.env._life
+        return obs
     
 class SkipFrame(gym.Wrapper):
     def __init__(self, env, skip):
