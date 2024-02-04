@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("--ent_coef", type=float, default=0.0)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
     parser.add_argument("--discount", type=float, default=0.99)
-    parser.add_argument("--anneal_lr", action="store_true", default=True)
+    parser.add_argument("--anneal_lr", action="store_true", default=False)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
 
     # intrinsic reward
