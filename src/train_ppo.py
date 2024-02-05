@@ -1,5 +1,5 @@
 from src.utils import parse_args, make_env, select_intrinsic_reward
-from rllte.agent import PPO
+from rllte.agent import PPO, TwoHeadPPO
 
 if __name__ == "__main__":
     # env setup
@@ -17,10 +17,10 @@ if __name__ == "__main__":
         device=args.device,
     )
     
-    exp_name = f"ppo_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_s{args.seed}"
+    exp_name = f"ppo_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_rff:{args.int_gamma is not None}_s{args.seed}"
 
     # create agent and turn on pre-training mode
-    agent = PPO(
+    ppo_args = dict(
         env=env, 
         eval_env=eval_env,
         seed=args.seed,
@@ -43,6 +43,13 @@ if __name__ == "__main__":
         pretraining=args.pretraining,
     )
     
+    if args.two_head:
+        agent_class = TwoHeadPPO
+    else:
+        agent_class = PPO
+        
+    agent = agent_class(**ppo_args)
+        
     # create intrinsic reward
     if intrinsic_reward is not None:
         agent.set(reward=intrinsic_reward)

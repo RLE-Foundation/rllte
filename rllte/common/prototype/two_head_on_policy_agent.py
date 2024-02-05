@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-
-
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional
 
@@ -34,8 +32,8 @@ from rllte.common import utils
 from rllte.common.prototype.base_agent import BaseAgent
 from rllte.common.type_alias import OnPolicyType, RolloutStorageType, VecEnv
 
-class OnPolicyAgent(BaseAgent):
-    """Trainer for on-policy algorithms.
+class TwoHeadOnPolicyAgent(BaseAgent):
+    """Trainer for on-policy algorithms with 2 value heads. One for extrinsic and one for intrinsic rewards.
 
     Args:
         env (VecEnv): Vectorized environments for training.
@@ -65,7 +63,7 @@ class OnPolicyAgent(BaseAgent):
         # attr annotations
         self.policy: OnPolicyType
         self.storage: RolloutStorageType
-
+        
     def update(self) -> None:
         """Update the agent. Implemented by individual algorithms."""
         raise NotImplementedError
@@ -96,6 +94,8 @@ class OnPolicyAgent(BaseAgent):
         Returns:
             None.
         """
+        assert self.irs is not None, "You must provide an Intrinsic reward module if using the TwoHead architecture"
+        
         # freeze the agent and get ready for training
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
         
@@ -106,11 +106,8 @@ class OnPolicyAgent(BaseAgent):
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
-###############################################################################################################
         # init obs normalization parameters if necessary
-        if self.irs is not None:
-            env = self.irs.init_normalization(self.num_steps, 20, self.env)
-###############################################################################################################
+        env = self.irs.init_normalization(self.num_steps, 20, self.env)
                     
         for update in range(num_updates):
             # try to eval
@@ -127,19 +124,13 @@ class OnPolicyAgent(BaseAgent):
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
+                    from IPython import embed; embed()
                     actions, extra_policy_outputs = self.policy(obs, training=True)
                     # observe rewards and next obs
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
-                # pre-training mode
-                if self.pretraining:
-                    rews = th.zeros_like(rews, device=self.device)
-
-###############################################################################################################
                 # adapt to intrinsic reward modules
-                if self.irs is not None:
-                    self.irs.watch(obs, actions, rews, terms, truncs, next_obs)
-###############################################################################################################
+                self.irs.watch(obs, actions, rews, terms, truncs, next_obs)
 
                 # add transitions
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
@@ -154,31 +145,35 @@ class OnPolicyAgent(BaseAgent):
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(next_obs).detach()
+                last_values, last_intrinsic_values = self.policy.get_value(next_obs)
+                last_values = last_values.detach()
+                last_intrinsic_values = last_intrinsic_values.detach()
 
-###############################################################################################################
-            if self.irs is not None:
-                # deal with the intrinsic reward module
-                intrinsic_rewards = self.irs.compute(
-                    samples={
-                        "observations": self.storage.observations[:-1],  # type: ignore
-                        "actions": self.storage.actions,
-                        "rewards": self.storage.rewards,
-                        "terminateds": self.storage.terminateds,
-                        "truncateds": self.storage.truncateds,
-                        "next_observations": self.storage.observations[1:],  # type: ignore
-                    }
-                )
-                # just plus the intrinsic rewards to the extrinsic rewards
-                self.storage.rewards += intrinsic_rewards.to(self.device)
-###############################################################################################################
+            # deal with the intrinsic reward module
+            intrinsic_rewards = self.irs.compute(
+                samples={
+                    "observations": self.storage.observations[:-1],  # type: ignore
+                    "actions": self.storage.actions,
+                    "rewards": self.storage.rewards,
+                    "terminateds": self.storage.terminateds,
+                    "truncateds": self.storage.truncateds,
+                    "next_observations": self.storage.observations[1:],  # type: ignore
+                }
+            )
+            self.storage.intrinsic_rewards = intrinsic_rewards.to(self.device)
             
-            # compute advantages and returns 
-            if self.irs and self.pretraining and self.int_gamma is not None:
-                self.storage.compute_returns_and_advantages(last_values, episodic=False)
+            # compute intrinsic advantages and returns
+            if self.irs.rff:
+                self.storage.compute_intrinsic_returns_and_advantages(last_intrinsic_values, episodic=False)
             else:
-                self.storage.compute_returns_and_advantages(last_values)
-
+                self.storage.compute_intrinsic_returns_and_advantages(last_intrinsic_values, episodic=True)
+            
+            # compute extrinsic advantages and returns
+            self.storage.compute_extrinsic_returns_and_advantages(last_values)
+            
+            # combine advantages
+            self.storage.combined_advantages = self.storage.advantages + self.storage.intrinsic_advantages
+                
             # update the agent
             self.update()
 

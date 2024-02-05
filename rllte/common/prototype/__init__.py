@@ -35,3 +35,4 @@ from .base_storage import BaseStorage as BaseStorage
 from .distributed_agent import DistributedAgent as DistributedAgent
 from .off_policy_agent import OffPolicyAgent as OffPolicyAgent
 from .on_policy_agent import OnPolicyAgent as OnPolicyAgent
+from .two_head_on_policy_agent import TwoHeadOnPolicyAgent as TwoHeadOnPolicyAgent

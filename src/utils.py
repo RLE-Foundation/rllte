@@ -27,12 +27,17 @@ def parse_args():
     parser.add_argument("--anneal_lr", action="store_true", default=False)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
 
+    # ppo type
+    parser.add_argument("--two_head", action="store_true", default=False)
+
     # intrinsic reward
     parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
     parser.add_argument("--rwd_norm_type", type=str, default="rms")
     parser.add_argument("--obs_rms", action="store_true", default=False)
     parser.add_argument("--update_proportion", type=float, default=1.0)
     parser.add_argument("--pretraining", action="store_true", default=False)
+    parser.add_argument("--int_gamma", type=float, default=None)
+    
     args = parser.parse_args()
     return args
 
@@ -76,7 +81,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "icm":
         intrinsic_reward = ICM(
@@ -86,7 +92,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "rnd":
         intrinsic_reward = RND(
@@ -96,7 +103,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "ngu":
         intrinsic_reward = NGU(
@@ -106,7 +114,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "ride":
         intrinsic_reward = RIDE(
@@ -116,7 +125,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "re3":
         intrinsic_reward = RE3(
@@ -126,6 +136,7 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "rise":
         intrinsic_reward = RISE(
@@ -135,6 +146,7 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "revd":
         intrinsic_reward = REVD(
@@ -145,6 +157,7 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "e3b":
         intrinsic_reward = E3B(
@@ -154,7 +167,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     elif args.intrinsic_reward == "disagreement":
         intrinsic_reward = Disagreement(
@@ -164,7 +178,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            update_proportion=args.update_proportion
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma
         )
     else:
         raise NotImplementedError

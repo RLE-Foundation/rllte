@@ -131,7 +131,7 @@ class VanillaRolloutStorage(BaseStorage):
         self.terminateds[0].copy_(self.terminateds[-1])
         self.truncateds[0].copy_(self.truncateds[-1])
 
-    def compute_returns_and_advantages(self, last_values: th.Tensor) -> None:
+    def compute_returns_and_advantages(self, last_values: th.Tensor, episodic=True) -> None:
         """Perform generalized advantage estimation (GAE).
 
         Args:
@@ -146,7 +146,12 @@ class VanillaRolloutStorage(BaseStorage):
                 next_values = last_values[:, 0]
             else:
                 next_values = self.values[step + 1]
-            next_non_terminal = 1.0 - self.terminateds[step + 1]
+
+            if episodic:
+                next_non_terminal = 1.0 - self.terminateds[step + 1]                
+            else:
+                next_non_terminal = 1.0
+            
             delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
             # time limit
@@ -154,7 +159,6 @@ class VanillaRolloutStorage(BaseStorage):
             self.advantages[step] = gae
 
         self.returns = self.advantages + self.values
-        self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self) -> Generator:
         """Sample data from storage."""
@@ -170,6 +174,9 @@ class VanillaRolloutStorage(BaseStorage):
             batch_truncateds = self.truncateds[:-1].view(-1)[indices]
             batch_old_log_probs = self.log_probs.view(-1)[indices]
             adv_targ = self.advantages.view(-1)[indices]
+            
+            # normalize advantages in each batch
+            adv_targ = (adv_targ - adv_targ.mean()) / (adv_targ.std() + 1e-8)
 
             yield VanillaRolloutBatch(
                 observations=batch_obs,

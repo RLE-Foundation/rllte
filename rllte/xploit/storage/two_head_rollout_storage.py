@@ -30,11 +30,11 @@ import torch as th
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from rllte.common.prototype import BaseStorage
-from rllte.common.type_alias import VanillaRolloutBatch
+from rllte.common.type_alias import TwoHeadRolloutBatch
 
 
-class RogerRolloutStorage(BaseStorage):
-    """Vanilla rollout storage for on-policy algorithms.
+class TwoHeadRolloutStorage(BaseStorage):
+    """Rollout storage for separate extrinsic/intrinsic rewards.
 
     Args:
         observation_space (gym.Space): The observation space of environment.
@@ -58,7 +58,7 @@ class RogerRolloutStorage(BaseStorage):
         storage_size: int = 256,
         batch_size: int = 64,
         num_envs: int = 8,
-        discount: float = 0.999,
+        discount: float = 0.99,
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
@@ -84,6 +84,13 @@ class RogerRolloutStorage(BaseStorage):
         self.values = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         self.returns = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         self.advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        # intrinsic part 
+        self.intrinsic_rewards = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.intrinsic_values = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.intrinsic_returns = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        self.intrinsic_advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
+        # this will be filled by adding intrinsic advantages and extrinsic advantages
+        self.combined_advantages = th.empty(size=(self.storage_size, self.num_envs), dtype=th.float32, device=self.device)
         super().reset()
 
     def add(
@@ -97,6 +104,7 @@ class RogerRolloutStorage(BaseStorage):
         next_observations: th.Tensor,
         log_probs: th.Tensor,
         values: th.Tensor,
+        intrinsic_values: th.Tensor,
     ) -> None:
         """Add sampled transitions into storage.
 
@@ -122,6 +130,7 @@ class RogerRolloutStorage(BaseStorage):
         self.observations[self.step + 1].copy_(next_observations)
         self.log_probs[self.step].copy_(log_probs)
         self.values[self.step].copy_(values.flatten())
+        self.intrinsic_values[self.step].copy_(intrinsic_values.flatten())
 
         self.full = True if self.step == self.storage_size - 1 else False
         self.step = (self.step + 1) % self.storage_size
@@ -131,7 +140,36 @@ class RogerRolloutStorage(BaseStorage):
         self.terminateds[0].copy_(self.terminateds[-1])
         self.truncateds[0].copy_(self.truncateds[-1])
 
-    def compute_returns_and_advantages(self, last_values: th.Tensor) -> None:
+    def compute_intrinsic_returns_and_advantages(self, last_values: th.Tensor, episodic=True) -> None:
+        """Perform generalized advantage estimation (GAE).
+
+        Args:
+            last_values (th.Tensor): Estimated values of the last step.
+
+        Returns:
+            None.
+        """
+        gae = 0
+        for step in reversed(range(self.storage_size)):
+            if step == self.storage_size - 1:
+                next_values = last_values[:, 0]
+            else:
+                next_values = self.intrinsic_values[step + 1]
+
+            # cut off the advantage calculation at the end of the episode if episodic
+            if episodic:
+                next_non_terminal = 1.0 - self.terminateds[step + 1]                
+            else:
+                next_non_terminal = 1.0
+            
+            delta = self.intrinsic_rewards[step] + self.discount * next_values * next_non_terminal - self.intrinsic_values[step]
+            gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
+            # time limit
+            gae = gae * (1.0 - self.truncateds[step + 1])
+            self.intrinsic_advantages[step] = gae
+        self.intrinsic_returns = self.intrinsic_advantages + self.intrinsic_values
+        
+    def compute_extrinsic_returns_and_advantages(self, last_values: th.Tensor) -> None:
         """Perform generalized advantage estimation (GAE).
 
         Args:
@@ -146,11 +184,10 @@ class RogerRolloutStorage(BaseStorage):
                 next_values = last_values[:, 0]
             else:
                 next_values = self.values[step + 1]
-
-# don't cut the rewards when done is True
-#=============================================================================#
-            next_non_terminal = 1.0
-#=============================================================================#
+                
+            # extrinsic rewards are always episodic
+            next_non_terminal = 1.0 - self.terminateds[step + 1]
+            
             delta = self.rewards[step] + self.discount * next_values * next_non_terminal - self.values[step]
             gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
             # time limit
@@ -158,7 +195,6 @@ class RogerRolloutStorage(BaseStorage):
             self.advantages[step] = gae
 
         self.returns = self.advantages + self.values
-        self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-5)
 
     def sample(self) -> Generator:
         """Sample data from storage."""
@@ -173,9 +209,14 @@ class RogerRolloutStorage(BaseStorage):
             batch_terminateds = self.terminateds[:-1].view(-1)[indices]
             batch_truncateds = self.truncateds[:-1].view(-1)[indices]
             batch_old_log_probs = self.log_probs.view(-1)[indices]
-            adv_targ = self.advantages.view(-1)[indices]
+            batch_intrinsic_returns = self.intrinsic_returns.view(-1)[indices]
+            batch_intrinsic_values = self.intrinsic_values.view(-1)[indices]
+            adv_targ = self.combined_advantages.view(-1)[indices]
+            
+            # normalize advantages in each batch
+            adv_targ = (adv_targ - adv_targ.mean()) / (adv_targ.std() + 1e-8)
 
-            yield VanillaRolloutBatch(
+            yield TwoHeadRolloutBatch(
                 observations=batch_obs,
                 actions=batch_actions,
                 values=batch_values,
@@ -183,5 +224,7 @@ class RogerRolloutStorage(BaseStorage):
                 terminateds=batch_terminateds,
                 truncateds=batch_truncateds,
                 old_log_probs=batch_old_log_probs,
+                intrinsic_returns=batch_intrinsic_returns,
+                intrinsic_values=batch_intrinsic_values,                
                 adv_targ=adv_targ,
             )
