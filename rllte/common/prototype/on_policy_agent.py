@@ -106,9 +106,11 @@ class OnPolicyAgent(BaseAgent):
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
+###############################################################################################################
         # init obs normalization parameters if necessary
         if self.irs is not None:
             env = self.irs.init_normalization(self.num_steps, 20, self.env)
+###############################################################################################################
                     
         for update in range(num_updates):
             # try to eval

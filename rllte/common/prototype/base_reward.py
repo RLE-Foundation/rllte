@@ -30,9 +30,11 @@ import gymnasium as gym
 import numpy as np
 import torch as th
 from tqdm import tqdm
+import rllte
 
 from rllte.common.preprocessing import process_action_space, process_observation_space
-from rllte.common.utils import TorchRunningMeanStd
+from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
+
 
 class BaseReward(ABC):
     """Base class of reward module.
@@ -46,6 +48,7 @@ class BaseReward(ABC):
         kappa (float): The decay rate of the weighting coefficient.
         rwd_norm_type (bool): Use running mean and std for reward normalization, or minmax or none
         obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
 
     Returns:
         Instance of the base reward module.
@@ -60,7 +63,8 @@ class BaseReward(ABC):
         beta: float = 1.0,
         kappa: float = 0.0,
         rwd_norm_type: str = "rms",
-        obs_rms: bool = False
+        obs_rms: bool = False,
+        gamma: Optional[float] = None
     ) -> None:
         # get environment information
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
@@ -79,6 +83,9 @@ class BaseReward(ABC):
         # build the running mean and std for normalization
         self.rms = TorchRunningMeanStd() if self.rwd_norm_type=="rms" else None
         self.obs_norm = TorchRunningMeanStd(shape=self.obs_shape) if self.obs_rms else None
+
+        # build the reward forward filter
+        self.rff = RewardForwardFilter(gamma) if gamma is not None else None
         
     @property
     def weight(self) -> float:
@@ -95,6 +102,10 @@ class BaseReward(ABC):
         Returns:
             The scaled intrinsic rewards.
         """
+        if self.rff is not None:
+            for step in range(rewards.size(0)):
+                rewards[step] = self.rff.update(rewards[step])
+
         if self.rwd_norm_type == "rms":
             self.rms.update(rewards)
             return rewards / self.rms.std * self.weight

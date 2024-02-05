@@ -51,6 +51,7 @@ class E3B(BaseReward):
         lr (float): The learning rate.
         rwd_norm_type (str): Use running mean and std for reward normalization, or minmax or none
         obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
         batch_size (int): The batch size for training.
         ridge (float): The ridge parameter for the covariance matrix.
         update_proportion (float): The proportion of the training data used for updating the forward dynamics models.
@@ -71,11 +72,12 @@ class E3B(BaseReward):
         lr: float = 0.001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
+        gamma: Optional[float] = None,
         batch_size: int = 256,
         ridge: float = 0.1,
         update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
 
         # build the encoder and inverse dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 

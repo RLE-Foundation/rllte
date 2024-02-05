@@ -46,6 +46,8 @@ class PseudoCounts(BaseReward):
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
         rwd_norm_type (bool): Use running mean and std for normalization.
+        obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
@@ -70,6 +72,7 @@ class PseudoCounts(BaseReward):
         kappa: float = 0.0,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
+        gamma: float = None,
         latent_dim: int = 32,
         lr: float = 0.001,
         batch_size: int = 256,
@@ -80,7 +83,7 @@ class PseudoCounts(BaseReward):
         sm: float = 8.0,
         update_proportion: float = 1.0,
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # set parameters
         self.lr = lr
         self.batch_size = batch_size

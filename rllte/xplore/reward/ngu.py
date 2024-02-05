@@ -44,6 +44,8 @@ class NGU(Fabric):
         beta (float): The initial weighting coefficient of the intrinsic rewards.
         kappa (float): The decay rate of the weighting coefficient.
         rwd_norm_type (bool): Use running mean and std for reward normalization.
+        obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
@@ -68,6 +70,7 @@ class NGU(Fabric):
                  kappa: float = 0.0,
                  rwd_norm_type: str = "rms",
                  obs_rms: bool = False,
+                 gamma: float = None,
                  latent_dim: int = 32,
                  lr: float = 0.001,
                  batch_size: int = 256,
@@ -88,6 +91,7 @@ class NGU(Fabric):
                   kappa=kappa,
                   rwd_norm_type=rwd_norm_type,
                   obs_rms=obs_rms,
+                  gamma=gamma,
                   latent_dim=latent_dim,
                   lr=lr,
                   batch_size=batch_size,
@@ -101,6 +105,7 @@ class NGU(Fabric):
                                      kappa=kappa,
                                      rwd_norm_type=rwd_norm_type,
                                      obs_rms=obs_rms,
+                                     gamma=gamma,
                                      latent_dim=latent_dim,
                                      lr=lr,
                                      batch_size=batch_size,

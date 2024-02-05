@@ -47,6 +47,7 @@ class RIDE(BaseReward):
         kappa (float): The decay rate of the weighting coefficient.
         rwd_norm_type (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
         latent_dim (int): The dimension of encoding vectors.
         n_envs (int): The number of parallel environments.
         lr (float): The learning rate.
@@ -68,6 +69,7 @@ class RIDE(BaseReward):
         lr: float = 0.001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
+        gamma: Optional[float] = None,
         n_envs: int = 1,
         batch_size: int = 256,
         # episodic memory
@@ -78,7 +80,7 @@ class RIDE(BaseReward):
         sm: float = 0.1,
         update_proportion: float = 1.0
     ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the encoder, inverse dynamics model and forward dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
                                           latent_dim=latent_dim).to(self.device)

@@ -4,6 +4,7 @@ sys.path.append("../")
 from rllte.agent import PPO
 from rllte.env import make_envpool_atari_env
 from rllte.xplore.reward import *
+from rllte.xploit.storage.roger_rollout_storage import RogerRolloutStorage
 
 if __name__ == "__main__":
     # env setup
@@ -24,15 +25,26 @@ if __name__ == "__main__":
     )
     
     # create intrinsic reward
-    rnd = NGU(
+    rnd = RND(
         observation_space=env.observation_space,
         action_space=env.action_space,
         device=device,
         n_envs=num_envs,
         # episode_length=128,
+        gamma=0.99,
     )
 
+    # use the custom storage
+    # please fill out the arguments by yourself
+    storage = RogerRolloutStorage(
+        ...
+    )
+
+# use the storage that don't cut the rewards when done is True
+#==============================================================================
     # set the reward module
-    agent.set(reward=rnd)
+    agent.set(reward=rnd, storage=storage)
+#==============================================================================
     # start training
     agent.train(num_train_steps=50000)
+    

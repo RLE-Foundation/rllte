@@ -43,6 +43,7 @@ class RE3(BaseReward):
         kappa (float): The decay rate of the weighting coefficient.
         rwd_norm_type (bool): Use running mean and std for reward normalization.
         obs_rms (bool): Use running mean and std for observation normalization.
+        gamma (Optional[float]): Intrinsic reward discount rate, None for no discount.
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.
         k (int): Use the k-th neighbors.
@@ -62,12 +63,13 @@ class RE3(BaseReward):
         kappa: float = 0.0,
         rwd_norm_type: str = "rms",
         obs_rms: bool = True,
+        gamma: Optional[float] = None,
         latent_dim: int = 128,
         storage_size: int = 1000,
         k: int = 5,
         average_entropy: bool = False
         ) -> None:
-        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms)
+        super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         # build the storage for random embeddings
         self.storage_size = storage_size

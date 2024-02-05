@@ -33,6 +33,19 @@ import torch as th
 from torch import nn
 
 
+class RewardForwardFilter:
+    """Reward forward filter."""
+    def __init__(self, gamma: float = 0.99) -> None:
+        self.rewems = None
+        self.gamma = gamma
+
+    def update(self, rews: th.Tensor) -> th.Tensor:
+        if self.rewems is None:
+            self.rewems = rews
+        else:
+            self.rewems = self.rewems * self.gamma + rews
+        return self.rewems
+
 class TorchRunningMeanStd:
     """Running mean and std for torch tensor."""
 
