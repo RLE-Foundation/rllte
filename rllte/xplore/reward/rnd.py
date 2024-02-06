@@ -73,13 +73,14 @@ class RND(BaseReward):
         lr: float = 0.001,
         batch_size: int = 256,
         update_proportion: float = 1.0,
+        encoder_model: str = "mnih"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the predictor and target networks
         self.predictor = ObservationEncoder(obs_shape=self.obs_shape, 
-                                            latent_dim=latent_dim).to(self.device)
+                                            latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
         self.target = ObservationEncoder(obs_shape=self.obs_shape, 
-                                         latent_dim=latent_dim).to(self.device)            
+                                         latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)            
 
         # freeze the randomly initialized target network parameters
         for p in self.target.parameters():

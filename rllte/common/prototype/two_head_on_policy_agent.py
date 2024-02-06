@@ -124,7 +124,6 @@ class TwoHeadOnPolicyAgent(BaseAgent):
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    from IPython import embed; embed()
                     actions, extra_policy_outputs = self.policy(obs, training=True)
                     # observe rewards and next obs
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)

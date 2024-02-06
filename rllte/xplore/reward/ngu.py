@@ -80,7 +80,8 @@ class NGU(Fabric):
                  c: float = 0.001,
                  sm: float = 8.0,
                  mrs: float = 5.0,
-                 update_proportion: float = 1.0
+                 update_proportion: float = 1.0,
+                 encoder_model: str = "mnih"
         ) -> None:
         # build the rnd and pseudo-counts modules
         rnd = RND(observation_space=observation_space,
@@ -95,7 +96,8 @@ class NGU(Fabric):
                   latent_dim=latent_dim,
                   lr=lr,
                   batch_size=batch_size,
-                  update_proportion=update_proportion
+                  update_proportion=update_proportion,
+                  encoder_model=encoder_model
                 )
         pseudo_counts = PseudoCounts(observation_space=observation_space,
                                      action_space=action_space,
@@ -114,7 +116,8 @@ class NGU(Fabric):
                                      kernel_epsilon=kernel_epsilon,
                                      c=c,
                                      sm=sm,
-                                     update_proportion=update_proportion)
+                                     update_proportion=update_proportion,
+                                     encoder_model=encoder_model)
 
         super().__init__(*[rnd, pseudo_counts])
         # set the maximum reward scaling

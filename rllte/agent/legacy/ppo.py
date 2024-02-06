@@ -31,7 +31,7 @@ from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
 from rllte.xploit.storage import VanillaRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
@@ -90,6 +90,7 @@ class PPO(OnPolicyAgent):
         max_grad_norm: float = 0.5,
         discount: float = 0.999,
         init_fn: str = "orthogonal",
+        encoder_model: str = "mnih",
     ) -> None:
         super().__init__(
             env=env,
@@ -112,13 +113,17 @@ class PPO(OnPolicyAgent):
         self.max_grad_norm = max_grad_norm
 
         # default encoder
-        if len(self.obs_shape) == 3:
-            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-        elif len(self.obs_shape) == 1:
+        if len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
             )
+        elif encoder_model == "mnih":
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        elif encoder_model == "espeholt":
+            encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        else:
+            raise NotImplementedError(f"Unsupported encoder model {encoder_model}!")
 
         # default distribution
         if self.action_type == "Discrete":

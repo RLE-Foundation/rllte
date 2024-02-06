@@ -17,7 +17,7 @@ if __name__ == "__main__":
         device=args.device,
     )
     
-    exp_name = f"ppo_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_rff:{args.int_gamma is not None}_s{args.seed}"
+    exp_name = f"{'twoHeadPPO' if args.two_head else 'PPO'}_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_rff:{args.int_gamma is not None}_s{args.seed}"
 
     # create agent and turn on pre-training mode
     ppo_args = dict(
@@ -41,6 +41,7 @@ if __name__ == "__main__":
         discount=args.discount,
         init_fn=args.init_fn,
         pretraining=args.pretraining,
+        encoder_model="mnih" if env.observation_space.shape[-1] == 84 else "espeholt",
     )
     
     if args.two_head:

@@ -106,20 +106,19 @@ def make_envpool_procgen_env(
     Returns:
         The vectorized environments.
     """
-    if distribution_mode == "easy":
-        task_id = env_id.capitalize() + "Easy-v0"
-    elif distribution_mode == "hard":
-        task_id = env_id.capitalize() + "Hard-v0"
-    else:
-        raise NotImplementedError(f"Distribution mode `{distribution_mode}` is not implemented in `EnvPool`!")
+    # if distribution_mode == "easy":
+    #     task_id = env_id.capitalize() + "Easy-v0"
+    # elif distribution_mode == "hard":
+    #     task_id = env_id.capitalize() + "Hard-v0"
+    # else:
+    #     raise NotImplementedError(f"Distribution mode `{distribution_mode}` is not implemented in `EnvPool`!")
 
     env_kwargs = dict(
-        task_id=task_id,
+        task_id=env_id,
         env_type="gymnasium",
         num_envs=num_envs,
         batch_size=num_envs,
         seed=seed,
-        env_name=env_id,
         num_levels=num_levels,
         start_level=start_level,
     )

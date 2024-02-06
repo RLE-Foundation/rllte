@@ -74,12 +74,13 @@ class Disagreement(BaseReward):
         n_envs: int = 1,
         batch_size: int = 256,
         ensemble_size: int = 5,
-        update_proportion: float = 1.0
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
-                                                   latent_dim=latent_dim).to(self.device)
+                                                   latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
 
         # freeze the randomly initialized target network parameters
         for p in self.random_encoder.parameters():
@@ -89,7 +90,7 @@ class Disagreement(BaseReward):
         self.ensemble_size = ensemble_size
         self.ensemble = [
             ForwardDynamicsModel(latent_dim=latent_dim,
-                                    action_dim=self.policy_action_dim).to(self.device)
+                                    action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
             for _ in range(self.ensemble_size)
         ]        
         self.opt = [

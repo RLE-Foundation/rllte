@@ -58,19 +58,26 @@ def make_env(args, device):
             env_id=args.env_id,
         )
     else:
-        try:
-            from rllte.env import make_envpool_atari_env
-            env = make_envpool_atari_env(
-                env_id=args.env_id,
-                num_envs=args.n_envs,
-                device=device,
-            )
-        except:
-            raise NotImplementedError
+        from rllte.env import make_envpool_procgen_env
+        # this config gives a very cool level for MazeHard-v0
+        env = make_envpool_procgen_env(
+            env_id=args.env_id,
+            num_envs=args.n_envs,
+            device=device,
+            num_levels=1,
+            start_level=495,
+            seed=394,
+        )
     return env, args.env_id
 
 def select_intrinsic_reward(args, env, device):
-    # select intrinsic reward
+    # chose encoder_model based on env_id. 
+    if "Maze" in args.env_id:
+        encoder_model = "espeholt"
+    else:
+        encoder_model = "mnih"
+    
+    # select intrinsic reward    
     if args.intrinsic_reward == "extrinsic":
         intrinsic_reward = None
     elif args.intrinsic_reward == "pseudocounts":
@@ -82,7 +89,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "icm":
         intrinsic_reward = ICM(
@@ -93,7 +101,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "rnd":
         intrinsic_reward = RND(
@@ -104,7 +113,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "ngu":
         intrinsic_reward = NGU(
@@ -115,7 +125,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "ride":
         intrinsic_reward = RIDE(
@@ -126,7 +137,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "re3":
         intrinsic_reward = RE3(
@@ -136,7 +148,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "rise":
         intrinsic_reward = RISE(
@@ -146,7 +159,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "revd":
         intrinsic_reward = REVD(
@@ -157,7 +171,8 @@ def select_intrinsic_reward(args, env, device):
             n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "e3b":
         intrinsic_reward = E3B(
@@ -168,7 +183,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     elif args.intrinsic_reward == "disagreement":
         intrinsic_reward = Disagreement(
@@ -179,7 +195,8 @@ def select_intrinsic_reward(args, env, device):
             rwd_norm_type=args.rwd_norm_type,
             obs_rms=args.obs_rms,
             update_proportion=args.update_proportion,
-            gamma=args.int_gamma
+            gamma=args.int_gamma,
+            encoder_model=encoder_model
         )
     else:
         raise NotImplementedError

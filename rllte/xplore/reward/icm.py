@@ -73,17 +73,18 @@ class ICM(BaseReward):
         obs_rms: bool = False,
         gamma: Optional[float] = None,
         batch_size: int = 256,
-        update_proportion: float = 1.0
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         # build the encoder, inverse dynamics model and forward dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim).to(self.device)
+                                          latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
@@ -94,10 +95,11 @@ class ICM(BaseReward):
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
         self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
         # set the parameters
+
         self.batch_size = batch_size
         self.update_proportion = update_proportion
         self.latent_dim = latent_dim
-
+        
     def watch(self, 
               observations: th.Tensor, 
               actions: th.Tensor,
