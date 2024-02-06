@@ -174,7 +174,7 @@ class OnPolicyAgent(BaseAgent):
 ###############################################################################################################
             
             # compute advantages and returns 
-            if self.irs and self.pretraining and self.int_gamma is not None:
+            if self.irs and self.pretraining and self.irs.rff is not None:
                 self.storage.compute_returns_and_advantages(last_values, episodic=False)
             else:
                 self.storage.compute_returns_and_advantages(last_values)

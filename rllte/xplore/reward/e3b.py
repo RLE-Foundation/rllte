@@ -72,7 +72,7 @@ class E3B(BaseReward):
         lr: float = 0.001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
-        gamma: Optional[float] = None,
+        gamma: float = None,
         batch_size: int = 256,
         ridge: float = 0.1,
         update_proportion: float = 1.0,
@@ -87,7 +87,7 @@ class E3B(BaseReward):
                                        action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
-            self.im_loss = nn.CrossEntropyLoss(reduction="none")
+            self.im_loss = nn.CrossEntropyLoss()
         else:
             self.im_loss = nn.MSELoss(reduction="none")
         # set the optimizer
@@ -194,30 +194,46 @@ class E3B(BaseReward):
             actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
-        # update the encoder and inverse dynamics model
-        for _idx, batch_data in enumerate(loader):
-            # get the batch data
-            obs, actions, next_obs = batch_data
-            obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
-            # zero the gradients
-            self.encoder_opt.zero_grad()
-            self.im_opt.zero_grad()
-            # encode the observations
-            encoded_obs = self.encoder(obs)
-            encoded_next_obs = self.encoder(next_obs)
-            # get the predicted actions
-            pred_actions = self.im(encoded_obs, encoded_next_obs)
-            # compute the inverse dynamics loss
-            im_loss = self.im_loss(pred_actions, actions)
-            # use a random mask to select a subset of the training data
-            mask = th.rand(len(im_loss), device=self.device)
-            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
-            im_loss = (im_loss * mask).sum() / th.max(
-                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
-            )
-            # backward and update
-            im_loss.backward()
-            self.encoder_opt.step()
-            self.im_opt.step()
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
+
+        # only perform one update step, otherwise the inverse model will overfit
+        obs, actions, next_obs = next(iter(loader))
+        self.encoder_opt.zero_grad()
+        self.im_opt.zero_grad()
+
+        encoded_obs = self.encoder(obs)
+        encoded_next_obs = self.encoder(next_obs)
+        pred_actions = self.im(encoded_obs, encoded_next_obs)
+        im_loss = self.im_loss(pred_actions, actions)
+
+        im_loss.backward()
+        self.encoder_opt.step()
+        self.im_opt.step()
+        
+        # # update the encoder and inverse dynamics model
+        # for _idx, batch_data in enumerate(loader):
+        #     # get the batch data
+        #     obs, actions, next_obs = batch_data
+        #     obs, actions, next_obs = obs.to(self.device), actions.to(self.device), next_obs.to(self.device)
+        #     # zero the gradients
+        #     self.encoder_opt.zero_grad()
+        #     self.im_opt.zero_grad()
+        #     # encode the observations
+        #     encoded_obs = self.encoder(obs)
+        #     encoded_next_obs = self.encoder(next_obs)
+        #     # get the predicted actions
+        #     pred_actions = self.im(encoded_obs, encoded_next_obs)
+        #     # compute the inverse dynamics loss
+        #     im_loss = self.im_loss(pred_actions, actions)
+        #     # use a random mask to select a subset of the training data
+        #     mask = th.rand(len(im_loss), device=self.device)
+        #     mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+        #     # get the masked loss
+        #     im_loss = (im_loss * mask).sum() / th.max(
+        #         mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+        #     )
+        #     # backward and update
+
+        # im_loss.backward()
+        # self.encoder_opt.step()
+        # self.im_opt.step()

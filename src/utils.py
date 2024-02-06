@@ -64,9 +64,9 @@ def make_env(args, device):
             env_id=args.env_id,
             num_envs=args.n_envs,
             device=device,
-            num_levels=1,
-            start_level=495,
-            seed=394,
+            #num_levels=1,
+            #start_level=495,
+            #seed=394,
         )
     return env, args.env_id
 
