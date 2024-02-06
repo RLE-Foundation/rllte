@@ -26,7 +26,7 @@ def make_mario_env(
 
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            env = gym_old.make(env_id, apply_api_compatibility=True, render_mode="rgb_array")
+            env = gym_old.make(env_id, apply_api_compatibility=True, render_mode="rgb_array", max_episode_steps=500)
             env = JoypadSpace(env, SIMPLE_MOVEMENT)
             env = Gym2Gymnasium(env)
             env = SkipFrame(env, skip=4)
