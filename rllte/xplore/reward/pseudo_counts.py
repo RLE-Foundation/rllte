@@ -255,4 +255,7 @@ class PseudoCounts(BaseReward):
             
             avg_loss.append(im_loss.item())
             
-        self.logger.record("avg_im_loss", np.mean(avg_im_loss))
+        try:
+            self.logger.record("avg_loss", np.mean(avg_loss))
+        except:
+            pass

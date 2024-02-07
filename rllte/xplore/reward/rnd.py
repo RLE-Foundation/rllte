@@ -192,4 +192,7 @@ class RND(BaseReward):
             
             avg_loss.append(loss.item())
             
-        self.logger.record("avg_loss", np.mean(avg_loss))
+        try:
+            self.logger.record("avg_loss", np.mean(avg_loss))
+        except:
+            pass

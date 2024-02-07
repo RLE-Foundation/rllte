@@ -1,12 +1,17 @@
-from src.utils import parse_args, make_env, select_intrinsic_reward
+from src.utils import parse_args, parse_args_big, make_env, select_intrinsic_reward
 from rllte.agent import PPO, TwoHeadPPO
 
 if __name__ == "__main__":
     # env setup
     args = parse_args()
-    eval_args = parse_args()
-    eval_args.n_envs = 1
+    if args.parse_big:
+        args = parse_args_big()
+        eval_args = parse_args_big()
+    else:
+        args = parse_args()
+        eval_args = parse_args()
 
+    eval_args.n_envs = 1
     env, env_name = make_env(args, args.device)
     eval_env, _ = make_env(eval_args, args.device)
     
@@ -22,7 +27,7 @@ if __name__ == "__main__":
     # create agent and turn on pre-training mode
     ppo_args = dict(
         env=env, 
-        #eval_env=eval_env,
+        eval_env=eval_env,
         seed=args.seed,
         device=args.device,
         tag=exp_name,
