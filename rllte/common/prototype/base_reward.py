@@ -112,6 +112,7 @@ class BaseReward(ABC):
         if self.rwd_norm_type == "rms":
             self.rms.update(rewards.ravel())
             std_rewards = ((rewards) / self.rms.std) * self.weight
+            std_rewards = th.clamp(std_rewards, -0.1, 0.1)
             return std_rewards
         elif self.rwd_norm_type == "minmax":
             min_r = rewards.min(dim=0, keepdim=True)[0]

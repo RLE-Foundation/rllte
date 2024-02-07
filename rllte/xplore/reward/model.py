@@ -56,7 +56,13 @@ class ObservationEncoder(nn.Module):
     def __init__(self, obs_shape: Tuple, latent_dim: int, encoder_model:str = "mnih", weight_init="default") -> None:
         super().__init__()
 
-        init_ = default_layer_init if weight_init == "default" else orthogonal_layer_init
+        if weight_init == "orthogonal":
+            init_ = orthogonal_layer_init
+        elif weight_init == "default":
+            init_ = default_layer_init
+        else:
+            raise ValueError("Invalid weight_init")
+
 
         # visual
         if encoder_model == "mnih" and len(obs_shape) > 2:
