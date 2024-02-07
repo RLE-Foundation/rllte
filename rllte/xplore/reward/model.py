@@ -86,10 +86,10 @@ class ObservationEncoder(nn.Module):
             self.trunk.append(nn.ReLU())
         else:
             self.trunk = nn.Sequential(
-                layer_init(nn.Linear(obs_shape[0], 256)), 
+                nn.Linear(obs_shape[0], 256), 
                 nn.ReLU()
             )
-            self.trunk.append(layer_init(nn.Linear(256, latent_dim)))
+            self.trunk.append(nn.Linear(256, latent_dim))
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
