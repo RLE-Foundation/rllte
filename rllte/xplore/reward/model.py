@@ -51,11 +51,11 @@ class ObservationEncoder(nn.Module):
         # visual
         if encoder_model == "mnih" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
-                layer_init(nn.Conv2d(obs_shape[0], 32, 8, stride=4)),
+                nn.Conv2d(obs_shape[0], 32, 8, stride=4),
                 nn.ReLU(),
-                layer_init(nn.Conv2d(32, 64, 4, stride=2)),
+                nn.Conv2d(32, 64, 4, stride=2),
                 nn.ReLU(),
-                layer_init(nn.Conv2d(64, 64, 3, stride=1)),
+                nn.Conv2d(64, 64, 3, stride=1),
                 nn.ReLU(),
                 nn.Flatten(),
             )
@@ -64,7 +64,7 @@ class ObservationEncoder(nn.Module):
                 sample = th.ones(size=tuple(obs_shape)).float()
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-            self.trunk.append(layer_init(nn.Linear(n_flatten, latent_dim)))
+            self.trunk.append(nn.Linear(n_flatten, latent_dim))
             self.trunk.append(nn.ReLU())
         elif encoder_model == "espeholt" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
@@ -86,10 +86,10 @@ class ObservationEncoder(nn.Module):
             self.trunk.append(nn.ReLU())
         else:
             self.trunk = nn.Sequential(
-                nn.Linear(obs_shape[0], 256), 
+                layer_init(nn.Linear(obs_shape[0], 256)), 
                 nn.ReLU()
             )
-            self.trunk.append(nn.Linear(256, latent_dim))
+            self.trunk.append(layer_init(nn.Linear(256, latent_dim)))
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.

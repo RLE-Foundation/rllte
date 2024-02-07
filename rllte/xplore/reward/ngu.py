@@ -72,7 +72,7 @@ class NGU(Fabric):
                  obs_rms: bool = False,
                  gamma: float = None,
                  latent_dim: int = 32,
-                 lr: float = 0.0001,
+                 lr: float = 0.001,
                  batch_size: int = 256,
                  k: int = 10,
                  kernel_cluster_distance: float = 0.008,

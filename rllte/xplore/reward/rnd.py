@@ -70,7 +70,7 @@ class RND(BaseReward):
         obs_rms: bool = True,
         gamma: Optional[float] = None,
         latent_dim: int = 128,
-        lr: float = 0.0001,
+        lr: float = 0.001,
         batch_size: int = 256,
         update_proportion: float = 1.0,
         encoder_model: str = "mnih"

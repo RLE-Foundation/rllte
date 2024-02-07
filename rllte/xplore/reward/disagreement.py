@@ -67,7 +67,7 @@ class Disagreement(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.0001,
+        lr: float = 0.001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = True,
         gamma: Optional[float] = None,
@@ -156,6 +156,7 @@ class Disagreement(BaseReward):
                 preds.append(next_obs_hat)
             preds = th.stack(preds, dim=0)
             intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
+        
         # update the reward module
         self.update(samples)
         # return the scaled intrinsic rewards
