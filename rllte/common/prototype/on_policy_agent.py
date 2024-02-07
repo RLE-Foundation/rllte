@@ -202,6 +202,7 @@ class OnPolicyAgent(BaseAgent):
                     "total_time": total_time,
                 }
                 self.logger.train(msg=train_metrics)
+                self.logger.loss(msg=self.logger.metrics)
 
             # save model
             if update % save_interval == 0:

@@ -31,6 +31,7 @@ import torch as th
 from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
+import numpy as np
 
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, InverseDynamicsModel, ForwardDynamicsModel
@@ -66,7 +67,7 @@ class RIDE(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.001,
+        lr: float = 0.0001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
         gamma: Optional[float] = None,
@@ -242,6 +243,9 @@ class RIDE(BaseReward):
         # create the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_im_loss = []
+        avg_fm_loss = []
         # update the encoder, inverse dynamics model and forward dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -274,3 +278,9 @@ class RIDE(BaseReward):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
+            
+            avg_im_loss.append(im_loss.item())
+            avg_fm_loss.append(fm_loss.item())
+        
+        self.logger.record("avg_im_loss", np.mean(avg_im_loss))
+        self.logger.record("avg_fm_loss", np.mean(avg_fm_loss))

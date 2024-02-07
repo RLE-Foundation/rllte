@@ -204,6 +204,6 @@ class PPO(OnPolicyAgent):
                 total_entropy_loss.append(entropy.item())
 
         # record metrics
-        self.logger.record("train/policy_loss", np.mean(total_policy_loss))
-        self.logger.record("train/value_loss", np.mean(total_value_loss))
-        self.logger.record("train/entropy_loss", np.mean(total_entropy_loss))
+        self.logger.record("policy_loss", np.mean(total_policy_loss))
+        self.logger.record("value_loss", np.mean(total_value_loss))
+        self.logger.record("entropy_loss", np.mean(total_entropy_loss))

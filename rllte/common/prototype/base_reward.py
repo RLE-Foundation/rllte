@@ -87,6 +87,9 @@ class BaseReward(ABC):
         # build the reward forward filter
         self.rff = RewardForwardFilter(gamma) if gamma is not None else None
         
+        # build logger
+        self.logger = None
+        
     @property
     def weight(self) -> float:
         """Get the weighting coefficient of the intrinsic rewards.

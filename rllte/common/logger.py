@@ -72,8 +72,10 @@ class Logger:
 
         self._train_file = self._log_dir / "train.log"
         self._eval_file = self._log_dir / "eval.log"
+        self._loss_file = self._log_dir / "losses.log"
         self._train_file_write_header = True
         self._eval_file_write_header = True
+        self._loss_file_write_header = True
 
         self.metrics: Dict[str, Any] = {}
 
@@ -226,3 +228,15 @@ class Logger:
 
         csv_writer.writerow(data)
         csv_file.flush()
+        
+    def loss(self, msg: Dict) -> None:
+        """Output msg with 'loss' level.
+
+        Args:
+            msg (Dict): Message to be printed.
+
+        Returns:
+            None.
+        """
+        self._dump_to_csv(self._loss_file, msg, self._loss_file_write_header)
+        self._loss_file_write_header = False

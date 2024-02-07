@@ -25,7 +25,7 @@
 
 
 from typing import Dict, Optional
-
+import numpy as np
 import gymnasium as gym
 import torch as th
 import torch.nn.functional as F
@@ -67,7 +67,7 @@ class Disagreement(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.001,
+        lr: float = 0.0001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = True,
         gamma: Optional[float] = None,
@@ -189,6 +189,8 @@ class Disagreement(BaseReward):
         # build the dataset and dataloader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_loss = []
         # update the ensemble of forward dynamics models
         for _idx, batch_data in enumerate(loader):
             ensemble_idx = _idx % self.ensemble_size
@@ -215,3 +217,7 @@ class Disagreement(BaseReward):
             # backward and update
             fm_loss.backward()
             self.opt[ensemble_idx].step()
+            
+            avg_loss.append(fm_loss.item())
+            
+        self.logger.record("avg_loss", np.mean(avg_loss))

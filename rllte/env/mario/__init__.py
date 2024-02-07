@@ -26,13 +26,16 @@ def make_mario_env(
 
     def make_env(env_id: str, seed: int) -> Callable:
         def _thunk():
-            env = gym_old.make(env_id, apply_api_compatibility=True, render_mode="rgb_array", max_episode_steps=500)
+            env = gym_old.make(env_id, apply_api_compatibility=True, render_mode="rgb_array")
             env = JoypadSpace(env, SIMPLE_MOVEMENT)
             env = Gym2Gymnasium(env)
             env = SkipFrame(env, skip=4)
             env = gym.wrappers.ResizeObservation(env, (84, 84))
+            # env = gym.wrappers.GrayScaleObservation(env)
+            # env = gym.wrappers.FrameStack(env, num_stack=4)
             env = ImageTranspose(env)
             env = EpisodicLifeEnv(env)
+            env = gym.wrappers.TransformReward(env, lambda r: 0.01*r)
             env.observation_space.seed(seed)
             return env
         return _thunk

@@ -22,12 +22,17 @@
 # SOFTWARE.
 # =============================================================================
 
-
+import numpy as np
 from typing import Tuple
 from torch import nn
 from torch.nn import functional as F
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, PathakCnnEncoder
 import torch as th
+
+def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
+    th.nn.init.orthogonal_(layer.weight, std)
+    th.nn.init.constant_(layer.bias, bias_const)
+    return layer
 
 class ObservationEncoder(nn.Module):
     """Encoder for encoding observations.
@@ -46,11 +51,11 @@ class ObservationEncoder(nn.Module):
         # visual
         if encoder_model == "mnih" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, 8, stride=4),
+                layer_init(nn.Conv2d(obs_shape[0], 32, 8, stride=4)),
                 nn.ReLU(),
-                nn.Conv2d(32, 64, 4, stride=2),
+                layer_init(nn.Conv2d(32, 64, 4, stride=2)),
                 nn.ReLU(),
-                nn.Conv2d(64, 64, 3, stride=1),
+                layer_init(nn.Conv2d(64, 64, 3, stride=1)),
                 nn.ReLU(),
                 nn.Flatten(),
             )
@@ -59,17 +64,17 @@ class ObservationEncoder(nn.Module):
                 sample = th.ones(size=tuple(obs_shape)).float()
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-            self.trunk.append(nn.Linear(n_flatten, latent_dim))
+            self.trunk.append(layer_init(nn.Linear(n_flatten, latent_dim)))
             self.trunk.append(nn.ReLU())
         elif encoder_model == "espeholt" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
+                layer_init(nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1)),
                 nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                layer_init(nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)),
                 nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                layer_init(nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)),
                 nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+                layer_init(nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)),
                 nn.ELU(),
                 nn.Flatten(),
             )
@@ -77,12 +82,14 @@ class ObservationEncoder(nn.Module):
                 sample = th.ones(size=tuple(obs_shape)).float()
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
-            self.trunk.append(nn.Linear(n_flatten, latent_dim))
+            self.trunk.append(layer_init(nn.Linear(n_flatten, latent_dim)))
             self.trunk.append(nn.ReLU())
         else:
-            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), 
-                                       nn.ReLU())
-            self.trunk.append(nn.Linear(256, latent_dim))
+            self.trunk = nn.Sequential(
+                layer_init(nn.Linear(obs_shape[0], 256)), 
+                nn.ReLU()
+            )
+            self.trunk.append(layer_init(nn.Linear(256, latent_dim)))
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.

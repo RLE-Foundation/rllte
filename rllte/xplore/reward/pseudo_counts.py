@@ -27,10 +27,9 @@ from typing import Dict, List, Optional
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
-
+import numpy as np
 import gymnasium as gym
 import torch as th
-
 from rllte.common.prototype import BaseReward
 from .model import InverseDynamicsEncoder
 
@@ -74,7 +73,7 @@ class PseudoCounts(BaseReward):
         obs_rms: bool = False,
         gamma: float = None,
         latent_dim: int = 32,
-        lr: float = 0.001,
+        lr: float = 0.0001,
         batch_size: int = 256,
         k: int = 10,
         kernel_cluster_distance: float = 0.008,
@@ -231,6 +230,8 @@ class PseudoCounts(BaseReward):
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_loss = []
         # update the encoder
         for _idx, batch in enumerate(loader):
             # get the batch data
@@ -251,3 +252,7 @@ class PseudoCounts(BaseReward):
             # backward and update
             im_loss.backward()
             self.opt.step()
+            
+            avg_loss.append(im_loss.item())
+            
+        self.logger.record("avg_im_loss", np.mean(avg_im_loss))

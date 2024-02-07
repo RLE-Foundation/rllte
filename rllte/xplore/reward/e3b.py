@@ -25,7 +25,7 @@
 
 
 from typing import Dict, Optional
-
+import numpy as np
 import gymnasium as gym
 import torch as th
 from torch import nn
@@ -69,7 +69,7 @@ class E3B(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.001,
+        lr: float = 0.0001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
         gamma: float = None,
@@ -196,7 +196,7 @@ class E3B(BaseReward):
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
-
+        avg_im_loss = []
         # update the encoder and inverse dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -223,3 +223,7 @@ class E3B(BaseReward):
             im_loss.backward()
             self.encoder_opt.step()
             self.im_opt.step()
+            
+            avg_im_loss.append(im_loss.item())
+
+        self.logger.record("avg_im_loss", np.mean(avg_im_loss))

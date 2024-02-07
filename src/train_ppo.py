@@ -63,5 +63,4 @@ if __name__ == "__main__":
     agent.train(
         num_train_steps=args.num_train_steps,
         anneal_lr=args.anneal_lr,
-        #num_eval_episodes=1
     )
