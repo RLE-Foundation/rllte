@@ -63,4 +63,5 @@ if __name__ == "__main__":
     agent.train(
         num_train_steps=args.num_train_steps,
         anneal_lr=args.anneal_lr,
+        eval_interval=500
     )
