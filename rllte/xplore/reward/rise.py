@@ -70,7 +70,8 @@ class RISE(BaseReward):
         alpha: float = 0.5,
         k: int = 5,
         average_entropy: bool = False,
-        encoder_model: str = "mnih"
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
         ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
@@ -85,7 +86,7 @@ class RISE(BaseReward):
         self.k = k
         self.average_entropy = average_entropy
         # build the random encoder and freeze the network parameters
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         for p in self.random_encoder.parameters():
             p.requires_grad = False
     

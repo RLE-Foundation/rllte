@@ -75,12 +75,13 @@ class Disagreement(BaseReward):
         batch_size: int = 256,
         ensemble_size: int = 5,
         update_proportion: float = 1.0,
-        encoder_model: str = "mnih"
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
-                                                   latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
+                                                   latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
 
         # freeze the randomly initialized target network parameters
         for p in self.random_encoder.parameters():

@@ -81,7 +81,8 @@ class PseudoCounts(BaseReward):
         c: float = 0.001,
         sm: float = 8.0,
         update_proportion: float = 1.0,
-        encoder_model: str = "mnih"
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
         ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # set parameters
@@ -102,7 +103,7 @@ class PseudoCounts(BaseReward):
         self.encoder = InverseDynamicsEncoder(
             obs_shape=self.obs_shape,
             action_dim=self.policy_action_dim,
-            latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
+            latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the optimizer and loss function
         self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         if self.action_type == "Discrete":

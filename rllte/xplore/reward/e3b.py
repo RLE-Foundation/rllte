@@ -77,14 +77,15 @@ class E3B(BaseReward):
         ridge: float = 0.1,
         update_proportion: float = 1.0,
         encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
 
         # build the encoder and inverse dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim, encoder_model=encoder_model).to(self.device)
+                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
