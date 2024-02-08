@@ -101,8 +101,11 @@ def make_env(args, device):
             num_envs=args.n_envs,
             env_id=args.env_id,
         )
-    else:
+    elif "procgen_" in args.env_id:
         from rllte.env import make_envpool_procgen_env
+        args.env_id = args.env_id.split("_")[1] + "-v0"
+        
+        from IPython import embed; embed()
         # this config gives a very cool level for MazeHard-v0
         env = make_envpool_procgen_env(
             env_id=args.env_id,
@@ -112,6 +115,16 @@ def make_env(args, device):
             #start_level=495,
             #seed=394,
         )
+    elif "MiniGrid" in args.env_id:
+        from rllte.env import make_minigrid_env
+        env = make_minigrid_env(
+            env_id=args.env_id,
+            num_envs=args.n_envs,
+            device=device,
+        )
+    else:
+        raise NotImplementedError
+
     return env, args.env_id
 
 def select_intrinsic_reward(args, env, device):
