@@ -101,6 +101,7 @@ class OnPolicyAgent(BaseAgent):
         
         # reset the env
         episode_rewards: Deque = deque(maxlen=10)
+        intrinsic_episode_rewards: Deque = deque(maxlen=10)
         episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
@@ -171,6 +172,7 @@ class OnPolicyAgent(BaseAgent):
                 )
                 # just plus the intrinsic rewards to the extrinsic rewards
                 self.storage.rewards += intrinsic_rewards.to(self.device)
+                intrinsic_episode_rewards.extend(intrinsic_rewards.cpu().numpy())
 ###############################################################################################################
             
             # compute advantages and returns 
@@ -197,6 +199,7 @@ class OnPolicyAgent(BaseAgent):
                     "step": self.global_step,
                     "episode": self.global_episode,
                     "episode_length": np.mean(list(episode_steps)),
+                    "intrinsic_episode_reward": np.mean(list(intrinsic_episode_rewards)),
                     "episode_reward": np.mean(list(episode_rewards)),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,

@@ -35,6 +35,7 @@ TRAIN_MSG_FORMAT = [
     ("episode", "E", "int"),
     ("episode_length", "L", "int"),
     ("episode_reward", "R", "float"),
+    ("intrinsic_episode_reward", "IR", "float"),
     ("fps", "FPS", "float"),
     ("total_time", "T", "time"),
 ]
