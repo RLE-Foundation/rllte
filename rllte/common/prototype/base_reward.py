@@ -161,11 +161,22 @@ class BaseReward(ABC):
                 ob += s.unsqueeze(0)
                 next_act += acs.unsqueeze(0)
 
-                s, r, te, tr, _ = env.step(acs)
-                next_ob += s.unsqueeze(0)
+                ns, r, te, tr, _ = env.step(acs)
 
+                next_ob += ns.unsqueeze(0)
                 next_term += te.unsqueeze(0)
                 next_trunc += tr.unsqueeze(0)
+
+                self.watch(
+                    observations=s,
+                    actions=acs,
+                    rewards=r,
+                    terminateds=te,
+                    truncateds=tr,
+                    next_observations=ns
+                )
+
+                s = ns
 
                 if len(next_ob) % num_steps == 0:
                     ob = th.stack(ob).float()
