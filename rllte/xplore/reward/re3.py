@@ -109,7 +109,6 @@ class RE3(BaseReward):
             Feedbacks for the current samples, e.g., intrinsic rewards for the current samples. This 
             is useful when applying the memory-based methods to off-policy algorithms.
         """
-        from IPython import embed; embed()
         with th.no_grad():
             observations = self.normalize(observations)
             self.storage[self.storage_idx] = self.random_encoder(observations)
