@@ -114,7 +114,7 @@ class REVD(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
 
-    def compute(self, samples: Dict) -> th.Tensor:
+    def compute(self, samples: Dict, update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:

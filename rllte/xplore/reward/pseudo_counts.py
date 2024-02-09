@@ -176,7 +176,7 @@ class PseudoCounts(BaseReward):
         else:
             return 1.0 / s
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -196,8 +196,8 @@ class PseudoCounts(BaseReward):
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
             
-        # update the embedding network
-        self.update(samples)
+        if update:
+            self.update(samples)
 
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)

@@ -25,6 +25,7 @@
 
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional
+from copy import deepcopy
 
 import numpy as np
 import torch as th
@@ -98,8 +99,8 @@ class OnPolicyAgent(BaseAgent):
         """
         # freeze the agent and get ready for training
         self.freeze(init_model_path=init_model_path, th_compile=th_compile)
-        
-        # reset the env
+
+        # reset the env        
         episode_rewards: Deque = deque(maxlen=10)
         intrinsic_episode_rewards: Deque = deque(maxlen=10)
         episode_steps: Deque = deque(maxlen=10)
@@ -107,11 +108,11 @@ class OnPolicyAgent(BaseAgent):
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
-###############################################################################################################
+        ###############################################################################################################
         # init obs normalization parameters if necessary
         if self.irs is not None:
-            env = self.irs.init_normalization(self.num_steps, 20, self.env)
-###############################################################################################################
+            self.env = self.irs.init_normalization(self.num_steps, 20, self.env)
+        ###############################################################################################################
                     
         for update in range(num_updates):
             # try to eval

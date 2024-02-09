@@ -128,7 +128,7 @@ class E3B(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -163,8 +163,10 @@ class E3B(BaseReward):
                     # reset the covariance matrix if the episode is terminated or truncated
                     if terminateds_tensor[j, env_idx] or truncateds_tensor[j, env_idx]:
                         self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
-        # update the reward module
-        self.update(samples)
+        if update:
+            # update the reward module
+            self.update(samples)
+            
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 

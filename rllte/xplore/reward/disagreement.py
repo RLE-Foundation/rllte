@@ -125,7 +125,7 @@ class Disagreement(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -158,8 +158,10 @@ class Disagreement(BaseReward):
             preds = th.stack(preds, dim=0)
             intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
         
-        # update the reward module
-        self.update(samples)
+        if update:
+            # update the reward module
+            self.update(samples)
+            
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 

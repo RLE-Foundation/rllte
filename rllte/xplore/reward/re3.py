@@ -118,7 +118,7 @@ class RE3(BaseReward):
         # update the storage status
         self.storage_full = self.storage_full or self.storage_idx == 0
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:

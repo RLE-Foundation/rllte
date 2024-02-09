@@ -124,7 +124,7 @@ class ICM(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -157,8 +157,10 @@ class ICM(BaseReward):
                 pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
                 dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
-        # update the reward module
-        self.update(samples)
+        
+        if update:
+            # update the reward module
+            self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
