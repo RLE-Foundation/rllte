@@ -173,7 +173,7 @@ class OnPolicyAgent(BaseAgent):
                 )
                 # just plus the intrinsic rewards to the extrinsic rewards
                 self.storage.rewards += intrinsic_rewards.to(self.device)
-                intrinsic_episode_rewards.extend(np.mean(intrinsic_rewards.cpu().numpy()))
+                intrinsic_episode_rewards.extend([np.mean(intrinsic_rewards.cpu().numpy())])
 ###############################################################################################################
             
             # compute advantages and returns 
