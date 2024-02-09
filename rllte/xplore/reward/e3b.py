@@ -25,7 +25,7 @@
 
 
 from typing import Dict, Optional
-
+import numpy as np
 import gymnasium as gym
 import torch as th
 from torch import nn
@@ -69,21 +69,23 @@ class E3B(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.001,
+        lr: float = 0.0001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
-        gamma: Optional[float] = None,
+        gamma: float = None,
         batch_size: int = 256,
         ridge: float = 0.1,
-        update_proportion: float = 1.0
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
 
         # build the encoder and inverse dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim).to(self.device)
+                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
@@ -126,7 +128,7 @@ class E3B(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -161,8 +163,10 @@ class E3B(BaseReward):
                     # reset the covariance matrix if the episode is terminated or truncated
                     if terminateds_tensor[j, env_idx] or truncateds_tensor[j, env_idx]:
                         self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
-        # update the reward module
-        self.update(samples)
+        if update:
+            # update the reward module
+            self.update(samples)
+            
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -191,9 +195,11 @@ class E3B(BaseReward):
             actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
         else:
             actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
+        
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        avg_im_loss = []
         # update the encoder and inverse dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -220,3 +226,7 @@ class E3B(BaseReward):
             im_loss.backward()
             self.encoder_opt.step()
             self.im_opt.step()
+            
+            avg_im_loss.append(im_loss.item())
+
+        self.logger.record("avg_im_loss", np.mean(avg_im_loss))

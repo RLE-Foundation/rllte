@@ -87,6 +87,9 @@ class BaseReward(ABC):
         # build the reward forward filter
         self.rff = RewardForwardFilter(gamma) if gamma is not None else None
         
+        # build logger
+        self.logger = None
+        
     @property
     def weight(self) -> float:
         """Get the weighting coefficient of the intrinsic rewards.
@@ -107,12 +110,11 @@ class BaseReward(ABC):
                 rewards[step] = self.rff.update(rewards[step])
 
         if self.rwd_norm_type == "rms":
-            self.rms.update(rewards)
-            return rewards / self.rms.std * self.weight
+            self.rms.update(rewards.ravel())
+            std_rewards = ((rewards) / self.rms.std) * self.weight
+            return std_rewards
         elif self.rwd_norm_type == "minmax":
-            min_r = rewards.min(dim=0, keepdim=True)[0]
-            max_r = rewards.max(dim=0, keepdim=True)[0]
-            return (rewards - min_r) / (max_r - min_r) * self.weight
+            return (rewards - rewards.min()) / (rewards.max() - rewards.min()) * self.weight
         else:
             return rewards * self.weight
         
@@ -129,7 +131,7 @@ class BaseReward(ABC):
             x = x / 255.0 if len(self.obs_shape) > 2 else x
         return x
 
-    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env) -> None:
+    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env, s) -> None:
         if self.obs_rms:
             next_ob = []
             print("Start to initialize observation normalization parameter.....")
@@ -142,7 +144,59 @@ class BaseReward(ABC):
                     next_ob = th.stack(next_ob).float()
                     self.obs_norm.update(next_ob)
                     next_ob = []
-                    
+
+        if self.rwd_norm_type == "rms":
+            print("Start to initialize reward normalization parameter.....")
+            ob = []
+            next_ob = []
+            next_term = []
+            next_trunc = []
+            next_act = []
+            for step in tqdm(range(num_steps)):
+                acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
+                ob += s.unsqueeze(0)
+                next_act += acs.unsqueeze(0)
+
+                ns, r, te, tr, _ = env.step(acs)
+
+                next_ob += ns.unsqueeze(0)
+                next_term += te.unsqueeze(0)
+                next_trunc += tr.unsqueeze(0)
+
+                self.watch(
+                    observations=s,
+                    actions=acs,
+                    rewards=r,
+                    terminateds=te,
+                    truncateds=tr,
+                    next_observations=ns
+                )
+
+                s = ns
+
+                if len(next_ob) % num_steps == 0:
+                    ob = th.stack(ob).float()
+                    next_ob = th.stack(next_ob).float()
+                    next_term = th.stack(next_term).float()
+                    next_trunc = th.stack(next_trunc).float()
+                    next_act = th.stack(next_act).float()
+
+                    samples = {
+                        "observations": ob,
+                        "actions": next_act,
+                        "rewards": r,
+                        "terminateds": next_term,
+                        "truncateds": next_trunc,
+                        "next_observations": next_ob
+                    }
+                    # this computes the rewards and also scales them
+                    next_rew = self.compute(samples, update=True)
+                    ob = []
+                    next_ob = []
+                    next_term = []
+                    next_trunc = []
+                    next_act = []
+
         return env
 
     @abstractmethod
@@ -170,7 +224,7 @@ class BaseReward(ABC):
         """
     
     @abstractmethod
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -189,7 +243,6 @@ class BaseReward(ABC):
             self.obs_norm.update(samples['observations'].reshape(-1, *self.obs_shape).cpu())
 
         self.global_step += 1
-        
 
     @abstractmethod
     def update(self, samples: Dict[str, th.Tensor]) -> None:

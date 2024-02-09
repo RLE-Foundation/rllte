@@ -28,6 +28,7 @@ from .drac import DrAC as DrAC
 from .drdaac import DrDAAC as DrDAAC
 from .drqv2 import DrQv2 as DrQv2
 from .impala import IMPALA as IMPALA
+from .two_head_ppo import TwoHeadPPO as TwoHeadPPO
 from .legacy.a2c import A2C as A2C
 from .legacy.ddpg import DDPG as DDPG
 from .legacy.dqn import DQN as DQN

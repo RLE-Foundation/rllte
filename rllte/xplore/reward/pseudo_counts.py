@@ -27,10 +27,9 @@ from typing import Dict, List, Optional
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
-
+import numpy as np
 import gymnasium as gym
 import torch as th
-
 from rllte.common.prototype import BaseReward
 from .model import InverseDynamicsEncoder
 
@@ -82,6 +81,8 @@ class PseudoCounts(BaseReward):
         c: float = 0.001,
         sm: float = 8.0,
         update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
         ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # set parameters
@@ -102,7 +103,7 @@ class PseudoCounts(BaseReward):
         self.encoder = InverseDynamicsEncoder(
             obs_shape=self.obs_shape,
             action_dim=self.policy_action_dim,
-            latent_dim=latent_dim).to(self.device)
+            latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the optimizer and loss function
         self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         if self.action_type == "Discrete":
@@ -175,7 +176,7 @@ class PseudoCounts(BaseReward):
         else:
             return 1.0 / s
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -195,8 +196,8 @@ class PseudoCounts(BaseReward):
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
             
-        # update the embedding network
-        self.update(samples)
+        if update:
+            self.update(samples)
 
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
@@ -230,6 +231,8 @@ class PseudoCounts(BaseReward):
         # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_loss = []
         # update the encoder
         for _idx, batch in enumerate(loader):
             # get the batch data
@@ -250,3 +253,10 @@ class PseudoCounts(BaseReward):
             # backward and update
             im_loss.backward()
             self.opt.step()
+            
+            avg_loss.append(im_loss.item())
+            
+        try:
+            self.logger.record("avg_loss", np.mean(avg_loss))
+        except:
+            pass

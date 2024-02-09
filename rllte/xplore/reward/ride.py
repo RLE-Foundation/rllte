@@ -31,6 +31,7 @@ import torch as th
 from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
+import numpy as np
 
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, InverseDynamicsModel, ForwardDynamicsModel
@@ -78,16 +79,18 @@ class RIDE(BaseReward):
         kernel_epsilon: float = 0.1,
         c: float = 0.1,
         sm: float = 0.1,
-        update_proportion: float = 1.0
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the encoder, inverse dynamics model and forward dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim).to(self.device)
+                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
@@ -169,7 +172,7 @@ class RIDE(BaseReward):
                     self.episodic_memory[i].clear()
                     # print(terminateds, truncateds)
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -205,8 +208,10 @@ class RIDE(BaseReward):
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
 
-        # update the reward module
-        self.update(samples)
+        if update:
+            # update the reward module
+            self.update(samples)
+        
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards * all_n_eps)
 
@@ -227,20 +232,22 @@ class RIDE(BaseReward):
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         # get the observations, actions and next observations
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
         # normalize the observations and next observations
         obs_tensor = self.normalize(obs_tensor)
         next_obs_tensor = self.normalize(next_obs_tensor)
         # apply one-hot encoding if the action type is discrete
         if self.action_type == "Discrete":
-            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = samples.get("actions").view(n_steps * n_envs)
             actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
         else:
-            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+            actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
         # create the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_im_loss = []
+        avg_fm_loss = []
         # update the encoder, inverse dynamics model and forward dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -261,7 +268,7 @@ class RIDE(BaseReward):
             # use a random mask to select a subset of the training data
             mask = th.rand(len(im_loss), device=self.device)
             mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
+            # get the masked losses
             im_loss = (im_loss * mask).sum() / th.max(
                 mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
             )
@@ -273,3 +280,8 @@ class RIDE(BaseReward):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
+            avg_im_loss.append(im_loss.item())
+            avg_fm_loss.append(fm_loss.item())
+        
+        self.logger.record("avg_im_loss", np.mean(avg_im_loss))
+        self.logger.record("avg_fm_loss", np.mean(avg_fm_loss))

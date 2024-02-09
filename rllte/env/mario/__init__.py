@@ -31,8 +31,11 @@ def make_mario_env(
             env = Gym2Gymnasium(env)
             env = SkipFrame(env, skip=4)
             env = gym.wrappers.ResizeObservation(env, (84, 84))
+            # env = gym.wrappers.GrayScaleObservation(env)
+            # env = gym.wrappers.FrameStack(env, num_stack=4)
             env = ImageTranspose(env)
             env = EpisodicLifeEnv(env)
+            env = gym.wrappers.TransformReward(env, lambda r: 0.01*r)
             env.observation_space.seed(seed)
             return env
         return _thunk

@@ -29,17 +29,17 @@ import numpy as np
 import torch as th
 from torch import nn
 
-from rllte.common.prototype import OnPolicyAgent
+from rllte.common.prototype import TwoHeadOnPolicyAgent
 from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
-from rllte.xploit.policy import OnPolicySharedActorCritic
-from rllte.xploit.storage import VanillaRolloutStorage
+from rllte.xploit.policy import TwoHeadOnPolicySharedActorCritic
+from rllte.xploit.storage import TwoHeadRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
 
-
-class PPO(OnPolicyAgent):
+class TwoHeadPPO(TwoHeadOnPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
         Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
+        Uses two value functions for intrinsic and extrinsic rewards.
 
     Args:
         env (VecEnv): Vectorized environments for training.
@@ -65,7 +65,7 @@ class PPO(OnPolicyAgent):
         init_fn (str): Parameters initialization method.
 
     Returns:
-        PPO agent instance.
+        Two Head PPO agent instance.
     """
 
     def __init__(
@@ -92,6 +92,9 @@ class PPO(OnPolicyAgent):
         init_fn: str = "orthogonal",
         encoder_model: str = "mnih",
     ) -> None:
+        
+        assert pretraining == False, "For TwoHead architecture, you must train on intrinic + extrinsic rewards"
+        
         super().__init__(
             env=env,
             eval_env=eval_env,
@@ -138,7 +141,7 @@ class PPO(OnPolicyAgent):
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
-        policy = OnPolicySharedActorCritic(
+        policy = TwoHeadOnPolicySharedActorCritic(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -149,7 +152,7 @@ class PPO(OnPolicyAgent):
         )
 
         # default storage
-        storage = VanillaRolloutStorage(
+        storage = TwoHeadRolloutStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
@@ -171,7 +174,7 @@ class PPO(OnPolicyAgent):
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
                 # evaluate sampled actions
-                new_values, new_log_probs, entropy = self.policy.evaluate_actions(
+                new_values, new_int_values, new_log_probs, entropy = self.policy.evaluate_actions(
                     obs=batch.observations, actions=batch.actions
                 )
 
@@ -181,7 +184,7 @@ class PPO(OnPolicyAgent):
                 surr2 = th.clamp(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * batch.adv_targ
                 policy_loss = -th.min(surr1, surr2).mean()
 
-                # value loss part
+                # extrinsic value loss part
                 if self.clip_range_vf is None:
                     value_loss = 0.5 * (new_values.flatten() - batch.returns).pow(2).mean()
                 else:
@@ -191,6 +194,10 @@ class PPO(OnPolicyAgent):
                     values_losses = (new_values.flatten() - batch.returns).pow(2)
                     values_losses_clipped = (values_clipped - batch.returns).pow(2)
                     value_loss = 0.5 * th.max(values_losses, values_losses_clipped).mean()
+
+                # intrinsic value loss part
+                int_value_losses = 0.5 * ((new_int_values - batch.intrinsic_values) ** 2).mean()
+                value_loss  += int_value_losses
 
                 # update
                 self.policy.optimizers["opt"].zero_grad(set_to_none=True)
@@ -204,6 +211,6 @@ class PPO(OnPolicyAgent):
                 total_entropy_loss.append(entropy.item())
 
         # record metrics
-        self.logger.record("policy_loss", np.mean(total_policy_loss))
-        self.logger.record("value_loss", np.mean(total_value_loss))
-        self.logger.record("entropy_loss", np.mean(total_entropy_loss))
+        self.logger.record("train/policy_loss", np.mean(total_policy_loss))
+        self.logger.record("train/value_loss", np.mean(total_value_loss))
+        self.logger.record("train/entropy_loss", np.mean(total_entropy_loss))

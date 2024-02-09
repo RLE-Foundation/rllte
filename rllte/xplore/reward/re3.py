@@ -67,7 +67,9 @@ class RE3(BaseReward):
         latent_dim: int = 128,
         storage_size: int = 1000,
         k: int = 5,
-        average_entropy: bool = False
+        average_entropy: bool = False,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
         ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
@@ -81,7 +83,7 @@ class RE3(BaseReward):
         self.k = k
         self.average_entropy = average_entropy
         # build the random encoder and freeze the network parameters
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim).to(self.device)
+        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         for p in self.random_encoder.parameters():
             p.requires_grad = False
     
@@ -115,7 +117,7 @@ class RE3(BaseReward):
         # update the storage status
         self.storage_full = self.storage_full or self.storage_idx == 0
 
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:

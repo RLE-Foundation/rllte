@@ -194,7 +194,10 @@ class BaseAgent(ABC):
             self.logger.info(f"{'Pre-training Mode'.ljust(NUMBER_OF_SPACES)} : On")
         # sep line
         self.logger.debug("=" * 80)
-
+        
+        if self.irs is not None:
+            self.irs.logger = self.logger
+            
     def set(
         self,
         encoder: Optional[Encoder] = None,

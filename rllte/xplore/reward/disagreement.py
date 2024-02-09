@@ -25,7 +25,7 @@
 
 
 from typing import Dict, Optional
-
+import numpy as np
 import gymnasium as gym
 import torch as th
 import torch.nn.functional as F
@@ -73,13 +73,15 @@ class Disagreement(BaseReward):
         gamma: Optional[float] = None,
         n_envs: int = 1,
         batch_size: int = 256,
-        ensemble_size: int = 5,
-        update_proportion: float = 1.0
+        ensemble_size: int = 4,
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
-                                                   latent_dim=latent_dim).to(self.device)
+                                                   latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
 
         # freeze the randomly initialized target network parameters
         for p in self.random_encoder.parameters():
@@ -89,7 +91,7 @@ class Disagreement(BaseReward):
         self.ensemble_size = ensemble_size
         self.ensemble = [
             ForwardDynamicsModel(latent_dim=latent_dim,
-                                    action_dim=self.policy_action_dim).to(self.device)
+                                    action_dim=self.policy_action_dim, encoder_model=encoder_model).to(self.device)
             for _ in range(self.ensemble_size)
         ]        
         self.opt = [
@@ -123,7 +125,7 @@ class Disagreement(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -155,8 +157,11 @@ class Disagreement(BaseReward):
                 preds.append(next_obs_hat)
             preds = th.stack(preds, dim=0)
             intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
-        # update the reward module
-        self.update(samples)
+        
+        if update:
+            # update the reward module
+            self.update(samples)
+            
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -188,6 +193,8 @@ class Disagreement(BaseReward):
         # build the dataset and dataloader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_loss = []
         # update the ensemble of forward dynamics models
         for _idx, batch_data in enumerate(loader):
             ensemble_idx = _idx % self.ensemble_size
@@ -214,3 +221,7 @@ class Disagreement(BaseReward):
             # backward and update
             fm_loss.backward()
             self.opt[ensemble_idx].step()
+            
+            avg_loss.append(fm_loss.item())
+            
+        self.logger.record("avg_loss", np.mean(avg_loss))

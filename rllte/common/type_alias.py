@@ -137,6 +137,18 @@ class VanillaRolloutBatch(NamedTuple):
     truncateds: th.Tensor
     old_log_probs: th.Tensor
     adv_targ: th.Tensor
+    
+class TwoHeadRolloutBatch(NamedTuple):
+    observations: th.Tensor
+    actions: th.Tensor
+    values: th.Tensor
+    returns: th.Tensor
+    terminateds: th.Tensor
+    truncateds: th.Tensor
+    old_log_probs: th.Tensor
+    intrinsic_values: th.Tensor
+    intrinsic_returns: th.Tensor
+    adv_targ: th.Tensor
 
 
 class DictRolloutBatch(NamedTuple):

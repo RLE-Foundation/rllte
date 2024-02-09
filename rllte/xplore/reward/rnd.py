@@ -30,7 +30,7 @@ import gymnasium as gym
 import torch as th
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
-
+import numpy as np
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
@@ -73,13 +73,15 @@ class RND(BaseReward):
         lr: float = 0.001,
         batch_size: int = 256,
         update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the predictor and target networks
         self.predictor = ObservationEncoder(obs_shape=self.obs_shape, 
-                                            latent_dim=latent_dim).to(self.device)
+                                            latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.target = ObservationEncoder(obs_shape=self.obs_shape, 
-                                         latent_dim=latent_dim).to(self.device)            
+                                         latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)            
 
         # freeze the randomly initialized target network parameters
         for p in self.target.parameters():
@@ -113,7 +115,7 @@ class RND(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -141,8 +143,10 @@ class RND(BaseReward):
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
 
-        # update the reward module
-        self.update(samples)
+        if update:
+            # update the reward module
+            self.update(samples)
+        
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -163,6 +167,8 @@ class RND(BaseReward):
         # create the dataset and loader
         dataset = TensorDataset(obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_loss = []
         # update the predictor
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -186,3 +192,10 @@ class RND(BaseReward):
             # backward and update
             loss.backward()
             self.opt.step()
+            
+            avg_loss.append(loss.item())
+            
+        try:
+            self.logger.record("avg_loss", np.mean(avg_loss))
+        except:
+            pass

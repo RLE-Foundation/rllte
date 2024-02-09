@@ -25,7 +25,7 @@
 
 
 from typing import Dict, Optional
-
+import numpy as np
 import gymnasium as gym
 import torch as th
 from torch import nn
@@ -73,17 +73,19 @@ class ICM(BaseReward):
         obs_rms: bool = False,
         gamma: Optional[float] = None,
         batch_size: int = 256,
-        update_proportion: float = 1.0
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default"
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
         # build the encoder, inverse dynamics model and forward dynamics model
         self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim).to(self.device)
+                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, 
-                                       action_dim=self.policy_action_dim).to(self.device)
+                                       action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
@@ -94,10 +96,11 @@ class ICM(BaseReward):
         self.im_opt = th.optim.Adam(self.im.parameters(), lr=lr)
         self.fm_opt = th.optim.Adam(self.fm.parameters(), lr=lr)
         # set the parameters
+
         self.batch_size = batch_size
         self.update_proportion = update_proportion
         self.latent_dim = latent_dim
-
+        
     def watch(self, 
               observations: th.Tensor, 
               actions: th.Tensor,
@@ -121,7 +124,7 @@ class ICM(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -154,8 +157,10 @@ class ICM(BaseReward):
                 pred_next_obs = self.fm(encoded_obs, actions_tensor[:, i])
                 dist = F.mse_loss(encoded_next_obs, pred_next_obs, reduction="none").mean(dim=1)
                 intrinsic_rewards[:, i] = dist.cpu()
-        # update the reward module
-        self.update(samples)
+        
+        if update:
+            # update the reward module
+            self.update(samples)
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)
 
@@ -186,6 +191,9 @@ class ICM(BaseReward):
         # build the dataset and dataloader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+        
+        avg_im_loss = []
+        avg_fm_loss = []
         # update the encoder, inverse dynamics model and forward dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
@@ -219,3 +227,8 @@ class ICM(BaseReward):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
+            avg_im_loss.append(im_loss.item())
+            avg_fm_loss.append(fm_loss.item())
+            
+        self.logger.record("im_loss", np.mean(avg_im_loss))
+        self.logger.record("fm_loss", np.mean(avg_fm_loss))
