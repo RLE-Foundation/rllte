@@ -156,7 +156,7 @@ class BaseReward(ABC):
             next_term = []
             next_trunc = []
             next_act = []
-            for step in tqdm(range(num_steps * 2)):
+            for step in tqdm(range(num_steps)):
                 acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
                 ob += s.unsqueeze(0)
                 next_act += acs.unsqueeze(0)
@@ -194,7 +194,7 @@ class BaseReward(ABC):
                         "next_observations": next_ob
                     }
                     # this computes the rewards and also scales them
-                    next_rew = self.compute(samples, update=False)
+                    next_rew = self.compute(samples, update=True)
                     ob = []
                     next_ob = []
                     next_term = []
