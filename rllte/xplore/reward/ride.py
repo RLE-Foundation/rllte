@@ -232,17 +232,16 @@ class RIDE(BaseReward):
         (n_steps, n_envs) = samples.get("next_observations").size()[:2]
         # get the observations, actions and next observations
         obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-        actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
         # normalize the observations and next observations
         obs_tensor = self.normalize(obs_tensor)
         next_obs_tensor = self.normalize(next_obs_tensor)
         # apply one-hot encoding if the action type is discrete
         if self.action_type == "Discrete":
-            actions_tensor = samples["actions"].view(n_steps * n_envs)
+            actions_tensor = samples.get("actions").view(n_steps * n_envs)
             actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
         else:
-            actions_tensor = samples["actions"].view(n_steps * n_envs, -1)
+            actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
         # create the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
@@ -269,7 +268,7 @@ class RIDE(BaseReward):
             # use a random mask to select a subset of the training data
             mask = th.rand(len(im_loss), device=self.device)
             mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
+            # get the masked losses
             im_loss = (im_loss * mask).sum() / th.max(
                 mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
             )
@@ -281,7 +280,6 @@ class RIDE(BaseReward):
             self.encoder_opt.step()
             self.im_opt.step()
             self.fm_opt.step()
-            
             avg_im_loss.append(im_loss.item())
             avg_fm_loss.append(fm_loss.item())
         
