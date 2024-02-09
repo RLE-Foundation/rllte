@@ -111,7 +111,7 @@ class OnPolicyAgent(BaseAgent):
         ###############################################################################################################
         # init obs normalization parameters if necessary
         if self.irs is not None:
-            self.env = self.irs.init_normalization(self.num_steps, 20, self.env)
+            self.env = self.irs.init_normalization(self.num_steps, 20, self.env, obs)
         ###############################################################################################################
                     
         for update in range(num_updates):

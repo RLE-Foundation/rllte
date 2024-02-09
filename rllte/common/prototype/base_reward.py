@@ -133,9 +133,9 @@ class BaseReward(ABC):
             x = x / 255.0 if len(self.obs_shape) > 2 else x
         return x
 
-    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env) -> None:
+    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env, s) -> None:
         if self.obs_rms:
-            s, _ = env.reset()
+            #s, _ = env.reset()
             next_ob = []
             print("Start to initialize observation normalization parameter.....")
             for step in tqdm(range(num_steps * num_iters)):
@@ -149,7 +149,7 @@ class BaseReward(ABC):
                     next_ob = []
 
         if self.rwd_norm_type == "rms":
-            s, _ = env.reset()
+            #s, _ = env.reset()
             print("Start to initialize reward normalization parameter.....")
             ob = []
             next_ob = []
