@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # create agent and turn on pre-training mode
     ppo_args = dict(
         env=env, 
-        #eval_env=eval_env,
+        eval_env=eval_env,
         seed=args.seed,
         device=args.device,
         tag=exp_name,
