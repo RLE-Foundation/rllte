@@ -73,7 +73,7 @@ class Disagreement(BaseReward):
         gamma: Optional[float] = None,
         n_envs: int = 1,
         batch_size: int = 256,
-        ensemble_size: int = 5,
+        ensemble_size: int = 4,
         update_proportion: float = 1.0,
         encoder_model: str = "mnih",
         weight_init: str = "default"
