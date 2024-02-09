@@ -105,7 +105,6 @@ def make_env(args, device):
         from rllte.env import make_envpool_procgen_env
         args.env_id = args.env_id.split("_")[1] + "-v0"
         
-        from IPython import embed; embed()
         # this config gives a very cool level for MazeHard-v0
         env = make_envpool_procgen_env(
             env_id=args.env_id,
