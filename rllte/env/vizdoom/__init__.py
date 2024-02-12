@@ -3,7 +3,7 @@ from typing import Callable, Dict
 import gymnasium as gym
 import gym as gym_old
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
-from gymnasium.wrappers import RecordEpisodeStatistics, GrayScaleObservation, ResizeObservation
+from gymnasium.wrappers import RecordEpisodeStatistics, GrayScaleObservation, ResizeObservation, TransformReward
 
 from rllte.env.utils import Gymnasium2Torch
 from rllte.env.utils import EnvPoolAsync2Gymnasium, EnvPoolSync2Gymnasium, Gymnasium2Torch
@@ -39,6 +39,9 @@ def make_envpool_vizdoom_env(
         envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
+
+    if "MyWayHome" in env_id:
+        envs = TransformReward(envs, lambda r: r * 10.0)
 
     envs = RecordEpisodeStatistics(envs)
 
