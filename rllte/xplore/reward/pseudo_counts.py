@@ -33,6 +33,8 @@ import torch as th
 from rllte.common.prototype import BaseReward
 from .model import InverseDynamicsEncoder
 
+from rllte.common.utils import TorchRunningMeanStd
+
 class PseudoCounts(BaseReward):
     """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
         See paper: https://arxiv.org/pdf/2002.06038
@@ -111,6 +113,10 @@ class PseudoCounts(BaseReward):
         else:
             self.loss = nn.MSELoss(reduction="none")
     
+        # rms for the intrinsic rewards
+        self.dist_rms = TorchRunningMeanStd(shape=(1, ), device=self.device)
+        self.squared_distances = []
+    
     def watch(self, 
               observations: th.Tensor, 
               actions: th.Tensor,
@@ -138,21 +144,19 @@ class PseudoCounts(BaseReward):
             observations = self.normalize(observations)
             embeddings = self.encoder.encode(observations)
             for i in range(self.n_envs):
-                # update the episodic memory
-                self.episodic_memory[i].append(embeddings[i])            
-                n_eps = self.pseudo_counts(embeddings=embeddings[i].unsqueeze(0), memory=self.episodic_memory[i])
+                if len(self.episodic_memory[i]) > 0:
+                    # compute pseudo-counts
+                    n_eps = self.pseudo_counts(embeddings=embeddings[i].unsqueeze(0), memory=self.episodic_memory[i])
+                else:
+                    n_eps = 0.0
                 # store the pseudo-counts
                 self.n_eps[i].append(n_eps)
+                # update the episodic memory
+                self.episodic_memory[i].append(embeddings[i])
                 # clear the episodic memory if the episode is terminated or truncated
                 if terminateds[i].item() or truncateds[i].item():
                     self.episodic_memory[i].clear()
-                    # print(terminateds, truncateds)
         
-        # if self.is_sync:
-        #     return {'single_step_rewards': th.as_tensor(n_eps)}
-        # else:
-        #     return None
-
     def pseudo_counts(self, embeddings: th.Tensor, memory: List[th.Tensor]) -> th.Tensor:
         """Pseudo counts.
 
@@ -164,9 +168,9 @@ class PseudoCounts(BaseReward):
             Conut values.
         """
         memory = th.stack(memory)
-        dist = th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]
-        # moving average
-        dist = dist / (dist.mean() + 1e-11)
+        dist = (th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]) ** 2
+        self.squared_distances.append(dist)
+        dist = dist / (self.dist_rms.mean + 1e-8)
         dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
         kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
         s = th.sqrt(kernel.sum()) + self.c
@@ -192,6 +196,11 @@ class PseudoCounts(BaseReward):
         # compute the intrinsic rewards
         all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
         intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+
+        # update the running mean and std of the squared distances
+        flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+        self.dist_rms.update(flattened_squared_distances)
+        self.squared_distances.clear()
 
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
