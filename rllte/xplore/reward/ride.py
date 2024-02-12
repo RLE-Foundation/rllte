@@ -33,6 +33,7 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 
+from rllte.common.utils import TorchRunningMeanStd
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, InverseDynamicsModel, ForwardDynamicsModel
 
@@ -75,10 +76,10 @@ class RIDE(BaseReward):
         batch_size: int = 256,
         # episodic memory
         k: int = 10,
-        kernel_cluster_distance: float = 0.5,
-        kernel_epsilon: float = 0.1,
-        c: float = 0.1,
-        sm: float = 0.1,
+        kernel_cluster_distance: float = 0.008,
+        kernel_epsilon: float = 0.0001,
+        c: float = 0.001,
+        sm: float = 8.0,
         update_proportion: float = 1.0,
         encoder_model: str = "mnih",
         weight_init: str = "default"
@@ -111,6 +112,10 @@ class RIDE(BaseReward):
         # build the episodic memory
         self.episodic_memory = [[] for _ in range(n_envs)]
         self.n_eps = [[] for _ in range(n_envs)]
+        
+        # rms for the intrinsic rewards
+        self.dist_rms = TorchRunningMeanStd(shape=(1, ), device=self.device)
+        self.squared_distances = []
 
     def pseudo_counts(self, embeddings: th.Tensor, memory: List[th.Tensor]) -> th.Tensor:
         """Pseudo counts.
@@ -123,13 +128,13 @@ class RIDE(BaseReward):
             Conut values.
         """
         memory = th.stack(memory)
-        dist = th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]
-        # moving average
-        dist = dist / (dist.mean() + 1e-11)
+        dist = (th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]) ** 2
+        self.squared_distances.append(dist)
+        dist = dist / (self.dist_rms.mean + 1e-8)
         dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
         kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
         s = th.sqrt(kernel.sum()) + self.c
-
+        
         if th.isnan(s) or s > self.sm:
             return 0.0
         else:
@@ -162,15 +167,18 @@ class RIDE(BaseReward):
             observations = self.normalize(observations)
             embeddings = self.encoder(observations)
             for i in range(self.n_envs):
-                # update the episodic memory
-                self.episodic_memory[i].append(embeddings[i])            
-                n_eps = self.pseudo_counts(embeddings=embeddings[i].unsqueeze(0), memory=self.episodic_memory[i])
+                if len(self.episodic_memory[i]) > 0:
+                    # compute pseudo-counts
+                    n_eps = self.pseudo_counts(embeddings=embeddings[i].unsqueeze(0), memory=self.episodic_memory[i])
+                else:
+                    n_eps = 0.0
                 # store the pseudo-counts
                 self.n_eps[i].append(n_eps)
+                # update the episodic memory
+                self.episodic_memory[i].append(embeddings[i])
                 # clear the episodic memory if the episode is terminated or truncated
                 if terminateds[i].item() or truncateds[i].item():
                     self.episodic_memory[i].clear()
-                    # print(terminateds, truncateds)
         
     def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
         """Compute the rewards for current samples.
@@ -201,10 +209,16 @@ class RIDE(BaseReward):
                 dist = F.mse_loss(encoded_obs, encoded_next_obs, reduction="none").mean(dim=1)
 
                 intrinsic_rewards[:, i] = dist.cpu()
-        
+
         # get all the n_eps
         all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
         all_n_eps = th.stack(all_n_eps).T.to(self.device)
+        
+        # update the running mean and std of the squared distances
+        flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+        self.dist_rms.update(flattened_squared_distances)
+        self.squared_distances.clear()
+        
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
 

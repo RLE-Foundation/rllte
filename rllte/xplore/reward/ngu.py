@@ -81,48 +81,58 @@ class NGU(Fabric):
                  sm: float = 8.0,
                  mrs: float = 5.0,
                  update_proportion: float = 1.0,
-                 encoder_model: str = "mnih"
+                 encoder_model: str = "mnih",
+                 weight_init: str = "default"
         ) -> None:
         # build the rnd and pseudo-counts modules
-        rnd = RND(observation_space=observation_space,
-                  action_space=action_space,
-                  n_envs=n_envs,
-                  device=device,
-                  beta=beta,
-                  kappa=kappa,
-                  rwd_norm_type=rwd_norm_type,
-                  obs_rms=obs_rms,
-                  gamma=gamma,
-                  latent_dim=latent_dim,
-                  lr=lr,
-                  batch_size=batch_size,
-                  update_proportion=update_proportion,
-                  encoder_model=encoder_model
-                )
-        pseudo_counts = PseudoCounts(observation_space=observation_space,
-                                     action_space=action_space,
-                                     n_envs=n_envs,
-                                     device=device,
-                                     beta=beta,
-                                     kappa=kappa,
-                                     rwd_norm_type=rwd_norm_type,
-                                     obs_rms=obs_rms,
-                                     gamma=gamma,
-                                     latent_dim=latent_dim,
-                                     lr=lr,
-                                     batch_size=batch_size,
-                                     k=k,
-                                     kernel_cluster_distance=kernel_cluster_distance,
-                                     kernel_epsilon=kernel_epsilon,
-                                     c=c,
-                                     sm=sm,
-                                     update_proportion=update_proportion,
-                                     encoder_model=encoder_model)
+        rnd = RND(
+            observation_space=observation_space,
+            action_space=action_space,
+            n_envs=n_envs,
+            device=device,
+            beta=beta,
+            kappa=kappa,
+            rwd_norm_type="minmax",
+            obs_rms=True,
+            gamma=gamma,
+            latent_dim=latent_dim,
+            lr=lr,
+            batch_size=batch_size,
+            update_proportion=update_proportion,
+            encoder_model=encoder_model,
+            weight_init=weight_init
+        )
+        
+        pseudo_counts = PseudoCounts(
+            observation_space=observation_space,
+            action_space=action_space,
+            n_envs=n_envs,
+            device=device,
+            beta=beta,
+            kappa=kappa,
+            rwd_norm_type=rwd_norm_type,
+            obs_rms=obs_rms,
+            gamma=gamma,
+            latent_dim=latent_dim,
+            lr=lr,
+            batch_size=batch_size,
+            k=k,
+            kernel_cluster_distance=kernel_cluster_distance,
+            kernel_epsilon=kernel_epsilon,
+            c=c,
+            sm=sm,
+            update_proportion=update_proportion,
+            encoder_model=encoder_model,
+            weight_init=weight_init
+        )
 
         super().__init__(*[rnd, pseudo_counts])
         # set the maximum reward scaling
         self.mrs = mrs
         self.obs_rms = obs_rms
+
+        self.rwd_norm_type = rwd_norm_type
+        self.rff = RewardForwardFilter(gamma) if gamma is not None else None
 
     def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
