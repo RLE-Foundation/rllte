@@ -190,7 +190,7 @@ class BaseReward(ABC):
                         "next_observations": next_ob
                     }
                     # this computes the rewards and also scales them
-                    next_rew = self.compute(samples, update=True)
+                    next_rew = self.compute(samples)
                     ob = []
                     next_ob = []
                     next_term = []
@@ -224,7 +224,7 @@ class BaseReward(ABC):
         """
     
     @abstractmethod
-    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:

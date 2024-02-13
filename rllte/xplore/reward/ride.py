@@ -180,7 +180,7 @@ class RIDE(BaseReward):
                 if terminateds[i].item() or truncateds[i].item():
                     self.episodic_memory[i].clear()
         
-    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -222,9 +222,8 @@ class RIDE(BaseReward):
         # flush the episodic memory of intrinsic rewards
         self.n_eps = [[] for _ in range(self.n_envs)]
 
-        if update:
-            # update the reward module
-            self.update(samples)
+        # update the reward module
+        self.update(samples)
         
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards * all_n_eps)

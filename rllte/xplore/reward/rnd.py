@@ -115,7 +115,7 @@ class RND(BaseReward):
             is useful when applying the memory-based methods to off-policy algorithms.
         """
         
-    def compute(self, samples: Dict[str, th.Tensor], update=True) -> th.Tensor:
+    def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
 
         Args:
@@ -143,9 +143,8 @@ class RND(BaseReward):
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
 
-        if update:
-            # update the reward module
-            self.update(samples)
+        # update the reward module
+        self.update(samples)
         
         # scale the intrinsic rewards
         return self.scale(intrinsic_rewards)

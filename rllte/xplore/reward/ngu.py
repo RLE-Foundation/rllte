@@ -32,6 +32,9 @@ from .fabric import Fabric
 from .pseudo_counts import PseudoCounts
 from .rnd import RND
 
+from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
+
+
 class NGU(Fabric):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
         See paper: https://arxiv.org/pdf/2002.06038
@@ -92,8 +95,8 @@ class NGU(Fabric):
             device=device,
             beta=beta,
             kappa=kappa,
-            rwd_norm_type="minmax",
-            obs_rms=True,
+            rwd_norm_type=rwd_norm_type,
+            obs_rms=obs_rms,
             gamma=gamma,
             latent_dim=latent_dim,
             lr=lr,
@@ -133,6 +136,8 @@ class NGU(Fabric):
 
         self.rwd_norm_type = rwd_norm_type
         self.rff = RewardForwardFilter(gamma) if gamma is not None else None
+        self.n_envs = n_envs
+
 
     def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:
         """Compute the rewards for current samples.
