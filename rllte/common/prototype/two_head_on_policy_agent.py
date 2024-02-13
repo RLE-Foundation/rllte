@@ -107,7 +107,7 @@ class TwoHeadOnPolicyAgent(BaseAgent):
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
 
         # init obs normalization parameters if necessary
-        env = self.irs.init_normalization(self.num_steps, 20, self.env)
+        env = self.irs.init_normalization(self.num_steps, 20, self.env, obs)
                     
         for update in range(num_updates):
             # try to eval
