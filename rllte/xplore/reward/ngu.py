@@ -33,7 +33,7 @@ from .pseudo_counts import PseudoCounts
 from .rnd import RND
 
 from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
-
+from rllte.common.preprocessing import process_action_space, process_observation_space
 
 class NGU(Fabric):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
@@ -130,13 +130,23 @@ class NGU(Fabric):
         )
 
         super().__init__(*[rnd, pseudo_counts])
+        self.rwd_norm_type = rwd_norm_type
+        self.rff = RewardForwardFilter(gamma) if gamma is not None else None
+
+        self.obs_shape = process_observation_space(observation_space)  # type: ignore
+        self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \
+            = process_action_space(action_space)
+        self.n_envs = n_envs
+
+        # set device and parameters
+        self.device = th.device(device)
         # set the maximum reward scaling
         self.mrs = mrs
         self.obs_rms = obs_rms
-
+        self.beta = beta
+        self.kappa = kappa
         self.rwd_norm_type = rwd_norm_type
-        self.rff = RewardForwardFilter(gamma) if gamma is not None else None
-        self.n_envs = n_envs
+        self.global_step = 0
 
 
     def compute(self, samples: Dict[str, th.Tensor]) -> th.Tensor:

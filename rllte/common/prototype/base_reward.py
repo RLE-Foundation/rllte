@@ -35,7 +35,6 @@ import rllte
 from rllte.common.preprocessing import process_action_space, process_observation_space
 from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
 
-
 class BaseReward(ABC):
     """Base class of reward module.
 

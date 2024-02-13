@@ -26,7 +26,7 @@
 
 from typing import Dict, Optional, List
 import torch as th
-
+import gymnasium as gym
 from rllte.common.prototype import BaseReward
 
 class Fabric(BaseReward):
@@ -43,6 +43,11 @@ class Fabric(BaseReward):
         for rwd in rewards:
             assert isinstance(rwd, BaseReward), "The input rewards must be the instance of BaseReward!"
         self.rewards = list(rewards)
+
+    def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env, s) -> None:
+        for rwd in self.rewards:
+            rwd.init_normalization(num_steps, num_iters, env, s)
+        return env
     
     def watch(self, 
               observations: th.Tensor, 
