@@ -170,8 +170,8 @@ class TwoHeadOnPolicyAgent(BaseAgent):
             # compute extrinsic advantages and returns
             self.storage.compute_extrinsic_returns_and_advantages(last_values)
             
-            # combine advantages
-            self.storage.combined_advantages = self.storage.advantages + self.storage.intrinsic_advantages
+            # combine advantages weighted by the intrinsic reward weight
+            self.storage.combined_advantages = (2. * self.storage.advantages) +  (1. * self.storage.intrinsic_advantages)
                 
             # update the agent
             self.update()

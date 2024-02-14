@@ -89,6 +89,7 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
         ent_coef: float = 0.01,
         max_grad_norm: float = 0.5,
         discount: float = 0.999,
+        int_discount: float = 0.99,
         init_fn: str = "orthogonal",
         encoder_model: str = "mnih",
     ) -> None:
@@ -159,7 +160,8 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            discount=discount
+            discount=discount,
+            int_discount=int_discount
         )
 
         # set all the modules [essential operation!!!]

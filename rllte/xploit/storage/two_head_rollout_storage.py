@@ -58,11 +58,13 @@ class TwoHeadRolloutStorage(BaseStorage):
         storage_size: int = 256,
         batch_size: int = 64,
         num_envs: int = 8,
-        discount: float = 0.99,
+        discount: float = 0.999,
+        int_discount: float = 0.99,
         gae_lambda: float = 0.95,
     ) -> None:
         super().__init__(observation_space, action_space, device, storage_size, batch_size, num_envs)
         self.discount = discount
+        self.int_discount = int_discount
         self.gae_lambda = gae_lambda
         self.reset()
 
@@ -162,8 +164,8 @@ class TwoHeadRolloutStorage(BaseStorage):
             else:
                 next_non_terminal = 1.0
             
-            delta = self.intrinsic_rewards[step] + self.discount * next_values * next_non_terminal - self.intrinsic_values[step]
-            gae = delta + self.discount * self.gae_lambda * next_non_terminal * gae
+            delta = self.intrinsic_rewards[step] + self.int_discount * next_values * next_non_terminal - self.intrinsic_values[step]
+            gae = delta + self.int_discount * self.gae_lambda * next_non_terminal * gae
             # time limit
             gae = gae * (1.0 - self.truncateds[step + 1])
             self.intrinsic_advantages[step] = gae
