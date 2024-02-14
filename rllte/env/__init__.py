@@ -59,7 +59,8 @@ except Exception:
     pass
 
 try:
-    from .mario import make_mario_env as make_mario_env
+    from .mario import make_mario_env
+    from .mario import make_mario_multilevel_env
 except Exception:
     pass
 

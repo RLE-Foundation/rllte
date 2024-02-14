@@ -53,7 +53,7 @@ if __name__ == "__main__":
     else:
         ppo_args = dict(
             env=env, 
-            #eval_env=eval_env,
+            eval_env=eval_env,
             seed=args.seed,
             device=args.device,
             tag=exp_name,

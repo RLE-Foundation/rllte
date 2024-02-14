@@ -90,12 +90,19 @@ def parse_args_big():
 def make_env(args, device):
     # return either Mario or Atari env
     if "Mario" in args.env_id:
-        from rllte.env import make_mario_env
-        env = make_mario_env(
-            device=device,
-            num_envs=args.n_envs,
-            env_id=args.env_id,
-        )
+        from rllte.env import make_mario_env, make_mario_multilevel_env
+        if "RandomStages" in args.env_id:
+            env = make_mario_multilevel_env(
+                device=device,
+                num_envs=args.n_envs,
+                env_id=args.env_id,
+            )
+        else:
+            env = make_mario_env(
+                device=device,
+                num_envs=args.n_envs,
+                env_id=args.env_id,
+            )
     elif "MyWayHome" in args.env_id:
         from rllte.env import make_envpool_vizdoom_env
         env = make_envpool_vizdoom_env(

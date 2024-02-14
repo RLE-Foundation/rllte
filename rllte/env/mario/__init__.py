@@ -31,8 +31,6 @@ def make_mario_env(
             env = Gym2Gymnasium(env)
             env = SkipFrame(env, skip=4)
             env = gym.wrappers.ResizeObservation(env, (84, 84))
-            # env = gym.wrappers.GrayScaleObservation(env)
-            # env = gym.wrappers.FrameStack(env, num_stack=4)
             env = ImageTranspose(env)
             env = EpisodicLifeEnv(env)
             env = gym.wrappers.TransformReward(env, lambda r: 0.01*r)
@@ -49,3 +47,42 @@ def make_mario_env(
     envs = RecordEpisodeStatistics(envs)
     return Gymnasium2Torch(envs, device=device)
     
+def make_mario_multilevel_env(
+        env_id: str = "SuperMarioBrosRandomStages-v3",
+        num_envs: int = 8,
+        device: str = "cpu",
+        asynchronous: bool = True,
+        seed: int = 0,
+    ) -> Gymnasium2Torch:
+    
+    def make_multilevel_env(env_id: str, seed: int) -> Callable:
+        def _thunk():
+            env = gym_old.make(
+                env_id, 
+                apply_api_compatibility=True,
+                render_mode="rgb_array",
+                stages=[
+                    '1-1', '1-2', '1-4', 
+                    '2-1', '2-3', '2-4',
+                    '3-1', '3-2', '3-4',
+                    '4-1', '4-3', '4-4',
+                ]
+            )
+            env = JoypadSpace(env, SIMPLE_MOVEMENT)
+            env = Gym2Gymnasium(env)
+            env = SkipFrame(env, skip=4)
+            env = gym.wrappers.ResizeObservation(env, (84, 84))
+            env = ImageTranspose(env)
+            env = gym.wrappers.TransformReward(env, lambda r: 0.01*r)
+            env.observation_space.seed(seed)
+            return env
+        return _thunk
+    
+    envs = [make_multilevel_env(env_id, seed + i) for i in range(num_envs)]
+    if asynchronous:
+        envs = AsyncVectorEnv(envs)
+    else:
+        envs = SyncVectorEnv(envs)
+    
+    envs = RecordEpisodeStatistics(envs)
+    return Gymnasium2Torch(envs, device=device)
