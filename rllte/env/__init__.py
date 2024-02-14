@@ -68,3 +68,5 @@ try:
     from .vizdoom import make_envpool_vizdoom_env as make_envpool_vizdoom_env
 except Exception:
     pass
+
+from .miniworld import make_miniworld_env as make_miniworld_env

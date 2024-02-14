@@ -103,6 +103,13 @@ def make_env(args, device):
                 num_envs=args.n_envs,
                 env_id=args.env_id,
             )
+    elif "MiniWorld" in args.env_id:
+        from rllte.env import make_miniworld_env
+        env = make_miniworld_env(
+            env_id=args.env_id,
+            num_envs=args.n_envs,
+            device=device,
+        )
     elif "MyWayHome" in args.env_id:
         from rllte.env import make_envpool_vizdoom_env
         env = make_envpool_vizdoom_env(
