@@ -165,7 +165,7 @@ class E3B(BaseReward):
                         self.cov_inverse[env_idx] = th.eye(self.latent_dim) * (1.0 / self.ridge)
         # update the reward module
         self.update(samples)
-            
+
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 

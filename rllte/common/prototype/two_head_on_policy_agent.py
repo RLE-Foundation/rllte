@@ -101,6 +101,7 @@ class TwoHeadOnPolicyAgent(BaseAgent):
         
         # reset the env
         episode_rewards: Deque = deque(maxlen=10)
+        intrinsic_episode_rewards: Deque = deque(maxlen=10)
         episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
@@ -160,6 +161,7 @@ class TwoHeadOnPolicyAgent(BaseAgent):
                 }
             )
             self.storage.intrinsic_rewards = intrinsic_rewards.to(self.device)
+            intrinsic_episode_rewards.extend([np.mean(intrinsic_rewards.cpu().numpy())])
             
             # compute intrinsic advantages and returns
             if self.irs.rff:
@@ -191,11 +193,13 @@ class TwoHeadOnPolicyAgent(BaseAgent):
                     "step": self.global_step,
                     "episode": self.global_episode,
                     "episode_length": np.mean(list(episode_steps)),
+                    "intrinsic_episode_reward": np.mean(list(intrinsic_episode_rewards)),
                     "episode_reward": np.mean(list(episode_rewards)),
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
                 }
                 self.logger.train(msg=train_metrics)
+                self.logger.loss(msg=self.logger.metrics)
 
             # save model
             if update % save_interval == 0:
