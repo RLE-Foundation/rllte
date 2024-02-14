@@ -98,6 +98,8 @@ class TwoHeadOnPolicySharedActorCritic(BasePolicy):
             actor_kwargs["nvec"] = self.nvec
         self.actor = get_on_policy_actor(action_type=self.action_type, actor_kwargs=actor_kwargs)
 
+        self.extra_layer = nn.Sequential(nn.Linear(feature_dim, feature_dim), nn.ReLU())
+
         self.critic = OnPolicyCritic(
             obs_shape=self.obs_shape,
             action_dim=self.policy_action_dim,
@@ -164,10 +166,11 @@ class TwoHeadOnPolicySharedActorCritic(BasePolicy):
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
 
+        critic_features = self.extra_layer(h)
         if training:
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
-            return actions, {"values": self.critic(h), "intrinsic_values": self.intrinsic_critic(h), "log_probs": log_probs}
+            return actions, {"values": self.critic(h + critic_features), "intrinsic_values": self.intrinsic_critic(h + critic_features), "log_probs": log_probs}
         else:
             actions = dist.mean
             return actions, {}
@@ -182,7 +185,8 @@ class TwoHeadOnPolicySharedActorCritic(BasePolicy):
             Estimated values.
         """
         h = self.encoder(obs)
-        return self.critic(h), self.intrinsic_critic(h)
+        critic_features = self.extra_layer(h)
+        return self.critic(h + critic_features), self.intrinsic_critic(h + critic_features)
 
     def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, ...]:
         """Evaluate actions according to the current policy given the observations.
@@ -229,7 +233,9 @@ class TwoHeadOnPolicySharedActorCritic(BasePolicy):
         policy_outputs = self.actor.get_policy_outputs(h)
         dist = self.dist(*policy_outputs)
 
-        return dist, self.critic(h.detach()), self.aux_critic(h)
+        critic_features = self.extra_layer(h)
+
+        return dist, self.critic(h.detach() + critic_features.detach()), self.aux_critic(h + critic_features.detach())
 
     def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
