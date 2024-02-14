@@ -173,7 +173,8 @@ def make_procgen_env(
     envs = AdapterEnv(envs, num_envs)
     envs = TransformObservation(envs, lambda obs: obs["rgb"].transpose(0, 3, 1, 2))
     envs = RecordEpisodeStatistics(envs)
-    envs = NormalizeReward(envs, gamma=gamma)
-    envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
+    #envs = NormalizeReward(envs, gamma=gamma)
+    #envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
+    envs = TransformReward(envs, lambda reward: reward * 10.0)
 
     return Gymnasium2Torch(envs, device)
