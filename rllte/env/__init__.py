@@ -69,4 +69,7 @@ try:
 except Exception:
     pass
 
-from .miniworld import make_miniworld_env as make_miniworld_env
+try:
+    from .miniworld import make_miniworld_env as make_miniworld_env
+except Exception:
+    pass

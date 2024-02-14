@@ -205,7 +205,9 @@ class TwoHeadOnPolicySharedActorCritic(BasePolicy):
         log_probs = dist.log_prob(actions)
         entropy = dist.entropy().mean()
 
-        return self.critic(h), self.intrinsic_critic(h), log_probs, entropy
+        critic_features = self.extra_layer(h)
+
+        return self.critic(h + critic_features), self.intrinsic_critic(h + critic_features), log_probs, entropy
 
     def get_policy_outputs(self, obs: th.Tensor) -> th.Tensor:
         """Get policy outputs for training.
