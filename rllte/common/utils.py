@@ -32,7 +32,6 @@ import numpy as np
 import torch as th
 from torch import nn
 
-
 class RewardForwardFilter:
     """Reward forward filter."""
     def __init__(self, gamma: float = 0.99) -> None:
