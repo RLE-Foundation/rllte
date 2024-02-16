@@ -28,7 +28,7 @@ if __name__ == "__main__":
     if args.two_head:
         ppo_args = dict(
             env=env, 
-            eval_env=eval_env,
+            #eval_env=eval_env,
             seed=args.seed,
             device=args.device,
             tag=exp_name,
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     else:
         ppo_args = dict(
             env=env, 
-            eval_env=eval_env,
+            #eval_env=eval_env,
             seed=args.seed,
             device=args.device,
             tag=exp_name,
@@ -94,5 +94,6 @@ if __name__ == "__main__":
     agent.train(
         num_train_steps=args.num_train_steps,
         anneal_lr=args.anneal_lr,
-        eval_interval=500
+        eval_interval=500,
+        save_interval=999_999_999
     )
