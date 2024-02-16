@@ -10,12 +10,12 @@ from rllte.env.miniworld.wrappers import ImageTranspose
 
 def make_miniworld_env(
         env_id: str = "MiniWorld-Maze-v0",
-        num_envs: int = 32,
+        num_envs: int = 8,
         device: str = "cpu",
         asynchronous: bool = False,
         seed: int = 0,
         num_rows: int = 32,
-        num_cols: int = 8,
+        num_cols: int = 32,
         room_size: int = 3,
     ) -> Gymnasium2Torch:
 
@@ -28,10 +28,7 @@ def make_miniworld_env(
                 num_cols=num_cols,
                 room_size=room_size,
                 domain_rand=False,
-                params={
-                    "forward_step": 0.7,
-                    "turn_step": 45,
-                }
+                max_episode_steps=1000,
             )
             env = gym.wrappers.ResizeObservation(env, (84, 84))
             env = ImageTranspose(env)
