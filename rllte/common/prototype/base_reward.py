@@ -113,7 +113,7 @@ class BaseReward(ABC):
             std_rewards = ((rewards) / self.rms.std) * self.weight
             return std_rewards
         elif self.rwd_norm_type == "minmax":
-            return (rewards - rewards.min()) / (rewards.max() - rewards.min()) * self.weight
+            return (rewards - rewards.min()) / ((rewards.max() - rewards.min()) + 1e-8) * self.weight
         else:
             return rewards * self.weight
         

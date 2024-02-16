@@ -14,8 +14,8 @@ def make_miniworld_env(
         device: str = "cpu",
         asynchronous: bool = False,
         seed: int = 0,
-        num_rows: int = 32,
-        num_cols: int = 32,
+        num_rows: int = 12,
+        num_cols: int = 12,
         room_size: int = 3,
     ) -> Gymnasium2Torch:
 
@@ -28,7 +28,7 @@ def make_miniworld_env(
                 num_cols=num_cols,
                 room_size=room_size,
                 domain_rand=False,
-                max_episode_steps=1000,
+                max_episode_steps=500,
             )
             env = gym.wrappers.ResizeObservation(env, (84, 84))
             env = ImageTranspose(env)
