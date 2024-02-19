@@ -145,6 +145,15 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
+    elif "griddly" in args.env_id:
+        from rllte.env import make_griddly_env
+        env_name = args.env_id.split("_")[1]
+        env_name = f"GDY-{env_name}-v0"
+        env = make_griddly_env(
+            env_id=env_name,
+            num_envs=args.n_envs,
+            device=device,
+        )
     else:
         raise NotImplementedError
 

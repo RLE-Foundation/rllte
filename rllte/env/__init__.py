@@ -73,3 +73,8 @@ try:
     from .miniworld import make_miniworld_env as make_miniworld_env
 except Exception:
     pass
+
+try:
+    from .griddly import make_griddly_env as make_griddly_env
+except Exception:
+    pass
