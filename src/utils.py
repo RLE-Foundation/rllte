@@ -138,6 +138,13 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
+    elif "Montezuma" in args.env_id:
+        from rllte.env import make_envpool_atari_env
+        env = make_envpool_atari_env(
+            env_id=args.env_id,
+            num_envs=args.n_envs,
+            device=device,
+        )
     else:
         raise NotImplementedError
 
