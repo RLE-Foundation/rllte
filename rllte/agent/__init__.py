@@ -37,3 +37,4 @@ from .legacy.sac import SAC as SAC
 from .legacy.sacd import SACDiscrete as SACDiscrete
 from .legacy.td3 import TD3 as TD3
 from .ppg import PPG as PPG
+from .ppo_lstm import PPO_LSTM as PPO_LSTM

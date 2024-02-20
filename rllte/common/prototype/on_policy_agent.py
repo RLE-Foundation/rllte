@@ -60,12 +60,14 @@ class OnPolicyAgent(BaseAgent):
         device: str = "cpu",
         pretraining: bool = False,
         num_steps: int = 128,
+        use_lstm: bool = False,
     ) -> None:
         super().__init__(env=env, eval_env=eval_env, tag=tag, seed=seed, device=device, pretraining=pretraining)
         self.num_steps = num_steps
         # attr annotations
         self.policy: OnPolicyType
         self.storage: RolloutStorageType
+        self.use_lstm = use_lstm
 
     def update(self) -> None:
         """Update the agent. Implemented by individual algorithms."""
@@ -114,7 +116,19 @@ class OnPolicyAgent(BaseAgent):
             self.env = self.irs.init_normalization(self.num_steps, 20, self.env, obs)
         ###############################################################################################################
                     
+        # only if using lstm, initialize lstm state
+        if self.use_lstm:
+            lstm_state = (
+                th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+                th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+            )
+            done = th.zeros(self.num_envs, dtype=th.bool, device=self.device)
+
         for update in range(num_updates):
+            # important for updating the policy lstm later
+            if self.use_lstm:
+                self.initial_lstm_state = (lstm_state[0].clone(), lstm_state[1].clone())
+
             # try to eval
             if (update % eval_interval) == 0 and (self.eval_env is not None):
                 eval_metrics = self.eval(num_eval_episodes)
@@ -129,9 +143,18 @@ class OnPolicyAgent(BaseAgent):
             for _ in range(self.num_steps):
                 # sample actions
                 with th.no_grad(), utils.eval_mode(self):
-                    actions, extra_policy_outputs = self.policy(obs, training=True)
+                    if self.use_lstm:
+                        actions, extra_policy_outputs = self.policy(obs, lstm_state, done, training=True)
+                        lstm_state = extra_policy_outputs["lstm_state"]
+                        del extra_policy_outputs["lstm_state"]
+                    else:
+                        actions, extra_policy_outputs = self.policy(obs, training=True)
+                    
                     # observe rewards and next obs
                     next_obs, rews, terms, truncs, infos = self.env.step(actions)
+
+                    if self.use_lstm:
+                        done = th.logical_or(terms, truncs)
 
                 # pre-training mode
                 if self.pretraining:
@@ -156,7 +179,10 @@ class OnPolicyAgent(BaseAgent):
 
             # get the value estimation of the last step
             with th.no_grad():
-                last_values = self.policy.get_value(next_obs).detach()
+                if self.use_lstm:
+                    last_values = self.policy.get_value(next_obs, lstm_state, done).detach()
+                else:
+                    last_values = self.policy.get_value(next_obs).detach()
 
 ###############################################################################################################
             if self.irs is not None:
@@ -242,13 +268,31 @@ class OnPolicyAgent(BaseAgent):
         # since render() is not implemented, use image observation
         img = obs.cpu().numpy()[0].transpose(1, 2, 0)
 
+        if self.use_lstm:
+            lstm_state = (
+                th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+                th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+            )
+            done = th.zeros(self.num_envs, dtype=th.bool, device=self.device)
+
         # evaluation loop
         while len(episode_rewards) < num_eval_episodes:
             images.append(img)
             
             with th.no_grad(), utils.eval_mode(self):
-                actions, _ = self.policy(obs, training=True)
+                if self.use_lstm:
+                    actions, extra_policy_outputs = self.policy(obs, lstm_state, done, training=True)
+                    lstm_state = extra_policy_outputs["lstm_state"]
+                    del extra_policy_outputs["lstm_state"]
+                else:
+                    actions, _ = self.policy(obs, training=True)
+
+                
                 next_obs, rews, terms, truncs, infos = self.eval_env.step(actions)
+                
+                if self.use_lstm:
+                    done = th.logical_or(terms, truncs)
+                
                 # since render() is not implemented, use image observation
                 img = next_obs.cpu().numpy()[0].transpose(1, 2, 0)
 
@@ -257,6 +301,13 @@ class OnPolicyAgent(BaseAgent):
                 eps_r, eps_l = utils.get_episode_statistics(infos)
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
+
+                if self.use_lstm:
+                    lstm_state = (
+                        th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+                        th.zeros(self.policy.lstm.num_layers, self.num_envs, self.policy.lstm.hidden_size).to(self.device),
+                    )
+                    done = th.zeros(self.num_envs, dtype=th.bool, device=self.device)
 
             # set the current observation
             obs = next_obs
