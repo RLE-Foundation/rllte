@@ -31,7 +31,12 @@ def make_griddly_env(
             )
             env.reset()
             obs_shape = env.unwrapped.env.render(observer="global", mode="rgb_array").shape
-            env = GymnasiumGriddlyEnv(env, obs_shape)
+            env = GymnasiumGriddlyEnv(
+                env, 
+                obs_shape,
+                max_steps=250,
+                episodic=False
+            )
             env = gym.wrappers.ResizeObservation(env, (84, 84))
             env = ImageTranspose(env)
             env.observation_space.seed(seed)
