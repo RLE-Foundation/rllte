@@ -34,7 +34,7 @@ def make_griddly_env(
             env = GymnasiumGriddlyEnv(
                 env, 
                 obs_shape,
-                max_steps=250,
+                max_steps=500,
                 episodic=False
             )
             env = gym.wrappers.ResizeObservation(env, (84, 84))
