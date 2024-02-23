@@ -150,6 +150,19 @@ class TwoHeadRolloutBatch(NamedTuple):
     intrinsic_returns: th.Tensor
     adv_targ: th.Tensor
 
+class TwoHeadEpisodicRolloutBatch(NamedTuple):
+    observations: th.Tensor
+    actions: th.Tensor
+    values: th.Tensor
+    returns: th.Tensor
+    intrinsic_returns: th.Tensor
+    intrinsic_values: th.Tensor
+    terminateds: th.Tensor
+    truncateds: th.Tensor
+    old_log_probs: th.Tensor
+    adv_targ: th.Tensor
+    env_inds: th.Tensor
+
 class EpisodicRolloutBatch(NamedTuple):
     observations: th.Tensor
     actions: th.Tensor

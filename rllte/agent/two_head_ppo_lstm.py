@@ -32,14 +32,14 @@ from torch import nn
 from rllte.common.prototype import TwoHeadOnPolicyAgent
 from rllte.common.type_alias import VecEnv
 from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
-from rllte.xploit.policy import TwoHeadOnPolicySharedActorCritic
-from rllte.xploit.storage import TwoHeadRolloutStorage
+from rllte.xploit.policy import TwoHeadOnPolicySharedActorCriticLSTM
+from rllte.xploit.storage import TwoHeadEpisodicRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
 
-class TwoHeadPPO(TwoHeadOnPolicyAgent):
+class TwoHeadPPO_LSTM(TwoHeadOnPolicyAgent):
     """Proximal Policy Optimization (PPO) agent.
         Based on: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-        Uses two value functions for intrinsic and extrinsic rewards.
+        Uses two value functions for intrinsic and extrinsic rewards + LSTM for the representation
 
     Args:
         env (VecEnv): Vectorized environments for training.
@@ -65,7 +65,7 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
         init_fn (str): Parameters initialization method.
 
     Returns:
-        Two Head PPO agent instance.
+        Two Head PPO LSTM agent instance.
     """
 
     def __init__(
@@ -108,7 +108,7 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
             num_steps=num_steps,
             ext_adv_weight=ext_adv_weight,
             int_adv_weight=int_adv_weight,
-            use_lstm=False
+            use_lstm=True
         )
 
         # hyper parameters
@@ -147,7 +147,7 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
             raise NotImplementedError(f"Unsupported action type {self.action_type}!")
 
         # create policy
-        policy = TwoHeadOnPolicySharedActorCritic(
+        policy = TwoHeadOnPolicySharedActorCriticLSTM(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -158,7 +158,7 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
         )
 
         # default storage
-        storage = TwoHeadRolloutStorage(
+        storage = TwoHeadEpisodicRolloutStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,
@@ -181,9 +181,14 @@ class TwoHeadPPO(TwoHeadOnPolicyAgent):
 
         for _ in range(self.n_epochs):
             for batch in self.storage.sample():
+                done = th.logical_or(batch.terminateds, batch.truncateds)
+                
                 # evaluate sampled actions
                 new_values, new_int_values, new_log_probs, entropy = self.policy.evaluate_actions(
-                    obs=batch.observations, actions=batch.actions
+                    obs=batch.observations, 
+                    actions=batch.actions,
+                    lstm_state=(self.initial_lstm_state[0][:, batch.env_inds], self.initial_lstm_state[1][:, batch.env_inds]),
+                    done=done,
                 )
 
                 # policy loss part

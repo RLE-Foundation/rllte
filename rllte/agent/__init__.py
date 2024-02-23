@@ -28,7 +28,6 @@ from .drac import DrAC as DrAC
 from .drdaac import DrDAAC as DrDAAC
 from .drqv2 import DrQv2 as DrQv2
 from .impala import IMPALA as IMPALA
-from .two_head_ppo import TwoHeadPPO as TwoHeadPPO
 from .legacy.a2c import A2C as A2C
 from .legacy.ddpg import DDPG as DDPG
 from .legacy.dqn import DQN as DQN
@@ -38,3 +37,5 @@ from .legacy.sacd import SACDiscrete as SACDiscrete
 from .legacy.td3 import TD3 as TD3
 from .ppg import PPG as PPG
 from .ppo_lstm import PPO_LSTM as PPO_LSTM
+from .two_head_ppo import TwoHeadPPO as TwoHeadPPO
+from .two_head_ppo_lstm import TwoHeadPPO_LSTM as TwoHeadPPO_LSTM
