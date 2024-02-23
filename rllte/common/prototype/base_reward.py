@@ -80,7 +80,7 @@ class BaseReward(ABC):
         self.global_step = 0
 
         # build the running mean and std for normalization
-        self.rms = TorchRunningMeanStd() if self.rwd_norm_type=="rms" else None
+        self.rms = TorchRunningMeanStd() if "rms" in self.rwd_norm_type else None
         self.obs_norm = TorchRunningMeanStd(shape=self.obs_shape) if self.obs_rms else None
 
         # build the reward forward filter
@@ -111,6 +111,10 @@ class BaseReward(ABC):
         if self.rwd_norm_type == "rms":
             self.rms.update(rewards.ravel())
             std_rewards = ((rewards) / self.rms.std) * self.weight
+            return std_rewards
+        elif self.rwd_norm_type == "clipped-rms":
+            self.rms.update(rewards.ravel())
+            std_rewards = th.max((rewards / self.rms.std) - (self.rms.mean / self.rms.std), th.zeros_like(rewards)) * self.weight
             return std_rewards
         elif self.rwd_norm_type == "minmax":
             return (rewards - rewards.min()) / ((rewards.max() - rewards.min()) + 1e-8) * self.weight
@@ -144,7 +148,7 @@ class BaseReward(ABC):
                     self.obs_norm.update(next_ob)
                     next_ob = []
 
-        if self.rwd_norm_type == "rms":
+        if "rms" in self.rwd_norm_type:
             print("Start to initialize reward normalization parameter.....")
             ob = []
             next_ob = []
