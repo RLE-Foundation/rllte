@@ -35,5 +35,5 @@ _build/
 /misc
 /launchers/*
 /src/*
-
+/all_mario_runs/*
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf
