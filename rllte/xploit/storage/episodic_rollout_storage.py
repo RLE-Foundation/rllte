@@ -167,9 +167,10 @@ class EpisodicRolloutStorage(BaseStorage):
         Choose a minibatch of environment indices and sample the entire rollout for those minibatches.
         By not sampling uniform transitions, we can now train an LSTM model on entire trajectories
         """
+
         assert self.full, "Cannot sample when the storage is not full!"
         # only sample random envs (entire rollout)
-        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs)), self.batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(self.num_envs)), self.num_envs // 4, drop_last=True)
 
         b_obs = self.observations[:-1].reshape(-1, *self.obs_shape)
         b_act = self.actions.reshape(-1, *self.action_shape)

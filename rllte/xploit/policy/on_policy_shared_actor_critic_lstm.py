@@ -146,8 +146,9 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
         # set distribution
         assert dist is not None, "Distribution should not be None!"
         self.dist = dist
-        # initialize parameters
+
         self.apply(self.init_fn)
+        
         # build optimizers
         self._optimizers["opt"] = self.opt_class(self.parameters(), **self.opt_kwargs)
 
@@ -156,6 +157,7 @@ class OnPolicySharedActorCriticLSTM(BasePolicy):
 
         # LSTM logic
         batch_size = lstm_state[0].shape[1]
+
         hidden = hidden.reshape((-1, batch_size, self.lstm.input_size))
         done = done.reshape((-1, batch_size)).long()
         new_hidden = []
