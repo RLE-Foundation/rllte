@@ -31,3 +31,4 @@ from .vanilla_distributed_storage import VanillaDistributedStorage as VanillaDis
 from .vanilla_replay_storage import VanillaReplayStorage as VanillaReplayStorage
 from .vanilla_rollout_storage import VanillaRolloutStorage as VanillaRolloutStorage
 from .two_head_rollout_storage import TwoHeadRolloutStorage as TwoHeadRolloutStorage
+from .episodic_rollout_storage import EpisodicRolloutStorage as EpisodicRolloutStorage
