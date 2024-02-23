@@ -35,3 +35,4 @@ from .rnd import RND as RND
 from .fabric import Fabric as Fabric
 from .e3b import E3B as E3B
 from .disagreement import Disagreement as Disagreement
+from .byol_xplore import Byol_Explore as Byol_Explore

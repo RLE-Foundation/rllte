@@ -312,6 +312,19 @@ def select_intrinsic_reward(args, env, device):
             weight_init=args.weight_init,
             beta=args.beta
         )
+    elif args.intrinsic_reward == "byol-explore":
+        intrinsic_reward = Byol_Explore(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            device=device,
+            n_envs=args.n_envs,
+            rwd_norm_type=args.rwd_norm_type,
+            obs_rms=args.obs_rms,
+            update_proportion=args.update_proportion,
+            gamma=args.int_gamma,
+            encoder_model=encoder_model,
+            weight_init=args.weight_init
+        )
     else:
         raise NotImplementedError
     
