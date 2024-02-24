@@ -69,7 +69,7 @@ class E3B(BaseReward):
         beta: float = 1.0,
         kappa: float = 0.0,
         latent_dim: int = 128,
-        lr: float = 0.0001,
+        lr: float = 0.001,
         rwd_norm_type: str = "rms",
         obs_rms: bool = False,
         gamma: float = None,

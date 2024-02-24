@@ -148,58 +148,57 @@ class BaseReward(ABC):
                     self.obs_norm.update(next_ob)
                     next_ob = []
 
-        if "rms" in self.rwd_norm_type:
-            print("Start to initialize reward normalization parameter.....")
-            ob = []
-            next_ob = []
-            next_term = []
-            next_trunc = []
-            next_act = []
-            for step in tqdm(range(num_steps)):
-                acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
-                ob += s.unsqueeze(0)
-                next_act += acs.unsqueeze(0)
+        # if "rms" in self.rwd_norm_type:
+        #     print("Start to initialize reward normalization parameter.....")
+        #     ob = []
+        #     next_ob = []
+        #     next_term = []
+        #     next_trunc = []
+        #     next_act = []
+        #     for step in tqdm(range(num_steps)):
+        #         acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
+        #         ob += s.unsqueeze(0)
+        #         next_act += acs.unsqueeze(0)
 
-                ns, r, te, tr, _ = env.step(acs)
+        #         ns, r, te, tr, _ = env.step(acs)
 
-                next_ob += ns.unsqueeze(0)
-                next_term += te.unsqueeze(0)
-                next_trunc += tr.unsqueeze(0)
+        #         next_ob += ns.unsqueeze(0)
+        #         next_term += te.unsqueeze(0)
+        #         next_trunc += tr.unsqueeze(0)
 
-                self.watch(
-                    observations=s,
-                    actions=acs,
-                    rewards=r,
-                    terminateds=te,
-                    truncateds=tr,
-                    next_observations=ns
-                )
+        #         self.watch(
+        #             observations=s,
+        #             actions=acs,
+        #             rewards=r,
+        #             terminateds=te,
+        #             truncateds=tr,
+        #             next_observations=ns
+        #         )
 
-                s = ns
+        #         s = ns
 
-                if len(next_ob) % num_steps == 0:
-                    ob = th.stack(ob).float()
-                    next_ob = th.stack(next_ob).float()
-                    next_term = th.stack(next_term).float()
-                    next_trunc = th.stack(next_trunc).float()
-                    next_act = th.stack(next_act).float()
+        #         if len(next_ob) % num_steps == 0:
+        #             ob = th.stack(ob).float()
+        #             next_ob = th.stack(next_ob).float()
+        #             next_term = th.stack(next_term).float()
+        #             next_trunc = th.stack(next_trunc).float()
+        #             next_act = th.stack(next_act).float()
 
-                    samples = {
-                        "observations": ob,
-                        "actions": next_act,
-                        "rewards": r,
-                        "terminateds": next_term,
-                        "truncateds": next_trunc,
-                        "next_observations": next_ob
-                    }
-                    # this computes the rewards and also scales them
-                    next_rew = self.compute(samples)
-                    ob = []
-                    next_ob = []
-                    next_term = []
-                    next_trunc = []
-                    next_act = []
-
+        #             samples = {
+        #                 "observations": ob,
+        #                 "actions": next_act,
+        #                 "rewards": r,
+        #                 "terminateds": next_term,
+        #                 "truncateds": next_trunc,
+        #                 "next_observations": next_ob
+        #             }
+        #             # this computes the rewards and also scales them
+        #             next_rew = self.compute(samples)
+        #             ob = []
+        #             next_ob = []
+        #             next_term = []
+        #             next_trunc = []
+        #             next_act = []
         return env
 
     @abstractmethod
