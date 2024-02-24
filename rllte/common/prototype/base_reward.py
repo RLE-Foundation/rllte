@@ -199,6 +199,7 @@ class BaseReward(ABC):
         #             next_term = []
         #             next_trunc = []
         #             next_act = []
+                    
         return env
 
     @abstractmethod
