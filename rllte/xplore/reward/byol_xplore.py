@@ -181,7 +181,7 @@ class Byol_Explore(BaseReward):
         obs_tensor = self.normalize(obs_tensor)
         
         # compute the intrinsic rewards
-        intrinsic_rewards = th.zeros(size=(n_steps, n_envs))
+        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
 
         # zero out optimizers
         self.encoder_opt.zero_grad()
@@ -211,15 +211,15 @@ class Byol_Explore(BaseReward):
                 open_loop_input = actions_tensor[t+k, :]
 
                 if first:
-                    init_hidden = closed_loop_output.clone().detach()
                     open_loop_output, self.open_loop_rnn_state = self.open_loop_rnn(
                         open_loop_input.unsqueeze(0),
                         (
-                            (1.0 - d).view(1, -1, 1) * init_hidden,
-                            (1.0 - d).view(1, -1, 1) * init_hidden,
+                            (1.0 - d).view(1, -1, 1) * closed_loop_output.detach(),
+                            (1.0 - d).view(1, -1, 1) * closed_loop_output.detach(),
                         ),
                     )
                     first = False
+                    
                 else:
                     open_loop_output, self.open_loop_rnn_state = self.open_loop_rnn(
                         open_loop_input.unsqueeze(0),
@@ -243,7 +243,7 @@ class Byol_Explore(BaseReward):
                 loss = F.mse_loss(predicted_output, target_output, reduction="none").mean(dim=-1)
 
                 # a timestep receives intrinsic reward based on how difficult its observation was to predict from past partial histories.
-                intrinsic_rewards[t+k, :] += loss.cpu().detach()
+                intrinsic_rewards[t+k, :] += loss.detach()
 
                 # add loss
                 total_loss += loss.sum()
