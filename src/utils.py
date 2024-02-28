@@ -30,6 +30,10 @@ def parse_args():
     # ppo type
     parser.add_argument("--two_head", action="store_true", default=False)
 
+    # env config
+    parser.add_argument("--frame_stack", type=int, default=0)
+    parser.add_argument("--gray_scale", action="store_true", default=False)
+
     # intrinsic reward
     parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
     parser.add_argument("--rwd_norm_type", type=str, default="rms")
@@ -39,6 +43,49 @@ def parse_args():
     parser.add_argument("--int_gamma", type=float, default=None)
     parser.add_argument("--weight_init", type=str, default="orthogonal")
     parser.add_argument("--parse_big", action="store_true", default=False)
+    parser.add_argument("--beta", type=float, default=1.0)
+    
+    args = parser.parse_args()
+    return args
+
+def parse_args_dqn():
+    parser = argparse.ArgumentParser()
+    # env
+    parser.add_argument("--env_id", type=str, default="SuperMarioBros-1-1-v3")
+    parser.add_argument("--device", type=str, default="cuda:0")
+
+    # train config
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--n_envs", type=int, default=8)
+    parser.add_argument("--num_train_steps", type=int, default=10_000_000)
+    parser.add_argument("--hidden_dim", type=int, default=512)
+    parser.add_argument("--feature_dim", type=int, default=512)
+    parser.add_argument("--storage_size", type=int, default=1_000_000)
+    parser.add_argument("--num_init_steps", type=int, default=80_000)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--eps", type=float, default=1e-8)
+    parser.add_argument("--tau", type=float, default=1.0)
+    parser.add_argument("--update_every_steps", type=int, default=4)
+    parser.add_argument("--target_update_freq", type=int, default=1_000)
+    parser.add_argument("--discount", type=float, default=0.99)
+    parser.add_argument("--init_fn", type=str, default="orthogonal")
+    
+    # dqn type
+    parser.add_argument("--two_head", action="store_true", default=False)
+
+    # env config
+    parser.add_argument("--frame_stack", type=int, default=4)
+    parser.add_argument("--gray_scale", action="store_true", default=True)
+
+    # intrinsic reward
+    parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
+    parser.add_argument("--rwd_norm_type", type=str, default="rms")
+    parser.add_argument("--obs_rms", action="store_true", default=False)
+    parser.add_argument("--update_proportion", type=float, default=1.0)
+    parser.add_argument("--pretraining", action="store_true", default=False)
+    parser.add_argument("--int_gamma", type=float, default=None)
+    parser.add_argument("--weight_init", type=str, default="orthogonal")
     parser.add_argument("--beta", type=float, default=1.0)
     
     args = parser.parse_args()
@@ -88,7 +135,6 @@ def parse_args_big():
     return args
 
 def make_env(args, device):
-    # return either Mario or Atari env
     if "Mario" in args.env_id:
         from rllte.env import make_mario_env, make_mario_multilevel_env
         if "RandomStages" in args.env_id:
@@ -96,12 +142,16 @@ def make_env(args, device):
                 device=device,
                 num_envs=args.n_envs,
                 env_id=args.env_id,
+                gray_scale=args.gray_scale,
+                frame_stack=args.frame_stack,
             )
         else:
             env = make_mario_env(
                 device=device,
                 num_envs=args.n_envs,
                 env_id=args.env_id,
+                gray_scale=args.gray_scale,
+                frame_stack=args.frame_stack,
             )
     elif "MiniWorld" in args.env_id:
         from rllte.env import make_miniworld_env

@@ -107,6 +107,12 @@ class OffPolicyAgent(BaseAgent):
         episode_steps: Deque = deque(maxlen=10)
         obs, infos = self.env.reset(seed=self.seed)
 
+        ###############################################################################################################
+        # init obs normalization parameters if necessary
+        if self.irs is not None:
+            self.env = self.irs.init_normalization(self.num_steps, 20, self.env, obs)
+        ###############################################################################################################
+
         # training loop
         while self.global_step < num_train_steps:
             # try to eval
@@ -139,15 +145,13 @@ class OffPolicyAgent(BaseAgent):
             next_obs, rews, terms, truncs, infos = self.env.step(actions)
 
 # ============================================================================= #
-
             # adapt to intrinsic reward modules
             if self.irs is not None:
                 feedbacks = self.irs.watch(obs, actions, rews, terms, truncs, next_obs)
             
-            # for episodic memory-based intrinsic reward modules, we have to compute the intrinsic rewards at each time step
-            if self.irs.is_sync:
-                rews += feedbacks.get("single_step_rewards", th.zeros_like(rews, device=self.device))
-
+                # for episodic memory-based intrinsic reward modules, we have to compute the intrinsic rewards at each time step
+                if self.irs.is_sync:
+                    rews += feedbacks.get("single_step_rewards", th.zeros_like(rews, device=self.device))
 # ============================================================================= #
             # pre-training mode
             if self.pretraining:
@@ -165,7 +169,7 @@ class OffPolicyAgent(BaseAgent):
                     real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], device=self.device) # type: ignore[index]
 
             # add new transitions
-            self.storage.add(obs, actions, rews, terms, truncs, infos, real_next_obs)
+            self.storage.add(obs, actions.unsqueeze(-1), rews, terms, truncs, infos, real_next_obs)
             self.global_step += self.num_envs
 
             # deal with the intrinsic reward module

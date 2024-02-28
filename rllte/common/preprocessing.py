@@ -44,7 +44,7 @@ def process_observation_space(observation_space: gym.Space) -> ObsShape:
         Information of the observation space.
     """
     if isinstance(observation_space, spaces.Box):
-        # Observation is a vector
+        # Observation is a vector (or image)
         return observation_space.shape
     elif isinstance(observation_space, spaces.Discrete):
         # Observation is an int

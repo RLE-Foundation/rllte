@@ -65,6 +65,7 @@ class BaseReward(ABC):
         obs_rms: bool = False,
         gamma: Optional[float] = None
     ) -> None:
+        
         # get environment information
         self.obs_shape: Tuple = process_observation_space(observation_space)  # type: ignore
         self.action_shape, self.action_dim, self.policy_action_dim, self.action_type \

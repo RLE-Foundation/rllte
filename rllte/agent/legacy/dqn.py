@@ -31,7 +31,7 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
 from rllte.xploit.policy import OffPolicyDoubleQNetwork
 from rllte.xploit.storage import VanillaReplayStorage
 
@@ -84,6 +84,8 @@ class DQN(OffPolicyAgent):
         target_update_freq: int = 1000,
         discount: float = 0.99,
         init_fn: str = "orthogonal",
+        encoder_model: str = "mnih",
+        double_dqn: bool = True,
     ) -> None:
         super().__init__(
             env=env,
@@ -102,15 +104,20 @@ class DQN(OffPolicyAgent):
         self.discount = discount
         self.update_every_steps = update_every_steps
         self.target_update_freq = target_update_freq
+        self.double_dqn = double_dqn
 
         # default encoder
-        if len(self.obs_shape) == 3:
-            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-        elif len(self.obs_shape) == 1:
+        if len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
             )
+        elif encoder_model == "mnih":
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        elif encoder_model == "espeholt":
+            encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        else:
+            raise NotImplementedError(f"Unsupported encoder model {encoder_model}!")
 
         # create policy
         policy = OffPolicyDoubleQNetwork(
@@ -148,9 +155,12 @@ class DQN(OffPolicyAgent):
         if self.irs is not None:
             intrinsic_rewards = self.irs.compute_irs(
                 samples={
-                    "obs": batch.observations,
+                    "observations": batch.observations,
                     "actions": batch.actions,
-                    "next_obs": batch.next_observations,
+                    "rewards": batch.rewards,
+                    "terminateds": batch.terminateds,
+                    "truncateds": batch.truncateds,
+                    "next_observations": batch.next_observations,
                 },
                 step=self.global_step,
             )
@@ -163,9 +173,18 @@ class DQN(OffPolicyAgent):
 
         # compute target Q values
         with th.no_grad():
-            next_q_values = self.policy.qnet_target(encoded_next_obs)
-            next_q_values, _ = next_q_values.max(dim=1)
-            next_q_values = next_q_values.reshape(-1, 1)
+            # Take max actions from online Q-network and evaluate them on the target Q-network
+            if self.double_dqn:
+                next_q_values = self.policy.qnet(encoded_next_obs)
+                next_actions = next_q_values.argmax(dim=1)
+                next_q_values = self.policy.qnet_target(encoded_next_obs)
+                next_q_values = th.gather(next_q_values, dim=1, index=next_actions.unsqueeze(1).long())
+            # Take max actions from target Q-network
+            else:
+                next_q_values = self.policy.qnet_target(encoded_next_obs)
+                next_q_values, _ = next_q_values.max(dim=1)
+                next_q_values = next_q_values.reshape(-1, 1)
+            
             # time limit mask
             target_q_values = (
                 batch.rewards + (1.0 - batch.terminateds) * (1.0 - batch.truncateds) * self.discount * next_q_values
@@ -173,7 +192,7 @@ class DQN(OffPolicyAgent):
 
         # compute current Q values
         q_values = self.policy.qnet(encoded_obs)
-        q_values = th.gather(q_values, dim=1, index=batch.actions.unsqueeze(1).long())
+        q_values = th.gather(q_values, dim=1, index=batch.actions.long())
         # following https://github.com/DLR-RM/stable-baselines3/blob/d68ff2e17f2f823e6f48d9eb9cee28ca563a2554/stable_baselines3/dqn/dqn.py
         # less sensitive to outliers
         huber_loss = F.mse_loss(q_values, target_q_values)

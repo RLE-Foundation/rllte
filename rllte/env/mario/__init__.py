@@ -22,6 +22,8 @@ def make_mario_env(
         device: str = "cpu",
         asynchronous: bool = True,
         seed: int = 0,
+        gray_scale: bool = False,
+        frame_stack: int = 0,
     ) -> Gymnasium2Torch:
 
     def make_env(env_id: str, seed: int) -> Callable:
@@ -31,7 +33,12 @@ def make_mario_env(
             env = Gym2Gymnasium(env)
             env = SkipFrame(env, skip=4)
             env = gym.wrappers.ResizeObservation(env, (84, 84))
-            env = ImageTranspose(env)
+            if gray_scale:
+                env = gym.wrappers.GrayScaleObservation(env)
+            if frame_stack > 0:
+                env = gym.wrappers.FrameStack(env, frame_stack)
+            if not gray_scale and frame_stack <= 0:
+                env = ImageTranspose(env)
             env = EpisodicLifeEnv(env)
             env = gym.wrappers.TransformReward(env, lambda r: 0.01*r)
             env.observation_space.seed(seed)
