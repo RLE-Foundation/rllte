@@ -62,9 +62,8 @@ class BaseReward(ABC):
         obs_norm_type: str = "rms",
     ) -> None:
         # get environment information
-        self.envs = deepcopy(envs)
-        self.observation_space = envs.single_observation_space
-        self.action_space = envs.single_action_space
+        self.observation_space = envs.observation_space
+        self.action_space = envs.action_space
         self.n_envs = envs.unwrapped.num_envs
         ## process the observation and action space
         self.obs_shape: Tuple = process_observation_space(self.observation_space)  # type: ignore
@@ -86,6 +85,7 @@ class BaseReward(ABC):
         )
         # initialize the normalization parameters if necessary
         if self.obs_norm_type == "rms":
+            self.envs = envs
             self.init_normalization()
         # build the reward forward filter
         self.rff = RewardForwardFilter(gamma) if gamma is not None else None
@@ -139,7 +139,7 @@ class BaseReward(ABC):
         """Initialize the normalization parameters for observations if the RMS is used."""
         # TODO: better initialization parameters?
         num_steps, num_iters = 128, 20
-        if self.rwd_norm_type == "rms":
+        if self.obs_norm_type == "rms":
             all_next_obs = []
             for step in range(num_steps * num_iters):
                 actions = th.stack(
@@ -205,7 +205,7 @@ class BaseReward(ABC):
             assert key in samples.keys(), f"Key {key} is not in samples."
 
         # update the obs RMS if necessary
-        if self.obs_rms_type == "rms":
+        if self.obs_norm_type == "rms":
             self.obs_norm.update(
                 samples["observations"].reshape(-1, *self.obs_shape).cpu()
             )

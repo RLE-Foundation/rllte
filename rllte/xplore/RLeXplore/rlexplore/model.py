@@ -73,9 +73,8 @@ class ObservationEncoder(nn.Module):
             init_ = default_layer_init
         else:
             raise ValueError("Invalid weight_init")
-
         # visual
-        if encoder_model == "Mnih" and len(obs_shape) > 2:
+        if encoder_model == "mnih" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
                 init_(nn.Conv2d(obs_shape[0], 32, 8, stride=4)),
                 nn.ReLU(),
@@ -92,7 +91,7 @@ class ObservationEncoder(nn.Module):
 
             self.trunk.append(init_(nn.Linear(n_flatten, latent_dim)))
             self.trunk.append(nn.ReLU())
-        elif encoder_model == "Pathak" and len(obs_shape) > 2:
+        elif encoder_model == "pathak" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
                 init_(nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1)),
                 nn.ELU(),
