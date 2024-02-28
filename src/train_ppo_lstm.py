@@ -1,4 +1,4 @@
-from src.utils import parse_args, parse_args_big, make_env, select_intrinsic_reward
+from src.utils import parse_args, make_env, select_intrinsic_reward
 from rllte.agent import PPO_LSTM, TwoHeadPPO_LSTM
 
 if __name__ == "__main__":
