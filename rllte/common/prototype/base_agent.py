@@ -41,7 +41,7 @@ from rllte.common.prototype.base_augmentation import BaseAugmentation as Augment
 from rllte.common.prototype.base_distribution import BaseDistribution as Distribution
 from rllte.common.prototype.base_encoder import BaseEncoder as Encoder
 from rllte.common.prototype.base_policy import BasePolicy as Policy
-from rllte.common.prototype.base_reward import BaseIntrinsicRewardModule as IntrinsicRewardModule
+from rllte.common.prototype.base_reward import BaseReward as IntrinsicRewardModule
 from rllte.common.prototype.base_storage import BaseStorage as Storage
 from rllte.common.timer import Timer
 from rllte.common.type_alias import VecEnv

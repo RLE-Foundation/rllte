@@ -23,12 +23,15 @@
 # =============================================================================
 
 
-from .girm import GIRM as GIRM
+from .fabric import Fabric as Fabric
+from .e3b import E3B as E3B
+from .disagreement import Disagreement as Disagreement
 from .icm import ICM as ICM
 from .ngu import NGU as NGU
 from .pseudo_counts import PseudoCounts as PseudoCounts
 from .re3 import RE3 as RE3
-from .revd import REVD as REVD
 from .ride import RIDE as RIDE
-from .rise import RISE as RISE
 from .rnd import RND as RND
+# from .revd import REVD as REVD
+# from .rise import RISE as RISE
+# from .girm import GIRM as GIRM

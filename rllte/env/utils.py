@@ -25,7 +25,10 @@
 from collections import deque
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-import envpool
+try:
+    import envpool
+except:
+    pass
 import gymnasium as gym
 import numpy as np
 import torch as th
@@ -123,7 +126,7 @@ class Gymnasium2Torch(gym.Wrapper):
 
     def __init__(self, env: VectorEnv, device: str, envpool: bool = False) -> None:
         super().__init__(env)
-        self.num_envs = env.num_envs
+        self.num_envs = env.unwrapped.num_envs
         self.device = th.device(device)
 
         # envpool's observation space and action space are the same as the single env.
