@@ -34,7 +34,6 @@ import torch as th
 from rllte.common.prototype import BaseStorage
 from rllte.common.type_alias import PrioritizedReplayBatch
 
-
 class PrioritizedReplayStorage(BaseStorage):
     """Prioritized replay storage with proportional prioritization for off-policy algorithms.
         Since the storage updates the priorities of the samples based on the TD error, users
@@ -61,8 +60,8 @@ class PrioritizedReplayStorage(BaseStorage):
         observation_space: gym.Space,
         action_space: gym.Space,
         device: str = "cpu",
-        storage_size: int = 1000000,
-        batch_size: int = 1024,
+        storage_size: int = 1_000_000,
+        batch_size: int = 32,
         num_envs: int = 1,
         alpha: float = 0.6,
         beta: float = 0.4,

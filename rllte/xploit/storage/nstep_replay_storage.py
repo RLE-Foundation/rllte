@@ -63,13 +63,13 @@ class ReplayStorage:
 
     def add(
         self,
-        obs: np.ndarray,
-        action: np.ndarray,
-        reward: np.ndarray,
-        terminated: np.ndarray,
-        truncated: np.ndarray,
+        observations: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        terminateds: np.ndarray,
+        truncateds: np.ndarray,
         infos: Dict[str, Any],
-        next_obs: np.ndarray,
+        next_observations: np.ndarray,
     ) -> None:
         """Add a new transition to the storage.
 
@@ -85,16 +85,16 @@ class ReplayStorage:
         Returns:
             None.
         """
-        self._current_episode["observation"].append(obs)
-        self._current_episode["action"].append(action)
-        self._current_episode["reward"].append(np.full((1,), reward, np.float32))
-        self._current_episode["terminated"].append(np.full((1,), terminated, np.float32))
-        self._current_episode["truncated"].append(np.full((1,), truncated, np.float32))
+        self._current_episode["observations"].append(observations)
+        self._current_episode["actions"].append(actions)
+        self._current_episode["rewards"].append(np.full((1,), rewards, np.float32))
+        self._current_episode["terminateds"].append(np.full((1,), terminateds, np.float32))
+        self._current_episode["truncateds"].append(np.full((1,), truncateds, np.float32))
         self._current_episode["discount"].append(np.full((1,), 1.0, np.float32))
 
-        if terminated or truncated:
+        if terminateds or truncateds:
             # final next observation
-            self._current_episode["observation"].append(infos["final_observation"][0])
+            self._current_episode["observations"].append(infos["final_observation"][0])
             episode = dict()
             for key in self._current_episode.keys():
                 episode[key] = np.array(self._current_episode[key])
@@ -226,17 +226,19 @@ class ReplayStorageDataset(IterableDataset):
         self._samples_since_last_fetch += 1
         episode = self._sample_episode()
         idx = np.random.randint(0, episode_len(episode) - self._nstep)
-        obs = episode["observation"][idx]
-        actions = episode["action"][idx]
-        next_obs = episode["observation"][idx + self._nstep]
-        rewards = np.zeros_like(episode["reward"][idx])
+        obs = episode["observations"][idx]
+        actions = episode["actions"][idx]
+        next_obs = episode["observations"][idx + self._nstep]
+        terminateds = episode["terminateds"][idx + self._nstep - 1]
+        truncateds = episode["truncateds"][idx + self._nstep - 1]
+        rewards = np.zeros_like(episode["rewards"][idx])
         discounts = np.ones_like(episode["discount"][idx])
         for i in range(self._nstep):
-            step_reward = episode["reward"][idx + i]
+            step_reward = episode["rewards"][idx + i]
             rewards += discounts * step_reward
             discounts *= episode["discount"][idx + i] * self._discount
 
-        return obs, actions, rewards, discounts, next_obs
+        return obs, actions, rewards, terminateds, truncateds, discounts, next_obs
 
     def __iter__(self) -> Iterator:
         while True:
@@ -336,13 +338,13 @@ class NStepReplayStorage(BaseStorage):
         """
         # TODO: add parallel env support
         self.replay_storage.add(
-            obs=observations[0].cpu().numpy(),
-            action=actions[0].cpu().numpy(),
-            reward=rewards[0].cpu().numpy(),
-            terminated=terminateds[0].cpu().numpy(),
-            truncated=truncateds[0].cpu().numpy(),
+            observations=observations[0].cpu().numpy(),
+            actions=actions[0].cpu().numpy(),
+            rewards=rewards[0].cpu().numpy(),
+            terminateds=terminateds[0].cpu().numpy(),
+            truncateds=truncateds[0].cpu().numpy(),
             infos=infos,
-            next_obs=next_observations[0].cpu().numpy(),
+            next_observations=next_observations[0].cpu().numpy(),
         )
 
     @property
@@ -355,12 +357,14 @@ class NStepReplayStorage(BaseStorage):
     def sample(self) -> NStepReplayBatch:
         """Sample from the storage."""
         # to device
-        obs, actions, rewards, discounts, next_obs = next(self.replay_iter)
+        obs, actions, rewards, terminateds, truncateds, discounts, next_obs = next(self.replay_iter)
 
         return NStepReplayBatch(
             observations=self.to_torch(obs),
             actions=self.to_torch(actions),
             rewards=self.to_torch(rewards),
+            terminateds=self.to_torch(terminateds),
+            truncateds=self.to_torch(truncateds),
             discounts=self.to_torch(discounts),
             next_observations=self.to_torch(next_obs),
         )

@@ -39,3 +39,4 @@ from .ppg import PPG as PPG
 from .ppo_lstm import PPO_LSTM as PPO_LSTM
 from .two_head_ppo import TwoHeadPPO as TwoHeadPPO
 from .two_head_ppo_lstm import TwoHeadPPO_LSTM as TwoHeadPPO_LSTM
+from .rainbow import Rainbow as Rainbow

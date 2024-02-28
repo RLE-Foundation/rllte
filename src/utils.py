@@ -56,7 +56,7 @@ def parse_args_dqn():
 
     # train config
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=8)
+    parser.add_argument("--n_envs", type=int, default=1)
     parser.add_argument("--num_train_steps", type=int, default=10_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)

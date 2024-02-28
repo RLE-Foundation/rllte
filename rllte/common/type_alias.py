@@ -218,5 +218,7 @@ class NStepReplayBatch(NamedTuple):
     observations: th.Tensor
     actions: th.Tensor
     rewards: th.Tensor
+    terminateds: th.Tensor
+    truncateds: th.Tensor
     discounts: th.Tensor
     next_observations: th.Tensor
