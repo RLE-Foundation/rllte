@@ -106,6 +106,7 @@ class OnPolicyAgent(BaseAgent):
         episode_rewards: Deque = deque(maxlen=10)
         intrinsic_episode_rewards: Deque = deque(maxlen=10)
         episode_steps: Deque = deque(maxlen=10)
+        episode_achievements: Dict[str, deque] = {}
         obs, infos = self.env.reset(seed=self.seed)
         # get number of updates
         num_updates = int(num_train_steps // self.num_envs // self.num_steps)
@@ -174,6 +175,15 @@ class OnPolicyAgent(BaseAgent):
                 episode_rewards.extend(eps_r)
                 episode_steps.extend(eps_l)
 
+###############################################################################################################
+                # only used for craftax
+                eps_achievements = utils.get_achievement_statistics(infos)
+                for key, value in eps_achievements.items():
+                    if key not in episode_achievements:
+                        episode_achievements[key] = deque(maxlen=10)
+                    episode_achievements[key].extend(value)
+###############################################################################################################
+
                 # set the current observation
                 obs = next_obs
 
@@ -231,6 +241,11 @@ class OnPolicyAgent(BaseAgent):
                     "fps": self.global_step / total_time,
                     "total_time": total_time,
                 }
+###############################################################################################################
+                self.logger.additional(
+                    msg={key: np.mean(value) for key, value in episode_achievements.items() if len(value) > 0}
+                )
+###############################################################################################################
                 self.logger.train(msg=train_metrics)
                 self.logger.loss(msg=self.logger.metrics)
 

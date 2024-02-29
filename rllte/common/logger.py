@@ -57,7 +57,6 @@ ERROR_PREFIX = "[" + colored("ERROR".ljust(NUMBER_OF_PREFIX_SPACES, " "), "white
 TRAIN_PREFIX = "[" + colored("TRAIN".ljust(NUMBER_OF_PREFIX_SPACES, " "), "red", attrs=["bold"]) + "] - "
 EVAL_PREFIX = "[" + colored("EVAL.".ljust(NUMBER_OF_PREFIX_SPACES, " "), "green", attrs=["bold"]) + "] - "
 
-
 class Logger:
     """The logger class.
 
@@ -74,9 +73,11 @@ class Logger:
         self._train_file = self._log_dir / "train.log"
         self._eval_file = self._log_dir / "eval.log"
         self._loss_file = self._log_dir / "losses.log"
+        self._additional_file = self._log_dir / "additional.log"
         self._train_file_write_header = True
         self._eval_file_write_header = True
         self._loss_file_write_header = True
+        self._additional_file_write_header = True
 
         self.metrics: Dict[str, Any] = {}
 
@@ -241,3 +242,16 @@ class Logger:
         """
         self._dump_to_csv(self._loss_file, msg, self._loss_file_write_header)
         self._loss_file_write_header = False
+
+    def additional(self, msg: Dict) -> None:
+        """Output msg with 'additional' level.
+
+        Args:
+            msg (Dict): Message to be printed.
+
+        Returns:
+            None.
+        """
+        self._dump_to_csv(self._additional_file, msg, self._additional_file_write_header)
+        self._additional_file_write_header = False
+# =============================================================================

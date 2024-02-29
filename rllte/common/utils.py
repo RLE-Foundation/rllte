@@ -191,7 +191,14 @@ def get_episode_statistics(infos: Dict) -> Tuple[List, List]:
         return r, l
     else:
         return [], []
-
+    
+def get_achievement_statistics(infos: Dict) -> List:
+    indices = np.nonzero(infos["episode"]["l"])
+    results = {}
+    for key in infos.keys():
+        if "Achievement" in key:
+            results[key] = infos[key][indices].tolist()
+    return results
 
 def get_npu_name() -> str:
     """Get NPU name."""
