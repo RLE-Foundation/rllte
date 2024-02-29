@@ -1,7 +1,7 @@
 # =============================================================================
 # MIT License
 
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+# Copyright (c) 2024 Reinforcement Learning Evolution Foundation
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,82 +23,34 @@
 # =============================================================================
 
 
-from typing import Dict, Tuple
+from typing import Dict, Optional
 
-import gymnasium as gym
-import numpy as np
 import torch as th
-from torch import nn
+from gymnasium.vector import VectorEnv
 
-from rllte.common.prototype import BaseIntrinsicRewardModule
-
-from .utils import TorchRunningMeanStd
-
-
-class Encoder(nn.Module):
-    """Encoder for encoding observations.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): The dimension of actions.
-        latent_dim (int): The dimension of encoding vectors.
-
-    Returns:
-        Encoder instance.
-    """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
-        super().__init__()
-
-        # visual
-        if len(obs_shape) == 3:
-            self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Flatten(),
-            )
-            with th.no_grad():
-                sample = th.ones(size=tuple(obs_shape))
-                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-
-            self.linear = nn.Linear(n_flatten, latent_dim)
-        else:
-            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
-            self.linear = nn.Linear(256, latent_dim)
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Encode the input tensors.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Encoding tensors.
-        """
-        return self.linear(self.trunk(obs))
+from rllte.common.prototype import BaseReward
+from .model import ObservationEncoder
 
 
-class RE3(BaseIntrinsicRewardModule):
+class RE3(BaseReward):
     """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
         See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        envs (VectorEnv): The vectorized environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
+        kappa (float): The decay rate of the weighting coefficient.
+        gamma (Optional[float]): Intrinsic reward discount rate, default is `None`.
+        rwd_norm_type (str): Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+        obs_norm_type (str): Normalization type for observations data from ['rms', 'none'].
+
         latent_dim (int): The dimension of encoding vectors.
         storage_size (int): The size of the storage for random embeddings.
-        num_envs (int): The number of parallel environments.
         k (int): Use the k-th neighbors.
         average_entropy (bool): Use the average of entropy estimation.
+        encoder_model (str): The network architecture of the encoder from ['mnih', 'pathak'].
+        weight_init (str): The weight initialization method from ['default', 'orthogonal'].
 
     Returns:
         Instance of RE3.
@@ -106,104 +58,127 @@ class RE3(BaseIntrinsicRewardModule):
 
     def __init__(
         self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
+        envs: VectorEnv,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
+        beta: float = 1.0,
+        kappa: float = 0.0,
+        gamma: float = None,
+        rwd_norm_type: str = "rms",
+        obs_norm_type: str = "rms",
         latent_dim: int = 128,
-        storage_size: int = 10000,
-        num_envs: int = 1,
+        storage_size: int = 1000,
         k: int = 5,
         average_entropy: bool = False,
+        encoder_model: str = "mnih",
+        weight_init: str = "orthogonal",
     ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa)
-        self.random_encoder = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
-            latent_dim=latent_dim,
-        ).to(self._device)
+        super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
 
-        # freeze the network parameters
+        # build the storage for random embeddings
+        self.storage_size = storage_size
+        self.storage = th.zeros(size=(storage_size, self.n_envs, latent_dim))
+        self.storage_idx = 0
+        self.storage_full = False
+        # set parameters
+        self.latent_dim = latent_dim
+        self.k = k
+        self.average_entropy = average_entropy
+        # build the random encoder and freeze the network parameters
+        self.random_encoder = ObservationEncoder(
+            obs_shape=self.obs_shape,
+            latent_dim=latent_dim,
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        ).to(self.device)
         for p in self.random_encoder.parameters():
             p.requires_grad = False
 
-        self.k = k
-        self.idx = 0
-        self.num_envs = num_envs
-        self.storage_size = storage_size
-        self.tgt_feats = th.zeros(size=(storage_size, num_envs, latent_dim))
-        self.average_entropy = average_entropy
-        self.running_mean_std = TorchRunningMeanStd(shape=(num_envs,), device=self._device)
-
-    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
-        """Compute the intrinsic rewards for current samples.
+    def watch(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        next_observations: th.Tensor,
+    ) -> Optional[Dict[str, th.Tensor]]:
+        """Watch the interaction processes and obtain necessary elements for reward computation.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-            step (int): The global training step.
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
+
+        Returns:
+            Feedbacks for the current samples.
+        """
+        with th.no_grad():
+            observations = self.normalize(observations)
+            self.storage[self.storage_idx] = self.random_encoder(observations)
+            self.storage_idx = (self.storage_idx + 1) % self.storage_size
+
+        # update the storage status
+        self.storage_full = self.storage_full or self.storage_idx == 0
+
+    def compute(self, samples: Dict[str, th.Tensor], sync: bool = True) -> th.Tensor:
+        """Compute the rewards for current samples.
+
+        Args:
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors,
+                whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+                For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+            sync (bool): Whether to update the reward module after the `compute` function, default is `True`.
 
         Returns:
             The intrinsic rewards.
         """
-        # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].to(self._device)
-
-        intrinsic_rewards = th.zeros(size=(num_steps, num_envs)).to(self._device)
-
+        super().compute(samples)
+        # get the number of steps and environments
+        (n_steps, n_envs) = samples.get("observations").size()[:2]
+        obs_tensor = samples.get("observations").to(self.device)
+        # normalize the observations
+        obs_tensor = self.normalize(obs_tensor)
+        # compute the intrinsic rewards
+        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            for i in range(num_envs):
-                src_feats = self.random_encoder(obs_tensor[:, i])
-                dist = th.linalg.vector_norm(
-                    src_feats.unsqueeze(1) - self.tgt_feats[: self.idx, i].to(self._device), ord=2, dim=2
+            for i in range(n_envs):
+                # get the target features
+                tgt_feats = (
+                    self.storage[: self.storage_idx, i]
+                    if not self.storage_full
+                    else self.storage[:, i]
                 )
+                # get the source features
+                src_feats = self.random_encoder(obs_tensor[:, i])
+                # compute the distance
+                dist = th.linalg.vector_norm(
+                    src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2
+                )
+                # compute the entropy with average estimation
                 if self.average_entropy:
                     for sub_k in range(self.k):
-                        intrinsic_rewards[:, i] += th.log(th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0)
+                        intrinsic_rewards[:, i] += th.log(
+                            th.kthvalue(dist, sub_k + 1, dim=1).values + 1.0
+                        )
                     intrinsic_rewards[:, i] /= self.k
                 else:
-                    intrinsic_rewards[:, i] = th.log(th.kthvalue(dist, self.k + 1, dim=1).values + 1.0)
+                    intrinsic_rewards[:, i] = th.log(
+                        th.kthvalue(dist, self.k + 1, dim=1).values + 1.0
+                    )
 
-        # update the running mean and std
-        self.running_mean_std.update(intrinsic_rewards)
+        # scale the intrinsic rewards
+        return self.scale(intrinsic_rewards)
 
-        return intrinsic_rewards / self.running_mean_std.std * beta_t
-
-    def update(self, samples: Dict) -> None:
-        """Update the intrinsic reward module if necessary.
-
-        Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-
-        Returns:
-            None
-        """
-
-    def add(self, samples: Dict) -> None:
-        """Calculate the random embeddings and insert them into the storage.
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
+        """Update the reward module if necessary.
 
         Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
 
         Returns:
-            None
+            None.
         """
-        with th.no_grad():
-            for j in range(samples["obs"].size()[0]):
-                self.tgt_feats[self.idx] = self.random_encoder(samples["obs"][j])
-                self.idx = (self.idx + 1) % self.storage_size
+        raise NotImplementedError

@@ -1,7 +1,7 @@
 # =============================================================================
 # MIT License
 
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+# Copyright (c) 2024 Reinforcement Learning Evolution Foundation
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,107 +23,39 @@
 # =============================================================================
 
 
-from collections import deque
-from typing import Deque, Dict, Tuple
+from typing import Dict
 
-import gymnasium as gym
-import numpy as np
 import torch as th
-from torch import nn
-from torch.nn import functional as F
-from torch.utils.data import DataLoader, TensorDataset
+from gymnasium.vector import VectorEnv
 
-from rllte.common.prototype import BaseIntrinsicRewardModule
-
-
-class Encoder(nn.Module):
-    """Encoder for encoding observations.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): The dimension of actions.
-        latent_dim (int): The dimension of encoding vectors.
-
-    Returns:
-        Encoder instance.
-    """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
-        super().__init__()
-
-        # visual
-        if len(obs_shape) == 3:
-            self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Flatten(),
-            )
-            with th.no_grad():
-                sample = th.ones(size=tuple(obs_shape))
-                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-
-            self.linear = nn.Linear(n_flatten, latent_dim)
-        else:
-            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
-            self.linear = nn.Linear(256, latent_dim)
-
-        # TODO: output actions
-        self.policy = nn.Linear(latent_dim * 2, action_dim)
-
-    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
-        """Forward function for outputing predicted actions.
-
-        Args:
-            obs (th.Tensor): Current observations.
-            next_obs (th.Tensor): Next observations.
-
-        Returns:
-            Predicted actions.
-        """
-        h = F.relu(self.linear(self.trunk(obs)))
-        next_h = F.relu(self.linear(self.trunk(next_obs)))
-
-        actions = self.policy(th.cat([h, next_h], dim=1))
-        return actions
-
-    def encode(self, obs: th.Tensor) -> th.Tensor:
-        """Encode the input tensors.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Encoding tensors.
-        """
-        return F.relu(self.linear(self.trunk(obs)))
+from .fabric import Fabric
+from .pseudo_counts import PseudoCounts
+from .rnd import RND
 
 
-class NGU(BaseIntrinsicRewardModule):
+class NGU(Fabric):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
         See paper: https://arxiv.org/pdf/2002.06038
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        envs (VectorEnv): The vectorized environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
+        kappa (float): The decay rate of the weighting coefficient.
+        gamma (Optional[float]): Intrinsic reward discount rate, default is `None`.
+        rwd_norm_type (str): Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+        obs_norm_type (str): Normalization type for observations data from ['rms', 'none'].
+
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
-        capacity (int): The of capacity the episodic memory.
         k (int): Number of neighbors.
         kernel_cluster_distance (float): The kernel cluster distance.
         kernel_epsilon (float): The kernel constant.
         c (float): The pseudo-counts constant.
         sm (float): The kernel maximum similarity.
         mrs (float): The maximum reward scaling.
+        update_proportion (float): The proportion of the training data used for updating the forward dynamics models.
 
     Returns:
         Instance of NGU.
@@ -131,182 +63,86 @@ class NGU(BaseIntrinsicRewardModule):
 
     def __init__(
         self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
+        envs: VectorEnv,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
-        latent_dim: int = 128,
+        beta: float = 1.0,
+        kappa: float = 0.0,
+        gamma: float = None,
+        rwd_norm_type: str = "rms",
+        obs_norm_type: str = "rms",
+        latent_dim: int = 32,
         lr: float = 0.001,
-        batch_size: int = 64,
-        capacity: int = 1000,
+        batch_size: int = 256,
         k: int = 10,
         kernel_cluster_distance: float = 0.008,
         kernel_epsilon: float = 0.0001,
         c: float = 0.001,
         sm: float = 8.0,
         mrs: float = 5.0,
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "default",
     ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa)
-
-        self.encoder = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
+        # build the rnd and pseudo-counts modules
+        rnd = RND(
+            envs=envs,
+            device=device,
+            beta=beta,
+            kappa=kappa,
+            rwd_norm_type=rwd_norm_type,
+            obs_norm_type=obs_norm_type,
+            gamma=gamma,
             latent_dim=latent_dim,
-        ).to(self._device)
-        self.episodic_memory: Deque = deque(maxlen=capacity)
-        self.k = k
-        self.kernel_cluster_distance = kernel_cluster_distance
-        self.kernel_epsilon = kernel_epsilon
-        self.c = c
-        self.sm = sm
-        self.mrs = mrs
+            lr=lr,
+            batch_size=batch_size,
+            update_proportion=update_proportion,
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        )
 
-        self.episodic_opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
-        if self._action_type == "Discrete":
-            self.episodic_loss = nn.CrossEntropyLoss()
-        else:
-            self.episodic_loss = nn.MSELoss()  # type: ignore[assignment]
-
-        # life-long part
-        self.predictor = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
+        pseudo_counts = PseudoCounts(
+            envs=envs,
+            device=device,
+            beta=beta,
+            kappa=kappa,
+            rwd_norm_type=rwd_norm_type,
+            obs_norm_type=obs_norm_type,
+            gamma=gamma,
             latent_dim=latent_dim,
-        ).to(self._device)
+            lr=lr,
+            batch_size=batch_size,
+            k=k,
+            kernel_cluster_distance=kernel_cluster_distance,
+            kernel_epsilon=kernel_epsilon,
+            c=c,
+            sm=sm,
+            update_proportion=update_proportion,
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        )
 
-        self.target = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
-            latent_dim=latent_dim,
-        ).to(self._device)
+        super().__init__(*[rnd, pseudo_counts])
 
-        self.life_long_opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
-
-        # freeze the network parameters
-        for p in self.target.parameters():
-            p.requires_grad = False
-
-        self.batch_size = batch_size
-
-    def pseudo_counts(self, e: th.Tensor) -> th.Tensor:
-        """Pseudo counts.
+    def compute(self, samples: Dict[str, th.Tensor], sync: bool = True) -> th.Tensor:
+        """Compute the rewards for current samples.
 
         Args:
-            e (th.Tensor): Encoded observations.
-
-        Returns:
-            Conut values.
-        """
-        num_steps = e.size()[0]
-        counts = th.zeros(size=(num_steps,))
-        memory = th.stack(list(self.episodic_memory)).squeeze(1)
-        for step in range(num_steps):
-            dist = th.norm(e[step] - memory, p=2, dim=1).sort().values[: self.k]
-            # moving average
-            dist = dist / (dist.mean() + 1e-11)
-            dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
-            kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
-            s = th.sqrt(kernel.sum()) + self.c
-
-            if s is th.nan or s > self.sm:
-                counts[step] = 0.0
-            else:
-                counts[step] = 1.0 / s
-
-        return counts
-
-    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
-        """Compute the intrinsic rewards for current samples.
-
-        Args:
-            samples (Dict): The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-            step (int): The global training step.
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors,
+                whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+                For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+            sync (bool): Whether to update the reward module after the `compute` function, default is `True`.
 
         Returns:
             The intrinsic rewards.
         """
-        # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].to(self._device)
-        intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
+        # get the number of steps and environments
+        lifelong_rewards, episodic_rewards = super().compute(samples, sync)
 
-        try:
-            with th.no_grad():
-                for i in range(num_envs):
-                    e = self.encoder.encode(obs_tensor[:, i])
-                    # TODO: add encodings into memory
-                    self.episodic_memory.extend(e.split(1))
-                    n_eps = self.pseudo_counts(e=e)
+        # compute the intrinsic rewards
+        lifelong_rewards = 1.0 + lifelong_rewards
+        lifelong_rewards = th.maximum(lifelong_rewards, th.ones_like(lifelong_rewards))
+        lifelong_rewards = th.minimum(
+            lifelong_rewards, th.ones_like(lifelong_rewards) * self.mrs
+        )
 
-                    src_feats = self.predictor.encode(obs_tensor[:, i])
-                    tgt_feats = self.target.encode(obs_tensor[:, i])
-                    dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-                    dist = (dist - dist.mean()) / (dist.std() + 1e-11)
-                    # min{max{alpha_t, 1}, L}
-                    alpha = 1.0 + dist
-                    alpha = th.maximum(alpha, th.ones_like(alpha))
-                    alpha = th.minimum(alpha, th.ones_like(alpha) * self.mrs)
-                    intrinsic_rewards[:, i] = n_eps * alpha.cpu()
-
-            # udpate the module
-            self.update(samples)
-        except KeyboardInterrupt:
-            exit(0)
-
-        return intrinsic_rewards * beta_t
-
-    def add(self, samples: Dict) -> None:
-        """Add new samples to the intrinsic reward module."""
-
-    def update(self, samples: Dict) -> None:
-        """Update the intrinsic reward module if necessary.
-
-        Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-
-        Returns:
-            None
-        """
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-
-        if self._action_type == "Discrete":
-            actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
-        else:
-            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_dim)).to(self._device)
-
-        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
-
-        for _idx, batch in enumerate(loader):
-            obs, actions, next_obs = batch
-            # episodic part
-            pred_actions = self.encoder(obs, next_obs)
-            self.episodic_opt.zero_grad()
-            episodic_loss = self.episodic_loss(pred_actions, actions)
-            episodic_loss.backward()
-            self.episodic_opt.step()
-
-            # life-long part
-            src_feats = self.predictor.encode(obs)
-            with th.no_grad():
-                tgt_feats = self.target.encode(obs)
-
-            self.life_long_opt.zero_grad()
-            life_long_loss = F.mse_loss(src_feats, tgt_feats)
-            life_long_loss.backward()
-            self.life_long_opt.step()
+        return lifelong_rewards * episodic_rewards

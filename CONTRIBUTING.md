@@ -51,7 +51,7 @@ def function_with_types_in_docstring(param1: type1, param2: type2):
 ```
 
 ## Pull Request (PR)
-Before proposing a PR, please open an issue, where the feature will be discussed. This prevent from duplicated PR to be proposed and also ease the code review process. Each PR need to be reviewed and accepted by at least one of the maintainers (@[yuanmingqi](https://github.com/yuanmingqi), @[ShihaoLuo](https://github.com/orgs/RLE-Foundation/people/ShihaoLuo)). A PR must pass the Continuous Integration tests to be merged with the master branch.
+Before proposing a PR, please open an issue, where the feature will be discussed. This prevent from duplicated PR to be proposed and also ease the code review process. Each PR need to be reviewed and accepted by at least one of the maintainers (@[yuanmingqi](https://github.com/yuanmingqi), @[roger-creus](https://github.com/roger-creus)). A PR must pass the Continuous Integration tests to be merged with the master branch.
 
 See the [Pull Request Template](https://github.com/RLE-Foundation/rllte/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
 

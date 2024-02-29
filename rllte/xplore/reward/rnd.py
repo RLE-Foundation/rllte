@@ -1,7 +1,7 @@
 # =============================================================================
 # MIT License
 
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+# Copyright (c) 2024 Reinforcement Learning Evolution Foundation
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,80 +23,37 @@
 # =============================================================================
 
 
-from typing import Dict, Tuple
+from typing import Dict, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
-from torch import nn
-from torch.nn import functional as F
+import torch.nn.functional as F
+from gymnasium.vector import VectorEnv
 from torch.utils.data import DataLoader, TensorDataset
 
-from rllte.common.prototype import BaseIntrinsicRewardModule
+from rllte.common.prototype import BaseReward
+from .model import ObservationEncoder
 
 
-class Encoder(nn.Module):
-    """Encoder for encoding observations.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): The dimension of actions.
-        latent_dim (int): The dimension of encoding vectors.
-
-    Returns:
-        Encoder instance.
-    """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
-        super().__init__()
-
-        # visual
-        if len(obs_shape) == 3:
-            self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Flatten(),
-            )
-            with th.no_grad():
-                sample = th.ones(size=tuple(obs_shape))
-                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-
-            self.linear = nn.Linear(n_flatten, latent_dim)
-        else:
-            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
-            self.linear = nn.Linear(256, latent_dim)
-
-    def forward(self, obs: th.Tensor) -> th.Tensor:
-        """Encode the input tensors.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Encoding tensors.
-        """
-        return self.linear(self.trunk(obs))
-
-
-class RND(BaseIntrinsicRewardModule):
+class RND(BaseReward):
     """Exploration by Random Network Distillation (RND).
         See paper: https://arxiv.org/pdf/1810.12894.pdf
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        envs (VectorEnv): The vectorized environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
+        kappa (float): The decay rate of the weighting coefficient.
+        gamma (Optional[float]): Intrinsic reward discount rate, default is `None`.
+        rwd_norm_type (str): Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+        obs_norm_type (str): Normalization type for observations data from ['rms', 'none'].
+
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
-        batch_size (int): The batch size for update.
+        batch_size (int): The batch size for training.
+        update_proportion (float): The proportion of the training data used for updating the forward dynamics models.
+        encoder_model (str): The network architecture of the encoder from ['mnih', 'pathak'].
+        weight_init (str): The weight initialization method from ['default', 'orthogonal'].
 
     Returns:
         Instance of RND.
@@ -104,100 +61,126 @@ class RND(BaseIntrinsicRewardModule):
 
     def __init__(
         self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
+        envs: VectorEnv,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
+        beta: float = 1.0,
+        kappa: float = 0.0,
+        gamma: Optional[float] = None,
+        rwd_norm_type: str = "rms",
+        obs_norm_type: str = "rms",
         latent_dim: int = 128,
         lr: float = 0.001,
-        batch_size: int = 64,
+        batch_size: int = 256,
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "orthogonal",
     ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa)
-        self.predictor = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
+        super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
+        # build the predictor and target networks
+        self.predictor = ObservationEncoder(
+            obs_shape=self.obs_shape,
             latent_dim=latent_dim,
-        ).to(self._device)
-
-        self.target = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        ).to(self.device)
+        self.target = ObservationEncoder(
+            obs_shape=self.obs_shape,
             latent_dim=latent_dim,
-        ).to(self._device)
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        ).to(self.device)
 
-        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
-        self.batch_size = batch_size
-
-        # freeze the network parameters
+        # freeze the randomly initialized target network parameters
         for p in self.target.parameters():
             p.requires_grad = False
+        # set the optimizer
+        self.opt = th.optim.Adam(self.predictor.parameters(), lr=lr)
+        # set the parameters
+        self.batch_size = batch_size
+        self.update_proportion = update_proportion
 
-    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
-        """Compute the intrinsic rewards for current samples.
+    def compute(self, samples: Dict[str, th.Tensor], sync: bool = True) -> th.Tensor:
+        """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-            step (int): The global training step.
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors,
+                whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+                For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+            sync (bool): Whether to update the reward module after the `compute` function, default is `True`.
 
         Returns:
             The intrinsic rewards.
         """
-        # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        next_obs_tensor = samples["next_obs"].to(self._device)
-
-        intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
-
+        super().compute(samples)
+        # get the number of steps and environments
+        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        # get the next observations
+        next_obs_tensor = samples.get("next_observations").to(self.device)
+        # normalize the observations
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        # compute the intrinsic rewards
+        intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
-            for i in range(num_envs):
-                src_feats = self.predictor(next_obs_tensor[:, i])
-                tgt_feats = self.target(next_obs_tensor[:, i])
-                dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
-                dist = (dist - dist.min()) / (dist.max() - dist.min() + 1e-11)
-                intrinsic_rewards[:, i] = dist
+            # get source and target features
+            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
+            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
+            # compute the distance
+            dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
+            intrinsic_rewards = dist.view(n_steps, n_envs)
 
-        # udpate the module
-        self.update(samples)
+        # update the reward module
+        if sync:
+            self.update(samples)
 
-        return intrinsic_rewards * beta_t
+        # scale the intrinsic rewards
+        return self.scale(intrinsic_rewards)
 
-    def add(self, samples: Dict) -> None:
-        """Add new samples to the intrinsic reward module."""
-
-    def update(self, samples: Dict) -> None:
-        """Update the intrinsic reward module if necessary.
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
+        """Update the reward module if necessary.
 
         Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
 
         Returns:
-            None
+            None.
         """
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-
+        # get the observations
+        obs_tensor = (
+            samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        )
+        # normalize the observations
+        obs_tensor = self.normalize(obs_tensor)
+        # create the dataset and loader
         dataset = TensorDataset(obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
+        avg_loss = []
+        # update the predictor
         for _idx, batch_data in enumerate(loader):
+            # get the batch data
             obs = batch_data[0]
+            # zero the gradients
+            self.opt.zero_grad()
+            # get the source and target features
             src_feats = self.predictor(obs)
             with th.no_grad():
                 tgt_feats = self.target(obs)
 
-            self.opt.zero_grad()
-            loss = F.mse_loss(src_feats, tgt_feats)
+            # compute the loss
+            loss = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=-1)
+            # use a random mask to select a subset of the training data
+            mask = th.rand(len(loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            # get the masked loss
+            loss = (loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            # backward and update
             loss.backward()
             self.opt.step()
+            avg_loss.append(loss.item())
+
+        try:
+            self.metrics["loss"].append([self.global_step, np.mean(avg_loss)])
+        except:
+            pass

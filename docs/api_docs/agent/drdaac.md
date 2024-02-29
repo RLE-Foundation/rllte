@@ -11,7 +11,7 @@ DrDAAC(
    hidden_dim: int = 256, clip_range: float = 0.2, clip_range_vf: float = 0.2,
    policy_epochs: int = 1, value_freq: int = 1, value_epochs: int = 9, vf_coef: float = 0.5,
    ent_coef: float = 0.01, aug_coef: float = 0.1, adv_coef: float = 0.25,
-   max_grad_norm: float = 0.5, init_fn: str = 'xavier_uniform'
+   max_grad_norm: float = 0.5, discount: float = 0.999, init_fn: str = 'xavier_uniform'
 )
 ```
 
@@ -45,6 +45,7 @@ Based on: https://github.com/rraileanu/idaac
 * **aug_coef** (float) : Weighting coefficient of augmentation loss.
 * **adv_ceof** (float) : Weighting coefficient of advantage loss.
 * **max_grad_norm** (float) : Maximum norm of gradients.
+* **discount** (float) : Discount factor.
 * **init_fn** (str) : Parameters initialization method.
 
 
@@ -58,7 +59,7 @@ DAAC agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L176)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drdaac.py/#L179)
 ```python
 .update()
 ```
