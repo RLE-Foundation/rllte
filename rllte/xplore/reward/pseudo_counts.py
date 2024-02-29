@@ -237,7 +237,7 @@ class PseudoCounts(BaseReward):
                     self.rwd_norm.update(th.cat(self.irs_buffer))
                     self.irs_buffer.clear()
                 if self.obs_norm_type == "rms":
-                    self.obs_norm.update(th.cat(self.obs_buffer))
+                    self.obs_norm.update(th.cat(self.obs_buffer).cpu())
                     self.obs_buffer.clear()
             # flush the episodic memory of intrinsic rewards
             self.n_eps = [[] for _ in range(self.n_envs)]

@@ -137,6 +137,7 @@ class BaseReward(ABC):
     def init_normalization(self) -> None:
         """Initialize the normalization parameters for observations if the RMS is used."""
         # TODO: better initialization parameters?
+        _, _ = self.envs.reset()
         num_steps, num_iters = 128, 20
         if self.obs_norm_type == "rms":
             all_next_obs = []

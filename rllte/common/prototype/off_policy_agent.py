@@ -157,12 +157,19 @@ class OffPolicyAgent(BaseAgent):
             self.storage.add(obs, actions, rews, terms, truncs, infos, real_next_obs)
             self.global_step += self.num_envs
 
-            # deal with the intrinsic reward module
-            # for modules like RE3, this will calculate the random embeddings
-            # and insert them into the storage. for modules like ICM, this
-            # will update the dynamic models.
+            # watch the interaction process and obtain necessary information
             if self.irs is not None:
-                self.irs.add(samples={"obs": obs, "actions": actions, "next_obs": real_next_obs})  # type: ignore
+                self.irs.watch(obs, actions, rews, terms, truncs, real_next_obs)
+                # compute the intrinsic rewards at each step
+                intrinsic_rewards = self.irs.compute(samples={'observations':obs.unsqueeze(0), 
+                                                              'actions':actions.unsqueeze(0), 
+                                                              'rewards':rews.unsqueeze(0), 
+                                                              'terminateds':terms.unsqueeze(0), 
+                                                              'truncateds':truncs.unsqueeze(0), 
+                                                              'next_observations':real_next_obs.unsqueeze(0)}, 
+                                                              sync=False)
+                print(rews.size(), intrinsic_rewards.size())
+                rews += intrinsic_rewards
 
             # get episode information
             eps_r, eps_l = utils.get_episode_statistics(infos)
