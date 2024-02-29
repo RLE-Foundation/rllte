@@ -80,11 +80,7 @@ class OffPolicyDoubleQNetwork(BasePolicy):
 
         # build q-network and target q-network
         self.qnet = nn.Sequential(
-            nn.Linear(self.feature_dim, self.hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(self.hidden_dim, self.policy_action_dim),
+            nn.Linear(self.feature_dim, self.policy_action_dim),
         )
         self.qnet_target = deepcopy(self.qnet)
 

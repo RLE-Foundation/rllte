@@ -90,5 +90,6 @@ if __name__ == "__main__":
         num_train_steps=args.num_train_steps,
         anneal_lr=args.anneal_lr,
         eval_interval=500,
-        save_interval=999_999_999
+        save_interval=999_999_999,
+        th_compile=False
     )

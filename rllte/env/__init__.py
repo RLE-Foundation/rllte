@@ -78,3 +78,8 @@ try:
     from .griddly import make_griddly_env as make_griddly_env
 except Exception:
     pass
+
+try:
+    from .craftax import make_craftax_env as make_craftax_env
+except Exception:
+    pass
