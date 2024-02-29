@@ -168,8 +168,7 @@ class OffPolicyAgent(BaseAgent):
                                                               'truncateds':truncs.unsqueeze(0), 
                                                               'next_observations':real_next_obs.unsqueeze(0)}, 
                                                               sync=False)
-                print(rews.size(), intrinsic_rewards.size())
-                rews += intrinsic_rewards
+                rews += intrinsic_rewards.squeeze(0)
 
             # get episode information
             eps_r, eps_l = utils.get_episode_statistics(infos)

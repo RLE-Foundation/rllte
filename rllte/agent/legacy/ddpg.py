@@ -26,6 +26,7 @@
 from typing import Optional
 
 import gymnasium as gym
+from matplotlib.pyplot import pink
 import torch as th
 from torch.nn import functional as F
 
@@ -203,8 +204,9 @@ class DDPG(OffPolicyAgent):
             # TODO: add time limit mask
             # target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
             target_Q = rewards + (1.0 - terminateds) * self.discount * target_V
-
-        Q1, Q2 = self.policy.critic(obs, actions)
+        
+        obs_actions = th.concat([obs, actions], dim=-1)
+        Q1, Q2 = self.policy.critic(obs_actions)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic
