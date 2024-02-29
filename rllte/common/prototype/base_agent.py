@@ -112,6 +112,8 @@ class BaseAgent(ABC):
             self.device_name = pynvml.nvmlDeviceGetName(handle)
         elif "npu" in device:
             self.device_name = f"HUAWEI Ascend {get_npu_name()}"
+        elif "mps" in device and th.backends.mps.is_available():
+            self.device_name = "MacOS MPS"
         else:
             self.device_name = "CPU"
 

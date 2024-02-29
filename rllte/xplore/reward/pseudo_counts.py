@@ -116,10 +116,12 @@ class PseudoCounts(BaseReward):
             self.loss = nn.CrossEntropyLoss(reduction="none")
         else:
             self.loss = nn.MSELoss(reduction="none")
-
         # rms for the intrinsic rewards
         self.dist_rms = TorchRunningMeanStd(shape=(1,), device=self.device)
         self.squared_distances = []
+        # temporary buffers for intrinsic rewards and observations
+        self.irs_buffer = []
+        self.obs_buffer = []
 
     def watch(
         self,
@@ -201,26 +203,46 @@ class PseudoCounts(BaseReward):
         Returns:
             The intrinsic rewards.
         """
-        super().compute(samples)
+        super().compute(samples, sync)
 
-        # compute the intrinsic rewards
-        all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
-        intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
-
-        # update the running mean and std of the squared distances
-        flattened_squared_distances = th.cat(self.squared_distances, dim=0)
-        self.dist_rms.update(flattened_squared_distances)
-        self.squared_distances.clear()
-
-        # flush the episodic memory of intrinsic rewards
-        self.n_eps = [[] for _ in range(self.n_envs)]
-
-        # update the reward module
         if sync:
+            # compute the intrinsic rewards
+            all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+            intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+            # update the running mean and std of the squared distances
+            flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+            self.dist_rms.update(flattened_squared_distances)
+            self.squared_distances.clear()
+            # flush the episodic memory of intrinsic rewards
+            self.n_eps = [[] for _ in range(self.n_envs)]
+            # update the reward module
             self.update(samples)
+            # scale the intrinsic rewards
+            return self.scale(intrinsic_rewards)
+        else:
+            # TODO: first consider single environment for off-policy algorithms
+            # compute the intrinsic rewards
+            all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+            intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+            # temporarily store the intrinsic rewards and observations
+            self.irs_buffer.append(intrinsic_rewards)
+            self.obs_buffer.append(samples['observations'])
+            if samples['truncateds'].item() or samples['terminateds'].item():
+                # update the running mean and std of the squared distances
+                flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+                self.dist_rms.update(flattened_squared_distances)
+                self.squared_distances.clear()
+                # update the running mean and std of the intrinsic rewards
+                if self.rwd_norm_type == "rms":
+                    self.rwd_norm.update(th.cat(self.irs_buffer))
+                    self.irs_buffer.clear()
+                if self.obs_norm_type == "rms":
+                    self.obs_norm.update(th.cat(self.obs_buffer))
+                    self.obs_buffer.clear()
+            # flush the episodic memory of intrinsic rewards
+            self.n_eps = [[] for _ in range(self.n_envs)]
 
-        # scale the intrinsic rewards
-        return self.scale(intrinsic_rewards)
+            return (intrinsic_rewards / self.rwd_norm.std) * self.weight
 
     def update(self, samples: Dict[str, th.Tensor]) -> None:
         """Update the reward module if necessary.

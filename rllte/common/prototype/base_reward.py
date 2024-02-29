@@ -202,9 +202,9 @@ class BaseReward(ABC):
             "next_observations",
         ]:
             assert key in samples.keys(), f"Key {key} is not in samples."
-
+        
         # update the obs RMS if necessary
-        if self.obs_norm_type == "rms":
+        if self.obs_norm_type == "rms" and sync:
             self.obs_norm.update(
                 samples["observations"].reshape(-1, *self.obs_shape).cpu()
             )
