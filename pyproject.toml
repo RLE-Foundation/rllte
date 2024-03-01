@@ -33,7 +33,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "gymnasium[accept-rom-license]",
+  "gymnasium[accept-rom-license, other]",
   "torch",
   "torchvision",
   "termcolor",
@@ -56,14 +56,6 @@ tests = [
   "ruff",
   "isort>=5.0",
   "black"
-]
-envs = [
-  "envpool",
-  "ale-py==0.8.1",
-  "gymnasium[accept-rom-license]",
-  "dm-control",
-  "procgen",
-  "minigrid"
 ]
 docs = [
   "mkdocs-material",
