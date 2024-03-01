@@ -178,18 +178,19 @@ class OffPolicyDetActorDoubleCritic(BasePolicy):
 
         return self.dist(mu)
 
-    def save(self, path: Path, pretraining: bool = False) -> None:
+    def save(self, path: Path, pretraining: bool, global_step: int) -> None:
         """Save models.
 
         Args:
             path (Path): Save path.
             pretraining (bool): Pre-training mode.
+            global_step (int): Global training step.
 
         Returns:
             None.
         """
         if pretraining:  # pretraining
-            th.save(self.state_dict(), path / "pretrained.pth")
+            th.save(self.state_dict(), path / f"pretrained_{global_step}.pth")
         else:
             export_model = ExportModel(encoder=self.encoder, actor=self.actor)
-            th.save(export_model, path / "agent.pth")
+            th.save(export_model, path / f"agent_{global_step}.pth")

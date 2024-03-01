@@ -168,18 +168,6 @@ class SAC(OffPolicyAgent):
         # sample a batch
         batch = self.storage.sample()
 
-        # compute intrinsic rewards
-        if self.irs is not None:
-            intrinsic_rewards = self.irs.compute_irs(
-                samples={
-                    "obs": batch.observations.unsqueeze(1),
-                    "actions": batch.actions.unsqueeze(1),
-                    "next_obs": batch.next_observations.unsqueeze(1),
-                },
-                step=self.global_step,
-            )
-            batch = batch._replace(rewards=batch.rewards + intrinsic_rewards.to(self.device))
-
         # encode
         encoded_obs = self.policy.encoder(batch.observations)
         with th.no_grad():

@@ -1,7 +1,7 @@
 # =============================================================================
 # MIT License
 
-# Copyright (c) 2023 Reinforcement Learning Evolution Foundation
+# Copyright (c) 2024 Reinforcement Learning Evolution Foundation
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,106 +23,44 @@
 # =============================================================================
 
 
-from collections import deque
-from typing import Deque, Dict, Tuple
+from typing import Dict, List, Optional
 
-import gymnasium as gym
 import numpy as np
 import torch as th
+from gymnasium.vector import VectorEnv
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from rllte.common.prototype import BaseIntrinsicRewardModule
+from rllte.common.prototype import BaseReward
+from rllte.common.utils import TorchRunningMeanStd
+from .model import InverseDynamicsEncoder
 
 
-class Encoder(nn.Module):
-    """Encoder for encoding observations.
-
-    Args:
-        obs_shape (Tuple): The data shape of observations.
-        action_dim (int): The dimension of actions.
-        latent_dim (int): The dimension of encoding vectors.
-
-    Returns:
-        Encoder instance.
-    """
-
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int) -> None:
-        super().__init__()
-
-        # visual
-        if len(obs_shape) == 3:
-            self.trunk = nn.Sequential(
-                nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.ELU(),
-                nn.Flatten(),
-            )
-            with th.no_grad():
-                sample = th.ones(size=tuple(obs_shape))
-                n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-
-            self.linear = nn.Linear(n_flatten, latent_dim)
-        else:
-            self.trunk = nn.Sequential(nn.Linear(obs_shape[0], 256), nn.ReLU())
-            self.linear = nn.Linear(256, latent_dim)
-
-        # TODO: output actions
-        self.policy = nn.Linear(latent_dim * 2, action_dim)
-
-    def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
-        """Forward function for outputing predicted actions.
-
-        Args:
-            obs (th.Tensor): Current observations.
-            next_obs (th.Tensor): Next observations.
-
-        Returns:
-            Predicted actions.
-        """
-        h = F.relu(self.linear(self.trunk(obs)))
-        next_h = F.relu(self.linear(self.trunk(next_obs)))
-
-        actions = self.policy(th.cat([h, next_h], dim=1))
-        return actions
-
-    def encode(self, obs: th.Tensor) -> th.Tensor:
-        """Encode the input tensors.
-
-        Args:
-            obs (th.Tensor): Observations.
-
-        Returns:
-            Encoding tensors.
-        """
-        return F.relu(self.linear(self.trunk(obs)))
-
-
-class PseudoCounts(BaseIntrinsicRewardModule):
+class PseudoCounts(BaseReward):
     """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
         See paper: https://arxiv.org/pdf/2002.06038
 
     Args:
-        observation_space (Space): The observation space of environment.
-        action_space (Space): The action space of environment.
+        envs (VectorEnv): The vectorized environments.
         device (str): Device (cpu, cuda, ...) on which the code should be run.
         beta (float): The initial weighting coefficient of the intrinsic rewards.
-        kappa (float): The decay rate.
+        kappa (float): The decay rate of the weighting coefficient.
+        gamma (Optional[float]): Intrinsic reward discount rate, default is `None`.
+        rwd_norm_type (str): Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+        obs_norm_type (str): Normalization type for observations data from ['rms', 'none'].
+
         latent_dim (int): The dimension of encoding vectors.
         lr (float): The learning rate.
         batch_size (int): The batch size for update.
-        capacity (int): The of capacity the episodic memory.
         k (int): Number of neighbors.
         kernel_cluster_distance (float): The kernel cluster distance.
         kernel_epsilon (float): The kernel constant.
         c (float): The pseudo-counts constant.
         sm (float): The kernel maximum similarity.
+        update_proportion (float): The proportion of the training data used for updating the forward dynamics models.
+        encoder_model (str): The network architecture of the encoder from ['mnih', 'pathak'].
+        weight_init (str): The weight initialization method from ['default', 'orthogonal'].
 
     Returns:
         Instance of PseudoCounts.
@@ -130,140 +68,248 @@ class PseudoCounts(BaseIntrinsicRewardModule):
 
     def __init__(
         self,
-        observation_space: gym.Space,
-        action_space: gym.Space,
+        envs: VectorEnv,
         device: str = "cpu",
-        beta: float = 0.05,
-        kappa: float = 0.000025,
+        beta: float = 1.0,
+        kappa: float = 0.0,
+        gamma: float = None,
+        rwd_norm_type: str = "rms",
+        obs_norm_type: str = "none",
         latent_dim: int = 32,
         lr: float = 0.001,
-        batch_size: int = 64,
-        capacity: int = 1000,
+        batch_size: int = 256,
         k: int = 10,
         kernel_cluster_distance: float = 0.008,
         kernel_epsilon: float = 0.0001,
         c: float = 0.001,
         sm: float = 8.0,
+        update_proportion: float = 1.0,
+        encoder_model: str = "mnih",
+        weight_init: str = "orthogonal",
     ) -> None:
-        super().__init__(observation_space, action_space, device, beta, kappa)
-
-        self.encoder = Encoder(
-            obs_shape=self._obs_shape,
-            action_dim=self._action_dim,
-            latent_dim=latent_dim,
-        ).to(self._device)
-        self.episodic_memory: Deque = deque(maxlen=capacity)
+        super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
+        # set parameters
+        self.lr = lr
+        self.batch_size = batch_size
         self.k = k
         self.kernel_cluster_distance = kernel_cluster_distance
         self.kernel_epsilon = kernel_epsilon
         self.c = c
         self.sm = sm
+        self.update_proportion = update_proportion
 
+        # build the episodic memory
+        self.episodic_memory = [[] for _ in range(self.n_envs)]
+        self.n_eps = [[] for _ in range(self.n_envs)]
+
+        # build the encoder
+        self.encoder = InverseDynamicsEncoder(
+            obs_shape=self.obs_shape,
+            action_dim=self.policy_action_dim,
+            latent_dim=latent_dim,
+            encoder_model=encoder_model,
+            weight_init=weight_init,
+        ).to(self.device)
+        # set the optimizer and loss function
         self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
-        if self._action_type == "Discrete":
-            self.loss = nn.CrossEntropyLoss()
+        if self.action_type == "Discrete":
+            self.loss = nn.CrossEntropyLoss(reduction="none")
         else:
-            self.loss = nn.MSELoss()  # type: ignore[assignment]
-        self.batch_size = batch_size
+            self.loss = nn.MSELoss(reduction="none")
+        # rms for the intrinsic rewards
+        self.dist_rms = TorchRunningMeanStd(shape=(1,), device=self.device)
+        self.squared_distances = []
+        # temporary buffers for intrinsic rewards and observations
+        self.irs_buffer = []
+        self.obs_buffer = []
 
-    def pseudo_counts(self, e: th.Tensor) -> th.Tensor:
+    def watch(
+        self,
+        observations: th.Tensor,
+        actions: th.Tensor,
+        rewards: th.Tensor,
+        terminateds: th.Tensor,
+        truncateds: th.Tensor,
+        next_observations: th.Tensor,
+    ) -> Optional[Dict[str, th.Tensor]]:
+        """Watch the interaction processes and obtain necessary elements for reward computation.
+
+        Args:
+            observations (th.Tensor): Observations data with shape (n_envs, *obs_shape).
+            actions (th.Tensor): Actions data with shape (n_envs, *action_shape).
+            rewards (th.Tensor): Extrinsic rewards data with shape (n_envs).
+            terminateds (th.Tensor): Termination signals with shape (n_envs).
+            truncateds (th.Tensor): Truncation signals with shape (n_envs).
+            next_observations (th.Tensor): Next observations data with shape (n_envs, *obs_shape).
+
+        Returns:
+            Feedbacks for the current samples.
+        """
+        with th.no_grad():
+            # data shape of embeddings: (n_envs, latent_dim)
+            observations = self.normalize(observations)
+            embeddings = self.encoder.encode(observations)
+            for i in range(self.n_envs):
+                if len(self.episodic_memory[i]) > 0:
+                    # compute pseudo-counts
+                    n_eps = self.pseudo_counts(
+                        embeddings=embeddings[i].unsqueeze(0),
+                        memory=self.episodic_memory[i],
+                    )
+                else:
+                    n_eps = 0.0
+                # store the pseudo-counts
+                self.n_eps[i].append(n_eps)
+                # update the episodic memory
+                self.episodic_memory[i].append(embeddings[i])
+                # clear the episodic memory if the episode is terminated or truncated
+                if terminateds[i].item() or truncateds[i].item():
+                    self.episodic_memory[i].clear()
+
+    def pseudo_counts(
+        self, embeddings: th.Tensor, memory: List[th.Tensor]
+    ) -> th.Tensor:
         """Pseudo counts.
 
         Args:
-            e (th.Tensor): Encoded observations.
+            embeddings (th.Tensor): Encoded observations.
+            memory (List[th.Tensor]): Episodic memory.
 
         Returns:
             Conut values.
         """
-        num_steps = e.size()[0]
-        counts = th.zeros(size=(num_steps,))
-        memory = th.stack(list(self.episodic_memory)).squeeze(1)
-        for step in range(num_steps):
-            dist = th.norm(e[step] - memory, p=2, dim=1).sort().values[: self.k]
-            # moving average
-            dist = dist / (dist.mean() + 1e-11)
-            dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
-            kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
-            s = th.sqrt(kernel.sum()) + self.c
+        memory = th.stack(memory)
+        dist = (th.norm(embeddings - memory, p=2, dim=1).sort().values[: self.k]) ** 2
+        self.squared_distances.append(dist)
+        dist = dist / (self.dist_rms.mean + 1e-8)
+        dist = th.maximum(dist - self.kernel_cluster_distance, th.zeros_like(dist))
+        kernel = self.kernel_epsilon / (dist + self.kernel_epsilon)
+        s = th.sqrt(kernel.sum()) + self.c
 
-            if s is th.nan or s > self.sm:
-                counts[step] = 0.0
-            else:
-                counts[step] = 1.0 / s
+        if th.isnan(s) or s > self.sm:
+            return 0.0
+        else:
+            return 1.0 / s
 
-        return counts
-
-    def compute_irs(self, samples: Dict, step: int = 0) -> th.Tensor:
-        """Compute the intrinsic rewards for current samples.
+    def compute(self, samples: Dict[str, th.Tensor], sync: bool = True) -> th.Tensor:
+        """Compute the rewards for current samples.
 
         Args:
-            samples (Dict): The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-            step (int): The global training step.
+            samples (Dict[str, th.Tensor]): The collected samples. A python dict consists of multiple tensors,
+                whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+                For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+            sync (bool): Whether to update the reward module after the `compute` function, default is `True`.
 
         Returns:
             The intrinsic rewards.
         """
-        # compute the weighting coefficient of timestep t
-        beta_t = self._beta * np.power(1.0 - self._kappa, step)
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].to(self._device)
-        intrinsic_rewards = th.zeros(size=(num_steps, num_envs))
+        super().compute(samples, sync)
 
-        try:
-            with th.no_grad():
-                for i in range(num_envs):
-                    e = self.encoder.encode(obs_tensor[:, i])
-                    # TODO: add encodings into memory
-                    self.episodic_memory.extend(e.split(1))
-                    n_eps = self.pseudo_counts(e=e)
-                    intrinsic_rewards[:, i] = n_eps
-
-            # udpate the module
+        if sync:
+            # compute the intrinsic rewards
+            all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+            intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+            # update the running mean and std of the squared distances
+            flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+            self.dist_rms.update(flattened_squared_distances)
+            self.squared_distances.clear()
+            # flush the episodic memory of intrinsic rewards
+            self.n_eps = [[] for _ in range(self.n_envs)]
+            # update the reward module
             self.update(samples)
-        except KeyboardInterrupt:
-            exit(0)
+            # scale the intrinsic rewards
+            return self.scale(intrinsic_rewards)
+        else:
+            # TODO: first consider single environment for off-policy algorithms
+            # compute the intrinsic rewards
+            all_n_eps = [th.as_tensor(n_eps) for n_eps in self.n_eps]
+            intrinsic_rewards = th.stack(all_n_eps).T.to(self.device)
+            # temporarily store the intrinsic rewards and observations
+            self.irs_buffer.append(intrinsic_rewards)
+            self.obs_buffer.append(samples['observations'])
+            if samples['truncateds'].item() or samples['terminateds'].item():
+                # update the running mean and std of the squared distances
+                flattened_squared_distances = th.cat(self.squared_distances, dim=0)
+                self.dist_rms.update(flattened_squared_distances)
+                self.squared_distances.clear()
+                # update the running mean and std of the intrinsic rewards
+                if self.rwd_norm_type == "rms":
+                    self.rwd_norm.update(th.cat(self.irs_buffer))
+                    self.irs_buffer.clear()
+                if self.obs_norm_type == "rms":
+                    self.obs_norm.update(th.cat(self.obs_buffer).cpu())
+                    self.obs_buffer.clear()
+            # flush the episodic memory of intrinsic rewards
+            self.n_eps = [[] for _ in range(self.n_envs)]
 
-        return intrinsic_rewards * beta_t
+            return (intrinsic_rewards / self.rwd_norm.std) * self.weight
 
-    def add(self, samples: Dict) -> None:
-        """Add new samples to the intrinsic reward module."""
-
-    def update(self, samples: Dict) -> None:
-        """Update the intrinsic reward module if necessary.
+    def update(self, samples: Dict[str, th.Tensor]) -> None:
+        """Update the reward module if necessary.
 
         Args:
-            samples: The collected samples. A python dict like
-                {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-                actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-                rewards (n_steps, n_envs) <class 'th.Tensor'>,
-                next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+            samples (Dict[str, th.Tensor]): The collected samples same as the `compute` function.
 
         Returns:
-            None
+            None.
         """
-        num_steps = samples["obs"].size()[0]
-        num_envs = samples["obs"].size()[1]
-        obs_tensor = samples["obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-        next_obs_tensor = samples["next_obs"].view((num_envs * num_steps, *self._obs_shape)).to(self._device)
-
-        if self._action_type == "Discrete":
-            actions_tensor = samples["actions"].view(num_envs * num_steps).to(self._device)
-            actions_tensor = F.one_hot(actions_tensor.long(), self._action_dim).float()
+        # get the number of steps and environments
+        (n_steps, n_envs) = samples.get("observations").size()[:2]
+        obs_tensor = (
+            samples.get("observations")
+            .to(self.device)
+            .view((n_steps * n_envs, *self.obs_shape))
+        )
+        next_obs_tensor = (
+            samples.get("next_observations")
+            .to(self.device)
+            .view((n_steps * n_envs, *self.obs_shape))
+        )
+        # normalize the observations
+        obs_tensor = self.normalize(obs_tensor)
+        next_obs_tensor = self.normalize(next_obs_tensor)
+        # apply one-hot encoding if the action type is discrete
+        if self.action_type == "Discrete":
+            actions_tensor = (
+                samples.get("actions").view(n_steps * n_envs).to(self.device)
+            )
+            actions_tensor = F.one_hot(
+                actions_tensor.long(), self.policy_action_dim
+            ).float()
         else:
-            actions_tensor = samples["actions"].view((num_envs * num_steps, self._action_dim)).to(self._device)
-
+            actions_tensor = (
+                samples.get("actions")
+                .view((n_steps * n_envs, self.action_dim))
+                .to(self.device)
+            )
+        # build the dataset and loader
         dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
-        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, drop_last=True)
+        loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
+        avg_loss = []
+        # update the encoder
         for _idx, batch in enumerate(loader):
+            # get the batch data
             obs, actions, next_obs = batch
-            pred_actions = self.encoder(obs, next_obs)
+            # zero the gradients
             self.opt.zero_grad()
-            loss = self.loss(pred_actions, actions)
-            loss.backward()
+            # get the predicted actions
+            pred_actions = self.encoder(obs, next_obs)
+            # compute the inverse dynamics loss
+            im_loss = self.loss(pred_actions, actions)
+            # use a random mask to select a subset of the training data
+            mask = th.rand(len(im_loss), device=self.device)
+            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+            # get the masked loss
+            im_loss = (im_loss * mask).sum() / th.max(
+                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+            )
+            # backward and update
+            im_loss.backward()
             self.opt.step()
+            avg_loss.append(im_loss.item())
+
+        try:
+            self.metrics["loss"].append([self.global_step, np.mean(avg_loss)])
+        except:
+            pass

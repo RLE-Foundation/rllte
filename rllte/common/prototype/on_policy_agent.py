@@ -78,7 +78,7 @@ class OnPolicyAgent(BaseAgent):
         eval_interval: int = 100,
         save_interval: int = 100,
         num_eval_episodes: int = 10,
-        th_compile: bool = True,
+        th_compile: bool = False,
         anneal_lr: bool = False
     ) -> None:
         """Training function.
@@ -128,6 +128,10 @@ class OnPolicyAgent(BaseAgent):
                 # pre-training mode
                 if self.pretraining:
                     rews = th.zeros_like(rews, device=self.device)
+                
+                # watch the interaction process and obtain necessary information
+                if self.irs is not None:
+                    self.irs.watch(obs, actions, rews, terms, truncs, next_obs)
 
                 # add transitions
                 self.storage.add(obs, actions, rews, terms, truncs, infos, next_obs, **extra_policy_outputs)
@@ -149,28 +153,22 @@ class OnPolicyAgent(BaseAgent):
 
             # deal with the intrinsic reward module
             if self.irs is not None:
-                # for modules like RE3, this will calculate the random embeddings
-                # and insert them into the storage. for modules like ICM, this
-                # will update the dynamic models.
-                self.irs.add(
+                # deal with the intrinsic reward module
+                intrinsic_rewards = self.irs.compute(
                     samples={
-                        "obs": self.storage.observations[:-1],  # type: ignore
+                        "observations": self.storage.observations[:-1],  # type: ignore
                         "actions": self.storage.actions,
-                        "next_obs": self.storage.observations[1:],  # type: ignore
+                        "rewards": self.storage.rewards,
+                        "terminateds": self.storage.terminateds,
+                        "truncateds": self.storage.truncateds,
+                        "next_observations": self.storage.observations[1:],  # type: ignore
                     }
                 )
-                # compute intrinsic rewards
-                intrinsic_rewards = self.irs.compute_irs(
-                    samples={
-                        "obs": self.storage.observations[:-1],  # type: ignore
-                        "actions": self.storage.actions,
-                        "next_obs": self.storage.observations[1:],  # type: ignore
-                    },
-                    step=self.global_episode * self.num_envs * self.num_steps,
-                )
-                # only add the intrinsic rewards to the advantages and returns
-                self.storage.advantages += intrinsic_rewards.to(self.device)
-                self.storage.returns += intrinsic_rewards.to(self.device)
+                # just plus the intrinsic rewards to the extrinsic rewards
+                self.storage.rewards += intrinsic_rewards.to(self.device)
+                # TODO: which integration is better?
+                # self.storage.advantages += intrinsic_rewards.to(self.device)
+                # self.storage.returns += intrinsic_rewards.to(self.device)
 
             # update the agent
             self.update()

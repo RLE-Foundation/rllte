@@ -26,6 +26,7 @@
 from typing import Optional
 
 import gymnasium as gym
+from matplotlib.pyplot import pink
 import torch as th
 from torch.nn import functional as F
 
@@ -150,18 +151,6 @@ class DDPG(OffPolicyAgent):
         # sample a batch
         batch = self.storage.sample()
 
-        # compute intrinsic rewards
-        if self.irs is not None:
-            intrinsic_rewards = self.irs.compute_irs(
-                samples={
-                    "obs": batch.observations.unsqueeze(1),
-                    "actions": batch.actions.unsqueeze(1),
-                    "next_obs": batch.next_observations.unsqueeze(1),
-                },
-                step=self.global_step,
-            )
-            batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
-
         # encode
         encoded_obs = self.policy.encoder(batch.observations)
         with th.no_grad():
@@ -215,8 +204,9 @@ class DDPG(OffPolicyAgent):
             # TODO: add time limit mask
             # target_Q = rewards + (1.0 - terminateds) * (1.0 - truncateds) * self.discount * target_V
             target_Q = rewards + (1.0 - terminateds) * self.discount * target_V
-
-        Q1, Q2 = self.policy.critic(obs, actions)
+        
+        obs_actions = th.concat([obs, actions], dim=-1)
+        Q1, Q2 = self.policy.critic(obs_actions)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
         # optimize encoder and critic

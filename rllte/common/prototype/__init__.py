@@ -28,7 +28,7 @@ from .base_augmentation import BaseAugmentation as BaseAugmentation
 from .base_distribution import BaseDistribution as BaseDistribution
 from .base_encoder import BaseEncoder as BaseEncoder
 from .base_policy import BasePolicy as BasePolicy
-from .base_reward import BaseIntrinsicRewardModule as BaseIntrinsicRewardModule
+from .base_reward import BaseReward as BaseReward
 from .base_storage import BaseStorage as BaseStorage
 
 # agent prototypes
