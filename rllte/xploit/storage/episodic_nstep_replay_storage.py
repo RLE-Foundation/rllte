@@ -245,8 +245,8 @@ class ReplayStorageDataset(IterableDataset):
             yield self._sample()
 
 
-class NStepReplayStorage(BaseStorage):
-    """N-step replay storage.
+class EpisodicNStepReplayStorage(BaseStorage):
+    """Episodic N-step replay storage.
         Implemented based on: https://github.com/facebookresearch/drqv2/blob/main/replay_buffer.py
 
     Args:

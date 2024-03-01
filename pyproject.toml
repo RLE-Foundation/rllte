@@ -60,7 +60,7 @@ tests = [
 envs = [
   "envpool",
   "ale-py==0.8.1",
-  "gymnasium[accept-rom-license]",
+  "gymnasium[accept-rom-license, other]",
   "dm-control",
   "procgen-mirror",
   "minigrid",
