@@ -53,7 +53,29 @@ except Exception:
     pass
 
 try:
+    from .miniworld import make_miniworld_env as make_miniworld_env
+except Exception:
+    pass
+
+try:
     from .procgen import make_envpool_procgen_env as make_envpool_procgen_env
     from .procgen import make_procgen_env as make_procgen_env
 except Exception:
     pass
+
+try:
+    from .mario import make_mario_env as make_mario_env
+except Exception:
+    pass
+
+try:
+    from .craftax import make_craftax_env as make_craftax_env
+except Exception:
+    pass
+
+try:
+    from vizdoom import make_envpool_vizdoom_env as make_envpool_vizdoom_env
+except Exception:
+    pass
+
+

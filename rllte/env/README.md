@@ -39,7 +39,4 @@ pip install procgen
 Envpool (add link here)
 pip install envpool
 
-# Envpool environment
-
-
 ### Usage
