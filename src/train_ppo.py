@@ -1,4 +1,4 @@
-from src.utils import parse_args, parse_args_big, make_env, select_intrinsic_reward
+from src.utils import parse_args, make_env, select_intrinsic_reward
 from rllte.agent import PPO, TwoHeadPPO
 
 if __name__ == "__main__":
@@ -8,7 +8,7 @@ if __name__ == "__main__":
     eval_args.n_envs = 1
 
     env, env_name = make_env(args, args.device)
-    eval_env, _ = make_env(eval_args, args.device)
+    #eval_env, _ = make_env(eval_args, args.device)
     
     # select intrinsic reward
     intrinsic_reward = select_intrinsic_reward(
@@ -67,6 +67,7 @@ if __name__ == "__main__":
             discount=args.discount,
             init_fn=args.init_fn,
             pretraining=args.pretraining,
+            gae_lambda=args.gae_lambda,
             encoder_model="mnih" if env.observation_space.shape[-1] == 84 else "espeholt",
         )
     

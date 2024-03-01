@@ -89,6 +89,7 @@ class PPO(OnPolicyAgent):
         ent_coef: float = 0.01,
         max_grad_norm: float = 0.5,
         discount: float = 0.999,
+        gae_lambda: float = 0.95,
         init_fn: str = "orthogonal",
         encoder_model: str = "mnih",
     ) -> None:
@@ -112,6 +113,8 @@ class PPO(OnPolicyAgent):
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.max_grad_norm = max_grad_norm
+        self.discount = discount
+        self.gae_lambda = gae_lambda
 
         # default encoder
         if len(self.obs_shape) == 1:
@@ -157,7 +160,8 @@ class PPO(OnPolicyAgent):
             storage_size=self.num_steps,
             num_envs=self.num_envs,
             batch_size=batch_size,
-            discount=discount
+            discount=discount,
+            gae_lambda=gae_lambda,
         )
 
         # set all the modules [essential operation!!!]

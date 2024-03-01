@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument("--discount", type=float, default=0.99)
     parser.add_argument("--anneal_lr", action="store_true", default=True)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
+    parser.add_argument("--gae_lambda", type=float, default=0.95)
 
     # ppo type
     parser.add_argument("--two_head", action="store_true", default=False)
@@ -87,49 +88,6 @@ def parse_args_dqn():
     parser.add_argument("--int_gamma", type=float, default=None)
     parser.add_argument("--weight_init", type=str, default="orthogonal")
     parser.add_argument("--beta", type=float, default=1.0)
-    
-    args = parser.parse_args()
-    return args
-
-def parse_args_big():
-    parser = argparse.ArgumentParser()
-    # env
-    parser.add_argument("--env_id", type=str, default="SuperMarioBros-1-1-v3")
-    parser.add_argument("--device", type=str, default="cuda:0")
-
-    # train config
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=16)
-    parser.add_argument("--num_train_steps", type=int, default=10_000_000)
-    parser.add_argument("--hidden_dim", type=int, default=512)
-    parser.add_argument("--feature_dim", type=int, default=512)
-    parser.add_argument("--num_steps", type=int, default=2048)
-    parser.add_argument("--batch_size", type=int, default=2048)
-    parser.add_argument("--lr", type=float, default=0.0003)
-    parser.add_argument("--eps", type=float, default=1e-5)
-    parser.add_argument("--n_epochs", type=int, default=10)
-    parser.add_argument("--clip_range", type=float, default=0.2)
-    parser.add_argument("--clip_range_vf", type=float, default=0.1)
-    parser.add_argument("--vf_coef", type=float, default=0.5)
-    parser.add_argument("--ent_coef", type=float, default=0.0)
-    parser.add_argument("--max_grad_norm", type=float, default=0.5)
-    parser.add_argument("--discount", type=float, default=0.99)
-    parser.add_argument("--anneal_lr", action="store_true", default=False)
-    parser.add_argument("--init_fn", type=str, default="orthogonal")
-
-    # ppo type
-    parser.add_argument("--two_head", action="store_true", default=False)
-
-    # intrinsic reward
-    parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
-    parser.add_argument("--rwd_norm_type", type=str, default="rms")
-    parser.add_argument("--obs_rms", action="store_true", default=False)
-    parser.add_argument("--update_proportion", type=float, default=1.0)
-    parser.add_argument("--pretraining", action="store_true", default=False)
-    parser.add_argument("--int_gamma", type=float, default=None)
-    parser.add_argument("--beta", type=float, default=1.0)
-
-    parser.add_argument("--parse_big", action="store_true", default=False)
     
     args = parser.parse_args()
     return args

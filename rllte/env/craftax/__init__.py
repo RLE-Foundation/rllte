@@ -9,7 +9,7 @@ from craftax_classic.envs.craftax_pixels_env import CraftaxClassicPixelsEnv
 from environment_base.wrappers import (
     LogWrapper,
     BatchEnvWrapper,
-    AutoResetEnvWrapper,
+    OptimisticResetVecEnvWrapper,
 )
 
 from rllte.env.craftax.wrappers import TorchWrapper, ResizeTorchWrapper, RecordEpisodeStatistics4Craftax
@@ -28,8 +28,7 @@ def make_craftax_env(
         raise ValueError(f"Unknown environment: {env_id}")
     
     env = LogWrapper(env)
-    env = AutoResetEnvWrapper(env)
-    env = BatchEnvWrapper(env, num_envs=num_envs)
+    env = OptimisticResetVecEnvWrapper(env, num_envs=num_envs, reset_ratio=16)
     env = TorchWrapper(env, device=device)
     env = ResizeTorchWrapper(env, (84, 84))
     env = RecordEpisodeStatistics4Craftax(env)
