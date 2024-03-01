@@ -28,7 +28,6 @@ from .testing import make_multibinary_env as make_multibinary_env
 from .testing import make_multidiscrete_env as make_multidiscrete_env
 from .testing import make_box_env as make_box_env
 from .testing import make_discrete_env as make_discrete_env
-
 from .utils import make_rllte_env as make_rllte_env
 
 try:
@@ -74,7 +73,7 @@ except Exception:
     pass
 
 try:
-    from vizdoom import make_envpool_vizdoom_env as make_envpool_vizdoom_env
+    from .vizdoom import make_envpool_vizdoom_env as make_envpool_vizdoom_env
 except Exception:
     pass
 

@@ -46,9 +46,26 @@ To add your custom environments, simply follow the same logic as the currently a
 
 ### Example training
 from rllte.agent import PPO
+from rllte.env import make_mario_env, make_miniworld_env, make_envpool_vizdoom_env, make_envpool_procgen_env, make_minigrid_env, make_envpool_atari_env, make_craftax_env
+
+# define params
+num_envs = 8
+device = "cuda"
+
+
+# define the environment
+env = make_craftax_env(
+        env_id="Craftax-Classic",
+        num_envs=num_envs,
+        device=device,
+    )
 
 # define the agent
-agent = PPO()
+agent = PPO(
+    env=env,
+    num_envs=num_envs,
+    device=device
+)
         
 
 # start training
