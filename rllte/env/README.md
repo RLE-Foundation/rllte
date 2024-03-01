@@ -13,7 +13,7 @@ Assuming you are running inside a conda environment.
 pip install ale-py==0.8.1
 ```
 
-### Craftax (add link here)
+### Craftax
 
 You will need a Jax GPU-enabled conda environment:
 
@@ -25,32 +25,32 @@ pip install -e .[envs]
 pip install -U "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html 
 ```
 
-### DMC (add link here)
+### DMC
 ```
 pip install dm-control
 ```
 
-### SuperMarioBros (add link here)
+### SuperMarioBros
 ```
 pip install gym-super-mario-bros==7.4.0
 ```
 
-### Minigrid (add link here)
+### Minigrid
 ```
 pip install minigrid
 ```
 
-### Miniworld (add link here)
+### Miniworld
 ```
 pip install miniworld
 ```
 
-### Procgen (add link here)
+### Procgen
 ```
 pip install procgen
 ```
 
-### Envpool (add link here)
+### Envpool
 ```
 pip install envpool
 ```
