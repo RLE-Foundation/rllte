@@ -45,4 +45,13 @@ Each environment has a make_env() function in rllte/env/<your_RL_env>/__init__.p
 To add your custom environments, simply follow the same logic as the currently available environments and the RL training will work flawlessly! 
 
 ### Example training
+from rllte.agent import PPO
 
+# define the agent
+agent = PPO()
+        
+
+# start training
+agent.train(
+    num_train_steps=10_000_000,
+)
