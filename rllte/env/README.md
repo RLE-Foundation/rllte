@@ -40,3 +40,9 @@ Envpool (add link here)
 pip install envpool
 
 ### Usage
+
+Each environment has a make_env() function in rllte/env/<your_RL_env>/__init__.py and its necessary wrappers in rllte/env/<your_RL_env>/wrappers.py
+To add your custom environments, simply follow the same logic as the currently available environments and the RL training will work flawlessly! 
+
+### Example training
+
