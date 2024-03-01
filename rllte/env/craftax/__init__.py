@@ -10,7 +10,8 @@ from rllte.env.craftax.wrappers import TorchWrapper, ResizeTorchWrapper, RecordE
 
 def make_craftax_env(
         env_id: str = "Craftax-Classic",
-        num_envs: int = 8,
+        num_envs: int = 32,
+        reset_ratio: int = 16,
         device: str = "cpu",
     ):
 
@@ -22,7 +23,7 @@ def make_craftax_env(
         raise ValueError(f"Unknown environment: {env_id}")
     
     env = LogWrapper(env)
-    env = OptimisticResetVecEnvWrapper(env, num_envs=num_envs, reset_ratio=16)
+    env = OptimisticResetVecEnvWrapper(env, num_envs=num_envs, reset_ratio=reset_ratio)
     env = TorchWrapper(env, device=device)
     env = ResizeTorchWrapper(env, (84, 84))
     env = RecordEpisodeStatistics4Craftax(env)

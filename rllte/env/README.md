@@ -77,7 +77,7 @@ device = "cuda"
 
 # define environment
 env = make_craftax_env(
-        num_envs=8,
+        num_envs=32,
         device=device,
     )
 
