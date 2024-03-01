@@ -140,7 +140,7 @@ class BaseReward(ABC):
             next_ob = []
             print("Start to initialize observation normalization parameter.....")
             for step in tqdm(range(num_steps * num_iters)):
-                acs = th.randint(0, env.action_space.n, size=(self.n_envs,))
+                acs = th.randint(0, env.action_space.n, size=(self.n_envs,)).to(self.device)
                 s, r, te, tr, _ = env.step(acs)
                 next_ob += s.view(-1, *self.obs_shape).cpu()
 
