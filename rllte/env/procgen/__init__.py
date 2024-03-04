@@ -83,7 +83,7 @@ def make_envpool_procgen_env(
     gamma: float = 0.99,
     num_levels: int = 200,
     start_level: int = 0,
-    distribution_mode: str = "easy",
+    distribution_mode: int = 1,
     asynchronous: bool = True,
 ) -> Gymnasium2Torch:
     """Create Procgen environments.
@@ -121,12 +121,14 @@ def make_envpool_procgen_env(
         seed=seed,
         num_levels=num_levels,
         start_level=start_level,
+        distribution_mode=distribution_mode
     )
+    
     if asynchronous:
         envs = EnvPoolAsync2Gymnasium(env_kwargs)
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
-
+        
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))

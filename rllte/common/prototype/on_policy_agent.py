@@ -242,10 +242,11 @@ class OnPolicyAgent(BaseAgent):
                     "total_time": total_time,
                 }
 ###############################################################################################################
-                # only used for craftax
-                self.logger.additional(
-                    msg={key: np.mean(value) for key, value in episode_achievements.items() if len(value) > 0}
-                )
+                if len(episode_achievements) > 0:
+                    # only used for craftax
+                    self.logger.additional(
+                        msg={key: np.mean(value) for key, value in episode_achievements.items() if len(value) > 0}
+                    )
 ###############################################################################################################
                 self.logger.train(msg=train_metrics)
                 self.logger.loss(msg=self.logger.metrics)

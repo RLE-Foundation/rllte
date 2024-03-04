@@ -129,15 +129,47 @@ def make_env(args, device):
         from rllte.env import make_envpool_procgen_env
         args.env_id = args.env_id.split("_")[1] + "-v0"
         
-        # this config gives a very cool level for MazeHard-v0
-        env = make_envpool_procgen_env(
-            env_id=args.env_id,
-            num_envs=args.n_envs,
-            device=device,
-            num_levels=1,
-            start_level=495,
-            seed=394,
-        )
+        if args.env_id == "1MazeHard-v0":
+            # this config gives a very cool level for MazeHard-v0
+            env = make_envpool_procgen_env(
+                env_id="MazeHard-v0",
+                num_envs=args.n_envs,
+                device=device,
+                num_levels=1,
+                start_level=495,
+                seed=394,
+                distribution_mode=1
+            )
+        elif args.env_id == "AllMazeHard-v0":
+            env = make_envpool_procgen_env(
+                env_id="MazeHard-v0",
+                num_envs=args.n_envs,
+                device=device,
+                num_levels=200,
+                start_level=1,
+                seed=args.seed,
+                distribution_mode=1
+            )
+        elif args.env_id == "1MazeMemory-v0":
+            env = make_envpool_procgen_env(
+                env_id="MazeMemory-v0",
+                num_envs=args.n_envs,
+                device=device,
+                num_levels=1,
+                start_level=475,
+                seed=333,
+                distribution_mode=10
+            )
+        elif args.env_id == "AllMazeMemory-v0":
+            env = make_envpool_procgen_env(
+                env_id="MazeMemory-v0",
+                num_envs=args.n_envs,
+                device=device,
+                num_levels=200,
+                start_level=1,
+                seed=args.seed,
+                distribution_mode=10
+            )
 
     elif "MiniGrid" in args.env_id:
         from rllte.env import make_minigrid_env
