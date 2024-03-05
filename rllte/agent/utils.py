@@ -43,7 +43,7 @@ def soft_update_params(net: nn.Module, target_net: nn.Module, tau: float) -> Non
     """
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
-
+        
 
 def to_torch(xs: Tuple[np.ndarray, ...], device: th.device) -> Tuple[th.Tensor, ...]:
     """Convert numpy arrays to torch tensors.

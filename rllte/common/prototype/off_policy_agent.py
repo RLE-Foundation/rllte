@@ -166,7 +166,7 @@ class OffPolicyAgent(BaseAgent):
             for idx, (term, trunc) in enumerate(zip(terms, truncs)):
                 if term.item() or trunc.item():
                     # TODO: deal with dict observations
-                    real_next_obs[idx] = th.as_tensor(infos["final_observation"][idx], device=self.device) # type: ignore[index]
+                    real_next_obs[idx] = th.as_tensor(np.array(infos["final_observation"][idx]), device=self.device) # type: ignore[index]
 
             # add new transitions
             self.storage.add(obs, actions.unsqueeze(-1), rews, terms, truncs, infos, real_next_obs)
