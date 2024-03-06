@@ -180,7 +180,7 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
-    elif "Montezuma" in args.env_id:
+    elif "Montezuma" in args.env_id or "Pitfall":
         from rllte.env import make_envpool_atari_env
         env = make_envpool_atari_env(
             env_id=args.env_id,
