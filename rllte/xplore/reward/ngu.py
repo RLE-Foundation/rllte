@@ -95,13 +95,13 @@ class NGU(Fabric):
             device=device,
             beta=beta,
             kappa=kappa,
-            rwd_norm_type=rwd_norm_type,
-            obs_rms=obs_rms,
+            rwd_norm_type="none",
+            obs_rms=True,
             gamma=gamma,
             latent_dim=latent_dim,
             lr=lr,
             batch_size=batch_size,
-            update_proportion=update_proportion,
+            update_proportion=0.1,
             encoder_model=encoder_model,
             weight_init=weight_init
         )
@@ -113,8 +113,8 @@ class NGU(Fabric):
             device=device,
             beta=beta,
             kappa=kappa,
-            rwd_norm_type=rwd_norm_type,
-            obs_rms=obs_rms,
+            rwd_norm_type="rms",
+            obs_rms=True,
             gamma=gamma,
             latent_dim=latent_dim,
             lr=lr,
@@ -124,7 +124,7 @@ class NGU(Fabric):
             kernel_epsilon=kernel_epsilon,
             c=c,
             sm=sm,
-            update_proportion=update_proportion,
+            update_proportion=0.5,
             encoder_model=encoder_model,
             weight_init=weight_init
         )
