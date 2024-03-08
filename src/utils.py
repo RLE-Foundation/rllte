@@ -68,9 +68,11 @@ def parse_args_dqn():
     parser.add_argument("--eps", type=float, default=1e-8)
     parser.add_argument("--tau", type=float, default=1.0)
     parser.add_argument("--update_every_steps", type=int, default=4)
-    parser.add_argument("--target_update_freq", type=int, default=1_000)
+    parser.add_argument("--target_update_freq", type=int, default=2_500)
     parser.add_argument("--discount", type=float, default=0.99)
     parser.add_argument("--init_fn", type=str, default="orthogonal")
+    parser.add_argument("--encoder_model", type=str, default="mnih")
+    parser.add_argument("--double_dqn", action="store_true", default=True)
     
     # dqn type
     parser.add_argument("--two_head", action="store_true", default=False)
@@ -178,7 +180,7 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
-    elif "Montezuma" in args.env_id:
+    elif "Montezuma" in args.env_id or "Pitfall":
         from rllte.env import make_envpool_atari_env
         env = make_envpool_atari_env(
             env_id=args.env_id,

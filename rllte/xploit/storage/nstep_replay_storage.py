@@ -82,26 +82,25 @@ class NStepReplayStorage(BaseStorage):
         """
         for i in range(len(observations)):
             self.n_step_buffer.append((
-                observations[i], actions[i], rewards[i], terminateds[i], truncateds[i], infos[i], next_observations[i]
+                observations[i], actions[i], rewards[i], terminateds[i], truncateds[i], next_observations[i]
             ))
             if len(self.n_step_buffer) == self.n_step:
-                obs, act, rew, term, trunc, info, next_obs = self._get_n_step_info()
-                self._store_transition(obs, act, rew, term, trunc, info, next_obs)
+                obs, act, rew, term, trunc, next_obs = self._get_n_step_info()
+                self._store_transition(obs, act, rew, term, trunc, next_obs)
 
     def _get_n_step_info(self) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, th.Tensor, Dict[str, Any], th.Tensor]:
         """Calculate n-step information."""
-        rew, next_obs, term, trunc, info = 0, None, False, False, {}
+        rew, next_obs, term, trunc = 0, None, False, False
         for i in range(self.n_step):
-            obs, act, r, t, tr, inf, next_obs = self.n_step_buffer[i]
+            obs, act, r, t, tr, next_obs = self.n_step_buffer[i]
             rew += r * (self.gamma ** i)
             if i == self.n_step - 1:
                 next_obs = next_obs
                 term = t
                 trunc = tr
-                info = inf
-        return obs, act, rew, term, trunc, info, next_obs
+        return obs, act, rew, term, trunc, next_obs
 
-    def _store_transition(self, obs, act, rew, term, trunc, info, next_obs):
+    def _store_transition(self, obs, act, rew, term, trunc, next_obs):
         """Store a single transition."""
         np.copyto(self.observations[self.step], obs.cpu().numpy())
         np.copyto(self.actions[self.step], act.cpu().numpy())
@@ -135,3 +134,7 @@ class NStepReplayStorage(BaseStorage):
             truncateds=self.to_torch(truncateds),
             next_observations=self.to_torch(next_obs),
         )
+        
+    def update(self, *args) -> None:
+        """Update the storage if necessary."""
+        return None

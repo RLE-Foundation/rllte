@@ -31,8 +31,8 @@ from torch.nn import functional as F
 from rllte.agent import utils
 from rllte.common.prototype import OffPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder
-from rllte.xploit.policy import OffPolicyDoubleQNetwork
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
+from rllte.xploit.policy import OffPolicyDoubleDistributionalQNetwork
 from rllte.xploit.storage import NStepReplayStorage
 
 
@@ -84,6 +84,10 @@ class Rainbow(OffPolicyAgent):
         target_update_freq: int = 1000,
         discount: float = 0.99,
         init_fn: str = "orthogonal",
+        encoder_model: str = "mnih",
+        v_min: float = -100.0,
+        v_max: float = 100.0,
+        n_atoms: int = 101,
     ) -> None:
         super().__init__(
             env=env,
@@ -102,18 +106,26 @@ class Rainbow(OffPolicyAgent):
         self.discount = discount
         self.update_every_steps = update_every_steps
         self.target_update_freq = target_update_freq
+        self.v_min = v_min
+        self.v_max = v_max
+        self.n_atoms = n_atoms
 
         # default encoder
-        if len(self.obs_shape) == 3:
-            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
-        elif len(self.obs_shape) == 1:
+        if len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
             )
-
+        elif encoder_model == "mnih":
+            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        elif encoder_model == "espeholt":
+            encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+        else:
+            raise NotImplementedError(f"Unsupported encoder model {encoder_model}!")
+        
+        
         # create policy
-        policy = OffPolicyDoubleQNetwork(
+        policy = OffPolicyDoubleDistributionalQNetwork(
             observation_space=env.observation_space,
             action_space=env.action_space,
             feature_dim=feature_dim,
@@ -156,38 +168,37 @@ class Rainbow(OffPolicyAgent):
             )
             batch = batch._replace(reward=batch.rewards + intrinsic_rewards.to(self.device))
 
-        # encode
-        encoded_obs = self.policy.encoder(batch.observations)
-        with th.no_grad():
-            encoded_next_obs = self.policy.encoder(batch.next_observations)
-
         # compute target Q values
         with th.no_grad():
-            next_q_values = self.policy.qnet_target(encoded_next_obs)
-            next_q_values, _ = next_q_values.max(dim=1)
-            next_q_values = next_q_values.reshape(-1, 1)
-            # time limit mask
-            target_q_values = (
-                batch.rewards + (1.0 - batch.terminateds) * (1.0 - batch.truncateds) * self.discount * next_q_values
-            )
+            next_pmfs = self.policy.get_target_dist(batch.next_observations)
+            next_atoms = batch.rewards + self.discount * self.policy.target_atoms * (1.0 - batch.terminateds) * (1.0 - batch.truncateds)
+            delta_z = self.policy.target_atoms[1] - self.policy.target_atoms[0]
+            tz = next_atoms.clamp(self.v_min, self.v_max)
+            b = (tz - self.v_min) / delta_z
+            l = b.floor().clamp(0, self.n_atoms - 1)
+            u = b.ceil().clamp(0, self.n_atoms - 1)
+            d_m_l = (u + (l == u).float() - b) * next_pmfs
+            d_m_u = (b - l) * next_pmfs
+            target_pmfs = th.zeros_like(next_pmfs)
+            for i in range(target_pmfs.size(0)):
+                target_pmfs[i].index_add_(0, l[i].long(), d_m_l[i])
+                target_pmfs[i].index_add_(0, u[i].long(), d_m_u[i])
 
         # compute current Q values
-        q_values = self.policy.qnet(encoded_obs)
-        q_values = th.gather(q_values, dim=1, index=batch.actions.long())
-        # following https://github.com/DLR-RM/stable-baselines3/blob/d68ff2e17f2f823e6f48d9eb9cee28ca563a2554/stable_baselines3/dqn/dqn.py
-        # less sensitive to outliers
-        huber_loss = F.mse_loss(q_values, target_q_values)
+        old_pmfs = self.policy.get_online_dist(batch.observations, batch.actions.flatten())
+        loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
+        q_values = (old_pmfs * self.policy.atoms).sum(1)
 
         # optimize the qnet
         self.policy.optimizers["opt"].zero_grad(set_to_none=True)
-        huber_loss.backward()
+        loss.backward()
         self.policy.optimizers["opt"].step()
 
         # udpate target qnet
         if self.global_step % self.target_update_freq == 0:
             utils.soft_update_params(self.policy.qnet, self.policy.qnet_target, self.tau)
+            self.policy.target_atoms.data.copy_(self.policy.atoms.data)
 
         # record metrics
-        self.logger.record("train/q_loss", huber_loss.item())
+        self.logger.record("train/q_loss", loss.item())
         self.logger.record("train/q", q_values.mean().item())
-        self.logger.record("train/target_q", target_q_values.mean().item())
