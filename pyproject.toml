@@ -62,7 +62,7 @@ envs = [
   "ale-py==0.8.1",
   "gymnasium[accept-rom-license, other]",
   "dm-control",
-  "procgen-mirror",
+  "procgen",
   "minigrid",
   "gym-super-mario-bros==7.4.0" 
 ]

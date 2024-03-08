@@ -66,6 +66,7 @@ def make_envpool_atari_env(
         seed=seed,
         episodic_life=True,
         reward_clip=True,
+        repeat_action_probability=0.25,
         stack_num=1,
         gray_scale=False,
     )
