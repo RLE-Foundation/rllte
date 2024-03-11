@@ -13,7 +13,7 @@ packages = ["rllte"]
 
 [project]
 name = "rllte-core"
-version = "0.0.1.beta12"
+version = "0.0.1.beta13"
 authors = [
   { name="Reinforcement Learning Evolution Foundation", email="friedrichyuan19990827@gmail.com" },
 ]
@@ -33,7 +33,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "gymnasium[accept-rom-license]",
+  "gymnasium[accept-rom-license, other]",
   "torch",
   "torchvision",
   "termcolor",
@@ -56,13 +56,7 @@ tests = [
   "isort>=5.0",
   "black"
 ]
-envs = [
-  "envpool",
-  "ale-py==0.8.1",
-  "dm-control",
-  "procgen",
-  "minigrid"
-]
+
 docs = [
   "mkdocs-material",
   "mkgendocs"

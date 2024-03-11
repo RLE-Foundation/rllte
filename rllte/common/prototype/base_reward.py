@@ -34,6 +34,7 @@ import torch as th
 from rllte.common.preprocessing import process_action_space, process_observation_space
 from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
 
+
 class BaseReward(ABC):
     """Base class of reward module.
 
@@ -61,8 +62,12 @@ class BaseReward(ABC):
         obs_norm_type: str = "rms",
     ) -> None:
         # get environment information
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        if isinstance(envs, VectorEnv):
+            self.observation_space = envs.single_observation_space
+            self.action_space = envs.single_action_space
+        else:
+            self.observation_space = envs.observation_space
+            self.action_space = envs.action_space
         self.n_envs = envs.unwrapped.num_envs
         ## process the observation and action space
         self.obs_shape: Tuple = process_observation_space(self.observation_space)  # type: ignore
@@ -138,6 +143,7 @@ class BaseReward(ABC):
         """Initialize the normalization parameters for observations if the RMS is used."""
         # TODO: better initialization parameters?
         num_steps, num_iters = 128, 20
+        # for the vectorized environments with `Gymnasium2Torch` from rllte
         try:
             _, _ = self.envs.reset()
             if self.obs_norm_type == "rms":
@@ -157,14 +163,19 @@ class BaseReward(ABC):
                         self.obs_norm.update(all_next_obs)
                         all_next_obs = []
         except:
-            # for the outdated gym version
+            # for the normal vectorized environments
             _ = self.envs.reset()
             if self.obs_norm_type == "rms":
                 all_next_obs = []
                 for step in range(num_steps * num_iters):
                     actions = [self.action_space.sample() for _ in range(self.n_envs)]
                     actions = np.stack(actions)
-                    next_obs, _, _, _ = self.envs.step(actions)
+                    try:
+                        # for the old gym output
+                        next_obs, _, _, _ = self.envs.step(actions)
+                    except:
+                        # for the new gymnaisum output
+                        next_obs, _, _, _, _ = self.envs.step(actions)
                     all_next_obs += th.as_tensor(next_obs).view(-1, *self.obs_shape)
                     # update the running mean and std
                     if len(all_next_obs) % (num_steps * self.n_envs) == 0:
