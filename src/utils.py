@@ -180,7 +180,7 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
-    elif "Montezuma" in args.env_id or "Pitfall":
+    elif "Montezuma" in args.env_id or "Pitfall" in args.env_id:
         from rllte.env import make_envpool_atari_env
         env = make_envpool_atari_env(
             env_id=args.env_id,
@@ -235,7 +235,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "icm":
         intrinsic_reward = ICM(
@@ -249,7 +250,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "rnd":
         intrinsic_reward = RND(
@@ -263,7 +265,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "ngu":
         intrinsic_reward = NGU(
@@ -277,7 +280,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "ride":
         intrinsic_reward = RIDE(
@@ -291,7 +295,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "re3":
         intrinsic_reward = RE3(
@@ -304,7 +309,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "rise":
         intrinsic_reward = RISE(
@@ -317,7 +323,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "revd":
         intrinsic_reward = REVD(
@@ -331,7 +338,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "e3b":
         intrinsic_reward = E3B(
@@ -345,7 +353,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     elif args.intrinsic_reward == "disagreement":
         intrinsic_reward = Disagreement(
@@ -359,7 +368,8 @@ def select_intrinsic_reward(args, env, device):
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
-            beta=args.beta
+            beta=args.beta,
+            latent_dim=args.hidden_dim
         )
     else:
         raise NotImplementedError

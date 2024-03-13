@@ -63,7 +63,6 @@ class ObservationEncoder(nn.Module):
         else:
             raise ValueError("Invalid weight_init")
 
-
         # visual
         if encoder_model == "mnih" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
@@ -79,9 +78,8 @@ class ObservationEncoder(nn.Module):
             with th.no_grad():
                 sample = th.ones(size=tuple(obs_shape)).float()
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
-
+            
             self.trunk.append(init_(nn.Linear(n_flatten, latent_dim)))
-            self.trunk.append(nn.ReLU())
         elif encoder_model == "espeholt" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
                 init_(nn.Conv2d(obs_shape[0], 32, kernel_size=3, stride=2, padding=1)),
@@ -99,13 +97,16 @@ class ObservationEncoder(nn.Module):
                 n_flatten = self.trunk(sample.unsqueeze(0)).shape[1]
 
             self.trunk.append(init_(nn.Linear(n_flatten, latent_dim)))
-            self.trunk.append(nn.ReLU())
         else:
             self.trunk = nn.Sequential(
-                init_(nn.Linear(obs_shape[0], 256)), 
-                nn.ReLU()
+                init_(nn.Linear(obs_shape[0], latent_dim)),
+                nn.ReLU(),
+                init_(nn.Linear(latent_dim, latent_dim)),
+                nn.ReLU(),
+                init_(nn.Linear(latent_dim, latent_dim)),
+                nn.ReLU(),
+                init_(nn.Linear(latent_dim, latent_dim)),
             )
-            self.trunk.append(init_(nn.Linear(256, latent_dim)))
 
     def forward(self, obs: th.Tensor) -> th.Tensor:
         """Encode the input tensors.
@@ -179,7 +180,20 @@ class InverseDynamicsModel(nn.Module):
     def __init__(self, latent_dim, action_dim, encoder_model="mnih", weight_init="default") -> None:
         super().__init__()
 
-        self.trunk = ObservationEncoder(obs_shape=(latent_dim * 2,), latent_dim=action_dim, encoder_model=encoder_model, weight_init=weight_init)
+        if weight_init == "orthogonal":
+            init_ = orthogonal_layer_init
+        elif weight_init == "default":
+            init_ = default_layer_init
+        else:
+            raise ValueError("Invalid weight_init")
+
+
+        self.trunk = nn.Sequential(
+            nn.ReLU(),
+            init_(nn.Linear(2 * latent_dim, latent_dim)),
+            nn.ReLU(),
+            init_(nn.Linear(latent_dim, action_dim))
+        )
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:
         """Forward function for outputing predicted actions.
@@ -207,7 +221,19 @@ class ForwardDynamicsModel(nn.Module):
     def __init__(self, latent_dim, action_dim, encoder_model="mnih", weight_init="default") -> None:
         super().__init__()
 
-        self.trunk = ObservationEncoder(obs_shape=(latent_dim + action_dim,), latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init)
+        if weight_init == "orthogonal":
+            init_ = orthogonal_layer_init
+        elif weight_init == "default":
+            init_ = default_layer_init
+        else:
+            raise ValueError("Invalid weight_init")
+
+        self.trunk = nn.Sequential(
+            nn.ReLU(),
+            init_(nn.Linear(latent_dim + action_dim, latent_dim)),
+            nn.ReLU(),
+            init_(nn.Linear(latent_dim, latent_dim))
+        )
 
     def forward(self, obs: th.Tensor, pred_actions: th.Tensor) -> th.Tensor:
         """Forward function for outputing predicted next-obs.

@@ -103,7 +103,7 @@ class NGU(Fabric):
             batch_size=batch_size,
             update_proportion=0.1,
             encoder_model=encoder_model,
-            weight_init=weight_init
+            weight_init=weight_init,
         )
         
         pseudo_counts = PseudoCounts(

@@ -106,6 +106,7 @@ class PseudoCounts(BaseReward):
             obs_shape=self.obs_shape,
             action_dim=self.policy_action_dim,
             latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+        
         # set the optimizer and loss function
         self.opt = th.optim.Adam(self.encoder.parameters(), lr=lr)
         if self.action_type == "Discrete":
