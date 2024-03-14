@@ -3,6 +3,8 @@ import gymnasium as gym
 from brax.io import torch as brax_torch
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
+from craftax_classic.envs.craftax_symbolic_env import CraftaxClassicSymbolicEnv
+from craftax.envs.craftax_symbolic_env import CraftaxSymbolicEnv
 from craftax.envs.craftax_pixels_env import CraftaxPixelsEnv
 from craftax_classic.envs.craftax_pixels_env import CraftaxClassicPixelsEnv
 
@@ -21,17 +23,17 @@ def make_craftax_env(
     ):
 
     if env_id == "Craftax-Classic":
-        env = CraftaxClassicPixelsEnv()
+        env = CraftaxClassicSymbolicEnv()
     elif env_id == "Craftax":
-        env = CraftaxPixelsEnv()
+        env = CraftaxSymbolicEnv()
     else:
         raise ValueError(f"Unknown environment: {env_id}")
     
     env = LogWrapper(env)
     env = OptimisticResetVecEnvWrapper(env, num_envs=num_envs, reset_ratio=16)
     env = TorchWrapper(env, device=device)
-    env = ResizeTorchWrapper(env, (84, 84))
     env = RecordEpisodeStatistics4Craftax(env)
+
     env.num_envs = num_envs
     env.single_observation_space = env.observation_space
     env.single_action_space = env.action_space
