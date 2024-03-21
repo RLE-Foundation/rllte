@@ -132,9 +132,7 @@ def make_envpool_procgen_env(
     envs = RecordEpisodeStatistics(envs)
     envs = NormalizeReward(envs, gamma=gamma)
     envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
-
     return Gymnasium2Torch(envs, device=device, envpool=True)
-
 
 def make_procgen_env(
     env_id: str = "bigfish",
