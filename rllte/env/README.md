@@ -18,7 +18,7 @@ pip install ale-py==0.8.1
 You will need a Jax GPU-enabled conda environment:
 
 ```
-conda create -n rllte jaxlib==*cuda jax python=3.11 -c conda-forge
+conda create -n craftax jaxlib=*=*cuda* jax python=3.11 -c conda-forge
 pip install craftax
 pip install brax
 pip install -e .[envs]
