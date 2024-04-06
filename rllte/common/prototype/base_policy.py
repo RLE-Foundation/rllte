@@ -126,4 +126,5 @@ class BasePolicy(ABC, nn.Module):
             None.
         """
         params = th.load(path, map_location=device)
-        self.load_state_dict(params)
+        # some parameters are not there, dont load those
+        self.load_state_dict(params.state_dict(), strict=False)

@@ -8,7 +8,7 @@ if __name__ == "__main__":
     eval_args.n_envs = 1
 
     env, env_name = make_env(args, args.device)
-    eval_env, _ = make_env(eval_args, args.device)
+    #eval_env, _ = make_env(eval_args, args.device)
     
     # select intrinsic reward
     intrinsic_reward = select_intrinsic_reward(
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     else:
         ppo_args = dict(
             env=env, 
-            eval_env=eval_env,
+            #eval_env=eval_env,
             seed=args.seed,
             device=args.device,
             tag=exp_name,
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     agent.train(
         num_train_steps=args.num_train_steps,
         anneal_lr=args.anneal_lr,
-        eval_interval=10,
+        eval_interval=500,
         save_interval=999_999_999,
-        th_compile=False
+        th_compile=False,
     )

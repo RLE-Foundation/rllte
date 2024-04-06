@@ -102,8 +102,6 @@ def make_env(args, device):
                 device=device,
                 num_envs=args.n_envs,
                 env_id=args.env_id,
-                gray_scale=args.gray_scale,
-                frame_stack=args.frame_stack,
             )
         else:
             env = make_mario_env(
