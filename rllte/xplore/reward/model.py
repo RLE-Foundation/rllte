@@ -99,11 +99,7 @@ class ObservationEncoder(nn.Module):
             self.trunk.append(init_(nn.Linear(n_flatten, latent_dim)))
         else:
             self.trunk = nn.Sequential(
-                init_(nn.Linear(obs_shape[0], latent_dim)),
-                nn.ReLU(),
-                init_(nn.Linear(latent_dim, latent_dim)),
-                nn.ReLU(),
-                init_(nn.Linear(latent_dim, latent_dim)),
+                init_(nn.Linear(obs_shape[-1], latent_dim)),
                 nn.ReLU(),
                 init_(nn.Linear(latent_dim, latent_dim)),
             )

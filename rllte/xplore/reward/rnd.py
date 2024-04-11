@@ -137,8 +137,8 @@ class RND(BaseReward):
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
             # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
+            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape)).squeeze()
+            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape)).squeeze()
             # compute the distance
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
@@ -175,19 +175,23 @@ class RND(BaseReward):
             # zero the gradients
             self.opt.zero_grad()
             # get the source and target features
-            src_feats = self.predictor(obs)
+            src_feats = self.predictor(obs).squeeze()
             with th.no_grad():
-                tgt_feats = self.target(obs)
+                tgt_feats = self.target(obs).squeeze()
             
             # compute the loss
             loss = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=-1)
-            # use a random mask to select a subset of the training data
-            mask = th.rand(len(loss), device=self.device)
-            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
-            loss = (loss * mask).sum() / th.max(
-                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
-            )
+            
+            if self.action_type != "Discrete":
+                loss = loss.mean()
+            else:
+                # use a random mask to select a subset of the training data
+                mask = th.rand(len(loss), device=self.device)
+                mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+                # get the masked loss
+                loss = (loss * mask).sum() / th.max(
+                    mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+                )
             # backward and update
             loss.backward()
             self.opt.step()

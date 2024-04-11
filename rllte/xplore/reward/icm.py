@@ -203,24 +203,30 @@ class ICM(BaseReward):
             self.im_opt.zero_grad()
             self.fm_opt.zero_grad()
             # encode the observations and next observations
-            encoded_obs = self.encoder(obs)
-            encoded_next_obs = self.encoder(next_obs)
+            encoded_obs = self.encoder(obs).squeeze()
+            encoded_next_obs = self.encoder(next_obs).squeeze()
             # compute the inverse dynamics loss
             pred_actions = self.im(encoded_obs, encoded_next_obs)
             im_loss = self.im_loss(pred_actions, actions)
             # compute the forward dynamics loss
             pred_next_obs = self.fm(encoded_obs, actions)
             fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(dim=-1)
-            # use a random mask to select a subset of the training data
-            mask = th.rand(len(im_loss), device=self.device)
-            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked losses
-            im_loss = (im_loss * mask).sum() / th.max(
-                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
-            )
-            fm_loss = (fm_loss * mask).sum() / th.max(
-                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
-            )
+
+            if self.action_type != "Discrete":
+                im_loss = im_loss.mean(dim=-1).mean()
+                fm_loss = fm_loss.mean()
+            else:
+                # use a random mask to select a subset of the training data
+                mask = th.rand(len(im_loss), device=self.device)
+                mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+                # get the masked losses
+                im_loss = (im_loss * mask).sum() / th.max(
+                    mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+                )
+                fm_loss = (fm_loss * mask).sum() / th.max(
+                    mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+                )
+
             # backward and update
             (im_loss + fm_loss).backward()
             self.encoder_opt.step()
@@ -229,5 +235,8 @@ class ICM(BaseReward):
             avg_im_loss.append(im_loss.item())
             avg_fm_loss.append(fm_loss.item())
             
-        self.logger.record("im_loss", np.mean(avg_im_loss))
-        self.logger.record("fm_loss", np.mean(avg_fm_loss))
+        try:
+            self.logger.record("im_loss", np.mean(avg_im_loss))
+            self.logger.record("fm_loss", np.mean(avg_fm_loss))
+        except:
+            pass

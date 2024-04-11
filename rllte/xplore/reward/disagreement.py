@@ -147,13 +147,13 @@ class Disagreement(BaseReward):
         actions_tensor = samples.get("actions").to(self.device).view(-1, *self.action_shape)
         # apply one-hot encoding if the action type is discrete
         if self.action_type == "Discrete":
-            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float()
+            actions_tensor = F.one_hot(actions_tensor.long(), self.policy_action_dim).float().squeeze()
         # compute the intrinsic rewards
         with th.no_grad():
-            random_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
+            random_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape)).squeeze()
             preds = []
             for i in range(self.ensemble_size):
-                next_obs_hat = self.ensemble[i](random_feats, actions_tensor)
+                next_obs_hat = self.ensemble[i](random_feats, actions_tensor.squeeze())
                 preds.append(next_obs_hat)
             preds = th.stack(preds, dim=0)
             intrinsic_rewards = th.var(preds, dim=0).mean(dim=-1).view(n_steps, n_envs)
@@ -204,23 +204,30 @@ class Disagreement(BaseReward):
             self.opt[ensemble_idx].zero_grad()
             # get the encoded observations and next observations
             with th.no_grad():
-                encoded_obs = self.random_encoder(obs)
-                encoded_next_obs = self.random_encoder(next_obs)
+                encoded_obs = self.random_encoder(obs).squeeze()
+                encoded_next_obs = self.random_encoder(next_obs).squeeze()
             # compute the predicted next observations
             pred_next_obs = self.ensemble[ensemble_idx](encoded_obs, actions)
             # compute the forward dynamics loss
             fm_loss = F.mse_loss(pred_next_obs, encoded_next_obs, reduction="none").mean(-1)
-            # use a random mask to select a subset of the training data
-            mask = th.rand(len(fm_loss), device=self.device)
-            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
-            fm_loss = (fm_loss * mask).sum() / th.max(
-                mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
-            )
+            
+            if self.action_type != "Discrete":
+                fm_loss = fm_loss.mean(-1)
+            else:
+                # use a random mask to select a subset of the training data
+                mask = th.rand(len(fm_loss), device=self.device)
+                mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
+                # get the masked loss
+                fm_loss = (fm_loss * mask).sum() / th.max(
+                    mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
+                )
             # backward and update
             fm_loss.backward()
             self.opt[ensemble_idx].step()
             
             avg_loss.append(fm_loss.item())
             
-        self.logger.record("avg_loss", np.mean(avg_loss))
+        try:
+            self.logger.record("avg_loss", np.mean(avg_loss))
+        except:
+            pass
