@@ -19,6 +19,7 @@
 *.prof
 *.log
 *.json
+*.pdf
 
 __pycache__/
 _build/
