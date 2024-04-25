@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.interpolate import UnivariateSpline
+
 def smooth(scalars, weight):
     last = 0
     smoothed = []
@@ -14,3 +16,30 @@ def smooth(scalars, weight):
         smoothed.append(smoothed_val)
     
     return np.array(smoothed)
+
+def smooth_spline(x, y, s=10):
+    """
+    Smooths the data using spline interpolation.
+    Args:
+    x (list or numpy array): The independent variable.
+    y (list or numpy array): The dependent variable to smooth.
+    s (float): Smoothing factor for spline. Increase for more smoothing.
+
+    Returns:
+    function: A spline function that can be called with new x values.
+    """
+    spline = UnivariateSpline(x, y, s=s)
+    return spline
+
+def moving_average(data, window_size):
+    """
+    Smooths the data using a simple moving average.
+    Args:
+    data (list or numpy array): The input data to smooth.
+    window_size (int): The number of points to include in the moving average window.
+
+    Returns:
+    numpy array: Smoothed data.
+    """
+    weights = np.ones(window_size) / window_size
+    return np.convolve(data, weights, mode='valid')
