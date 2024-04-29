@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import UnivariateSpline
+from numpy.polynomial.polynomial import Polynomial
 
 def smooth(scalars, weight):
     last = 0
@@ -31,7 +32,7 @@ def smooth_spline(x, y, s=10):
     spline = UnivariateSpline(x, y, s=s)
     return spline
 
-def moving_average(data, window_size):
+def moving_average(data, window_size, mode='same'):
     """
     Smooths the data using a simple moving average.
     Args:
@@ -42,4 +43,15 @@ def moving_average(data, window_size):
     numpy array: Smoothed data.
     """
     weights = np.ones(window_size) / window_size
-    return np.convolve(data, weights, mode='valid')
+    return np.convolve(data, weights, mode=mode)
+
+def smooth_ema(data, alpha):
+    ema = [data[0]]
+    for i in range(1, len(data)):
+        ema.append(alpha * data[i] + (1 - alpha) * ema[i-1])
+    return np.array(ema)
+
+def smooth_polynomial(data, degree):
+    x = np.arange(len(data))
+    coefs = Polynomial.fit(x, data, deg=degree)
+    return coefs(x)
