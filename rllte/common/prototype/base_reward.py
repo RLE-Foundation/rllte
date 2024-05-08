@@ -105,12 +105,19 @@ class BaseReward(ABC):
         Returns:
             The scaled intrinsic rewards.
         """
-        if self.rff is not None:
-            for step in range(rewards.size(0)):
-                rewards[step] = self.rff.update(rewards[step])
+        # rewards_cloned = rewards.clone()
+        # if self.rff is not None:
+        #     for step in range(rewards_cloned.size(0)):
+        #         rewards_cloned[step] = self.rff.update(rewards_cloned[step])
 
         if self.rwd_norm_type == "rms":
-            self.rms.update(rewards.ravel())
+            if self.rff is not None:
+                rewards_cloned = rewards.clone()
+                for step in range(rewards_cloned.size(0)):
+                    rewards_cloned[step] = self.rff.update(rewards_cloned[step])
+                self.rms.update(rewards_cloned.ravel())
+            else:
+                self.rms.update(rewards.ravel())
             std_rewards = ((rewards) / self.rms.std) * self.weight
             return std_rewards
         elif self.rwd_norm_type == "clipped-rms":

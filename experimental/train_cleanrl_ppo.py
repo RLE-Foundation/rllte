@@ -29,9 +29,9 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "Breakout-v5"
+    env_id: str = "MontezumaRevenge-v5"
     """the id of the environment"""
-    total_timesteps: int = 10000000
+    total_timesteps: int = 100000000
     """total timesteps of the experiments"""
     learning_rate: float = 2.5e-4
     """the learning rate of the optimizer"""
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d-%I-%M-%S%p")
-    run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{time_stamp}"
+    run_name = f"{args.exp_name}__{args.env_id}__s{args.seed}__{time_stamp}"
 
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
