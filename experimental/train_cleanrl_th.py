@@ -15,6 +15,7 @@ import tyro
 from gym.wrappers.normalize import RunningMeanStd
 from torch.distributions.categorical import Categorical
 from rllte.xplore.reward import *
+import gymnasium as new_gym
 
 @dataclass
 class Args:
@@ -66,16 +67,16 @@ class Args:
     """the target KL divergence threshold"""
 
     # RND arguments
-    # update_proportion: float = 0.25
-    # """proportion of exp used for predictor update"""
-    # int_coef: float = 1.0
-    # """coefficient of extrinsic reward"""
-    # ext_coef: float = 2.0
-    # """coefficient of intrinsic reward"""
-    # int_gamma: float = 0.99
-    # """Intrinsic reward discount rate"""
-    # num_iterations_obs_norm_init: int = 50
-    # """number of iterations to initialize the observations normalization parameters"""
+    update_proportion: float = 0.25
+    """proportion of exp used for predictor update"""
+    int_coef: float = 1.0
+    """coefficient of extrinsic reward"""
+    ext_coef: float = 2.0
+    """coefficient of intrinsic reward"""
+    int_gamma: float = 0.99
+    """Intrinsic reward discount rate"""
+    num_iterations_obs_norm_init: int = 50
+    """number of iterations to initialize the observations normalization parameters"""
 
     # to be filled in runtime
     batch_size: int = 0
@@ -173,53 +174,6 @@ class Agent(nn.Module):
         return self.critic_ext(features + hidden), self.critic_int(features + hidden)
 
 
-    def __init__(self, input_size, output_size):
-        super().__init__()
-
-        self.input_size = input_size
-        self.output_size = output_size
-
-        feature_output = 7 * 7 * 64
-
-        # Prediction network
-        self.predictor = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4)),
-            nn.LeakyReLU(),
-            layer_init(nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)),
-            nn.LeakyReLU(),
-            layer_init(nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)),
-            nn.LeakyReLU(),
-            nn.Flatten(),
-            layer_init(nn.Linear(feature_output, 512)),
-            nn.ReLU(),
-            layer_init(nn.Linear(512, 512)),
-            nn.ReLU(),
-            layer_init(nn.Linear(512, 512)),
-        )
-
-        # Target network
-        self.target = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4)),
-            nn.LeakyReLU(),
-            layer_init(nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)),
-            nn.LeakyReLU(),
-            layer_init(nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)),
-            nn.LeakyReLU(),
-            nn.Flatten(),
-            layer_init(nn.Linear(feature_output, 512)),
-        )
-
-        # target network is not trainable
-        for param in self.target.parameters():
-            param.requires_grad = False
-
-    def forward(self, next_obs):
-        target_feature = self.target(next_obs)
-        predict_feature = self.predictor(next_obs)
-
-        return predict_feature, target_feature
-
-
 class RewardForwardFilter:
     def __init__(self, gamma):
         self.rewems = None
@@ -270,14 +224,16 @@ if __name__ == "__main__":
     assert isinstance(envs.action_space, gym.spaces.Discrete), "only discrete action space is supported"
 
     # ============= build internal reward =============
+    new_obs_space = new_gym.spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype=np.uint8)
+    new_act_space = new_gym.spaces.Discrete(18)
     irs = RND(
-        observation_space=envs.single_observation_space,
-        action_space=envs.single_action_space,
+        observation_space=new_obs_space,
+        action_space=new_act_space,
         n_envs=args.num_envs,
-        device=device,
+        device=args.device,
         rwd_norm_type='rms',
         obs_rms=True,
-        int_gamma=args.int_gamma,
+        gamma=args.int_gamma,
         lr=args.learning_rate,
         batch_size=args.batch_size,
         latent_dim=512,
