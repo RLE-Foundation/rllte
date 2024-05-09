@@ -193,7 +193,7 @@ if __name__ == "__main__":
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d-%I-%M-%S%p")
-    run_name = f"{args.exp_name}__{args.env_id}__s{args.seed}__{time_stamp}"
+    run_name = f"{args.exp_name}__{args.env_id}__s{args.seed}__th__{time_stamp}"
 
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
@@ -241,6 +241,7 @@ if __name__ == "__main__":
         encoder_model = "mnih",
         weight_init = "orthogonal"
     )
+    irs.init_gym_normalization(num_iters=50, num_steps=128, env=envs, s=envs.reset())
     # ============= build internal reward =============
 
     agent = Agent(envs).to(device)

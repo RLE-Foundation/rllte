@@ -209,6 +209,7 @@ if __name__ == "__main__":
         encoder_model = "mnih",
         weight_init = "orthogonal"
     )
+    irs.init_gym_normalization(num_iters=50, num_steps=128, env=envs, s=envs.reset())
     # ============= build internal reward =============
 
     agent = Agent(envs).to(device)
