@@ -57,7 +57,7 @@ Why **RLLTE**?
 - ⚙️ Support custom environments and modules;
 - 🖥️ Support multiple computing devices like GPU and NPU;
 - 💾 Large number of reusable benchmarks ([RLLTE Hub](https://hub.rllte.dev));
-- 👨‍✈️ Large language model-empowered copilot ([RLLTE Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
+- 🤖 Large language model-empowered copilot ([RLLTE Copilot](https://github.com/RLE-Foundation/rllte-copilot)).
 
 > ⚠️ Since the construction of RLLTE Hub requires massive computing power, we have to upload the training datasets and model weights gradually. Progress report can be found in [Issue#30](https://github.com/RLE-Foundation/rllte/issues/30).
 
@@ -136,9 +136,12 @@ device = "cuda:0" -> device = "npu:0"
 
 Developers only need three steps to implement an RL algorithm with **RLLTE**. The following example illustrates how to write an Advantage Actor-Critic (A2C) agent to solve Atari games. 
 - Firstly, select a prototype:
-``` py
-from rllte.common.prototype import OnPolicyAgent
-```
+  <details>
+        <summary>Click to expand code</summary>
+  ``` py
+  from rllte.common.prototype import OnPolicyAgent
+  ```
+  </details>
 - Secondly, select necessary modules to build the agent:
 
   <details>
@@ -287,17 +290,17 @@ Explore the ecosystem of RLLTE to facilitate your project:
 - [Pre-training](https://docs.rllte.dev/api/tutorials/): Methods of pre-training in RL.
 - [Copilot](https://docs.rllte.dev/copilot): Large language model-empowered copilot.
 
-# API Documentation
+<!-- # API Documentation
 View our well-designed documentation: [https://docs.rllte.dev/](https://docs.rllte.dev/)
 <div align=center>
 <img src='./docs/assets/images/docs.gif' style="width: 100%">
-</div>
+</div> -->
 
 # How To Contribute
 Welcome to contribute to this project! Before you begin writing code, please read [CONTRIBUTING.md](https://github.com/RLE-Foundation/rllte/blob/main/CONTRIBUTING.md) for guide first.
 
 # Cite the Project
-If you use **RLLTE** in your research, please cite this project like this:
+To cite this project in publications:
 ```bibtex
 @article{yuan2023rllte,
   title={RLLTE: Long-Term Evolution Project of Reinforcement Learning}, 
