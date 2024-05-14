@@ -3,7 +3,7 @@
 <img src='./docs/assets/images/logo_horizontal.svg' style="width: 55%">
 <br>
 
-# RLLTE: Long-Term Evolution Project of Reinforcement Learning
+## RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
 <!-- <h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> Paper </a> |
 <a href="https://docs.rllte.dev/api/"> Documentation </a> |
