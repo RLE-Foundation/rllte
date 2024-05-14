@@ -28,6 +28,7 @@ from typing import Dict, Tuple, Optional
 
 import gymnasium as gym
 import numpy as np
+from sympy import sieve
 import torch as th
 from tqdm import tqdm
 import rllte
@@ -105,12 +106,19 @@ class BaseReward(ABC):
         Returns:
             The scaled intrinsic rewards.
         """
-        if self.rff is not None:
-            for step in range(rewards.size(0)):
-                rewards[step] = self.rff.update(rewards[step])
+        # rewards_cloned = rewards.clone()
+        # if self.rff is not None:
+        #     for step in range(rewards_cloned.size(0)):
+        #         rewards_cloned[step] = self.rff.update(rewards_cloned[step])
 
         if self.rwd_norm_type == "rms":
-            self.rms.update(rewards.ravel())
+            if self.rff is not None:
+                rewards_cloned = rewards.clone()
+                for step in range(rewards_cloned.size(0)):
+                    rewards_cloned[step] = self.rff.update(rewards_cloned[step])
+                self.rms.update(rewards_cloned.ravel())
+            else:
+                self.rms.update(rewards.ravel())
             std_rewards = ((rewards) / self.rms.std) * self.weight
             return std_rewards
         elif self.rwd_norm_type == "clipped-rms":
@@ -134,6 +142,21 @@ class BaseReward(ABC):
         else:
             x = x / 255.0 if len(self.obs_shape) > 2 else x
         return x
+    
+    def init_gym_normalization(self, num_steps: int, num_iters: int, env: gym.Env, s) -> None:
+        if self.obs_rms:
+            next_ob = []
+            print("Start to initialize observation normalization parameter.....")
+            for step in tqdm(range(num_steps * num_iters)):
+                acs = np.random.randint(0, self.action_dim, size=(self.n_envs,))
+                s, r, d, _ = env.step(acs)
+                # next_ob += s[:, 3, :, :].reshape([-1, 1, 84, 84]).tolist()
+                next_ob += s.reshape([-1, 4, 84, 84]).tolist()
+
+                if len(next_ob) % (num_steps * self.n_envs) == 0:
+                    next_ob = np.stack(next_ob)
+                    self.obs_norm.update(th.from_numpy(next_ob).float())
+                    next_ob = []
 
     def init_normalization(self, num_steps: int, num_iters: int, env: gym.Env, s) -> None:
         if self.obs_rms:
