@@ -20,6 +20,9 @@
 *.log
 *.json
 *.pdf
+*.csv
+*.zip
+*.DS_Store
 
 __pycache__/
 _build/
