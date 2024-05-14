@@ -84,9 +84,6 @@ pip install rllte-core[envs] # for pre-defined environments
 Open a terminal and clone the repository from [GitHub](https://github.com/RLE-Foundation/rllte) with `git`:
 ``` sh
 git clone https://github.com/RLE-Foundation/rllte.git
-```
-After that, run the following command to install package and dependencies:
-``` sh
 pip install -e . # basic installation
 pip install -e .[envs] # for pre-defined environments
 ```
