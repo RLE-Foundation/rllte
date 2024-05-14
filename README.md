@@ -38,7 +38,7 @@
 - [Acknowledgment](#acknowledgment)
 - [Miscellaneous](#miscellaneous) -->
 
-# Overview
+<!-- # Overview -->
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
 
 <!-- <div align="center">
