@@ -1,22 +1,23 @@
 <div align=center>
 <br>
-<img src='./docs/assets/images/logo_horizontal.svg' style="width: 75%">
+<img src='./docs/assets/images/logo_horizontal.svg' style="width: 55%">
 <br>
-RLLTE: Long-Term Evolution Project of Reinforcement Learning
 
-<h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> Paper </a> |
+# RLLTE: Long-Term Evolution Project of Reinforcement Learning
+
+<!-- <h3> <a href="https://arxiv.org/pdf/2309.16382.pdf"> Paper </a> |
 <a href="https://docs.rllte.dev/api/"> Documentation </a> |
 <a href="https://docs.rllte.dev/tutorials/"> Tutorials </a> |
 <a href="https://github.com/RLE-Foundation/rllte/discussions"> Forum </a> |
-<a href="https://hub.rllte.dev/"> Benchmarks </a></h3>
+<a href="https://hub.rllte.dev/"> Benchmarks </a></h3> -->
 
 <img src="https://img.shields.io/badge/License-MIT-%230677b8"> <img src="https://img.shields.io/badge/GPU-NVIDIA-%2377b900"> <img src="https://img.shields.io/badge/NPU-Ascend-%23c31d20"> <img src="https://img.shields.io/badge/Python-%3E%3D3.8-%2335709F"> <img src="https://img.shields.io/badge/Docs-Passing-%23009485"> <img src="https://img.shields.io/badge/Codestyle-Black-black"> <img src="https://img.shields.io/badge/PyPI-0.0.1-%23006DAD"> <img src="https://img.shields.io/badge/Coverage-97.00%25-green"> 
 
-| [English](README.md) | [中文](docs/README-zh-Hans.md) |
+<!-- | [English](README.md) | [中文](docs/README-zh-Hans.md) | -->
 
 </div>
 
-# Contents
+<!-- # Contents
 - [Overview](#overview)
 - [Quick Start](#quick-start)
   + [Installation](#installation)
@@ -33,7 +34,7 @@ RLLTE: Long-Term Evolution Project of Reinforcement Learning
 - [Cite the Project](#cite-the-project)
 - [How To Contribute](#how-to-contribute)
 - [Acknowledgment](#acknowledgment)
-- [Miscellaneous](#miscellaneous)
+- [Miscellaneous](#miscellaneous) -->
 
 # Overview
 Inspired by the long-term evolution (LTE) standard project in telecommunications, aiming to provide development components for and standards for advancing RL research and applications. Beyond delivering top-notch algorithm implementations, **RLLTE** also serves as a **toolkit** for developing algorithms.
@@ -286,7 +287,7 @@ If you use **RLLTE** in your research, please cite this project like this:
 # Acknowledgment
 This project is supported by [The Hong Kong Polytechnic University](http://www.polyu.edu.hk/), [Eastern Institute for Advanced Study](http://www.eias.ac.cn/), and [FLW-Foundation](FLW-Foundation). [EIAS HPC](https://hpc.eias.ac.cn/) provides a GPU computing platform, and [HUAWEI Ascend Community](https://www.hiascend.com/) provides an NPU computing platform for our testing. Some code of this project is borrowed or inspired by several excellent projects, and we highly appreciate them. See [ACKNOWLEDGMENT.md](https://github.com/RLE-Foundation/rllte/blob/main/ACKNOWLEDGMENT.md).
 
-# Miscellaneous
+<!-- # Miscellaneous
 
 ## &#8627; Stargazers, thanks for your support!
 [![Stargazers repo roster for @RLE-Foundation/rllte](https://reporoster.com/stars/RLE-Foundation/rllte)](https://github.com/RLE-Foundation/rllte/stargazers)
@@ -299,4 +300,4 @@ This project is supported by [The Hong Kong Polytechnic University](http://www.p
 
 [![Star History Chart](https://api.star-history.com/svg?repos=RLE-Foundation/rllte&type=Date)](https://star-history.com/#RLE-Foundation/rllte&Date)
 
-</div>
+</div> -->
