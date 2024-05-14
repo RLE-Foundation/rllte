@@ -70,17 +70,11 @@ For more detailed descriptions of these modules, see [API Documentation](https:/
 
 # Quick Start
 ## Installation
-- Prerequisites
-
-Currently, we recommend `Python>=3.8`, and user can create an virtual environment by
-``` sh
-conda create -n rllte python=3.8
-```
-
 - with pip `recommended`
 
 Open a terminal and install **rllte** with `pip`:
 ``` shell
+conda create -n rllte python=3.8 # create an virtual environment
 pip install rllte-core # basic installation
 pip install rllte-core[envs] # for pre-defined environments
 ```
