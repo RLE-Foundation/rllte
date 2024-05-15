@@ -162,7 +162,7 @@ class OnPolicyAgent(BaseAgent):
                         "terminateds": self.storage.terminateds,
                         "truncateds": self.storage.truncateds,
                         "next_observations": self.storage.observations[1:],  # type: ignore
-                    }
+                    }, sync=True
                 )
                 # just plus the intrinsic rewards to the extrinsic rewards
                 self.storage.rewards += intrinsic_rewards.to(self.device)

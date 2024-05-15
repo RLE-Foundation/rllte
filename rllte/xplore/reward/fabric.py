@@ -40,11 +40,14 @@ class Fabric(BaseReward):
     """
 
     def __init__(self, *rewards: BaseReward) -> None:
+        assert len(rewards) >= 2, "At least two intrinsic rewards are needed!"
         for rwd in rewards:
             assert isinstance(
                 rwd, BaseReward
             ), "The input rewards must be the instance of BaseReward!"
         self.rewards = list(rewards)
+        self.device = self.rewards[0].device
+        
 
     def watch(
         self,

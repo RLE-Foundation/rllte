@@ -163,7 +163,7 @@ class BaseReward(ABC):
                         self.obs_norm.update(all_next_obs)
                         all_next_obs = []
         except:
-            # for the normal vectorized environments
+            # for the normal vectorized environments, old gym output
             _ = self.envs.reset()
             if self.obs_norm_type == "rms":
                 all_next_obs = []
