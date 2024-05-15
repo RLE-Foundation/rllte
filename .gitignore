@@ -38,7 +38,7 @@ _build/
 /rllte/copilot/g4f
 /misc
 /launchers/*
-/src/*
+# /src/*
 /all_mario_runs/*
 /all_procgen_runs/*
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf
