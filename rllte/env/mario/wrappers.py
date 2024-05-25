@@ -22,12 +22,12 @@ class EpisodicLifeEnv(gym.Wrapper):
     
     def reset(self, **kwargs):
         if self.was_real_done:
-            obs = self.env.reset(**kwargs)
+            obs, infos = self.env.reset(**kwargs)
         else:
             # no-op step to advance from terminal/lost life state
-            obs, _, _, _, _ = self.env.step(0)
+            obs, _, _, _, infos = self.env.step(0)
         self.lives = self.env.unwrapped.env._life
-        return obs
+        return obs, infos
     
 class SkipFrame(gym.Wrapper):
     def __init__(self, env, skip):
