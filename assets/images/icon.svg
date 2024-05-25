@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 512 512" xml:space="preserve">
+<rect x="428.077" y="448.768" style="fill:#6F6F6F;" width="33.391" height="46.535"/>
+<g>
+	
+		<rect x="288.447" y="35.702" transform="matrix(0.8536 -0.521 0.521 0.8536 21.3473 180.7468)" style="fill:#8B8B8B;" width="87.522" height="33.393"/>
+	<rect x="379.002" y="98.671" style="fill:#8B8B8B;" width="33.391" height="50.287"/>
+	<rect x="379.002" y="194.827" style="fill:#8B8B8B;" width="33.391" height="50.287"/>
+	<polygon style="fill:#8B8B8B;" points="337.616,512 478.091,512 478.091,478.609 371.007,478.609 371.007,448.769 337.616,448.769 
+			"/>
+	<rect x="291.84" y="266.518" style="fill:#8B8B8B;" width="39.502" height="33.391"/>
+	<rect x="337.619" y="306.187" style="fill:#8B8B8B;" width="33.391" height="60.605"/>
+	
+		<rect x="302.257" y="143.262" transform="matrix(0.8326 -0.5539 0.5539 0.8326 -61.3092 211.3348)" style="fill:#8B8B8B;" width="33.391" height="127.657"/>
+	<rect x="50.532" y="448.768" style="fill:#8B8B8B;" width="33.391" height="46.535"/>
+</g>
+<g>
+	
+		<rect x="136.034" y="35.699" transform="matrix(-0.8536 -0.521 0.521 -0.8536 305.965 190.787)" style="fill:#B0B0B0;" width="87.522" height="33.393"/>
+	<rect x="99.606" y="98.671" style="fill:#B0B0B0;" width="33.391" height="50.287"/>
+	<rect x="99.606" y="194.827" style="fill:#B0B0B0;" width="33.391" height="50.287"/>
+	<polygon style="fill:#B0B0B0;" points="174.384,512 33.909,512 33.909,478.609 140.993,478.609 140.993,448.769 174.384,448.769 	
+		"/>
+	<rect x="239.304" y="16.696" style="fill:#B0B0B0;" width="33.391" height="58.49"/>
+</g>
+<rect x="255.8" y="16.696" style="fill:#8B8B8B;" width="16.894" height="58.49"/>
+<rect x="197.955" style="fill:#B0B0B0;" width="116.09" height="33.391"/>
+<rect x="255.8" style="fill:#8B8B8B;" width="58.246" height="33.391"/>
+<g>
+	<rect x="180.658" y="266.518" style="fill:#B0B0B0;" width="39.502" height="33.391"/>
+	<rect x="140.989" y="306.187" style="fill:#B0B0B0;" width="33.391" height="60.605"/>
+	
+		<rect x="176.356" y="143.274" transform="matrix(-0.8326 -0.5539 0.5539 -0.8326 239.0705 486.4635)" style="fill:#B0B0B0;" width="33.391" height="127.657"/>
+</g>
+<path style="fill:#92E5EA;" d="M330.742,170.656H181.258V58.495h149.484V170.656z"/>
+<path style="fill:#79BBBC;" d="M330.742,170.656h-74.94V58.495h74.94V170.656z"/>
+<g>
+	<path style="fill:#F0C838;" d="M200.516,465.465h-85.656V350.096h85.656V465.465z"/>
+	<path style="fill:#F0C838;" d="M159.126,115.369H73.47V0h85.656V115.369z"/>
+</g>
+<g>
+	<path style="fill:#E79C25;" d="M116.299,211.602c-21.874,0-39.669-17.795-39.669-39.669s17.795-39.67,39.669-39.67
+		s39.669,17.795,39.669,39.67C155.967,193.806,138.172,211.602,116.299,211.602z"/>
+	<path style="fill:#E79C25;" d="M157.688,322.883c-21.874,0-39.669-17.795-39.669-39.669s17.795-39.669,39.669-39.669
+		s39.669,17.795,39.669,39.669S179.562,322.883,157.688,322.883z"/>
+	<path style="fill:#E79C25;" d="M311.484,350.096h85.656v115.369h-85.656V350.096z"/>
+	<path style="fill:#E79C25;" d="M352.874,0h85.656v115.369h-85.656V0z"/>
+</g>
+<g>
+	<path style="fill:#E0711B;" d="M356.033,171.934c0-21.874,17.795-39.67,39.669-39.67s39.669,17.795,39.669,39.67
+		c0,21.872-17.795,39.669-39.669,39.669S356.033,193.806,356.033,171.934z"/>
+	<path style="fill:#E0711B;" d="M314.644,283.214c0-21.872,17.795-39.669,39.669-39.669s39.669,17.795,39.669,39.669
+		s-17.795,39.669-39.669,39.669S314.644,305.087,314.644,283.214z"/>
+</g>
+</svg>
