@@ -63,7 +63,6 @@ def process_observation_space(observation_space: gym.Space) -> ObsShape:
     else:
         raise NotImplementedError(f"{observation_space} observation space is not supported")
 
-
 def process_action_space(action_space: gym.Space) -> Tuple[Tuple[int, ...], int, int, str]:
     """Get the dimension of the action space.
 
