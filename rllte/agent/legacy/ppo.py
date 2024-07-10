@@ -156,7 +156,7 @@ class PPO(OnPolicyAgent):
 
         # set all the modules [essential operation!!!]
         self.set(encoder=encoder, policy=policy, storage=storage, distribution=dist)
-
+        
     def update(self) -> None:
         """Update function that returns training metrics such as policy loss, value loss, etc.."""
         total_policy_loss = [0.0]

@@ -68,7 +68,7 @@ class BaseReward(ABC):
         else:
             self.observation_space = envs.observation_space
             self.action_space = envs.action_space
-        self.n_envs = envs.unwrapped.num_envs
+        self.n_envs = envs.num_envs
         ## process the observation and action space
         self.obs_shape: Tuple = process_observation_space(self.observation_space)  # type: ignore
         self.action_shape, self.action_dim, self.policy_action_dim, self.action_type = (

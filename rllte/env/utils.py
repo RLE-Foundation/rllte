@@ -126,7 +126,8 @@ class Gymnasium2Torch(gym.Wrapper):
 
     def __init__(self, env: VectorEnv, device: str, envpool: bool = False) -> None:
         super().__init__(env)
-        self.num_envs = env.unwrapped.num_envs
+        
+        self.num_envs = env.num_envs
         self.device = th.device(device)
 
         # envpool's observation space and action space are the same as the single env.
