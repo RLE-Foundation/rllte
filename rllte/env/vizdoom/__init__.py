@@ -35,7 +35,7 @@ def make_envpool_vizdoom_env(
         episodic_life=True,
         use_combined_action=True,
         stack_num=4,
-        cfg_path="/home/roger/Desktop/rllte/rllte/env/vizdoom/my_way_home.cfg",
+        cfg_path="/home/mila/r/roger.creus-castanyer/rllte/rllte/env/vizdoom/my_way_home.cfg",
     )
 
     if asynchronous:
