@@ -31,7 +31,7 @@ from gymnasium.vector import VectorEnv
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
-from rllte.xploit.encoder import MinigridEncoder
+from rllte.xploit.encoder import MinihackEncoder
 
 class RE3(BaseReward):
     """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
@@ -85,7 +85,7 @@ class RE3(BaseReward):
         self.k = k
         self.average_entropy = average_entropy
         # build the random encoder and freeze the network parameters
-        self.random_encoder = MinigridEncoder(
+        self.random_encoder = MinihackEncoder(
             observation_space=self.observation_space,
         ).to(self.device)
         for p in self.random_encoder.parameters():

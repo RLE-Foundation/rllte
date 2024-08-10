@@ -31,9 +31,9 @@ from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, MinigridEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, MinihackEncoder
 from rllte.xploit.policy import OnPolicySharedActorCritic
-from rllte.xploit.storage import VanillaRolloutStorage
+from rllte.xploit.storage import VanillaRolloutStorage, DictRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
 
 
@@ -112,9 +112,8 @@ class PPO(OnPolicyAgent):
         self.max_grad_norm = max_grad_norm
 
         # default encoder
-        if len(self.obs_shape) == 3:
-            encoder = MinigridEncoder(observation_space=env.observation_space)
-        elif len(self.obs_shape) == 1:
+        encoder = MinihackEncoder(observation_space=env.observation_space)
+        if len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
@@ -144,7 +143,7 @@ class PPO(OnPolicyAgent):
         )
 
         # default storage
-        storage = VanillaRolloutStorage(
+        storage = DictRolloutStorage(
             observation_space=env.observation_space,
             action_space=env.action_space,
             device=device,

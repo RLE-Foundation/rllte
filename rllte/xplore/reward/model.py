@@ -21,7 +21,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
+from typing import Optional
+import torch
+from torch.utils.data import Dataset, DataLoader
 
+class DictTensorDataset(Dataset):
+    def __init__(self, obs_dict, actions_tensor, next_obs_dict):
+        self.obs_dict = obs_dict
+        self.actions_tensor = actions_tensor
+        self.next_obs_dict = next_obs_dict
+        
+        # Ensure all dictionary values have the same length
+        first_key = list(obs_dict.keys())[0]
+        self.length = obs_dict[first_key].size(0)
+        
+        assert all(v.size(0) == self.length for v in obs_dict.values()), "Size mismatch in observations dictionary"
+        assert all(v.size(0) == self.length for v in next_obs_dict.values()), "Size mismatch in next observations dictionary"
+        assert actions_tensor.size(0) == self.length, "Size mismatch in actions tensor"
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, idx):
+        obs = {key: value[idx] for key, value in self.obs_dict.items()}
+        next_obs = {key: value[idx] for key, value in self.next_obs_dict.items()}
+        action = self.actions_tensor[idx]
+        return obs, action, next_obs
 
 from typing import Tuple
 from torch import nn
@@ -31,7 +56,7 @@ import numpy as np
 import torch as th
 import math
 
-from rllte.xploit.encoder import MinigridEncoder
+from rllte.xploit.encoder import MinihackEncoder
 
 def orthogonal_layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     th.nn.init.orthogonal_(layer.weight, std)
@@ -136,7 +161,7 @@ class InverseDynamicsEncoder(nn.Module):
     def __init__(self, observation_space, action_dim: int, latent_dim: int, encoder_model:str="mnih", weight_init="default") -> None:
         super().__init__()
 
-        self.encoder = MinigridEncoder(
+        self.encoder = MinihackEncoder(
             observation_space=observation_space,
         ).cuda()
         

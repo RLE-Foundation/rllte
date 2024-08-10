@@ -4,7 +4,7 @@ from rllte.xplore.reward import *
 def parse_args():
     parser = argparse.ArgumentParser()
     # env
-    parser.add_argument("--env_id", type=str, default="SuperMarioBros-1-1-v3")
+    parser.add_argument("--env_id", type=str, default="MiniHack-MazeWalk-15x15-v0")
     parser.add_argument("--device", type=str, default="cuda:0")
 
     # train config
@@ -12,8 +12,8 @@ def parse_args():
     parser.add_argument("--num_train_steps", type=int, default=10_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
-    parser.add_argument("--n_envs", type=int, default=128)
-    parser.add_argument("--num_steps", type=int, default=128)
+    parser.add_argument("--n_envs", type=int, default=32)
+    parser.add_argument("--num_steps", type=int, default=32)
     parser.add_argument("--batch_size", type=int, default=4096)
     parser.add_argument("--lr", type=float, default=2.5e-4)
     parser.add_argument("--eps", type=float, default=1e-5)
@@ -147,9 +147,9 @@ def make_env(args, device):
             num_envs=args.n_envs,
             device=device,
         )
-    else:
-        from rllte.env import make_envpool_atari_env
-        env = make_envpool_atari_env(
+    elif 'MiniHack' in args.env_id:
+        from rllte.env import make_minihack_env
+        env = make_minihack_env(
             env_id=args.env_id,
             num_envs=args.n_envs,
             device=device,

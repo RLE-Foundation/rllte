@@ -34,7 +34,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
-from rllte.xploit.encoder import MinigridEncoder
+from rllte.xploit.encoder import MinihackEncoder
 
 
 class RND(BaseReward):
@@ -79,10 +79,10 @@ class RND(BaseReward):
     ) -> None:
         super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
         # build the predictor and target networks
-        self.predictor = MinigridEncoder(
+        self.predictor = MinihackEncoder(
             observation_space=self.observation_space,
         ).to(self.device)
-        self.target = MinigridEncoder(
+        self.target = MinihackEncoder(
             observation_space=self.observation_space,
         ).to(self.device)
 

@@ -30,3 +30,4 @@ from .raffin_combined_encoder import RaffinCombinedEncoder as RaffinCombinedEnco
 from .tassa_cnn_encoder import TassaCnnEncoder as TassaCnnEncoder
 from .vanilla_mlp_encoder import VanillaMlpEncoder as VanillaMlpEncoder
 from .minigrid_encoder import MinigridEncoder as MinigridEncoder
+from .minihack_encoder import MinihackEncoder as MinihackEncoder

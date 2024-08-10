@@ -32,7 +32,7 @@ from .fabric import Fabric
 from .pseudo_counts import PseudoCounts
 from .rnd import RND
 
-from rllte.xploit.encoder import MinigridEncoder
+from rllte.xploit.encoder import MinihackEncoder
 
 
 class NGU(Fabric):

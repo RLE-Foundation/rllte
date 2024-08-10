@@ -76,3 +76,5 @@ try:
     from .vizdoom import make_envpool_vizdoom_env as make_envpool_vizdoom_env
 except Exception:
     pass
+
+from .minihack import make_minihack_env as make_minihack_env

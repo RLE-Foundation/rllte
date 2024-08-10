@@ -151,17 +151,24 @@ class OnPolicyAgent(BaseAgent):
             # perform return and advantage estimation
             self.storage.compute_returns_and_advantages(last_values)
 
-            # deal with the intrinsic reward module
+            obs_ = {
+                key: value[:-1] for key, value in self.storage.observations.items()
+            } if isinstance(self.storage.observations, dict) else self.storage.observations[:-1],
+
+            next_obs_ = {
+                key: value[1:] for key, value in self.storage.observations.items()
+            } if isinstance(self.storage.observations, dict) else self.storage.observations[1:],
+
             if self.irs is not None:
                 # deal with the intrinsic reward module
                 intrinsic_rewards = self.irs.compute(
                     samples={
-                        "observations": self.storage.observations[:-1],  # type: ignore
+                        "observations": obs_,  # type: ignore
                         "actions": self.storage.actions,
                         "rewards": self.storage.rewards,
                         "terminateds": self.storage.terminateds,
                         "truncateds": self.storage.truncateds,
-                        "next_observations": self.storage.observations[1:],  # type: ignore
+                        "next_observations": next_obs_,  # type: ignore
                     }, sync=True
                 )
                 # just plus the intrinsic rewards to the extrinsic rewards

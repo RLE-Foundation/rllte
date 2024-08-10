@@ -33,9 +33,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from rllte.common.prototype import BaseReward
-from .model import InverseDynamicsModel, ObservationEncoder
+from .model import DictTensorDataset, InverseDynamicsModel
 
-from rllte.xploit.encoder import MinigridEncoder
+from rllte.xploit.encoder import MinihackEncoder
 
 
 class E3B(BaseReward):
@@ -83,7 +83,7 @@ class E3B(BaseReward):
         super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
 
         # build the encoder and inverse dynamics model
-        self.encoder = MinigridEncoder(
+        self.encoder = MinihackEncoder(
             observation_space=self.observation_space,
         ).to(self.device)
         
@@ -126,18 +126,42 @@ class E3B(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        if isinstance(samples.get("next_observations")[0], dict):
+            (n_steps, n_envs) = samples.get("next_observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+
         # get the observations, terminateds, and truncateds
-        obs_tensor = samples.get("observations").to(self.device)
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device)
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device)
+            
         terminateds_tensor = samples.get("terminateds").to(self.device)
         truncateds_tensor = samples.get("truncateds").to(self.device)
+        
         # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key])
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
             for j in range(n_steps):
-                h = self.encoder(obs_tensor[j])
+                if isinstance(obs_tensor, dict):
+                    obs_ = {
+                        key: obs_tensor[key][j] for key in obs_tensor.keys()
+                    }
+                else:
+                    obs_ = obs_tensor[j]
+                
+                h = self.encoder(obs_)
                 for env_idx in range(n_envs):
                     u = th.mv(self.cov_inverse[env_idx], h[env_idx])
                     b = th.dot(h[env_idx], u).item()
@@ -162,6 +186,7 @@ class E3B(BaseReward):
         # return the scaled intrinsic rewards
         return self.scale(intrinsic_rewards)
 
+    # Usage in your update method
     def update(self, samples: Dict[str, th.Tensor]) -> None:
         """Update the reward module if necessary.
 
@@ -172,19 +197,38 @@ class E3B(BaseReward):
             None.
         """
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
-        # get the observations
-        obs_tensor = (
-            samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-        )
-        next_obs_tensor = (
-            samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
-        )
-        # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
-        next_obs_tensor = self.normalize(next_obs_tensor)
+        if isinstance(samples.get("next_observations")[0], dict):
+            (n_steps, n_envs) = samples.get("next_observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("next_observations").size()[:2]
 
-        # apply one-hot encoding if the action type is discrete
+        # get the observations, terminateds, and truncateds
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device).view(-1, *self.obs_shape)
+        
+        if isinstance(samples.get("next_observations")[0], dict):
+            next_obs_tensor = {
+                key: samples.get("next_observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("next_observations")[0].keys()
+            }
+        else:
+            next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
+
+
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key])
+                next_obs_tensor[key] = self.normalize(next_obs_tensor[key])
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+            next_obs_tensor = self.normalize(next_obs_tensor)
+
+        # process actions
         if self.action_type == "Discrete":
             actions_tensor = samples.get("actions").view(n_steps * n_envs)
             actions_tensor = F.one_hot(
@@ -193,41 +237,48 @@ class E3B(BaseReward):
         else:
             actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
 
-        # build the dataset and loader
-        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        # create custom dataset
+        if isinstance(obs_tensor, dict):
+            dataset = DictTensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        else:
+            dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
+
         avg_im_loss = []
+
         # update the encoder and inverse dynamics model
         for _idx, batch_data in enumerate(loader):
             # get the batch data
             obs, actions, next_obs = batch_data
-            obs, actions, next_obs = (
-                obs.to(self.device),
-                actions.to(self.device),
-                next_obs.to(self.device),
-            )
-            # zero the gradients
-            self.encoder_opt.zero_grad()
-            self.im_opt.zero_grad()
-            # encode the observations
+            
+            # Pass the dictionaries directly to the encoder and other models
+            obs = {key: value.to(self.device) for key, value in obs.items()}
+            next_obs = {key: value.to(self.device) for key, value in next_obs.items()}
+            actions = actions.to(self.device)
+            
+            # Example of using the model
             encoded_obs = self.encoder(obs)
             encoded_next_obs = self.encoder(next_obs)
-            # get the predicted actions
             pred_actions = self.im(encoded_obs, encoded_next_obs)
+            
             # compute the inverse dynamics loss
             im_loss = self.im_loss(pred_actions, actions)
-            # use a random mask to select a subset of the training data
+            
+            # random mask for subset training
             mask = th.rand(len(im_loss), device=self.device)
-            mask = (mask < self.update_proportion).type(th.FloatTensor).to(self.device)
-            # get the masked loss
+            mask = (mask < self.update_proportion).float().to(self.device)
+            
             im_loss = (im_loss * mask).sum() / th.max(
                 mask.sum(), th.tensor([1], device=self.device, dtype=th.float32)
             )
+            
             # backward and update
             im_loss.backward()
             self.encoder_opt.step()
             self.im_opt.step()
-            # record the loss
+            
             avg_im_loss.append(im_loss.item())
+
         # save the average loss
         self.metrics["loss"].append([self.global_step, np.mean(avg_im_loss)])
