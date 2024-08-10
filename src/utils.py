@@ -169,12 +169,11 @@ def select_intrinsic_reward(args, env, device):
         intrinsic_reward = None
     elif args.intrinsic_reward == "pseudocounts":
         intrinsic_reward = PseudoCounts(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
@@ -198,12 +197,11 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "rnd":
         intrinsic_reward = RND(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
@@ -213,12 +211,11 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "ngu":
         intrinsic_reward = NGU(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
@@ -228,12 +225,11 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "ride":
         intrinsic_reward = RIDE(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
@@ -243,12 +239,10 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "re3":
         intrinsic_reward = RE3(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
@@ -257,12 +251,12 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "rise":
         intrinsic_reward = RISE(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
+            update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
@@ -271,13 +265,12 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "revd":
         intrinsic_reward = REVD(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
-            episode_length=args.num_steps,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
+            update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
             weight_init=args.weight_init,
@@ -286,12 +279,11 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "e3b":
         intrinsic_reward = E3B(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,
@@ -301,12 +293,11 @@ def select_intrinsic_reward(args, env, device):
         )
     elif args.intrinsic_reward == "disagreement":
         intrinsic_reward = Disagreement(
-            observation_space=env.observation_space,
-            action_space=env.action_space,
+            envs=env,
             device=device,
-            n_envs=args.n_envs,
             rwd_norm_type=args.rwd_norm_type,
-            obs_rms=args.obs_rms,
+            obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,

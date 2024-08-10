@@ -30,34 +30,11 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import DictObservationSpaceWrapper, FlatObsWrapper, FullyObsWrapper
+from minigrid.wrappers import RGBImgPartialObsWrapper, ImgObsWrapper
+from gymnasium.wrappers.gray_scale_observation import GrayScaleObservation
+from gymnasium.wrappers.resize_observation import ResizeObservation
 
 from rllte.env.utils import FrameStack, Gymnasium2Torch
-
-
-class Minigrid2Image(gym.ObservationWrapper):
-    """Convert MiniGrid observation to image.
-
-    Args:
-        env (gym.Env): Environment to wrap.
-
-    Returns:
-        Minigrid2Image instance.
-    """
-
-    def __init__(self, env: gym.Env) -> None:
-        gym.ObservationWrapper.__init__(self, env)
-        self.observation_space = env.observation_space["image"]
-        shape = self.observation_space.shape
-        self.observation_space = gym.spaces.Box(
-            low=0,
-            high=255,
-            shape=(shape[2], shape[0], shape[1]),
-            dtype=self.observation_space.dtype,
-        )
-
-    def observation(self, observation: Dict) -> np.ndarray:
-        """Convert MiniGrid observation to image."""
-        return np.transpose(observation["image"], axes=[2, 0, 1])
 
 
 class ImageTranspose(gym.ObservationWrapper):
@@ -72,9 +49,9 @@ class ImageTranspose(gym.ObservationWrapper):
 
     def __init__(self, env: gym.Env) -> None:
         gym.ObservationWrapper.__init__(self, env)
-        shape = env.observation_space["image"].shape
-        dtype = env.observation_space["image"].dtype
-        self.observation_space["image"] = gym.spaces.Box(
+        shape = env.observation_space.shape
+        dtype = env.observation_space.dtype
+        self.observation_space = gym.spaces.Box(
             low=0,
             high=255,
             shape=(shape[2], shape[0], shape[1]),
@@ -83,19 +60,20 @@ class ImageTranspose(gym.ObservationWrapper):
 
     def observation(self, observation: Dict) -> Dict[str, np.ndarray]:
         """Convert MiniGrid observation to image."""
-        observation["image"] = np.transpose(observation["image"], axes=[2, 0, 1])
+        observation = np.transpose(observation, axes=[2, 0, 1])
+        observation = np.mean(observation, axis=0, keepdims=True)
         return observation
 
 
 def make_minigrid_env(
     env_id: str = "MiniGrid-DoorKey-5x5-v0",
     num_envs: int = 8,
-    fully_observable: bool = True,
+    fully_observable: bool = False,
     fully_numerical: bool = False,
     seed: int = 0,
-    frame_stack: int = 1,
+    frame_stack: int = 4,
     device: str = "cpu",
-    asynchronous: bool = True,
+    asynchronous: bool = False,
 ) -> Gymnasium2Torch:
     """Create MiniGrid environments.
 
@@ -120,16 +98,12 @@ def make_minigrid_env(
         def _thunk():
             env = gym.make(env_id)
 
-            if fully_observable:
-                env = FullyObsWrapper(env)
-                env = Minigrid2Image(env)
-                env = FrameStack(env, k=frame_stack)
-            elif fully_numerical:
-                env = DictObservationSpaceWrapper(env)
-                env = ImageTranspose(env)
-            else:
-                env = FlatObsWrapper(env)
-
+            #env = RGBImgPartialObsWrapper(env)
+            env = ImgObsWrapper(env)
+            #env = ResizeObservation(env, 84)
+            #env = ImageTranspose(env)
+            #env = FrameStack(env, k=frame_stack)
+            
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
@@ -143,6 +117,7 @@ def make_minigrid_env(
         envs = AsyncVectorEnv(envs)
     else:
         envs = SyncVectorEnv(envs)
+
     envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(envs, device=device)

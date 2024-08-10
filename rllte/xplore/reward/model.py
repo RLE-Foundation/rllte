@@ -31,6 +31,8 @@ import numpy as np
 import torch as th
 import math
 
+from rllte.xploit.encoder import MinigridEncoder
+
 def orthogonal_layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     th.nn.init.orthogonal_(layer.weight, std)
     th.nn.init.constant_(layer.bias, bias_const)
@@ -131,10 +133,13 @@ class InverseDynamicsEncoder(nn.Module):
         Encoder instance.
     """
 
-    def __init__(self, obs_shape: Tuple, action_dim: int, latent_dim: int, encoder_model:str="mnih", weight_init="default") -> None:
+    def __init__(self, observation_space, action_dim: int, latent_dim: int, encoder_model:str="mnih", weight_init="default") -> None:
         super().__init__()
 
-        self.encoder = ObservationEncoder(obs_shape, latent_dim, encoder_model=encoder_model, weight_init=weight_init)
+        self.encoder = MinigridEncoder(
+            observation_space=observation_space,
+        ).cuda()
+        
         self.policy = InverseDynamicsModel(latent_dim, action_dim, encoder_model=encoder_model, weight_init=weight_init)
 
     def forward(self, obs: th.Tensor, next_obs: th.Tensor) -> th.Tensor:

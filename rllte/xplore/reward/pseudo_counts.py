@@ -35,7 +35,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from rllte.common.prototype import BaseReward
 from rllte.common.utils import TorchRunningMeanStd
 from .model import InverseDynamicsEncoder
-
+from rllte.xploit.encoder import MinigridEncoder
 
 class PseudoCounts(BaseReward):
     """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
@@ -97,6 +97,7 @@ class PseudoCounts(BaseReward):
         self.c = c
         self.sm = sm
         self.update_proportion = update_proportion
+        self.device = device
 
         # build the episodic memory
         self.episodic_memory = [[] for _ in range(self.n_envs)]
@@ -104,7 +105,7 @@ class PseudoCounts(BaseReward):
 
         # build the encoder
         self.encoder = InverseDynamicsEncoder(
-            obs_shape=self.obs_shape,
+            observation_space=self.observation_space,
             action_dim=self.policy_action_dim,
             latent_dim=latent_dim,
             encoder_model=encoder_model,

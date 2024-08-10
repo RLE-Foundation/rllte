@@ -35,6 +35,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from rllte.common.prototype import BaseReward
 from .model import ForwardDynamicsModel, InverseDynamicsModel, ObservationEncoder
 
+from rllte.xploit.encoder import MinigridEncoder
 
 class ICM(BaseReward):
     """Curiosity-driven Exploration by Self-supervised Prediction.
@@ -79,12 +80,10 @@ class ICM(BaseReward):
         super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
 
         # build the encoder, inverse dynamics model and forward dynamics model
-        self.encoder = ObservationEncoder(
-            obs_shape=self.obs_shape,
-            latent_dim=latent_dim,
-            encoder_model=encoder_model,
-            weight_init=weight_init,
+        self.encoder = MinigridEncoder(
+            observation_space=self.observation_space,
         ).to(self.device)
+
         self.im = InverseDynamicsModel(
             latent_dim=latent_dim,
             action_dim=self.policy_action_dim,

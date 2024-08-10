@@ -32,6 +32,8 @@ from .fabric import Fabric
 from .pseudo_counts import PseudoCounts
 from .rnd import RND
 
+from rllte.xploit.encoder import MinigridEncoder
+
 
 class NGU(Fabric):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
@@ -84,6 +86,9 @@ class NGU(Fabric):
         weight_init: str = "default",
     ) -> None:
         # build the rnd and pseudo-counts modules
+
+        self.mrs = mrs
+        
         rnd = RND(
             envs=envs,
             device=device,

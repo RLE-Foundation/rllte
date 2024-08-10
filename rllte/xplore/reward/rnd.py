@@ -34,6 +34,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
+from rllte.xploit.encoder import MinigridEncoder
+
 
 class RND(BaseReward):
     """Exploration by Random Network Distillation (RND).
@@ -77,17 +79,11 @@ class RND(BaseReward):
     ) -> None:
         super().__init__(envs, device, beta, kappa, gamma, rwd_norm_type, obs_norm_type)
         # build the predictor and target networks
-        self.predictor = ObservationEncoder(
-            obs_shape=self.obs_shape,
-            latent_dim=latent_dim,
-            encoder_model=encoder_model,
-            weight_init=weight_init,
+        self.predictor = MinigridEncoder(
+            observation_space=self.observation_space,
         ).to(self.device)
-        self.target = ObservationEncoder(
-            obs_shape=self.obs_shape,
-            latent_dim=latent_dim,
-            encoder_model=encoder_model,
-            weight_init=weight_init,
+        self.target = MinigridEncoder(
+            observation_space=self.observation_space,
         ).to(self.device)
 
         # freeze the randomly initialized target network parameters
