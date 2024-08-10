@@ -32,7 +32,7 @@ from gymnasium.vector import VectorEnv
 from torch.utils.data import DataLoader, TensorDataset
 
 from rllte.common.prototype import BaseReward
-from .model import ForwardDynamicsModel, ObservationEncoder
+from .model import ForwardDynamicsModel, ObservationEncoder, DictTensorDataset
 
 from rllte.xploit.encoder import MinihackEncoder
 
@@ -121,13 +121,27 @@ class Disagreement(BaseReward):
         super().compute(samples)
 
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
-        # get the observations
-        obs_tensor = (
-            samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-        )
+        if isinstance(samples.get("next_observations")[0], dict):
+            (n_steps, n_envs) = samples.get("next_observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+
+        # get the observations, terminateds, and truncateds
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device)
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device)
+
         # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key])
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+
         actions_tensor = (
             samples.get("actions").to(self.device).view(-1, *self.action_shape)
         )
@@ -138,7 +152,16 @@ class Disagreement(BaseReward):
             ).float()
         # compute the intrinsic rewards
         with th.no_grad():
-            random_feats = self.random_encoder(obs_tensor.view(-1, *self.obs_shape))
+            
+            #adapt to dict obs_tensor view -1
+            if isinstance(obs_tensor, dict):
+                obs_ = {
+                    key: obs_tensor[key].view(-1, *self.obs_shape)
+                }
+            else:
+                obs_ = obs_tensor.view(-1, *self.obs_shape)
+
+            random_feats = self.random_encoder(obs_)
             preds = []
             for i in range(self.ensemble_size):
                 next_obs_hat = self.ensemble[i](random_feats, actions_tensor)
