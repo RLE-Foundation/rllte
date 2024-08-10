@@ -33,6 +33,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
+from .model import DictTensorDataset
 
 from rllte.xploit.encoder import MinihackEncoder
 
@@ -109,17 +110,41 @@ class RND(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        # get the number of steps and environments
+        if isinstance(samples.get("next_observations")[0], dict):
+            (n_steps, n_envs) = samples.get("next_observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+        
         # get the next observations
-        next_obs_tensor = samples.get("next_observations").to(self.device)
+        if isinstance(samples.get("next_observations")[0], dict):
+            next_obs_tensor = {
+                key: samples.get("next_observations")[0][key].to(self.device)
+                for key in samples.get("next_observations")[0].keys()
+            }
+        else:
+            next_obs_tensor = samples.get("next_observations").to(self.device)
+        
         # normalize the observations
-        next_obs_tensor = self.normalize(next_obs_tensor)
+        if isinstance(next_obs_tensor, dict):
+            for key in next_obs_tensor.keys():
+                next_obs_tensor[key] = self.normalize(next_obs_tensor[key], key)
+        else:
+            next_obs_tensor = self.normalize(next_obs_tensor)
+        
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
+            if isinstance(next_obs_tensor, dict):
+                next_obs_ = {
+                    key: next_obs_tensor[key].view(-1, *self.obs_shape[key])
+                    for key in next_obs_tensor.keys()
+                }
+            else:
+                next_obs_ = next_obs_tensor.view(-1, *self.obs_shape)
             # get source and target features
-            src_feats = self.predictor(next_obs_tensor.view(-1, *self.obs_shape))
-            tgt_feats = self.target(next_obs_tensor.view(-1, *self.obs_shape))
+            src_feats = self.predictor(next_obs_)
+            tgt_feats = self.target(next_obs_)
             # compute the distance
             dist = F.mse_loss(src_feats, tgt_feats, reduction="none").mean(dim=1)
             intrinsic_rewards = dist.view(n_steps, n_envs)
@@ -140,21 +165,54 @@ class RND(BaseReward):
         Returns:
             None.
         """
+
+        if isinstance(samples.get("next_observations")[0], dict):
+            (n_steps, n_envs) = samples.get("next_observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("next_observations").size()[:2]
+
         # get the observations
-        obs_tensor = (
-            samples.get("observations").to(self.device).view(-1, *self.obs_shape)
-        )
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device)
+
         # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+        
+        
+        if self.action_type == "Discrete":
+            actions_tensor = samples.get("actions").view(n_steps * n_envs)
+            actions_tensor = F.one_hot(
+                actions_tensor.long(), self.policy_action_dim
+            ).float()
+        else:
+            actions_tensor = samples.get("actions").view(n_steps * n_envs, -1)
+
         # create the dataset and loader
-        dataset = TensorDataset(obs_tensor)
+        if isinstance(obs_tensor, dict):
+            next_obs_tensor = {
+                key: samples.get("next_observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("next_observations")[0].keys()
+            }
+            dataset = DictTensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        else:
+            dataset = TensorDataset(obs_tensor)
+
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
         avg_loss = []
         # update the predictor
         for _idx, batch_data in enumerate(loader):
             # get the batch data
-            obs = batch_data[0]
+            obs, action, next_obs = batch_data
             # zero the gradients
             self.opt.zero_grad()
             # get the source and target features

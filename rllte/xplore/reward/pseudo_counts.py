@@ -36,6 +36,7 @@ from rllte.common.prototype import BaseReward
 from rllte.common.utils import TorchRunningMeanStd
 from .model import InverseDynamicsEncoder
 from rllte.xploit.encoder import MinihackEncoder
+from .model import DictTensorDataset
 
 class PseudoCounts(BaseReward):
     """Pseudo-counts based on "Never Give Up: Learning Directed Exploration Strategies (NGU)".
@@ -148,7 +149,13 @@ class PseudoCounts(BaseReward):
         """
         with th.no_grad():
             # data shape of embeddings: (n_envs, latent_dim)
-            observations = self.normalize(observations)
+            # normalize the observations
+            if isinstance(observations, dict):
+                for key in observations.keys():
+                    observations[key] = self.normalize(observations[key], key)
+            else:
+                observations = self.normalize(observations)
+
             embeddings = self.encoder.encode(observations)
             for i in range(self.n_envs):
                 if len(self.episodic_memory[i]) > 0:
@@ -255,20 +262,42 @@ class PseudoCounts(BaseReward):
             None.
         """
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
-        obs_tensor = (
-            samples.get("observations")
-            .to(self.device)
-            .view((n_steps * n_envs, *self.obs_shape))
-        )
-        next_obs_tensor = (
-            samples.get("next_observations")
-            .to(self.device)
-            .view((n_steps * n_envs, *self.obs_shape))
-        )
+        if isinstance(samples.get("observations")[0], dict):
+            (n_steps, n_envs) = samples.get("observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("observations").size()[:2]
+
+        # get the observations, actions and next observations
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device)
+        if isinstance(samples.get("next_observations")[0], dict):
+            next_obs_tensor = {
+                key: samples.get("next_observations")[0][key].to(self.device).view(-1, *self.obs_shape[key])
+                for key in samples.get("next_observations")[0].keys()
+            }
+        else:
+            next_obs_tensor = samples.get("next_observations").to(self.device)
+
+         # normalize the observations
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+
         # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
-        next_obs_tensor = self.normalize(next_obs_tensor)
+        if isinstance(next_obs_tensor, dict):
+            for key in next_obs_tensor.keys():
+                next_obs_tensor[key] = self.normalize(next_obs_tensor[key], key)
+        else:
+            next_obs_tensor = self.normalize(next_obs_tensor)
+
+        # normalize the observations
         # apply one-hot encoding if the action type is discrete
         if self.action_type == "Discrete":
             actions_tensor = (
@@ -284,7 +313,11 @@ class PseudoCounts(BaseReward):
                 .to(self.device)
             )
         # build the dataset and loader
-        dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        if isinstance(obs_tensor, dict):
+            dataset = DictTensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        else:
+            dataset = TensorDataset(obs_tensor, actions_tensor, next_obs_tensor)
+        
         loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
         avg_loss = []

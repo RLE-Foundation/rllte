@@ -146,7 +146,7 @@ class E3B(BaseReward):
         # normalize the observations
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
 
@@ -219,11 +219,10 @@ class E3B(BaseReward):
         else:
             next_obs_tensor = samples.get("next_observations").to(self.device).view(-1, *self.obs_shape)
 
-
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
-                next_obs_tensor[key] = self.normalize(next_obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
+                next_obs_tensor[key] = self.normalize(next_obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
             next_obs_tensor = self.normalize(next_obs_tensor)
