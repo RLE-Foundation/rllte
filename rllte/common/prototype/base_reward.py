@@ -128,15 +128,16 @@ class BaseReward(ABC):
         else:
             return rewards * self.weight
 
-    def normalize(self, x: th.Tensor) -> th.Tensor:
+    def normalize(self, x: th.Tensor, key=None) -> th.Tensor:
         """Normalize the observations data, especially useful for images-based observations."""
+        obs_shape = self.obs_shape if key is None else self.obs_shape[key]
         if self.obs_norm:
             x = (
                 ((x - self.obs_norm.mean.to(self.device)))
                 / th.sqrt(self.obs_norm.var.to(self.device))
             ).clip(-5, 5)
         else:
-            x = x / 255.0 if len(self.obs_shape) > 2 else x
+            x = x / 255.0 if len(obs_shape) > 2 else x
         return x
 
     def init_normalization(self) -> None:

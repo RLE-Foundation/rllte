@@ -128,7 +128,7 @@ class RND(BaseReward):
         # normalize the observations
         if isinstance(next_obs_tensor, dict):
             for key in next_obs_tensor.keys():
-                next_obs_tensor[key] = self.normalize(next_obs_tensor[key])
+                next_obs_tensor[key] = self.normalize(next_obs_tensor[key], key)
         else:
             next_obs_tensor = self.normalize(next_obs_tensor)
         
@@ -183,7 +183,7 @@ class RND(BaseReward):
         # normalize the observations
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
         

@@ -138,7 +138,7 @@ class Disagreement(BaseReward):
         # normalize the observations
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
 
@@ -206,7 +206,7 @@ class Disagreement(BaseReward):
 
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
         

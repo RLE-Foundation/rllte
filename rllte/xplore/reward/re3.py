@@ -116,7 +116,7 @@ class RE3(BaseReward):
         with th.no_grad():
             if isinstance(observations, dict):
                 for key in observations.keys():
-                    observations[key] = self.normalize(observations[key])
+                    observations[key] = self.normalize(observations[key], key)
             else:
                 observations = self.normalize(observations)
             self.storage[self.storage_idx] = self.random_encoder(observations)
@@ -155,7 +155,7 @@ class RE3(BaseReward):
         # normalize the observations
         if isinstance(obs_tensor, dict):
             for key in obs_tensor.keys():
-                obs_tensor[key] = self.normalize(obs_tensor[key])
+                obs_tensor[key] = self.normalize(obs_tensor[key], key)
         else:
             obs_tensor = self.normalize(obs_tensor)
         
