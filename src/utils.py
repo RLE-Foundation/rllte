@@ -9,12 +9,12 @@ def parse_args():
 
     # train config
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=8)
     parser.add_argument("--num_train_steps", type=int, default=10_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
+    parser.add_argument("--n_envs", type=int, default=128)
     parser.add_argument("--num_steps", type=int, default=128)
-    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--batch_size", type=int, default=4096)
     parser.add_argument("--lr", type=float, default=2.5e-4)
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=4)
@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument("--intrinsic_reward", type=str, default="extrinsic")
     parser.add_argument("--rwd_norm_type", type=str, default="rms")
     parser.add_argument("--obs_rms", action="store_true", default=False)
-    parser.add_argument("--update_proportion", type=float, default=1.0)
+    parser.add_argument("--update_proportion", type=float, default=0.25)
     parser.add_argument("--pretraining", action="store_true", default=False)
     parser.add_argument("--int_gamma", type=float, default=None)
     parser.add_argument("--weight_init", type=str, default="orthogonal")
@@ -188,6 +188,7 @@ def select_intrinsic_reward(args, env, device):
             device=device,
             rwd_norm_type=args.rwd_norm_type,
             obs_norm_type=args.obs_rms,
+            batch_size=args.batch_size,
             update_proportion=args.update_proportion,
             gamma=args.int_gamma,
             encoder_model=encoder_model,

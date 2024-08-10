@@ -64,7 +64,6 @@ class ObservationEncoder(nn.Module):
         else:
             raise ValueError("Invalid weight_init")
 
-
         # visual
         if encoder_model == "mnih" and len(obs_shape) > 2:
             self.trunk = nn.Sequential(
