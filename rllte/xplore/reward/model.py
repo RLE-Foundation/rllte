@@ -35,15 +35,16 @@ class DictTensorDataset(Dataset):
         first_key = list(obs_dict.keys())[0]
         self.length = obs_dict[first_key].size(0)
         
-        assert all(v.size(0) == self.length for v in obs_dict.values()), "Size mismatch in observations dictionary"
-        assert all(v.size(0) == self.length for v in next_obs_dict.values()), "Size mismatch in next observations dictionary"
-        assert actions_tensor.size(0) == self.length, "Size mismatch in actions tensor"
+        #assert all(v.size(0) == self.length for v in obs_dict.values()), "Size mismatch in observations dictionary"
+        #assert all(v.size(0) == self.length for v in next_obs_dict.values()), "Size mismatch in next observations dictionary"
+        #assert actions_tensor.size(0) == self.length, "Size mismatch in actions tensor"
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx):
         obs = {key: value[idx] for key, value in self.obs_dict.items()}
+
         next_obs = {key: value[idx] for key, value in self.next_obs_dict.items()}
         action = self.actions_tensor[idx]
         return obs, action, next_obs

@@ -114,7 +114,11 @@ class RE3(BaseReward):
             Feedbacks for the current samples.
         """
         with th.no_grad():
-            observations = self.normalize(observations)
+            if isinstance(observations, dict):
+                for key in observations.keys():
+                    observations[key] = self.normalize(observations[key])
+            else:
+                observations = self.normalize(observations)
             self.storage[self.storage_idx] = self.random_encoder(observations)
             self.storage_idx = (self.storage_idx + 1) % self.storage_size
 
@@ -135,10 +139,26 @@ class RE3(BaseReward):
         """
         super().compute(samples)
         # get the number of steps and environments
-        (n_steps, n_envs) = samples.get("observations").size()[:2]
-        obs_tensor = samples.get("observations").to(self.device)
+        if isinstance(samples.get("observations")[0], dict):
+            (n_steps, n_envs) = samples.get("observations")[0]["glyphs"].size()[:2]
+        else:
+            (n_steps, n_envs) = samples.get("observations").size()[:2]
+
+        if isinstance(samples.get("observations")[0], dict):
+            obs_tensor = {
+                key: samples.get("observations")[0][key].to(self.device)
+                for key in samples.get("observations")[0].keys()
+            }
+        else:
+            obs_tensor = samples.get("observations").to(self.device)
+        
         # normalize the observations
-        obs_tensor = self.normalize(obs_tensor)
+        if isinstance(obs_tensor, dict):
+            for key in obs_tensor.keys():
+                obs_tensor[key] = self.normalize(obs_tensor[key])
+        else:
+            obs_tensor = self.normalize(obs_tensor)
+        
         # compute the intrinsic rewards
         intrinsic_rewards = th.zeros(size=(n_steps, n_envs)).to(self.device)
         with th.no_grad():
@@ -150,7 +170,12 @@ class RE3(BaseReward):
                     else self.storage[:, i]
                 )
                 # get the source features
-                src_feats = self.random_encoder(obs_tensor[:, i])
+
+                if isinstance(obs_tensor, dict):
+                    obs_ = {key: obs_tensor[key][:, i] for key in obs_tensor.keys()}
+                else:
+                    obs_ = obs_tensor[:, i]
+                src_feats = self.random_encoder(obs_)
                 # compute the distance
                 dist = th.linalg.vector_norm(
                     src_feats.unsqueeze(1) - tgt_feats.to(self.device), ord=2, dim=2
