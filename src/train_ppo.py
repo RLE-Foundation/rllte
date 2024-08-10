@@ -17,7 +17,7 @@ if __name__ == "__main__":
         device=args.device,
     )
     
-    exp_name = f"{'twoHeadPPO' if args.two_head else 'PPO'}_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_rff:{args.int_gamma is not None}_weightInit:{args.weight_init}_s{args.seed}"
+    exp_name = f"{'twoHeadPPO' if args.two_head else 'PPO'}_{env_name}_{args.intrinsic_reward}_obsRMS:{args.obs_rms}_rewNorm:{args.rwd_norm_type}_updateProp:{args.update_proportion}_weightInit:{args.weight_init}_s{args.seed}"
 
     # create agent
     if args.two_head:

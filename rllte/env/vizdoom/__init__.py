@@ -34,7 +34,8 @@ def make_envpool_vizdoom_env(
         seed=seed,
         episodic_life=True,
         use_combined_action=True,
-        stack_num=1
+        stack_num=4,
+        cfg_path="/home/roger/Desktop/rllte/rllte/env/vizdoom/my_way_home.cfg",
     )
 
     if asynchronous:
@@ -42,9 +43,9 @@ def make_envpool_vizdoom_env(
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
 
-    if "MyWayHome" in env_id:
-        envs = NormalizeReward(envs, gamma=0.99)
-        envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
+    #if "MyWayHome" in env_id:
+    #    envs = NormalizeReward(envs, gamma=0.99)
+    #    envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
     envs = RecordEpisodeStatistics(envs)
 
