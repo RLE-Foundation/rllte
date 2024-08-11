@@ -29,4 +29,4 @@ class MinigridEncoder(BaseEncoder):
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         #observations = observations.permute(0, 3, 1, 2).float()
-        return self.linear(self.cnn(observations))
+        return self.linear(self.cnn(observations.float()))

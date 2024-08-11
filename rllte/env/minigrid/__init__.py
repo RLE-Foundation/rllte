@@ -30,6 +30,8 @@ import numpy as np
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv
 from gymnasium.wrappers import RecordEpisodeStatistics
 from minigrid.wrappers import DictObservationSpaceWrapper, FlatObsWrapper, FullyObsWrapper
+from minigrid.wrappers import RGBImgPartialObsWrapper, ImgObsWrapper
+from gymnasium.wrappers import NormalizeReward, TransformReward
 
 from rllte.env.utils import FrameStack, Gymnasium2Torch
 
@@ -90,12 +92,12 @@ class ImageTranspose(gym.ObservationWrapper):
 def make_minigrid_env(
     env_id: str = "MiniGrid-DoorKey-5x5-v0",
     num_envs: int = 8,
-    fully_observable: bool = True,
+    fully_observable: bool = False,
     fully_numerical: bool = False,
     seed: int = 0,
-    frame_stack: int = 1,
+    frame_stack: int = 4,
     device: str = "cpu",
-    asynchronous: bool = True,
+    asynchronous: bool = False,
 ) -> Gymnasium2Torch:
     """Create MiniGrid environments.
 
@@ -120,16 +122,12 @@ def make_minigrid_env(
         def _thunk():
             env = gym.make(env_id)
 
-            if fully_observable:
-                env = FullyObsWrapper(env)
-                env = Minigrid2Image(env)
-                env = FrameStack(env, k=frame_stack)
-            elif fully_numerical:
-                env = DictObservationSpaceWrapper(env)
-                env = ImageTranspose(env)
-            else:
-                env = FlatObsWrapper(env)
-
+            #env = RGBImgPartialObsWrapper(env)
+            env = ImageTranspose(env)
+            env = ImgObsWrapper(env)
+            #env = ResizeObservation(env, 84)
+            #env = FrameStack(env, k=frame_stack)
+            
             env.action_space.seed(seed)
             env.observation_space.seed(seed)
 
@@ -143,6 +141,8 @@ def make_minigrid_env(
         envs = AsyncVectorEnv(envs)
     else:
         envs = SyncVectorEnv(envs)
+
+    envs = TransformReward(envs, lambda r: 100.0 * r)
     envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(envs, device=device)

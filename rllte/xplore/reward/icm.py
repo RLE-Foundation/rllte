@@ -86,6 +86,8 @@ class ICM(BaseReward):
                                        action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, 
                                        action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+
+        print(self.encoder, self.im, self.fm)
         # set the loss function
         if self.action_type == "Discrete":
             self.im_loss = nn.CrossEntropyLoss(reduction="none")
