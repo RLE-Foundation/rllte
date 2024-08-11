@@ -89,7 +89,7 @@ def parse_args_dqn():
     parser.add_argument("--pretraining", action="store_true", default=False)
     parser.add_argument("--int_gamma", type=float, default=None)
     parser.add_argument("--weight_init", type=str, default="orthogonal")
-    parser.add_argument("--beta", type=float, default=1.0)
+    parser.add_argument("--beta", type=float, default=0.25)
     
     args = parser.parse_args()
     return args
@@ -124,6 +124,7 @@ def make_env(args, device):
             device=device,
             num_envs=args.n_envs,
             env_id=args.env_id,
+            seed=args.seed
         )
     elif "procgen_" in args.env_id:
         from rllte.env import make_envpool_procgen_env
