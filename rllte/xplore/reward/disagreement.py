@@ -34,6 +34,8 @@ from torch.utils.data import TensorDataset, DataLoader
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, ForwardDynamicsModel
 
+from rllte.xploit.encoder import MinigridEncoder
+
 
 class Disagreement(BaseReward):
     """Self-Supervised Exploration via Disagreement (Disagreement).
@@ -80,8 +82,7 @@ class Disagreement(BaseReward):
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape,
-                                                   latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+        self.random_encoder = MinigridEncoder(observation_space=observation_space).to(self.device)
 
         # freeze the randomly initialized target network parameters
         for p in self.random_encoder.parameters():

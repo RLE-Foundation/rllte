@@ -37,6 +37,8 @@ from rllte.common.utils import TorchRunningMeanStd
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, InverseDynamicsModel, ForwardDynamicsModel
 
+from rllte.xploit.encoder import MinigridEncoder
+
 class RIDE(BaseReward):
     """RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments.
         See paper: https://arxiv.org/pdf/2002.12292
@@ -86,8 +88,7 @@ class RIDE(BaseReward):
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the encoder, inverse dynamics model and forward dynamics model
-        self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+        self.encoder = MinigridEncoder(observation_space=observation_space).to(self.device)
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
                                        action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         self.fm = ForwardDynamicsModel(latent_dim=latent_dim, 

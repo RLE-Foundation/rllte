@@ -4,15 +4,57 @@
 intrinsic_rewards=("extrinsic" "pseudocounts" "icm" "rnd" "ngu" "ride" "re3" "e3b" "disagreement")
 
 # Loop over seeds (adjust the range as needed)
-for seed in {1..2}; do
+for seed in {1..3}; do
     # Loop over each intrinsic reward
     for reward in "${intrinsic_rewards[@]}"; do
         # Run with --obs_rms
         echo "Running with seed=${seed}, intrinsic_reward=${reward}, and obs_rms"
-        python src/train_ppo.py --env_id=MyWayHome-v1 --intrinsic_reward=${reward} --seed=${seed} --obs_rms
+        python src/train_ppo.py --env_id=MiniGrid-Empty-5x5-v0 --intrinsic_reward=${reward} --seed=${seed} --obs_rms
 
         # Run without --obs_rms
         echo "Running with seed=${seed}, intrinsic_reward=${reward}, and without obs_rms"
-        python src/train_ppo.py --env_id=MyWayHome-v1 --intrinsic_reward=${reward} --seed=${seed}
+        python src/train_ppo.py --env_id=MiniGrid-Empty-5x5-v0 --intrinsic_reward=${reward} --seed=${seed}
+    done
+done
+
+# Loop over seeds (adjust the range as needed)
+for seed in {1..3}; do
+    # Loop over each intrinsic reward
+    for reward in "${intrinsic_rewards[@]}"; do
+        # Run with --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-FourRooms-v0 --intrinsic_reward=${reward} --seed=${seed} --obs_rms
+
+        # Run without --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and without obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-FourRooms-v0 --intrinsic_reward=${reward} --seed=${seed}
+    done
+done
+
+# Loop over seeds (adjust the range as needed)
+for seed in {1..3}; do
+    # Loop over each intrinsic reward
+    for reward in "${intrinsic_rewards[@]}"; do
+        # Run with --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-MultiRoom-N2-S4-v0 --intrinsic_reward=${reward} --seed=${seed} --obs_rms
+
+        # Run without --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and without obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-MultiRoom-N2-S4-v0 --intrinsic_reward=${reward} --seed=${seed}
+    done
+done
+
+# Loop over seeds (adjust the range as needed)
+for seed in {1..3}; do
+    # Loop over each intrinsic reward
+    for reward in "${intrinsic_rewards[@]}"; do
+        # Run with --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-MultiRoom-N2-S4-v0 --intrinsic_reward=${reward} --seed=${seed} --obs_rms
+
+        # Run without --obs_rms
+        echo "Running with seed=${seed}, intrinsic_reward=${reward}, and without obs_rms"
+        python src/train_ppo.py --env_id=MiniGrid-MultiRoom-N2-S4-v0 --intrinsic_reward=${reward} --seed=${seed}
     done
 done

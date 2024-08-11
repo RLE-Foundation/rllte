@@ -30,6 +30,8 @@ import torch as th
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
+from rllte.xploit.encoder import MinigridEncoder
+
 class RE3(BaseReward):
     """State Entropy Maximization with Random Encoders for Efficient Exploration (RE3).
         See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
@@ -83,7 +85,7 @@ class RE3(BaseReward):
         self.k = k
         self.average_entropy = average_entropy
         # build the random encoder and freeze the network parameters
-        self.random_encoder = ObservationEncoder(obs_shape=self.obs_shape, latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+        self.random_encoder = MinigridEncoder(observation_space=observation_space).to(device)
         for p in self.random_encoder.parameters():
             p.requires_grad = False
     

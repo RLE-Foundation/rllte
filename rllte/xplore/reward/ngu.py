@@ -35,6 +35,8 @@ from .rnd import RND
 from rllte.common.utils import TorchRunningMeanStd, RewardForwardFilter
 from rllte.common.preprocessing import process_action_space, process_observation_space
 
+from rllte.xploit.encoder import MinigridEncoder
+
 class NGU(Fabric):
     """Never Give Up: Learning Directed Exploration Strategies (NGU).
         See paper: https://arxiv.org/pdf/2002.06038

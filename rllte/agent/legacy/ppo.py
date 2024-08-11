@@ -123,7 +123,7 @@ class PPO(OnPolicyAgent):
                 observation_space=env.observation_space, feature_dim=feature_dim  # type: ignore[assignment]
             )
         elif encoder_model == "mnih":
-            encoder = MnihCnnEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
+            encoder = MinigridEncoder(observation_space=env.observation_space)
         elif encoder_model == "espeholt":
             encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         else:

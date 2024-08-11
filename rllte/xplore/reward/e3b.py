@@ -35,6 +35,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder, InverseDynamicsModel
 
+from rllte.xploit.encoder import MinigridEncoder
 
 class E3B(BaseReward):
     """Exploration via Elliptical Episodic Bonuses (E3B).
@@ -82,8 +83,8 @@ class E3B(BaseReward):
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
 
         # build the encoder and inverse dynamics model
-        self.encoder = ObservationEncoder(obs_shape=self.obs_shape, 
-                                          latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
+        self.encoder = MinigridEncoder(observation_space=observation_space).to(self.device)
+        
         self.im = InverseDynamicsModel(latent_dim=latent_dim, 
                                        action_dim=self.policy_action_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
         # set the loss function

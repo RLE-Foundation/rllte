@@ -34,6 +34,7 @@ import numpy as np
 from rllte.common.prototype import BaseReward
 from .model import ObservationEncoder
 
+from rllte.xploit.encoder import MinigridEncoder
 
 class RND(BaseReward):
     """Exploration by Random Network Distillation (RND).
@@ -78,10 +79,8 @@ class RND(BaseReward):
     ) -> None:
         super().__init__(observation_space, action_space, n_envs, device, beta, kappa, rwd_norm_type, obs_rms, gamma)
         # build the predictor and target networks
-        self.predictor = ObservationEncoder(obs_shape=self.obs_shape, 
-                                            latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)
-        self.target = ObservationEncoder(obs_shape=self.obs_shape, 
-                                         latent_dim=latent_dim, encoder_model=encoder_model, weight_init=weight_init).to(self.device)            
+        self.predictor = MinigridEncoder(observation_space=observation_space).to(self.device)
+        self.target = MinigridEncoder(observation_space=observation_space).to(self.device)
 
         # freeze the randomly initialized target network parameters
         for p in self.target.parameters():
