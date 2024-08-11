@@ -9,12 +9,12 @@ def parse_args():
 
     # train config
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_envs", type=int, default=8)
+    parser.add_argument("--n_envs", type=int, default=256)
     parser.add_argument("--num_train_steps", type=int, default=10_000_000)
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
-    parser.add_argument("--num_steps", type=int, default=128)
-    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--num_steps", type=int, default=32)
+    parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--lr", type=float, default=2.5e-4)
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=4)
@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument("--int_gamma", type=float, default=None)
     parser.add_argument("--weight_init", type=str, default="orthogonal")
     parser.add_argument("--parse_big", action="store_true", default=False)
-    parser.add_argument("--beta", type=float, default=1.0)
+    parser.add_argument("--beta", type=float, default=0.25)
     
     args = parser.parse_args()
     return args

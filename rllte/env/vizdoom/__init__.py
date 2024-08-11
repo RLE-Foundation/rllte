@@ -32,6 +32,7 @@ def make_envpool_vizdoom_env(
         num_envs=num_envs,
         batch_size=num_envs,
         seed=seed,
+        max_episode_steps=2500,
         episodic_life=True,
         use_combined_action=True,
         stack_num=1
@@ -42,10 +43,11 @@ def make_envpool_vizdoom_env(
     else:
         envs = EnvPoolSync2Gymnasium(env_kwargs)
 
-    if "MyWayHome" in env_id:
-        envs = NormalizeReward(envs, gamma=0.99)
-        envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
+    #if "MyWayHome" in env_id:
+    #    envs = NormalizeReward(envs, gamma=0.99)
+    #    envs = TransformReward(envs, lambda reward: np.clip(reward, -10, 10))
 
+    envs = TransformReward(envs, lambda r: 100.0 * r)
     envs = RecordEpisodeStatistics(envs)
 
     return Gymnasium2Torch(envs, device, envpool=True)
