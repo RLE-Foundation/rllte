@@ -2,12 +2,12 @@
 #SBATCH --partition=long
 #SBATCH --cpus-per-task=12
 #SBATCH --gres=gpu:1 
-#SBATCH --mem=50G                                   
-#SBATCH --time=10:00:00                              
+#SBATCH --mem=25G
+#SBATCH --time=2:00:00                              
 #SBATCH -o /network/scratch/r/roger.creus-castanyer/slurm-%j.out # Write the log on scratch
 
 # 1. Load your environment
 module load anaconda/3
 conda activate /home/mila/r/roger.creus-castanyer/miniconda3/envs/rllte
 
-python3 src/train_ppo.py $1 $2 $3 $4 $5 $6 $7 $8
+python3 src/train_ppo.py $1 $2 $3 $4 $5 $6 $7 $8 $9
