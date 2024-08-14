@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=12
 #SBATCH --gres=gpu:1 
 #SBATCH --mem=25G
-#SBATCH --time=2:00:00                              
+#SBATCH --time=8:00:00                              
 #SBATCH -o /network/scratch/r/roger.creus-castanyer/slurm-%j.out # Write the log on scratch
 
 # 1. Load your environment
