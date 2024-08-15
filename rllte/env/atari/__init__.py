@@ -67,8 +67,8 @@ def make_envpool_atari_env(
         episodic_life=True,
         reward_clip=True,
         repeat_action_probability=0.25,
-        stack_num=1,
-        gray_scale=False,
+        stack_num=4,
+        gray_scale=True,
     )
 
     if asynchronous:
