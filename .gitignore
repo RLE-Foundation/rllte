@@ -23,6 +23,8 @@
 *.csv
 *.zip
 *.DS_Store
+*.sif
+
 
 __pycache__/
 _build/
@@ -38,7 +40,9 @@ _build/
 /rllte/copilot/g4f
 /misc
 /launchers/*
+/slurm_templates/*
 # /src/*
 /all_mario_runs/*
 /all_procgen_runs/*
+/batch_jobs/*
 # find . | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf
