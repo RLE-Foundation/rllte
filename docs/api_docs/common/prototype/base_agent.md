@@ -34,7 +34,7 @@ Base agent instance.
 
 
 ### .freeze
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L151)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L153)
 ```python
 .freeze(
    **kwargs
@@ -45,7 +45,7 @@ Base agent instance.
 Freeze the agent and get ready for training.
 
 ### .check
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L172)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L174)
 ```python
 .check()
 ```
@@ -54,7 +54,7 @@ Freeze the agent and get ready for training.
 Check the compatibility of selected modules.
 
 ### .set
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L198)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L200)
 ```python
 .set(
    encoder: Optional[Encoder] = None, policy: Optional[Policy] = None,
@@ -85,7 +85,7 @@ Set a module for the agent.
 None.
 
 ### .mode
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L238)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L240)
 ```python
 .mode(
    training: bool = True
@@ -106,7 +106,7 @@ Set the training mode.
 None.
 
 ### .save
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L250)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L252)
 ```python
 .save()
 ```
@@ -115,7 +115,7 @@ None.
 Save the agent.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L262)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L264)
 ```python
 .update(
    *args, **kwargs
@@ -126,7 +126,7 @@ Save the agent.
 Update function of the agent.
 
 ### .train
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L266)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L268)
 ```python
 .train(
    num_train_steps: int, init_model_path: Optional[str], log_interval: int,
@@ -154,7 +154,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L292)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/base_agent.py/#L294)
 ```python
 .eval(
    num_eval_episodes: int

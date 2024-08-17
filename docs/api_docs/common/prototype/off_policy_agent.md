@@ -75,7 +75,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/off_policy_agent.py/#L205)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/off_policy_agent.py/#L211)
 ```python
 .eval(
    num_eval_episodes: int

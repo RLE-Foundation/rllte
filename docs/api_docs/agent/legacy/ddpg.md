@@ -2,7 +2,7 @@
 
 
 ## DDPG
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L41)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L42)
 ```python 
 DDPG(
    env: VecEnv, eval_env: Optional[VecEnv] = None, tag: str = 'default', seed: int = 1,
@@ -51,7 +51,7 @@ DDPG agent instance.
 
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L145)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L146)
 ```python
 .update()
 ```
@@ -60,7 +60,7 @@ DDPG agent instance.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L186)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L175)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -87,7 +87,7 @@ Update the critic network.
 None.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L235)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/ddpg.py/#L225)
 ```python
 .update_actor(
    obs: th.Tensor

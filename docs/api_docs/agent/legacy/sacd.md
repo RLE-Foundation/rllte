@@ -76,7 +76,7 @@ Get the temperature coefficient.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .deal_with_zero_probs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L206)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L194)
 ```python
 .deal_with_zero_probs(
    action_probs: th.Tensor
@@ -97,7 +97,7 @@ Deal with situation of 0.0 probabilities.
 Action probabilities and its log values.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L220)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L208)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -124,7 +124,7 @@ Update the critic network.
 None.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L270)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sacd.py/#L258)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor

@@ -2,12 +2,14 @@
 
 
 ## RE3
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L87)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L35)
 ```python 
 RE3(
-   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   beta: float = 0.05, kappa: float = 2.5e-05, latent_dim: int = 128,
-   storage_size: int = 10000, num_envs: int = 1, k: int = 5, average_entropy: bool = False
+   envs: VectorEnv, device: str = 'cpu', beta: float = 1.0, kappa: float = 0.0,
+   gamma: float = None, rwd_norm_type: str = 'rms', obs_norm_type: str = 'rms',
+   latent_dim: int = 128, storage_size: int = 1000, k: int = 5,
+   average_entropy: bool = False, encoder_model: str = 'mnih',
+   weight_init: str = 'orthogonal'
 )
 ```
 
@@ -19,16 +21,20 @@ See paper: http://proceedings.mlr.press/v139/seo21a/seo21a.pdf
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment.
+* **envs** (VectorEnv) : The vectorized environments.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
-* **kappa** (float) : The decay rate.
+* **kappa** (float) : The decay rate of the weighting coefficient.
+* **gamma** (Optional[float]) : Intrinsic reward discount rate, default is `None`.
+* **rwd_norm_type** (str) : Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+* **obs_norm_type** (str) : Normalization type for observations data from ['rms', 'none'].
 * **latent_dim** (int) : The dimension of encoding vectors.
 * **storage_size** (int) : The size of the storage for random embeddings.
-* **num_envs** (int) : The number of parallel environments.
 * **k** (int) : Use the k-th neighbors.
 * **average_entropy** (bool) : Use the average of entropy estimation.
+* **encoder_model** (str) : The network architecture of the encoder from ['mnih', 'pathak'].
+* **weight_init** (str) : The weight initialization method from ['default', 'orthogonal'].
+
 
 
 **Returns**
@@ -39,26 +45,51 @@ Instance of RE3.
 **Methods:**
 
 
-### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L139)
+### .watch
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L96)
 ```python
-.compute_irs(
-   samples: Dict, step: int = 0
+.watch(
+   observations: th.Tensor, actions: th.Tensor, rewards: th.Tensor,
+   terminateds: th.Tensor, truncateds: th.Tensor, next_observations: th.Tensor
 )
 ```
 
 ---
-Compute the intrinsic rewards for current samples.
+Watch the interaction processes and obtain necessary elements for reward computation.
 
 
 **Args**
 
-* **samples** (Dict) : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-* **step** (int) : The global training step.
+* **observations** (th.Tensor) : Observations data with shape (n_envs, *obs_shape).
+* **actions** (th.Tensor) : Actions data with shape (n_envs, *action_shape).
+* **rewards** (th.Tensor) : Extrinsic rewards data with shape (n_envs).
+* **terminateds** (th.Tensor) : Termination signals with shape (n_envs).
+* **truncateds** (th.Tensor) : Truncation signals with shape (n_envs).
+* **next_observations** (th.Tensor) : Next observations data with shape (n_envs, *obs_shape).
+
+
+**Returns**
+
+Feedbacks for the current samples.
+
+### .compute
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L126)
+```python
+.compute(
+   samples: Dict[str, th.Tensor], sync: bool = True
+)
+```
+
+---
+Compute the rewards for current samples.
+
+
+**Args**
+
+* **samples** (Dict[str, th.Tensor]) : The collected samples. A python dict consists of multiple tensors,
+    whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+    For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+* **sync** (bool) : Whether to update the reward module after the `compute` function, default is `True`.
 
 
 **Returns**
@@ -66,51 +97,22 @@ Compute the intrinsic rewards for current samples.
 The intrinsic rewards.
 
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L179)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L175)
 ```python
 .update(
-   samples: Dict
+   samples: Dict[str, th.Tensor]
 )
 ```
 
 ---
-Update the intrinsic reward module if necessary.
+Update the reward module if necessary.
 
 
 **Args**
 
-* **samples**  : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+* **samples** (Dict[str, th.Tensor]) : The collected samples same as the `compute` function.
 
 
 **Returns**
 
-None
-
-### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/re3.py/#L193)
-```python
-.add(
-   samples: Dict
-)
-```
-
----
-Calculate the random embeddings and insert them into the storage.
-
-
-**Args**
-
-* **samples**  : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-
-
-**Returns**
-
-None
+None.

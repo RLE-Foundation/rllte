@@ -39,7 +39,7 @@ pages:
   - page: common/prototype/base_reward.md
     source: rllte/common/prototype/base_reward.py
     classes:
-      - BaseIntrinsicRewardModule
+      - BaseReward
   - page: common/prototype/base_policy.md
     source: rllte/common/prototype/base_policy.py
     classes:

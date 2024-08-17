@@ -60,7 +60,7 @@ DrQv2 agent instance.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L189)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L177)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, discount: th.Tensor,
@@ -86,7 +86,7 @@ Update the critic network.
 None.
 
 ### .update_actor
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L236)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/drqv2.py/#L224)
 ```python
 .update_actor(
    obs: th.Tensor

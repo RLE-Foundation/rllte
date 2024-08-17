@@ -2,31 +2,39 @@
 
 
 ## ICM
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L149)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L39)
 ```python 
 ICM(
-   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   beta: float = 0.05, kappa: float = 2.5e-05, latent_dim: int = 128, lr: float = 0.001,
-   batch_size: int = 64
+   envs: VectorEnv, device: str = 'cpu', beta: float = 1.0, kappa: float = 0.0,
+   gamma: Optional[float] = None, rwd_norm_type: str = 'rms',
+   obs_norm_type: str = 'none', latent_dim: int = 128, lr: float = 0.001,
+   batch_size: int = 256, update_proportion: float = 1.0, encoder_model: str = 'mnih',
+   weight_init: str = 'orthogonal'
 )
 ```
 
 
 ---
-Curiosity-Driven Exploration by Self-Supervised Prediction.
+Curiosity-driven Exploration by Self-supervised Prediction.
 See paper: http://proceedings.mlr.press/v70/pathak17a/pathak17a.pdf
 
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment.
+* **envs** (VectorEnv) : The vectorized environments.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
-* **kappa** (float) : The decay rate.
+* **kappa** (float) : The decay rate of the weighting coefficient.
+* **gamma** (Optional[float]) : Intrinsic reward discount rate, default is `None`.
+* **rwd_norm_type** (str) : Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+* **obs_norm_type** (str) : Normalization type for observations data from ['rms', 'none'].
 * **latent_dim** (int) : The dimension of encoding vectors.
 * **lr** (float) : The learning rate.
-* **batch_size** (int) : The batch size for update.
+* **batch_size** (int) : The batch size for training.
+* **update_proportion** (float) : The proportion of the training data used for updating the forward dynamics models.
+* **encoder_model** (str) : The network architecture of the encoder from ['mnih', 'pathak'].
+* **weight_init** (str) : The weight initialization method from ['default', 'orthogonal'].
+
 
 
 **Returns**
@@ -37,64 +45,47 @@ Instance of ICM.
 **Methods:**
 
 
-### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L198)
+### .compute
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L115)
 ```python
-.compute_irs(
-   samples: Dict, step: int = 0
+.compute(
+   samples: Dict[str, th.Tensor], sync: bool = True
 )
 ```
 
 ---
-Compute the intrinsic rewards for current samples.
+Compute the rewards for current samples.
 
 
 **Args**
 
-* **samples** (Dict) : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-* **step** (int) : The global training step.
+* **samples** (Dict[str, th.Tensor]) : The collected samples. A python dict consists of multiple tensors,
+    whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+    For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+* **sync** (bool) : Whether to update the reward module after the `compute` function, default is `True`.
 
 
 **Returns**
 
 The intrinsic rewards.
 
-### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L236)
-```python
-.add(
-   samples: Dict
-)
-```
-
----
-Add new samples to the intrinsic reward module.
-
 ### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L239)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/icm.py/#L162)
 ```python
 .update(
-   samples: Dict
+   samples: Dict[str, th.Tensor]
 )
 ```
 
 ---
-Update the intrinsic reward module if necessary.
+Update the reward module if necessary.
 
 
 **Args**
 
-* **samples**  : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
+* **samples** (Dict[str, th.Tensor]) : The collected samples same as the `compute` function.
 
 
 **Returns**
 
-None
+None.

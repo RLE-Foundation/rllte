@@ -2,14 +2,15 @@
 
 
 ## NGU
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L107)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L36)
 ```python 
 NGU(
-   observation_space: gym.Space, action_space: gym.Space, device: str = 'cpu',
-   beta: float = 0.05, kappa: float = 2.5e-05, latent_dim: int = 128, lr: float = 0.001,
-   batch_size: int = 64, capacity: int = 1000, k: int = 10,
+   envs: VectorEnv, device: str = 'cpu', beta: float = 1.0, kappa: float = 0.0,
+   gamma: float = None, rwd_norm_type: str = 'rms', obs_norm_type: str = 'rms',
+   latent_dim: int = 32, lr: float = 0.001, batch_size: int = 256, k: int = 10,
    kernel_cluster_distance: float = 0.008, kernel_epsilon: float = 0.0001,
-   c: float = 0.001, sm: float = 8.0, mrs: float = 5.0
+   c: float = 0.001, sm: float = 8.0, mrs: float = 5.0, update_proportion: float = 1.0,
+   encoder_model: str = 'mnih', weight_init: str = 'default'
 )
 ```
 
@@ -21,21 +22,24 @@ See paper: https://arxiv.org/pdf/2002.06038
 
 **Args**
 
-* **observation_space** (Space) : The observation space of environment.
-* **action_space** (Space) : The action space of environment.
+* **envs** (VectorEnv) : The vectorized environments.
 * **device** (str) : Device (cpu, cuda, ...) on which the code should be run.
 * **beta** (float) : The initial weighting coefficient of the intrinsic rewards.
-* **kappa** (float) : The decay rate.
+* **kappa** (float) : The decay rate of the weighting coefficient.
+* **gamma** (Optional[float]) : Intrinsic reward discount rate, default is `None`.
+* **rwd_norm_type** (str) : Normalization type for intrinsic rewards from ['rms', 'minmax', 'none'].
+* **obs_norm_type** (str) : Normalization type for observations data from ['rms', 'none'].
 * **latent_dim** (int) : The dimension of encoding vectors.
 * **lr** (float) : The learning rate.
 * **batch_size** (int) : The batch size for update.
-* **capacity** (int) : The of capacity the episodic memory.
 * **k** (int) : Number of neighbors.
 * **kernel_cluster_distance** (float) : The kernel cluster distance.
 * **kernel_epsilon** (float) : The kernel constant.
 * **c** (float) : The pseudo-counts constant.
 * **sm** (float) : The kernel maximum similarity.
 * **mrs** (float) : The maximum reward scaling.
+* **update_proportion** (float) : The proportion of the training data used for updating the forward dynamics models.
+
 
 
 **Returns**
@@ -46,85 +50,26 @@ Instance of NGU.
 **Methods:**
 
 
-### .pseudo_counts
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L192)
+### .compute
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L126)
 ```python
-.pseudo_counts(
-   e: th.Tensor
+.compute(
+   samples: Dict[str, th.Tensor], sync: bool = True
 )
 ```
 
 ---
-Pseudo counts.
+Compute the rewards for current samples.
 
 
 **Args**
 
-* **e** (th.Tensor) : Encoded observations.
-
-
-**Returns**
-
-Conut values.
-
-### .compute_irs
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L219)
-```python
-.compute_irs(
-   samples: Dict, step: int = 0
-)
-```
-
----
-Compute the intrinsic rewards for current samples.
-
-
-**Args**
-
-* **samples** (Dict) : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-* **step** (int) : The global training step.
+* **samples** (Dict[str, th.Tensor]) : The collected samples. A python dict consists of multiple tensors,
+    whose keys are ['observations', 'actions', 'rewards', 'terminateds', 'truncateds', 'next_observations'].
+    For example, the data shape of 'observations' is (n_steps, n_envs, *obs_shape).
+* **sync** (bool) : Whether to update the reward module after the `compute` function, default is `True`.
 
 
 **Returns**
 
 The intrinsic rewards.
-
-### .add
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L265)
-```python
-.add(
-   samples: Dict
-)
-```
-
----
-Add new samples to the intrinsic reward module.
-
-### .update
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xplore/reward/ngu.py/#L268)
-```python
-.update(
-   samples: Dict
-)
-```
-
----
-Update the intrinsic reward module if necessary.
-
-
-**Args**
-
-* **samples**  : The collected samples. A python dict like
-    {obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>,
-    actions (n_steps, n_envs, *action_shape) <class 'th.Tensor'>,
-    rewards (n_steps, n_envs) <class 'th.Tensor'>,
-    next_obs (n_steps, n_envs, *obs_shape) <class 'th.Tensor'>}.
-
-
-**Returns**
-
-None

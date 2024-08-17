@@ -114,7 +114,7 @@ RLLTE distribution.
 [source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/xploit/policy/off_policy_det_actor_double_critic.py/#L181)
 ```python
 .save(
-   path: Path, pretraining: bool = False
+   path: Path, pretraining: bool, global_step: int
 )
 ```
 
@@ -126,6 +126,7 @@ Save models.
 
 * **path** (Path) : Save path.
 * **pretraining** (bool) : Pre-training mode.
+* **global_step** (int) : Global training step.
 
 
 **Returns**

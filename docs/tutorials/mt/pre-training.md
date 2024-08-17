@@ -26,17 +26,13 @@ if __name__ == "__main__":
     # env setup
     device = "cuda:0"
     env = make_atari_env(device=device)
-    eval_env = make_atari_env(device=device)
     # create agent and turn on pre-training mode
     agent = PPO(env=env, 
-                eval_env=eval_env, 
                 device=device,
                 tag="ppo_atari",
                 pretraining=True)
     # create intrinsic reward
-    re3 = RE3(observation_space=env.observation_space,
-              action_space=env.action_space,
-              device=device)
+    re3 = RE3(envs=env, device=device)
     # set the reward module
     agent.set(reward=re3)
     # start training

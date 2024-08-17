@@ -49,7 +49,7 @@ Update the agent. Implemented by individual algorithms.
 .train(
    num_train_steps: int, init_model_path: Optional[str] = None, log_interval: int = 1,
    eval_interval: int = 100, save_interval: int = 100, num_eval_episodes: int = 10,
-   th_compile: bool = True, anneal_lr: bool = False
+   th_compile: bool = False, anneal_lr: bool = False
 )
 ```
 
@@ -74,7 +74,7 @@ Training function.
 None.
 
 ### .eval
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/on_policy_agent.py/#L213)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/common/prototype/on_policy_agent.py/#L211)
 ```python
 .eval(
    num_eval_episodes: int

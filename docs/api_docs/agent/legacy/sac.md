@@ -76,7 +76,7 @@ Get the temperature coefficient.
 Update the agent and return training metrics such as actor loss, critic_loss, etc.
 
 ### .update_critic
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L206)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L194)
 ```python
 .update_critic(
    obs: th.Tensor, actions: th.Tensor, rewards: th.Tensor, terminateds: th.Tensor,
@@ -103,7 +103,7 @@ Update the critic network.
 None.
 
 ### .update_actor_and_alpha
-[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L256)
+[source](https://github.com/RLE-Foundation/rllte/blob/main/rllte/agent/legacy/sac.py/#L244)
 ```python
 .update_actor_and_alpha(
    obs: th.Tensor
