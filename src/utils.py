@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument("--hidden_dim", type=int, default=512)
     parser.add_argument("--feature_dim", type=int, default=512)
     parser.add_argument("--num_steps", type=int, default=32)
-    parser.add_argument("--batch_size", type=int, default=1024)
+    parser.add_argument("--batch_size", type=int, default=2048)
     parser.add_argument("--lr", type=float, default=2.5e-4)
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--n_epochs", type=int, default=4)

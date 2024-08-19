@@ -23,6 +23,7 @@
 *.csv
 *.zip
 *.DS_Store
+*.sif
 
 __pycache__/
 _build/
@@ -37,6 +38,8 @@ _build/
 /checkpoints_in
 /rllte/copilot/g4f
 /misc
+/slurm_templates/*
+/batch_jobs/*
 /launchers/*
 # /src/*
 /all_mario_runs/*
