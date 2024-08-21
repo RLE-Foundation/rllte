@@ -31,7 +31,7 @@ from torch import nn
 
 from rllte.common.prototype import OnPolicyAgent
 from rllte.common.type_alias import VecEnv
-from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder
+from rllte.xploit.encoder import IdentityEncoder, MnihCnnEncoder, EspeholtResidualEncoder, MinigridEncoder
 from rllte.xploit.policy import OnPolicySharedActorCriticLSTM
 from rllte.xploit.storage import EpisodicRolloutStorage
 from rllte.xplore.distribution import Bernoulli, Categorical, DiagonalGaussian, MultiCategorical
@@ -113,6 +113,8 @@ class PPO_LSTM(OnPolicyAgent):
         self.max_grad_norm = max_grad_norm
 
         # default encoder
+        encoder = MinigridEncoder(observation_space=env.observation_space)
+        """
         if len(self.obs_shape) == 1:
             feature_dim = self.obs_shape[0]  # type: ignore
             encoder = IdentityEncoder(
@@ -124,6 +126,7 @@ class PPO_LSTM(OnPolicyAgent):
             encoder = EspeholtResidualEncoder(observation_space=env.observation_space, feature_dim=feature_dim)
         else:
             raise NotImplementedError(f"Unsupported encoder model {encoder_model}!")
+        """
 
         # default distribution
         if self.action_type == "Discrete":
