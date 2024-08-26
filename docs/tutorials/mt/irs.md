@@ -33,9 +33,9 @@ The workflow of RLeXplore is illustrated as follows:
 Commonly, at each time step, the agent receives observations from the environment and predicts actions. The environment then executes the actions and returns feedback to the agent, which consists of a next observation, a reward, and a terminal signal. During the data collection process, the ***.watch()*** function is used to monitor the agent-environment interactions. For instance, E3B [1] updates an estimate of an ellipsoid in an embedding space after observing every state. At the end of the data collection rollouts, ***.compute()*** computes the corresponding intrinsic rewards. Note that ***.compute()*** is only called once per rollout using batched operations, which makes RLeXplore a highly efficient framework. Additionally, RLeXplore provides several utilities for reward and observation normalization. Finally, the ***.update()*** function is called immediately after ***.compute()*** to update the reward module if necessary (e.g., train the forward dynamics models in Disagreement [2] or the predictor network in RND [3]). All operations are subject to the standard workflow of the Gymnasium API. 
 
 ``` 
-[1] \cite{henaff2022exploration}
-[2] \cite{pathak2019self}
-[3] \cite{burda2018exploration}
+[1] Henaff M, Raileanu R, Jiang M, et al. Exploration via elliptical episodic bonuses[J]. Advances in Neural Information Processing Systems, 2022, 35: 37631-37646.
+[2] Pathak D, Agrawal P, Efros A A, et al. Curiosity-driven exploration by self-supervised prediction[C]//International conference on machine learning. PMLR, 2017: 2778-2787.
+[3] Burda Y, Edwards H, Storkey A, et al. Exploration by random network distillation[C]//Seventh International Conference on Learning Representations. 2019: 1-17.
 ```
 
 ## Workflow
@@ -227,11 +227,11 @@ Run `example.py` and you'll see the intrinsic reward module is invoked:
 ```
 
 ## RLeXplore with Stable-baselines, CleanRL, ...
-**RLeXplore** can be seamlessly integrated with existing RL libraries, such as Stable-Baselines3, CleanRL, etc. We provide specific examples [GitHub](https://github.com/RLE-Foundation/RLeXplore#tutorials).
+**RLeXplore** can be seamlessly integrated with existing RL libraries, such as Stable-Baselines3, CleanRL, etc. We provide specific examples on [GitHub](https://github.com/RLE-Foundation/RLeXplore#tutorials).
 
 ## Custom Intrinsic Reward
 Since **RLeXplore** provides a standardized workflow and modular components of intrinsic rewards, which facilitates the creation, modification, and testing of new ideas. See the example of creating custom intrinsic rewards on [GitHub](https://github.com/RLE-Foundation/RLeXplore/blob/main/5%20custom_intrinsic_reward.ipynb).
 
 
 ## Benchmark Results
-We conducted extensive experiments to evaluate the performance of **RLeXplore** on multiple well-recognized exploration tasks, such as *Super Mario Bros*, *MiniGrid*, etc. Please view our [Wandb](https://wandb.ai/yuanmingqi/RLeXplore/reportlist) space for the benchmark results.
+We conducted extensive experiments to evaluate the performance of **RLeXplore** on multiple well-recognized exploration tasks, such as *SuperMarioBros*, *MiniGrid*, etc. Please view our [Wandb](https://wandb.ai/yuanmingqi/RLeXplore/reportlist) space for the benchmark results.
