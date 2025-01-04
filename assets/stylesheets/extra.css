@@ -1,0 +1,24 @@
+.md-content {
+    text-align: justify;
+}
+
+[data-md-color-scheme="rllte"] {
+    --md-primary-fg-color: rgb(0,83,214);
+    --md-accent-fg-color: rgb(0,83,174);
+    --md-typeset-a-color: rgb(0,83,214);
+  }  
+
+[data-md-color-scheme="white"] {
+  --md-primary-fg-color: rgb(255,255,255);
+  --md-accent-fg-color: rgb(0,83,174);
+  --md-typeset-a-color: rgb(0,83,214);
+  --md-default-fg-color--light: #000000de;
+}  
+
+.badge {
+  display: inline-block;
+  width: 220px;
+  box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  padding: 12px 17px;border-radius: 8px;
+  margin: 10px;
+}
