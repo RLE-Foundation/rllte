@@ -121,6 +121,8 @@ class NGU(Fabric):
             weight_init=weight_init,
         )
 
+        self.mrs = mrs
+        
         super().__init__(*[rnd, pseudo_counts])
 
     def compute(self, samples: Dict[str, th.Tensor], sync: bool = True) -> th.Tensor:
