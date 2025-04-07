@@ -293,11 +293,12 @@ Welcome to contribute to this project! Before you begin writing code, please rea
 # Cite the Project
 To cite this project in publications:
 ```bibtex
-@article{yuan2023rllte,
-  title={RLLTE: Long-Term Evolution Project of Reinforcement Learning}, 
-  author={Mingqi Yuan and Zequn Zhang and Yang Xu and Shihao Luo and Bo Li and Xin Jin and Wenjun Zeng},
-  year={2023},
-  journal={arXiv preprint arXiv:2309.16382}
+@inproceedings{
+yuan2025rllte,
+title={{RLLTE}: Long-Term Evolution Project of Reinforcement Learning},
+author={Mingqi Yuan and Zequn Zhang and Yang Xu and Jake Shihao Luo and Bo Li and Xin Jin and Wenjun Zeng},
+booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+year={2025}
 }
 ```
 
